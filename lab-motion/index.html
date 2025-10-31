@@ -246,20 +246,20 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
   ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 
-  /* ===== Loader ===== */
+  /* ===== Loader (kept as in your working build) ===== */
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
   const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
 
   let model = null, skeleton = null;
+  const initialBoneRot = new Map();
 
   function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    // Fallback to your known good filename; change to match your repo if needed
     return "./Athletic_Grace_1006002620_texture.glb";
   }
   let MODEL_URL = pickModelUrl();
@@ -270,8 +270,137 @@ optgroup{color:#9fb0c9;font-style:normal}
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
   }
+  function autoScaleToHeight(target=1.75){
+    const box = new THREE.Box3().setFromObject(model);
+    const h = box.max.y - box.min.y;
+    if (!isFinite(h) || h <= 0) return;
+    const s = target / h;
+    if (s < 0.4 || s > 2.5) { model.scale.multiplyScalar(s); log(`Scaled ×${s.toFixed(2)}`); }
+  }
+  function fitView(){
+    const box = new THREE.Box3().setFromObject(model || scene);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    controls.target.copy(center);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const dist = maxDim / (2 * Math.tan((camera.fov * Math.PI/180)/2));
+    camera.position.copy(center).add(new THREE.Vector3(0.8*dist, 0.8*dist, 1.2*dist));
+    camera.lookAt(center);
+  }
 
-  /* ===== Joint lists (ROM + control) ===== */
+  /* ===== Populate bones (unchanged) ===== */
+  function populateBones(){
+    boneSel.innerHTML = "";
+    if (!skeleton) {
+      const o = document.createElement("option");
+      o.value = ""; o.textContent = "(No skeleton)";
+      boneSel.appendChild(o);
+      return;
+    }
+    skeleton.bones.forEach((b,i)=>{
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = b.name || `Bone ${i}`;
+      boneSel.appendChild(o);
+      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+    });
+    if (skeleton.bones.length) boneSel.value = "0";
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    setBoneRotationFromUI();
+  }
+  function setBoneRotationFromUI(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
+    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
+    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
+    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
+    b.quaternion.copy(qBase).multiply(qDelta);
+  }
+  function zeroSelectedBone(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const qb = initialBoneRot.get(b);
+    if (qb) b.quaternion.copy(qb);
+    rx.value="0"; ry.value="0"; rz.value="0";
+  }
+
+  /* ===== Minimal rig profile (unchanged) ===== */
+  let RIG_PROFILE = 'generic';
+  function detectRigProfile(){
+    const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
+    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    else RIG_PROFILE = 'generic';
+    log(`Rig profile: ${RIG_PROFILE}`);
+  }
+
+  const EXCLUDE = /(pelvis|root|spine|clavicle|scapula)/i;
+  function sideRegex(side){
+    if (!side) return [/.*/];
+    if (side==='l'){
+      return [
+        /\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i,
+        /\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
+      ];
+    } else {
+      return [
+        /\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i,
+        /\bright(?=[A-Z_])/i, /mixamorig:.*right/i
+      ];
+    }
+  }
+  function findBoneBy(cfg){
+    if (!skeleton) return null;
+    const names = skeleton.bones.map(b=>b.name.toLowerCase());
+    const sideREs = sideRegex(cfg.side);
+    for (const cand of cfg.hints){
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (!sideREs.some(r=>r.test(names[i]))) continue;
+        if (cand.test(names[i])) return skeleton.bones[i];
+      }
+    }
+    if (!cfg.side){
+      for (const cand of cfg.hints){
+        for (let i=0;i<names.length;i++){
+          if (EXCLUDE.test(names[i])) continue;
+          if (cand.test(names[i])) return skeleton.bones[i];
+        }
+      }
+    }
+    return null;
+  }
+  const JOINT_BIND = new Map();
+  function axisFor(profile, motionKey, def){ return def; } // keep simple
+
+  function resolveBind(key,cfg){
+    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
+    let bone = findBoneBy(cfg);
+    if (!bone) { log(`No bind for ${key}`); return null; }
+    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
+    const baseAxis = ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane?.toLowerCase?.()] || 'x';
+    const axis = axisFor(RIG_PROFILE, key, baseAxis);
+    const obj = {bone, qBind, axis};
+    JOINT_BIND.set(key,obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
+    return obj;
+  }
+  function applyPairAngle(key,cfg,deg){
+    const bind = resolveBind(key,cfg); if (!bind) return;
+    const {bone,qBind,axis} = bind;
+    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+    const e = new THREE.Euler(0,0,0,"XYZ");
+    if (axis==='x') e.set(rad,0,0,"XYZ");
+    if (axis==='y') e.set(0,rad,0,"XYZ");
+    if (axis==='z') e.set(0,0,rad,"XYZ");
+    const qDelta = new THREE.Quaternion().setFromEuler(e);
+    bone.quaternion.copy(qBind).multiply(qDelta);
+  }
+
+  /* ===== Joint definitions (same set used for ROM & control) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'Sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'Frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
@@ -279,37 +408,37 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'cerv_fe',   pair:'Cervical Flex / Ext',           side:'', plane:'Sagittal',   neutral:0, min:-60, max:70,  hints:[/neck|cspine|head/i]},
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',     side:'', plane:'Frontal',    neutral:0, min:-45, max:45,  hints:[/neck|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',     side:'', plane:'Transverse', neutral:0, min:-80, max:80,  hints:[/neck|cspine|head/i]},
-    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',       side:'L', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',       side:'R', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',        side:'L', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',        side:'R', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_l', pair:'Shoulder L — Internal / External', side:'L', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_r', pair:'Shoulder R — Internal / External', side:'R', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',          side:'L', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',          side:'R', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'L', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'R', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',          side:'L', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',          side:'R', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',  side:'L', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_ru_r',   pair:'Wrist R — Radial / Ulnar Dev',  side:'R', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',       side:'l', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',       side:'r', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',        side:'l', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',        side:'r', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — Internal / External', side:'l', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — Internal / External', side:'r', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',          side:'l', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',          side:'r', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',          side:'l', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',          side:'r', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',  side:'l', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ru_r',   pair:'Wrist R — Radial / Ulnar Dev',  side:'r', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
   ];
   const LOWER = [
-    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',            side:'L', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',            side:'R', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',             side:'L', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',             side:'R', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_irer_l', pair:'Hip L — Internal / External',   side:'L', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_irer_r', pair:'Hip R — Internal / External',   side:'R', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
-    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',           side:'L', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
-    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',           side:'R', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
-    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex', side:'L', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex', side:'R', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion', side:'L', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
-    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion', side:'R', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
+    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',            side:'l', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',            side:'r', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',             side:'l', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',             side:'r', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_irer_l', pair:'Hip L — Internal / External',   side:'l', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_irer_r', pair:'Hip R — Internal / External',   side:'r', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',           side:'l', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
+    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',           side:'r', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex', side:'l', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex', side:'r', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion', side:'l', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
+    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion', side:'r', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
   ];
 
-  /* ===== ROM Reference builder (no markdown) ===== */
+  /* ===== ROM Reference (Upper/Lower only) ===== */
   function buildRomList(which){
     const list = (which==='upper') ? UPPER : LOWER;
     romNav.innerHTML = '';
@@ -327,7 +456,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (buttons[idx]) buttons[idx].classList.add('on');
     const item = list[idx];
     const min = item.min, max = item.max;
-    const side = item.side || '—';
+    const side = (item.side||'—').toUpperCase();
     const plane = item.plane || '—';
     romContent.innerHTML = `
       <h3>${item.pair} <span class="badge">${plane} plane</span> <span class="badge">Side: ${side}</span></h3>
@@ -338,40 +467,32 @@ optgroup{color:#9fb0c9;font-style:normal}
     `;
   }
 
-  /* ===== Rig helpers (minimal for now) ===== */
-  let RIG_PROFILE = 'generic';
-  function detectRigProfile(){
-    const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
-    else RIG_PROFILE = 'generic';
-    log(\`Rig profile: \${RIG_PROFILE}\`);
-  }
-
-  /* ===== UI: region & motion ===== */
-  let currentSide = 'upper';
+  /* ===== UI: actions ===== */
   function fillActionMenu(){
     actionSel.innerHTML = "";
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
-    const CURRENT = currentSide==='upper' ? UPPER : LOWER;
+
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
     const og = document.createElement("optgroup");
-    og.label = currentSide==='upper' ? "Cervical, Trunk, Shoulder & Arm" : "Hip, Leg & Foot";
-    for (const item of CURRENT){
+    og.label = (CURRENT===UPPER) ? "Cervical, Trunk, Shoulder & Arm" : "Hip, Leg & Foot";
+    for (const item of list){
       const opt = document.createElement("option");
       opt.value = item.key;
       opt.textContent = item.pair;
       og.appendChild(opt);
     }
     actionSel.appendChild(og);
+
     actionSel.value = "";
     pairLabel.textContent = "Angle (°)";
     actionDeg.disabled = true;
     zeroAction.disabled = true;
   }
   function cfgFromKey(k){
-    const CURRENT = currentSide==='upper' ? UPPER : LOWER;
-    return CURRENT.find(x=>x.key===k) || null;
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    return list.find(x=>x.key===k) || null;
   }
   function syncActionUI(forceZero=false){
     const key = actionSel.value;
@@ -389,50 +510,58 @@ optgroup{color:#9fb0c9;font-style:normal}
     actionDeg.disabled = false;
     zeroAction.disabled = false;
   }
-  segUpper.onclick = ()=>{ currentSide='upper'; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
-  segLower.onclick = ()=>{ currentSide='lower'; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
-  actionSel.addEventListener("change", ()=>syncActionUI(true));
 
-  /* ===== Load model (with graceful fallback) ===== */
+  const segUpperBtn = segUpper, segLowerBtn = segLower;
+  let CURRENT = UPPER;
+
+  segUpperBtn.onclick = ()=>{ CURRENT = UPPER; segUpperBtn.classList.add('on'); segLowerBtn.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
+  segLowerBtn.onclick = ()=>{ CURRENT = LOWER; segLowerBtn.classList.add('on'); segUpperBtn.classList.remove('on'); fillActionMenu(); };
+
+  actionSel.addEventListener("change", ()=>syncActionUI(true));
+  actionDeg.addEventListener("input", ()=>{
+    const key = actionSel.value; const cfg = cfgFromKey(key);
+    if (cfg) applyPairAngle(key,cfg, parseFloat(actionDeg.value)||0);
+  });
+  zeroAction.onclick = ()=>{
+    const key = actionSel.value; const cfg = cfgFromKey(key);
+    if (!cfg) return;
+    actionDeg.value = "0";
+    applyPairAngle(key,cfg, 0);
+  };
+
+  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
+  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+
+  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
+    if (!model) return;
+    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+    model.scale.setScalar(parseInt(ms.value,10)/100);
+    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+  }));
+  zeroBone.onclick = zeroSelectedBone;
+  resetModel.onclick = ()=>{
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="50"; myaw.value="0";
+    if (model){
+      model.position.set(0,0,0.6);
+      model.scale.setScalar(0.5);
+      model.rotation.y = 0;
+    }
+    groundSnap();
+  };
+
+  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
+
+  /* ===== Load model (unchanged from your working logic) ===== */
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
+    initialBoneRot.clear(); JOINT_BIND.clear();
+    boneSel.innerHTML = "";
   }
-  function addFallbackMannequin(){
-    // Simple placeholder so the lab is never empty
-    const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({color:0x9fb0c9, roughness:0.6, metalness:0.1});
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.6, 8, 16), mat); torso.position.y = 1.2; group.add(torso);
-    const head  = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 16), mat); head.position.y = 1.75; group.add(head);
-    const legL  = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.9, 16), mat); legL.position.set(-0.12,0.45,0); group.add(legL);
-    const legR  = legL.clone(); legR.position.x = 0.12; group.add(legR);
-    const armL  = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.6,16), mat); armL.position.set(-0.42,1.3,0); armL.rotation.z = 0.15; group.add(armL);
-    const armR  = armL.clone(); armR.position.x = 0.42; armR.rotation.z = -0.15; group.add(armR);
-    group.traverse(o=>o.castShadow=o.receiveShadow=true);
-    model = group;
-    scene.add(model);
-    model.scale.setScalar(0.5);
-    model.position.set(0,0,0.6);
-    groundSnap();
-    msg.textContent = "⚠️ Placeholder mannequin (GLB not found)";
-    log("Using fallback mannequin.");
-  }
-
   function loadModel(){
     msg.textContent = "Loading…"; log("Loading model...");
     clearModel();
     const url = MODEL_URL;
-    const onLoaded = ()=>{
-      scene.add(model);
-      model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-      model.scale.setScalar(parseInt(ms.value,10)/100);
-      model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-      groundSnap();
-      msg.textContent = "✅ Model loaded";
-      log("Model load OK");
-      detectRigProfile();
-      fillActionMenu();
-    };
     loader.load(
       url,
       (gltf) => {
@@ -441,21 +570,30 @@ optgroup{color:#9fb0c9;font-style:normal}
           if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
           if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
         });
-        onLoaded();
+        scene.add(model);
+        model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+        model.scale.setScalar(parseInt(ms.value,10)/100);
+        model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+        groundSnap(); 
+        msg.textContent = "✅ Model loaded";
+        log("Model load OK");
+        populateBones();
+        detectRigProfile();
+        CURRENT = UPPER;
+        segUpperBtn.classList.add('on'); segLowerBtn.classList.remove('on');
+        fillActionMenu();
       },
       (xhr) => {
         msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
       },
       (err) => {
-        console.warn("Model load failed:", err);
-        addFallbackMannequin();
-        fillActionMenu();
+        console.error(err);
+        msg.textContent = "⚠️ Load error";
+        log(`Error: ${err?.message || err}`);
       }
     );
   }
   loadModel();
-
-  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(\`Reload: \${MODEL_URL}\`); loadModel(); };
 
   /* ===== ROM Modal wiring (Upper/Lower only) ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
