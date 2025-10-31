@@ -388,52 +388,30 @@ function groundSnap(){
   model.position.y -= minY; // feet at y=0
 }
 
-
 async function loadModel() {
   try {
-    // Ping file to distinguish missing vs CORS
-    const head = await fetch("./Athletic_Grace_1006002620_texture.glb", { method: "HEAD", cache: "no-store" });
-    if (!head.ok) throw new Error("HEAD " + head.status);
-  } catch (e) {
-    msg.textContent = "⚠️ Model not found or blocked. Loading fallback mannequin.";
-    addFallback();
-    return;
-  }
+    const head = await fetch(MODEL_URL, { method: "HEAD", cache: "no-store" });
+    if (!head.ok) { msg.textContent = `⚠️ ${MODEL_URL} (HTTP ${head.status}) — using fallback`; addFallbackMannequin(); return; }
+  } catch { msg.textContent = `⚠️ Network error — using fallback`; addFallbackMannequin(); return; }
 
-  msg.textContent = "Loading model… 0%";
-  loader.load("./Athletic_Grace_1006002620_texture.glb",
-    (gltf) => {
-      model = gltf.scene;
-      model.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
-      scene.add(model);
-      msg.textContent = "✅ Model loaded";
-      setTimeout(() => { msg.textContent = ""; }, 1200);
-    },
-    (xhr) => {
-      if (xhr && xhr.total) {
-        const pct = Math.round((xhr.loaded / xhr.total) * 100);
-        msg.textContent = "Loading model… " + pct + "%";
-      } else {
-        msg.textContent = "Loading model…";
-      }
-    },
-    (err) => {
-      console.error(err);
-      msg.textContent = "⚠️ Loader error. Showing fallback mannequin.";
-      addFallback();
-    }
-  );
+  loader.load(MODEL_URL, (gltf) => {
+    model = gltf.scene;
+    model.traverse(o=>{ if(o.isMesh){ o.castShadow = true; }});
+    scene.add(model);
 
-  // Safety net: if not loaded in 8s, show fallback but keep trying in background
-  setTimeout(() => {
-    if (!model) {
-      msg.textContent = "⏳ Slow load — showing fallback mannequin.";
-      addFallback();
-    }
-  }, 8000);
+    groundSnap();
+    model.position.x = 0;
+    model.position.z = 0.6;
+    model.scale.setScalar(1.0);
+
+    controls.target.set(0,1.1,0);
+    msg.textContent = "✅ Model loaded";
+  }, (xhr) => {
+    msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
+  }, () => { msg.textContent = "⚠️ Loader error — using fallback"; addFallbackMannequin(); });
+  setTimeout(()=>{ if (!model) addFallbackMannequin(); }, 6000);
 }
 loadModel();
-
 
 /* ===================== SCREEN-SPACE DOTS (no 3D raycast) ===================== */
 const scr = { fulcrum:null, stationary:null, moving:null };
@@ -490,7 +468,6 @@ if(scr.fulcrum && scr.stationary && scr.moving){
   }
 }
 
-
 function pickOnScreen(e){
   if(!target) return;
   // ignore clicks on the left control panel or note
@@ -498,31 +475,11 @@ function pickOnScreen(e){
   if(leftPanel && leftPanel.contains(e.target)) return;
 
   const r = renderer.domElement.getBoundingClientRect();
+  // clamp into viewport
   const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
   const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
+
   const p = { x, y };
-
-  // Record selected point
-  scr[target] = p;
-
-  // Immediately show the overlay and the specific dot (no waiting)
-  const host = document.getElementById('gonioHost');
-  host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
-  const inst = document.getElementById('instrument');
-  if (inst) inst.style.display = 'none'; // instrument waits for all 3
-
-  // Draw the one dot instantly
-  if (target === 'fulcrum') { setDotEl(scrFulcrum, p); }
-  if (target === 'stationary') { setDotEl(scrStationary, p); }
-  if (target === 'moving') { setDotEl(scrMoving, p); }
-
-  // Update lines/detectors; if all three are set, show instrument
-  refreshScreenDots();
-
-  log(`${target} pinned @ ${x|0},${y|0}`);
-  target = null;
-}
-;
   scr[target] = p;
   // ensure overlay shows immediately after each placement
   (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
