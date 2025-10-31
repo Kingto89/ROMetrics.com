@@ -652,7 +652,7 @@ function resolveBind(key,cfg){
       const el = document.createElement('details');
       el.className = 'rom-item';
       const side = (m.side||'—').toUpperCase();
-      el.innerHTML = `<summary>${m.pair} <span class="badge">${m.plane} plane</span> <span class="badge">Side: ${side}</span></summary>
+      el.innerHTML = `<summary>${m.pair} <span class="badge">${m.plane} plane</span></summary>
         <div class="inner">
           <div class="rom-row"><div class="rom-head">Expected ROM (°)</div><div>${m.min} to ${m.max}</div></div>
         </div>`;
