@@ -589,76 +589,7 @@ function resolveBind(key,cfg){
     // Enable but DO NOT apply until user moves the slider
     actionDeg.disabled = false;
     zeroAction.disabled = false;
-  }  /* ===== Postures ===== */
-  function rotateBoneDelta(b, x=0, y=0, z=0){
-    const qb = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-    const dq = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-      THREE.MathUtils.degToRad(x),
-      THREE.MathUtils.degToRad(y),
-      THREE.MathUtils.degToRad(z),
-      "XYZ"
-    ));
-    b.quaternion.copy(qb).multiply(dq);
-  }
-  function findOne(reList){
-    if (!skeleton) return null;
-    const names = skeleton.bones.map(b=>b.name.toLowerCase());
-    for (const re of reList){
-      const i = names.findIndex(n => re.test(n));
-      if (i >= 0) return skeleton.bones[i];
-    }
-    return null;
-  }
-
-  function zeroAllJoints(){
-    for (const [,bind] of JOINT_BIND.entries()){
-      bind.bone.quaternion.copy(bind.qBind);
-    }
-    actionDeg.value = "0";
-    log("Zero all motions");
-  }
-
-  function applyPosturePreset(kind){
-    zeroAllJoints();
-
-    if (kind === "stand"){
-      model.rotation.x = 0;
-      groundSnap();
-return;
-    }
-    if (kind === "sit"){
-      // Mixamo-friendly names
-      const Lhip = findOne([/upper.?leg_l|thigh_l|femur_l|mixamorig:lefthip|mixamorig:leftupleg/i, /left upleg/i]);
-      const Rhip = findOne([/upper.?leg_r|thigh_r|femur_r|mixamorig:righthip|mixamorig:rightupleg/i, /right upleg/i]);
-      const Lk = findOne([/lower.?leg_l|tibia_l|shin_l|calf_l|mixamorig:leftleg/i]);
-      const Rk = findOne([/lower.?leg_r|tibia_r|shin_r|calf_r|mixamorig:rightleg/i]);
-      const Lank = findOne([/foot.*l|ankle.*l|talus.*l|tarsal.*l|mixamorig:leftfoot/i]);
-      const Rank = findOne([/foot.*r|ankle.*r|talus.*r|tarsal.*r|mixamorig:rightfoot/i]);
-
-      if (Lhip) rotateBoneDelta(Lhip, -90,0,0);
-      if (Rhip) rotateBoneDelta(Rhip, -90,0,0);
-      if (Lk) rotateBoneDelta(Lk, -90,0,0);
-      if (Rk) rotateBoneDelta(Rk, -90,0,0);
-      if (Lank) rotateBoneDelta(Lank, +5,0,0);
-      if (Rank) rotateBoneDelta(Rank, +5,0,0);
-
-      model.rotation.x = 0;
-      groundSnap();
-return;
-    }
-    if (kind === "supine"){
-      model.rotation.x = Math.PI/2;
-      groundSnap();
-return;
-    }
-    if (kind === "prone"){
-      model.rotation.x = -Math.PI/2;
-      groundSnap();
-return;
-    }
-  }
-
-  /* ===== Wire UI ===== */
+  }  /* ===== Wire UI ===== */
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
@@ -736,7 +667,7 @@ msg.textContent = "✅ Model loaded";
         CURRENT = UPPER;
         segUpper.classList.add('on'); segLower.classList.remove('on');
         // Force neutral start
-        try{ zeroAllJoints(); applyPosturePreset("stand"); }catch(e){}
+        try{   }catch(e){}
         fillActionMenu();
 },
       (xhr) => {
