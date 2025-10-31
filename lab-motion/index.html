@@ -42,17 +42,12 @@ optgroup{color:#9fb0c9;font-style:normal}
 .modal .body{padding:12px;overflow:auto}
 
 
-.handTag{ position:fixed; z-index:15; pointer-events:auto; user-select:none;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.45)); cursor:grab; transform-origin:center center; }
-.handTag:active{ cursor:grabbing; }
-.handTag .badge{
   position:absolute; right:-8px; bottom:-8px; font:700 10px/1 system-ui,Segoe UI,Roboto;
   color:#0b1220; background:#f59e0b; border:1px solid rgba(0,0,0,.35);
   border-radius:999px; padding:3px 6px; transform:translate(50%,50%); pointer-events:none;
   box-shadow:0 2px 6px rgba(0,0,0,.45);
 }
-.handTag.stab .badge{ background:#14b8a6; } /* teal for Stabilize */
-.handTag.test .badge{ background:#f59e0b; } /* amber for Test */
 
 </style>
 </head>
@@ -66,30 +61,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       </div>
 
       
-<label>Hands</label>
-<div class="row">
-  <button id="handsBtn" class="mini">✋ Hands</button>
-</div>
-<details id="handsPanel" style="display:none">
-  <summary>Hand Controls</summary>
-  <div class="row">
-    <button id="pickStab" class="mini">Active: Stabilize</button>
-    <button id="pickTest" class="mini">Active: Test</button>
-  </div>
-  <div class="row">
-    <label style="margin:0">Size</label>
-    <input id="handSize" type="range" min="60" max="220" value="96">
-  </div>
-  <div class="row">
-    <button id="flipHand" class="mini">Flip</button>
-    <button id="toggleHands" class="mini">Hide/Show</button>
-    <button id="resetHands" class="mini">Reset</button>
-    <button id="removeHands" class="mini">Remove</button>
-  </div>
-  <small style="color:#9fb0c9">Drag the hands over the model. Size slider adjusts both.</small>
-</details>
-
-      <label>Posture</label>
+<label>Posture</label>
       <div class="row">
         <select id="postureSel">
           <option value="stand">Stand (neutral)</option>
@@ -792,107 +764,6 @@ msg.textContent = "✅ Model loaded";
   })();
 
 
-  /* ===== Emoji Hands Overlay (no GLB) ===== */
-  const handsBtn = document.getElementById("handsBtn");
-  const handsPanel = document.getElementById("handsPanel");
-  const pickStab = document.getElementById("pickStab");
-  const pickTest = document.getElementById("pickTest");
-  const handSize = document.getElementById("handSize");
-  const flipHand = document.getElementById("flipHand");
-  const toggleHands = document.getElementById("toggleHands");
-  const resetHands = document.getElementById("resetHands");
-  const removeHands = document.getElementById("removeHands");
-
-  let stab = null, test = null, active = "stab", handsShown = true, flipped = false;
-
-  function mkHand(char, id){
-    const div = document.createElement("div");
-    div.className = "handTag"; div.id = id;
-    // add badge label
-    const b = document.createElement("span"); b.className="badge"; b.textContent = (id==="hand_stab"?"S":"T");
-    div.appendChild(b);
-    // add role class for styling
-    if (id==="hand_stab") div.classList.add("stab"); else div.classList.add("test");
-    div.textContent = char;
-    div.style.fontSize = (parseInt(handSize?.value||120,10)) + "px";
-    // default placement: near upper screen center split left/right
-    const w = innerWidth, h = innerHeight;
-    const x = id==="hand_stab" ? (w*0.38) : (w*0.62);
-    const y = h*0.35;
-    div.style.left = x + "px";
-    div.style.top  = y + "px";
-    // simple drag
-    let dx=0, dy=0, dragging=false;
-    const onDown = (e)=>{ dragging=true; dx=e.clientX-parseFloat(div.style.left); dy=e.clientY-parseFloat(div.style.top); e.preventDefault(); };
-    const onMove = (e)=>{ if(!dragging) return; div.style.left = (e.clientX-dx)+"px"; div.style.top=(e.clientY-dy)+"px"; };
-    const onUp = ()=>{ dragging=false; };
-    div.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    document.body.appendChild(div);
-    return div;
-  }
-
-  function ensureHands(){
-    if (stab && test) return;
-    // Medium skin-tone emoji hands
-    stab = mkHand("🤚🏽","hand_stab"); // Stabilize
-    test = mkHand("🤚🏽","hand_test"); // Test (back-of-hand)
-    handsPanel.style.display = "";
-    msg.textContent = "Emoji hands added — drag to place; use size/flip as needed.";
-  }
-
-  if (handsBtn){
-    handsBtn.addEventListener("click", ()=>{ ensureHands(); handsPanel.open = true; });
-  }
-  if (pickStab){
-    pickStab.addEventListener("click", ()=>{ active="stab"; msg.textContent="Active: Stabilize hand"; });
-  }
-  if (pickTest){
-    pickTest.addEventListener("click", ()=>{ active="test"; msg.textContent="Active: Test hand"; });
-  }
-  if (handSize){
-    handSize.addEventListener("input", ()=>{
-      const px = parseInt(handSize.value,10) || 120;
-      if (stab) stab.style.fontSize = px+"px";
-      if (test) test.style.fontSize = px+"px";
-    });
-  }
-  if (flipHand){
-    flipHand.addEventListener("click", ()=>{
-      flipped = !flipped;
-      const s = flipped ? "scaleX(-1)" : "scaleX(1)";
-      if (stab) stab.style.transform = s;
-      if (test) test.style.transform = s;
-    });
-  }
-  if (toggleHands){
-    toggleHands.addEventListener("click", ()=>{
-      handsShown = !handsShown;
-      if (stab) stab.style.display = handsShown ? "" : "none";
-      if (test) test.style.display = handsShown ? "" : "none";
-      msg.textContent = handsShown ? "Hands shown" : "Hands hidden";
-    });
-  }
-  if (resetHands){
-    resetHands.addEventListener("click", ()=>{
-      if (!stab || !test) return;
-      const w = innerWidth, h = innerHeight;
-      stab.style.left = (w*0.38) + "px"; stab.style.top = (h*0.35) + "px";
-      test.style.left = (w*0.62) + "px"; test.style.top = (h*0.35) + "px";
-      msg.textContent = "Hands reset to default positions";
-    });
-  }
-  if (removeHands){
-    removeHands.addEventListener("click", ()=>{
-      if (stab){ stab.remove(); stab=null; }
-      if (test){ test.remove(); test=null; }
-      msg.textContent = "Hands removed";
-      handsPanel.open = false;
-    });
-  }
-
-  window.addEventListener('error', e=>{ msg.textContent='❌ '+(e.message||'Script error'); console.error(e); });
   </script>
 </body>
 </html>
