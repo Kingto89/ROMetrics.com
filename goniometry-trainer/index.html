@@ -18,10 +18,7 @@
   html,body{margin:0;height:100%;background:#0b1220;color:#e5e7eb;overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
   canvas{position:fixed; inset:0; z-index:0; width:100%; height:100%; display:block}
 
-  .panel{
-    position:fixed; left:0; top:0; bottom:0; width:360px;
-    background:#0f172a; border-right:1px solid #1f2937; padding:14px; overflow:auto; z-index:50;
-  }
+  .panel{position:fixed; left:0; top:0; bottom:0; width:360px; background:#0f172a; border-right:1px solid #1f2937; padding:14px; overflow:auto; z-index:50;}
   h3{margin:8px 0 12px 0}
   label{display:block;font-size:13px;margin-top:10px;color:#cbd5e1}
   select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:#1e293b;border:1px solid #334155;color:#e2e8f0}
@@ -68,6 +65,15 @@
   /* Cursors */
   #instrument{cursor:move}
   #armB_handleKnob,#armB_handleShaft,#armB_knob{cursor:grab}
+
+  /* === DIAL (infinite spin controller) === */
+  .dialWrap{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .dial{width:140px;height:140px;border-radius:999px;border:2px solid #334155;background:radial-gradient(circle at 50% 50%, #0b1220 0, #0b1220 42%, #111827 43% 100%); position:relative; user-select:none; touch-action:none}
+  .dial .tick{position:absolute;left:50%;top:50%;width:2px;height:10px;background:#475569;transform-origin:50% 65px;opacity:.8}
+  .dial .marker{position:absolute;left:50%;top:50%;width:3px;height:20px;background:#22c55e;border-radius:2px;transform-origin:50% 60px}
+  .dial .dot{position:absolute;left:50%;top:50%;width:10px;height:10px;background:#22c55e;border-radius:999px;transform:translate(-50%,-70px)}
+  .dialRead{flex:1;text-align:right;font-variant-numeric:tabular-nums}
+  .hint{font-size:12px;color:#94a3b8;margin-top:-4px}
 </style>
 </head>
 <body>
@@ -98,18 +104,9 @@
   </div>
 
   <div class="row">
-    <button class="pill orange" id="pickFulcrum">
-      <div class="top"><span class="dot orange"></span><span>1</span></div>
-      <div class="label">Fulcrum</div>
-    </button>
-    <button class="pill red" id="pickStationary">
-      <div class="top"><span class="dot red"></span><span>2</span></div>
-      <div class="label">Stationary</div>
-    </button>
-    <button class="pill green" id="pickMoving">
-      <div class="top"><span class="dot green"></span><span>3</span></div>
-      <div class="label">Moving</div>
-    </button>
+    <button class="pill orange" id="pickFulcrum"><div class="top"><span class="dot orange"></span><span>1</span></div><div class="label">Fulcrum</div></button>
+    <button class="pill red" id="pickStationary"><div class="top"><span class="dot red"></span><span>2</span></div><div class="label">Stationary</div></button>
+    <button class="pill green" id="pickMoving"><div class="top"><span class="dot green"></span><span>3</span></div><div class="label">Moving</div></button>
   </div>
 
   <label>Range of Motion</label>
@@ -128,14 +125,25 @@
   <details id="controllers">
     <summary>🎛️ Controllers</summary>
     <div class="group">
-      <details id="ctrlGonio">
+      <details id="ctrlGonio" open>
         <summary>🧭 Goniometer</summary>
         <label>Gonio Size (10–200%)</label>
         <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-        <label>Rotate Moving Arm (°) — relative 0–360</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="rotateMove">
+
+        <!-- DIAL: infinite-spin control for moving arm -->
+        <label>Moving Arm — Infinite Spin Dial</label>
+        <div class="dialWrap">
+          <div id="dial" class="dial" aria-label="Moving arm dial"></div>
+          <div class="dialRead">
+            <div>Relative: <strong id="dialRel">0°</strong></div>
+            <div>Total turns: <strong id="dialTurns">0</strong></div>
+            <div class="hint">Drag to rotate • Double-click to re-zero</div>
+          </div>
+        </div>
+
         <label>Rotate Goniometer (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="rotateGonio">
+
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
         <label>Gonio Y (px)</label>
@@ -144,19 +152,12 @@
 
       <details id="ctrlModel">
         <summary>🧍 Model</summary>
-        <label>Model X (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0" id="modelX">
-        <label>Model Z (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0.6" id="modelZ">
-        <label>Model Y (m) — up/down</label>
-        <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="modelY">
-        <label>Model Scale (%)</label>
-        <input type="range" min="60" max="160" step="1" value="100" id="modelScale">
-        <label>Model Yaw (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="modelYaw">
-        <div class="row" style="margin-top:6px">
-          <button id="resetPose">Reset Pose</button>
-        </div>
+        <label>Model X (m)</label><input type="range" min="-2" max="2" step="0.01" value="0" id="modelX">
+        <label>Model Z (m)</label><input type="range" min="-2" max="2" step="0.01" value="0.6" id="modelZ">
+        <label>Model Y (m) — up/down</label><input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="modelY">
+        <label>Model Scale (%)</label><input type="range" min="60" max="160" step="1" value="100" id="modelScale">
+        <label>Model Yaw (°)</label><input type="range" min="0" max="360" step="1" value="0" id="modelYaw">
+        <div class="row" style="margin-top:6px"><button id="resetPose">Reset Pose</button></div>
       </details>
     </div>
   </details>
@@ -165,7 +166,7 @@
   <pre id="log"></pre>
 </div>
 
-<!-- SVG overlay: screen-space dots + lines -->
+<!-- SVG overlay -->
 <div id="gonioHost" class="hide" aria-hidden="true">
   <svg id="gonioSvg" aria-label="Universal goniometer">
     <g id="screenDots">
@@ -234,30 +235,30 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ===================== CONFIG / UI HOOKS ===================== */
+/* ===================== UI refs ===================== */
 const msg = document.getElementById("msg");
 const hud = document.getElementById("hud");
 const logEl = document.getElementById("log");
 const toast = document.getElementById("toast");
+const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+const regionSel = document.getElementById("regionSel");
+const motionSel = document.getElementById("motionSel");
+const showNoteBtn = document.getElementById("showNote");
+const note = document.getElementById("note");
+const noteTitle = document.getElementById("noteTitle");
+const noteBody = document.getElementById("noteBody");
 
 const lock3DBtn = document.getElementById("lock3D");
 const lockGonioBtn = document.getElementById("lockGonio");
 
 const sizeEl = document.getElementById("gonioSize");
-const rotateMoveEl = document.getElementById("rotateMove");
 const rotateGonioEl = document.getElementById("rotateGonio");
 const gonioXEl = document.getElementById("gonioX");
 const gonioYEl = document.getElementById("gonioY");
 
-const regionSel = document.getElementById("regionSel");
-const motionSel = document.getElementById("motionSel");
-const note = document.getElementById("note");
-const noteTitle = document.getElementById("noteTitle");
-const noteBody = document.getElementById("noteBody");
-document.getElementById("noteClose").onclick = ()=> note.classList.add("hide");
-
-const resetROMBtn = document.getElementById("resetROM");
 const startROMBtn = document.getElementById("startROM");
+const resetROMBtn = document.getElementById("resetROM");
 const resetMeasurementBtn = document.getElementById("resetMeasurement");
 
 const modelX = document.getElementById("modelX");
@@ -267,9 +268,7 @@ const modelScale = document.getElementById("modelScale");
 const modelYaw = document.getElementById("modelYaw");
 const resetPose = document.getElementById("resetPose");
 
-const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
-
-/* Motions */
+/* ===================== Motions ===================== */
 const REGION_MOTIONS = {
   cervical_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
   thoracic_lumbar_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
@@ -294,7 +293,7 @@ function refreshMotions(){
 refreshMotions();
 regionSel.onchange = refreshMotions;
 
-/* ===================== THREE SETUP ===================== */
+/* ===================== THREE setup ===================== */
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(devicePixelRatio);
@@ -321,30 +320,22 @@ controls.minDistance = 0.8;
 controls.maxDistance = 6;
 controls.target.set(0, 1.1, 0);
 
-/* Lights + shadow */
+/* Lights + ground */
 scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
 const key = new THREE.DirectionalLight(0xffffff, 1.2);
 key.position.set(2.5, 4, 2.5);
 key.castShadow = true;
 key.shadow.mapSize.set(2048,2048);
-key.shadow.camera.near = 0.1;
-key.shadow.camera.far = 15;
-key.shadow.camera.left = -4;
-key.shadow.camera.right = 4;
-key.shadow.camera.top = 4;
-key.shadow.camera.bottom = -4;
+key.shadow.camera.near = 0.1; key.shadow.camera.far = 15;
+key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
 scene.add(key);
 
-/* Ground plane */
 const groundGeo = new THREE.PlaneGeometry(20, 20);
 const groundMat = new THREE.ShadowMaterial({ opacity: 0.45 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI/2;
-ground.position.y = 0;
-ground.receiveShadow = true;
-scene.add(ground);
+ground.rotation.x = -Math.PI/2; ground.position.y = 0; ground.receiveShadow = true; scene.add(ground);
 
-/* ========== Model loader (+ ground-snap) ========== */
+/* Model */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
 const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
@@ -359,9 +350,9 @@ function addFallbackMannequin(){
   const mat = new THREE.MeshStandardMaterial({color:0xa0a4ae, metalness:0.1, roughness:0.8});
   const mk = (geo,y,s=1)=>{ const m=new THREE.Mesh(geo,mat); m.position.y=y; m.scale.setScalar(s); m.castShadow=true; g.add(m); };
   mk(new THREE.CapsuleGeometry(0.22,0.8,8,16), 1.1);
-  mk(new THREE.SphereGeometry(0.16,16,16),        1.8);
+  mk(new THREE.SphereGeometry(0.16,16,16), 1.8);
   mk(new THREE.CylinderGeometry(0.1,0.12,0.3,12), 1.45);
-  mk(new THREE.CylinderGeometry(0.11,0.11,0.8,12),0.55);
+  mk(new THREE.CylinderGeometry(0.11,0.11,0.8,12), 0.55);
   g.traverse(o=>{ if(o.isMesh){ o.castShadow = true; }});
   scene.add(g); model = g; msg.textContent = "⚠️ GLB missing/blocked — fallback mannequin shown";
   groundSnap();
@@ -369,26 +360,19 @@ function addFallbackMannequin(){
 function groundSnap(){
   if(!model) return;
   const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  model.position.y -= minY; // feet at y=0
+  model.position.y -= box.min.y; // snap feet to ground
 }
-
 async function loadModel() {
   try {
     const head = await fetch(MODEL_URL, { method: "HEAD", cache: "no-store" });
     if (!head.ok) { msg.textContent = `⚠️ ${MODEL_URL} (HTTP ${head.status}) — using fallback`; addFallbackMannequin(); return; }
   } catch { msg.textContent = `⚠️ Network error — using fallback`; addFallbackMannequin(); return; }
-
   loader.load(MODEL_URL, (gltf) => {
     model = gltf.scene;
     model.traverse(o=>{ if(o.isMesh){ o.castShadow = true; }});
     scene.add(model);
-
     groundSnap();
-    model.position.x = 0;
-    model.position.z = 0.6;
-    model.scale.setScalar(1.0);
-
+    model.position.x = 0; model.position.z = 0.6; model.scale.setScalar(1.0);
     controls.target.set(0,1.1,0);
     msg.textContent = "✅ Model loaded";
   }, (xhr) => {
@@ -398,7 +382,7 @@ async function loadModel() {
 }
 loadModel();
 
-/* ===================== SCREEN-SPACE DOTS (no 3D raycast) ===================== */
+/* ===================== Screen dots ===================== */
 const scr = { fulcrum:null, stationary:null, moving:null };
 const svg = document.getElementById('gonioSvg');
 const scrFulcrum = document.getElementById('scrFulcrum');
@@ -408,23 +392,13 @@ const scrLineA = document.getElementById('scrLineA');
 const scrLineB = document.getElementById('scrLineB');
 
 let target = null;
-function setDotEl(el, p){
-  if(!p){ el.style.display='none'; return; }
-  el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); el.style.display='block';
-}
+function setDotEl(el, p){ if(!p){ el.style.display='none'; return; } el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); el.style.display='block'; }
 function setLineEl(el, a, b, onColor){
-  if(a && b){
-    el.setAttribute('x1', a.x); el.setAttribute('y1', a.y);
-    el.setAttribute('x2', b.x); el.setAttribute('y2', b.y);
-    el.style.display='block';
-    if(onColor) el.setAttribute('stroke', onColor);
-  } else el.style.display='none';
+  if(a && b){ el.setAttribute('x1', a.x); el.setAttribute('y1', a.y); el.setAttribute('x2', b.x); el.setAttribute('y2', b.y); el.style.display='block'; if(onColor) el.setAttribute('stroke', onColor); }
+  else el.style.display='none';
 }
-
 function refreshScreenDots(){
-  setDotEl(scrFulcrum,   scr.fulcrum);
-  setDotEl(scrStationary,scr.stationary);
-  setDotEl(scrMoving,    scr.moving);
+  setDotEl(scrFulcrum, scr.fulcrum); setDotEl(scrStationary, scr.stationary); setDotEl(scrMoving, scr.moving);
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
 
@@ -444,7 +418,6 @@ function refreshScreenDots(){
 
     if (firstReveal) {
       Gonio.setZoom(1);
-      // make initial visual smaller so it never spawns huge
       const targetFrac = 0.18;
       const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
       const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
@@ -455,7 +428,7 @@ function refreshScreenDots(){
     Gonio.show();
     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
     Gonio.zeroHere();
-    rotateMoveEl.value = 0;
+    dialZero();                        // DIAL: sync zero with current pose
     rotateGonioEl.value = Math.round(Gonio.getUserRot());
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
@@ -464,42 +437,28 @@ function refreshScreenDots(){
     document.getElementById('instrument').style.display = 'none';
   }
 }
-
 function pickOnScreen(e){
   if(!target) return;
   const leftPanel = document.querySelector('.panel');
   if(leftPanel && leftPanel.contains(e.target)) return;
-
   const r = renderer.domElement.getBoundingClientRect();
   const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
   const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
-
   scr[target] = { x, y };
-
-  const host = document.getElementById('gonioHost');
-  host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
-  log(`${target} pinned @ ${x|0},${y|0}`);
-  target = null;
-  refreshScreenDots();
+  document.getElementById('gonioHost').classList.remove('hide');
+  target = null; refreshScreenDots();
 }
 renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
 svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
 
-/* HUD + ROM */
-function setAngleHUD(angle, romStr=""){
-  hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
-}
+/* ===================== HUD + ROM ===================== */
+function setAngleHUD(angle, romStr=""){ hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`; }
 let romActive = false;
-startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
-resetROMBtn.onclick  = ()=>{ romActive = false; log(`ROM reset`); };
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
+startROMBtn.onclick = ()=>{ Gonio.zeroHere(); dialZero(); romActive = true; log(`ROM start @ 0°`); };
+resetROMBtn.onclick = ()=>{ romActive = false; log(`ROM reset`); };
 
-/* Pills */
-document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum");   };
-document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
-document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving");    };
-
-/* Locks */
+/* ===================== Locks ===================== */
 let lock3D=false, lockGonio=false;
 function set3DLock(v){ lock3D=v; controls.enabled=!lock3D; lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked"); lock3DBtn.classList.toggle('lockOn', lock3D); }
 function setGonioLock(v){
@@ -512,7 +471,7 @@ set3DLock(false); setGonioLock(false);
 lock3DBtn.onclick = ()=> set3DLock(!lock3D);
 lockGonioBtn.onclick = ()=> setGonioLock(!lockGonio);
 
-/* Controllers */
+/* ===================== Controllers open behavior ===================== */
 const ctrlGonio = document.getElementById("ctrlGonio");
 const ctrlModel = document.getElementById("ctrlModel");
 [ctrlGonio, ctrlModel].forEach(d=>{
@@ -524,13 +483,7 @@ const ctrlModel = document.getElementById("ctrlModel");
 });
 document.getElementById("controllers").open = false;
 
-/* Sliders */
-sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gonio.refresh(); };
-rotateMoveEl.oninput = ()=>{ if (lockGonio) return; Gonio.setMovDegRel(parseFloat(rotateMoveEl.value)); setAngleHUD(Gonio.angle, romString()); };
-rotateGonioEl.oninput= ()=>{ if (lockGonio) return; Gonio.setUserRot(parseFloat(rotateGonioEl.value)); setAngleHUD(Gonio.angle, romString()); };
-gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
-gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
-
+/* ===================== Model transforms ===================== */
 function applyModelTransform(){
   if(!model) return;
   model.position.x = parseFloat(modelX.value);
@@ -547,32 +500,28 @@ resetPose.onclick = ()=>{
   applyModelTransform(); controls.target.set(0,1.1,0);
 };
 
-/* Reset Measurement */
+/* ===================== Reset Measurement ===================== */
 resetMeasurementBtn.onclick = ()=>{
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
   Gonio.hide(); romActive = false;
-  rotateMoveEl.value = 0; rotateGonioEl.value = 0;
+  rotateGonioEl.value = 0; dialZero();
   setAngleHUD(0,"");
   log("Measurement reset");
 };
 
-/* Render loop */
-addEventListener("resize", () => {
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
-});
+/* ===================== Render loop ===================== */
+addEventListener("resize", () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 const clock = new THREE.Clock();
 (function animate(){
   clock.getDelta();
   controls.update();
-  if (!document.getElementById('gonioHost').classList.contains('hide')) {
-    setAngleHUD(Gonio.angle, romString());
-  }
+  if (!document.getElementById('gonioHost').classList.contains('hide')) setAngleHUD(Gonio.angle, romString());
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 })();
 
-/* ===================== GONIOMETER MODULE ===================== */
+/* ===================== GONIO MODULE ===================== */
 const Gonio = (() => {
   const host  = document.getElementById('gonioHost');
   const svg   = document.getElementById('gonioSvg');
@@ -591,15 +540,23 @@ const Gonio = (() => {
   (function build(){
     const ticks = document.getElementById('ticks');
     const numsOut = document.getElementById('numsOut');
-    const numsIn = document.getElementById('numsIn');
+    const numsIn  = document.getElementById('numsIn');
     const R=120, Rin=86;
     const line=(p,x1,y1,x2,y2,cls)=>{ const n=document.createElementNS('http://www.w3.org/2000/svg','line'); n.setAttribute('x1',x1);n.setAttribute('y1',y1);n.setAttribute('x2',x2);n.setAttribute('y2',y2); if(cls)n.setAttribute('class',cls); p.appendChild(n); };
     const text=(p,x,y,t,cls,rot)=>{ const n=document.createElementNS('http://www.w3.org/2000/svg','text'); n.setAttribute('x',x); n.setAttribute('y',y); n.setAttribute('class',cls||'labelOuter'); if(rot)n.setAttribute('transform',`rotate(${rot} ${x} ${y})`); n.textContent=t; p.appendChild(n); return n; };
     for(let d=0; d<360; d+=5){ const a=(d-90)*Math.PI/180, big=d%30===0, len=big?12:6; line(ticks,Math.cos(a)*(R-len),Math.sin(a)*(R-len),Math.cos(a)*R,Math.sin(a)*R,big?'tick tickBig':'tick'); }
     const rWhite=R-8;
-    for(let d=0; d<360; d+=10){ const diff90=Math.abs(((d-90)%360+540)%360-180); const diff270=Math.abs(((d-270)%360+540)%360-180); const val=Math.min(diff90,diff270); if(val%20===0 && val<=80){ const a=(d-90)*Math.PI/180,x=Math.cos(a)*rWhite,y=Math.sin(a)*rWhite; text(numsOut,x,y,String(val),'labelOuter'); } }
+    for(let d=0; d<360; d+=10){
+      const diff90=Math.abs(((d-90)%360+540)%360-180);
+      const diff270=Math.abs(((d-270)%360+540)%360-180);
+      const val=Math.min(diff90,diff270);
+      if(val%20===0 && val<=80){ const a=(d-90)*Math.PI/180,x=Math.cos(a)*rWhite,y=Math.sin(a)*rWhite; text(numsOut,x,y,String(val),'labelOuter'); }
+    }
     const rInner=Rin+9, valFromTheta=th=>{const t=(th+180)%360; return t<=180?t:360-t;};
-    for(let th=0; th<360; th+=10){ const v=valFromTheta(th); if(v%10!==0) continue; if(v===0 && th!==180) continue; const a=(th-90)*Math.PI/180,x=Math.cos(a)*rInner,y=Math.sin(a)*rInner; text(numsIn,x,y,String(v),'labelInner'); }
+    for(let th=0; th<360; th+=10){
+      const v=valFromTheta(th); if(v%10!==0) continue; if(v===0 && th!==180) continue;
+      const a=(th-90)*Math.PI/180,x=Math.cos(a)*rInner,y=Math.sin(a)*rInner; text(numsIn,x,y,String(v),'labelInner');
+    }
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
     buildTipRuler(armB_ruler, -380, -1, 'B');
@@ -630,14 +587,12 @@ const Gonio = (() => {
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
   let baseRot=0, userRot=0, scale=1;
   let zeroRef=0;
-  let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
   function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
   function applyLabelFix(){ const t=-(baseRot+userRot); labelsFixed.setAttribute('transform',`rotate(${t})`); numsInWrap.setAttribute('transform',`rotate(${-t})`); }
   function updateRulerUpright(){
-    const labels = document.querySelectorAll('.ruLbl');
-    labels.forEach(t=>{
+    document.querySelectorAll('.ruLbl').forEach(t=>{
       const which=t.dataset.arm;
       const base = (which==='A'? 0 : mov) + baseRot + userRot;
       const x=+t.dataset.x, y=+t.dataset.y;
@@ -645,17 +600,13 @@ const Gonio = (() => {
     });
   }
 
-  /* --- KEY FIX: allow full up/down pan (very loose clamp) --- */
   function clampPanToViewport(){
-    const bound   = 80 * zoom * scale; // smaller radius budget
-    const margin  = 6;                 // tiny gutter
-    const minX = margin + bound, maxX = innerWidth  - margin - bound;
-    const minY = margin + bound, maxY = innerHeight - margin - bound;
-    if (minX <= maxX) panX = Math.min(maxX, Math.max(minX, panX)); else panX = innerWidth/2;
-    if (minY <= maxY) panY = Math.min(maxY, Math.max(minY, panY)); else panY = innerHeight/2;
+    const bound=80*zoom*scale, margin=6;
+    const minX=margin+bound, maxX=innerWidth-margin-bound;
+    const minY=margin+bound, maxY=innerHeight-margin-bound;
+    if(minX<=maxX) panX=Math.min(maxX,Math.max(minX,panX)); else panX=innerWidth/2;
+    if(minY<=maxY) panY=Math.min(maxY,Math.max(minY,panY)); else panY=innerHeight/2;
   }
-  function clampNow(){ clampPanToViewport(); applyView(); }
-
   function render(){
     document.getElementById('armA_grp').setAttribute('transform','rotate(0)');
     document.getElementById('armB_grp').setAttribute('transform',`rotate(${mov})`);
@@ -663,59 +614,21 @@ const Gonio = (() => {
   }
   clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
 
-  /* Pan by dragging anywhere on the instrument (except moving-arm handles) */
-  const instrument = document.getElementById('instrument');
-  instrument.addEventListener('pointerdown', e=>{
-    if (lockGonio) return;
-    // ignore if grabbing the green arm handle/shaft/knob
-    if (e.target.closest('#armB_handleKnob') || e.target.closest('#armB_handleShaft') || e.target.closest('#armB_knob')) return;
-    e.preventDefault(); draggingPan = true;
-    lastPanScreen = { x: e.clientX, y: e.clientY };
-    instrument.setPointerCapture?.(e.pointerId);
-  });
-  instrument.addEventListener('pointermove', e=>{
-    if (lockGonio) return;
-    if (!draggingPan || !lastPanScreen) return;
-    e.preventDefault();
-    const dx = (e.clientX - lastPanScreen.x) / (zoom * scale);
-    const dy = (e.clientY - lastPanScreen.y) / (zoom * scale);
-    panX += dx; panY += dy;
-    lastPanScreen = { x: e.clientX, y: e.clientY };
-    clampPanToViewport(); applyView();
-  });
-  instrument.addEventListener('pointerup',   ()=>{ draggingPan=false; lastPanScreen=null; });
-  instrument.addEventListener('pointercancel',()=>{ draggingPan=false; lastPanScreen=null; });
-
-  /* Wheel zoom */
-  svg.addEventListener('wheel', e=>{
-    if (lockGonio) return;
-    e.preventDefault();
-    const step = Math.sign(e.deltaY) < 0 ? 1.22 : 1/1.22;
-    zoom = clamp(zoom * step, 0.07, 10);
-    clampPanToViewport(); applyView();
-  }, {passive:false});
-
-  /* Drag moving arm (visual), full 360 */
-  function startArmDrag(e){
-    if (lockGonio) return;
-    e.stopPropagation(); e.preventDefault();
-    document.getElementById('armB_grp').setPointerCapture?.(e.pointerId);
-    draggingArm = true;
-  }
+  /* Drag the moving arm on the gonio */
+  const svgEl = document.getElementById('gonioSvg');
+  let draggingArm=false;
+  function startArmDrag(e){ e.stopPropagation(); e.preventDefault(); document.getElementById('armB_grp').setPointerCapture?.(e.pointerId); draggingArm=true; }
   function moveArm(e){
-    if (lockGonio) return;
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
-    const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const pt = svgEl.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p = pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    mov = toDegUp(p.x, p.y); // 0..360
+    mov = (Math.atan2(-p.y, p.x)*180/Math.PI + 90 + 360) % 360;
     render();
   }
   function endArm(){ draggingArm=false; }
-
   ['armB_handleKnob','armB_handleShaft','armB_grp','armB_knob'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
+    const el=document.getElementById(id); if(!el) return;
     el.addEventListener('pointerdown', startArmDrag);
     el.addEventListener('pointermove', moveArm);
     el.addEventListener('pointerup', endArm);
@@ -724,92 +637,117 @@ const Gonio = (() => {
 
   function show(){ host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); clampPanToViewport(); applyView(); }
   function hide(){ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); }
+  function setPose(cx,cy,baseDeg,movDeg){ panX=cx; panY=cy; baseRot=baseDeg; mov=(movDeg-baseDeg+360)%360; clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render(); }
 
-  // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
-  function setPose(cx,cy,baseDeg,movDeg){
-    panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
-    clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
-  }
+  function setScale(k){ scale=Math.min(2,Math.max(0.1,k||1)); clampPanToViewport(); applyView(); }
+  function setZoom(k){  zoom =Math.min(10,Math.max(0.07,k||1)); clampPanToViewport(); applyView(); }
+  function degFromScreenVec(dx,dy){ return (Math.atan2(-dy,dx)*180/Math.PI + 90 + 360)%360; }
 
-  function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
-  function setZoom(k){  zoom =clamp(k||1,0.07,10); clampPanToViewport(); applyView(); }
-  function degFromScreenVec(dx,dy){ return toDegUp(dx,dy); }
+  function zeroHere(){ zeroRef = (mov+360)%360; }                         // set current moving arm as 0
+  function setMovDegRel(deg){ mov = (zeroRef + deg)%360; if(mov<0) mov += 360; render(); }
+  function setMovDegAbs(deg){ mov = (deg+360)%360; render(); }
+  function setUserRot(deg){ userRot = (deg+360)%360; applyRot(); applyLabelFix(); render(); }
+  function getUserRot(){ return (userRot+360)%360; }
+  function getMovDegAbs(){ return (mov+360)%360; }
 
-  // Relative-zero API
-  function zeroHere(){ zeroRef = clamp360(mov); }
-  function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
-  function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
-  function setUserRot(deg){ userRot = clamp360(deg); applyRot(); applyLabelFix(); render(); }
-  function getUserRot(){ return clamp360(userRot); }
-  function getMovDegAbs(){ return clamp360(mov); }
-
-  // pan getters/setters for sliders
-  function setPan(x,y){ panX = x; panY = y; clampPanToViewport(); applyView(); }
+  function setPan(x,y){ panX=x; panY=y; clampPanToViewport(); applyView(); }
   function getPan(){ return { x: panX, y: panY }; }
 
-  // Angle is shortest arc from zeroRef to mov (<=180°)
-  function currentAngle(){ return shortest(mov, zeroRef); }
+  function currentAngle(){ let d=(mov-zeroRef+360)%360; return d>180? 360-d: d; }
 
-  return {
-    show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
+  return { show, hide, setPose, setScale, setZoom, degFromScreenVec,
     zeroHere, setMovDegRel, setMovDegAbs, setUserRot, getUserRot, getMovDegAbs,
-    setPan, getPan,
-    get angle(){ return currentAngle(); },
-    refresh: ()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
-  };
+    setPan, getPan, get angle(){ return currentAngle(); }, refresh: ()=>{ applyView(); applyRot(); applyLabelFix(); render(); } };
 })();
 window.Gonio = Gonio;
 
-/* ===================== NOTES LOADER (Markdown) ===================== */
+/* ===================== DIAL (infinite spin) ===================== */
+const dial = document.getElementById('dial');
+const dialRel = document.getElementById('dialRel');
+const dialTurns = document.getElementById('dialTurns');
+let dialDragging=false, dialLastAngle=null, dialCum=0;   // cumulative degrees (can grow ±infinite)
+function dialRender(markerAngle=0){
+  dialRel.textContent = `${Math.round(dialCum % 360)}°`;
+  dialTurns.textContent = (dialCum/360|0);
+  dial.querySelectorAll('.marker,.dot,.tick').forEach(el=>el.remove());
+  // ticks
+  for(let i=0;i<36;i++){
+    const t=document.createElement('div'); t.className='tick';
+    t.style.transform=`translate(-50%,-50%) rotate(${i*10}deg)`;
+    dial.appendChild(t);
+  }
+  // marker arm + dot
+  const m=document.createElement('div'); m.className='marker';
+  m.style.transform=`translate(-50%,-50%) rotate(${markerAngle}deg)`; dial.appendChild(m);
+  const d=document.createElement('div'); d.className='dot'; dial.appendChild(d);
+}
+function dialAngleFromEvent(e){
+  const rect = dial.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  // 0° at up, clockwise positive
+  return (Math.atan2(dx, -dy)*180/Math.PI + 360) % 360;
+}
+function dialZero(){ dialCum = 0; dialLastAngle = null; dialRender(0); Gonio.zeroHere(); setAngleHUD(Gonio.angle, romString()); }
+dialZero();
+
+dial.addEventListener('pointerdown', e=>{
+  e.preventDefault(); dialDragging=true; dial.setPointerCapture?.(e.pointerId);
+  dialLastAngle = dialAngleFromEvent(e);
+});
+dial.addEventListener('pointermove', e=>{
+  if(!dialDragging) return;
+  e.preventDefault();
+  const a = dialAngleFromEvent(e);
+  if(dialLastAngle==null) dialLastAngle=a;
+  let delta = a - dialLastAngle;
+  // unwrap across 0/360 to get smooth infinite turns
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  dialCum += delta;
+  dialLastAngle = a;
+  dialRender(a);
+  Gonio.setMovDegRel(dialCum);                     // drive moving arm by cumulative degrees
+  setAngleHUD(Gonio.angle, romString());
+});
+dial.addEventListener('pointerup',   ()=>{ dialDragging=false; dialLastAngle=null; });
+dial.addEventListener('pointercancel',()=>{ dialDragging=false; dialLastAngle=null; });
+dial.addEventListener('dblclick', ()=>{ dialZero(); log('Dial re-zeroed'); });
+// Keyboard nudge (left/right)
+dial.tabIndex = 0;
+dial.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowLeft'){ dialCum -= 1; dialRender((dialLastAngle??0)-1); Gonio.setMovDegRel(dialCum); }
+  if(e.key==='ArrowRight'){ dialCum += 1; dialRender((dialLastAngle??0)+1); Gonio.setMovDegRel(dialCum); }
+  setAngleHUD(Gonio.angle, romString());
+});
+
+/* ===================== Other controller hooks ===================== */
+sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gonio.refresh(); };
+rotateGonioEl.oninput= ()=> { Gonio.setUserRot(parseFloat(rotateGonioEl.value)); setAngleHUD(Gonio.angle, romString()); };
+gonioXEl.oninput     = ()=> { const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
+gonioYEl.oninput     = ()=> { const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
+
+/* ===================== Notes loader ===================== */
 function mdToHtml(md){
-  let html = md
-    .replace(/^### (.*)$/gm, '<h5>$1</h5>')
-    .replace(/^## (.*)$/gm, '<h4>$1</h4>')
-    .replace(/^# (.*)$/gm, '<h3>$1</h3>')
-    .replace(/^\* (.*)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  let html = md.replace(/^### (.*)$/gm,'<h5>$1</h5>').replace(/^## (.*)$/gm,'<h4>$1</h4>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^\* (.*)$/gm,'<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
   return html;
 }
 async function loadNote(region, motion){
   const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
   try{
-    const res = await fetch(url);
-    if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+    const res = await fetch(url); if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const md = await res.text();
     const re = new RegExp(`(^|\\n)##?\\s*${motion}\\s*\\n([\\s\\S]*?)(\\n##?\\s|$)`,'i');
-    const m = md.match(re);
-    const section = m ? m[2].trim() : md;
-    noteTitle.textContent = `${regionToTitle(region)} — ${motion}`;
+    const m = md.match(re); const section = m ? m[2].trim() : md;
+    noteTitle.textContent = region.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) + " — " + motion;
     noteBody.innerHTML = mdToHtml(section || "—");
-  }catch(e){
-    console.error(e);
-    noteTitle.textContent = `${regionToTitle(region)} — ${motion}`;
-    noteBody.textContent = "Failed to load note.";
-  }
+  }catch(e){ noteTitle.textContent = region + " — " + motion; noteBody.textContent = "Failed to load note."; }
 }
-function regionToTitle(r){
-  return ({
-    cervical_spine:"Cervical Spine",
-    thoracic_lumbar_spine:"Thoracic & Lumbar Spine",
-    glenohumeral_joint:"Glenohumeral Joint",
-    elbow_radioulnar:"Elbow & Radioulnar Joints",
-    wrist:"Wrist", hip:"Hip", knee:"Knee",
-    talocrural_ankle:"Talocrural (Ankle)",
-    transverse_tarsal_subtalar:"Transverse Tarsal & Subtalar",
-    fingers_mcp_pip_dip:"Fingers (MCP, PIP, DIP)",
-    thumb_cmc_mcp_ip:"Thumb (CMC, MCP, IP)",
-    toes_mtp_pip_dip:"Toes (MTP, PIP, DIP)"
-  }[r]||r.replace(/_/g,' '));
-}
-document.getElementById("showNote").onclick = async ()=>{
-  const region = regionSel.value;
-  const motion = motionSel.value || "(General)";
-  await loadNote(region, motion);
-  note.classList.remove("hide");
-};
+showNoteBtn.onclick = async ()=>{ const region = regionSel.value; const motion = motionSel.value || "(General)"; await loadNote(region, motion); note.classList.remove("hide"); };
 
-/* Errors */
 window.addEventListener('error', e => { msg.textContent = '❌ ' + (e.message || 'Script error'); console.error(e); });
 </script>
 </body>
