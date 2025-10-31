@@ -481,6 +481,8 @@ function pickOnScreen(e){
 
   const p = { x, y };
   scr[target] = p;
+  // ensure overlay shows immediately after each placement
+  (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
   log(`${target} pinned @ ${x|0},${y|0}`);
   target = null;
   refreshScreenDots();
@@ -812,4 +814,3 @@ window.addEventListener('error', e => { msg.textContent = '❌ ' + (e.message ||
 </script>
 </body>
 </html>
-
