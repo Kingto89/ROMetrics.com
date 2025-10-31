@@ -494,6 +494,9 @@ function pickOnScreen(e){
 
 renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
 
+/* NEW: allow dot placement while overlay is visible */
+svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
+
 /* HUD + ROM */
 function setAngleHUD(angle, romStr=""){
   hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
@@ -581,7 +584,7 @@ const clock = new THREE.Clock();
   requestAnimationFrame(animate);
 })();
 
-/* ===================== GONIOMETER MODULE (unchanged) ===================== */
+/* ===================== GONIOMETER MODULE (unchanged except pan guard) ===================== */
 const Gonio = (() => {
   const host  = document.getElementById('gonioHost');
   const svg   = document.getElementById('gonioSvg');
@@ -674,6 +677,7 @@ const Gonio = (() => {
   // Pan
   svg.addEventListener('pointerdown', e=>{
     if (lockGonio) return;
+    if (typeof target !== 'undefined' && target) return; // NEW: skip panning while placing a dot
     if (e.target.closest('#armB_grp')) return;
     e.preventDefault(); draggingPan = true;
     lastPanScreen = { x: e.clientX, y: e.clientY };
