@@ -62,12 +62,36 @@
   .labelOuter{fill:#e5e7eb;font-size:11px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
   .labelInner{fill:#fca5a5;font-size:8.2px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
   .rulerTick{stroke:#94a3b8}
-  .ruLbl{fill:#cbd5e1;font-size:9.5px;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
+  .ruLbl{fill:#cbd5e1;font-size:9.5px;dominant-baseline:middle;paint-order:stroke;stroke-width:3px;stroke:#0b1220}
   .scrLine{stroke-width:2.2; stroke-linecap:round}
 
   /* Cursors */
   #instrument{cursor:move}
   #armB_handleKnob,#armB_handleShaft,#armB_knob{cursor:grab}
+
+  /* === 360° dial controller (added) === */
+  .dial {
+    width: 140px; height: 140px; margin: 8px auto 4px;
+    border-radius: 999px; border: 2px solid #334155;
+    background: radial-gradient(circle at 50% 50%, #0b1220 0 58%, #0f172a 60% 100%);
+    position: relative; user-select: none; touch-action: none;
+  }
+  .dial .marker {
+    position: absolute; left: 50%; top: 50%;
+    width: 4px; height: 46%;
+    background: #22c55e; border-radius: 4px;
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%) rotate(0deg);
+    box-shadow: 0 0 0 1px #0b1220;
+  }
+  .dial .centerDot {
+    position: absolute; left: 50%; top: 50%;
+    width: 10px; height: 10px; border-radius: 999px;
+    background: #94a3b8; transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 2px #0b1220;
+  }
+  /* keep original slider but hide it (sync + keyboard fallback) */
+  #rotateMove { display:none; }
 </style>
 </head>
 <body>
@@ -132,8 +156,15 @@
         <summary>🧭 Goniometer</summary>
         <label>Gonio Size (10–200%)</label>
         <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-        <label>Rotate Moving Arm (°) — relative 0–360</label>
+
+        <!-- replaced: dial + hidden slider (synced) -->
+        <label>Rotate Moving Arm — 360° Dial</label>
+        <div id="dialMove" class="dial" role="slider" aria-valuemin="0" aria-valuemax="360" aria-valuenow="0" tabindex="0">
+          <div id="dialMoveMarker" class="marker"></div>
+          <div class="centerDot"></div>
+        </div>
         <input type="range" min="0" max="360" step="1" value="0" id="rotateMove">
+
         <label>Rotate Goniometer (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="rotateGonio">
         <label>Gonio X (px)</label>
@@ -490,7 +521,7 @@ function setAngleHUD(angle, romStr=""){
   hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
 }
 let romActive = false;
-startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
+startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateMoveEl.value = 0; setDial(0); romActive = true; log(`ROM start @ 0°`); };
 resetROMBtn.onclick  = ()=>{ romActive = false; log(`ROM reset`); };
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
 
@@ -526,7 +557,13 @@ document.getElementById("controllers").open = false;
 
 /* Sliders */
 sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gonio.refresh(); };
-rotateMoveEl.oninput = ()=>{ if (lockGonio) return; Gonio.setMovDegRel(parseFloat(rotateMoveEl.value)); setAngleHUD(Gonio.angle, romString()); };
+rotateMoveEl.oninput = ()=> {
+  if (lockGonio) return;
+  const deg = parseFloat(rotateMoveEl.value) || 0;
+  Gonio.setMovDegRel(deg);
+  setDial(deg);
+  setAngleHUD(Gonio.angle, romString());
+};
 rotateGonioEl.oninput= ()=>{ if (lockGonio) return; Gonio.setUserRot(parseFloat(rotateGonioEl.value)); setAngleHUD(Gonio.angle, romString()); };
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
@@ -552,7 +589,7 @@ resetMeasurementBtn.onclick = ()=>{
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
   Gonio.hide(); romActive = false;
-  rotateMoveEl.value = 0; rotateGonioEl.value = 0;
+  rotateMoveEl.value = 0; rotateGonioEl.value = 0; setDial(0);
   setAngleHUD(0,"");
   log("Measurement reset");
 };
@@ -760,6 +797,63 @@ const Gonio = (() => {
 })();
 window.Gonio = Gonio;
 
+/* ===================== 360° DIAL CONTROLLER (added) ===================== */
+const dialMove = document.getElementById('dialMove');
+const dialMarker = document.getElementById('dialMoveMarker');
+let dialDragging = false;
+
+function norm360(deg){ return (deg % 360 + 360) % 360; }
+function setDial(deg){
+  const v = norm360(deg);
+  dialMarker.style.transform = `translate(-50%, -100%) rotate(${v}deg)`;
+  dialMove?.setAttribute('aria-valuenow', String(Math.round(v)));
+}
+function angleFromPointer(e){
+  const r = dialMove.getBoundingClientRect();
+  const cx = r.left + r.width/2;
+  const cy = r.top  + r.height/2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  let a = Math.atan2(-dy, dx) * 180/Math.PI + 90; // 0° up, CCW positive
+  return norm360(a);
+}
+function applyDial(deg){
+  const v = norm360(deg);
+  rotateMoveEl.value = String(Math.round(v));
+  Gonio.setMovDegRel(v);
+  setDial(v);
+  setAngleHUD(Gonio.angle, romString());
+}
+
+dialMove.addEventListener('pointerdown', e=>{
+  if (lockGonio) return;
+  e.preventDefault();
+  dialDragging = true;
+  dialMove.setPointerCapture?.(e.pointerId);
+  applyDial(angleFromPointer(e));
+});
+dialMove.addEventListener('pointermove', e=>{
+  if (lockGonio || !dialDragging) return;
+  e.preventDefault();
+  applyDial(angleFromPointer(e));
+});
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>{
+  dialMove.addEventListener(ev, ()=> dialDragging=false);
+});
+// Keyboard: ←/→ = 1°, ↑/↓ = 10°
+dialMove.addEventListener('keydown', e=>{
+  let step = 0;
+  if (e.key === 'ArrowLeft')  step = -1;
+  if (e.key === 'ArrowRight') step = +1;
+  if (e.key === 'ArrowUp')    step = +10;
+  if (e.key === 'ArrowDown')  step = -10;
+  if (step !== 0){
+    e.preventDefault();
+    const cur = parseFloat(rotateMoveEl.value) || 0;
+    applyDial(cur + step);
+  }
+});
+
 /* ===================== NOTES LOADER (Markdown) ===================== */
 function mdToHtml(md){
   let html = md
@@ -814,4 +908,3 @@ window.addEventListener('error', e => { msg.textContent = '❌ ' + (e.message ||
 </script>
 </body>
 </html>
-
