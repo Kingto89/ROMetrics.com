@@ -436,14 +436,15 @@ function setLineEl(el, a, b, onColor){
   } else el.style.display='none';
 }
 
+/* --- UPDATED: show dots/lines immediately; instrument only when all three are set --- */
 function refreshScreenDots(){
   setDotEl(scrFulcrum, scr.fulcrum);
   setDotEl(scrStationary, scr.stationary);
   setDotEl(scrMoving, scr.moving);
-  setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444'); // show as soon as 2 pts exist
-  setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e'); // show as soon as 2 pts exist
+  setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
+  setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
 
-  // Show the overlay as soon as ANY point is placed
+  // Show overlay as soon as any point is placed
   (function(){
     const host = document.getElementById('gonioHost');
     const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
@@ -451,8 +452,8 @@ function refreshScreenDots(){
     else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
   })();
 
-  if (scr.fulcrum && scr.stationary && scr.moving){
-    // All three placed → align + show instrument
+  if(scr.fulcrum && scr.stationary && scr.moving){
+    // Align and reveal the instrument when all three exist
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
     const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
@@ -465,12 +466,33 @@ function refreshScreenDots(){
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
   } else {
-    // Not all points yet → keep dots/lines visible, hide only the instrument
+    // Keep overlay visible while placing; hide only the instrument
     document.getElementById('instrument').style.display = 'none';
-    // NOTE: do NOT call Gonio.hide() here, or the overlay (and lines) will vanish.
+    // Do NOT call Gonio.hide() here.
   }
 }
 
+function pickOnScreen(e){
+  if(!target) return;
+  // ignore clicks on the left control panel or note
+  const leftPanel = document.querySelector('.panel');
+  if(leftPanel && leftPanel.contains(e.target)) return;
+
+  const r = renderer.domElement.getBoundingClientRect();
+  // clamp into viewport
+  const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
+  const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
+
+  const p = { x, y };
+  scr[target] = p;
+  // ensure overlay shows immediately after each placement
+  (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
+  log(`${target} pinned @ ${x|0},${y|0}`);
+  target = null;
+  refreshScreenDots();
+}
+
+renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
 
 /* HUD + ROM */
 function setAngleHUD(angle, romStr=""){
