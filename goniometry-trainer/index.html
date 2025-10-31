@@ -436,7 +436,7 @@ function setLineEl(el, a, b, onColor){
   } else el.style.display='none';
 }
 
-/* --- UPDATED: show dots/lines immediately; instrument only when all three are set --- */
+/* --- Show dots/lines immediately; instrument only when all three are set & auto-fit on first reveal --- */
 function refreshScreenDots(){
   setDotEl(scrFulcrum, scr.fulcrum);
   setDotEl(scrStationary, scr.stationary);
@@ -453,11 +453,24 @@ function refreshScreenDots(){
   })();
 
   if(scr.fulcrum && scr.stationary && scr.moving){
-    // Align and reveal the instrument when all three exist
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
     const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
-    document.getElementById('instrument').style.display = 'block';
+
+    const inst = document.getElementById('instrument');
+    const firstReveal = inst.style.display !== 'block';
+    inst.style.display = 'block';
+
+    // Auto-fit once (first time instrument appears)
+    if (firstReveal) {
+      Gonio.setZoom(1);
+      const targetFrac = 0.24; // smaller->0.20, larger->0.28
+      const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
+      const autoScale = Math.max(0.35, Math.min(1.0, targetBound / 140)); // 140 ≈ bound used in clampPanToViewport
+      Gonio.setScale(autoScale);
+      sizeEl.value = Math.round(autoScale * 100);
+    }
+
     Gonio.show();
     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
     Gonio.zeroHere();
@@ -466,9 +479,8 @@ function refreshScreenDots(){
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
   } else {
-    // Keep overlay visible while placing; hide only the instrument
     document.getElementById('instrument').style.display = 'none';
-    // Do NOT call Gonio.hide() here.
+    // keep overlay visible; do not hide
   }
 }
 
@@ -479,12 +491,12 @@ function pickOnScreen(e){
   if(leftPanel && leftPanel.contains(e.target)) return;
 
   const r = renderer.domElement.getBoundingClientRect();
-  // clamp into viewport
   const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
   const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
 
   const p = { x, y };
   scr[target] = p;
+
   // ensure overlay shows immediately after each placement
   (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
   log(`${target} pinned @ ${x|0},${y|0}`);
@@ -493,8 +505,7 @@ function pickOnScreen(e){
 }
 
 renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
-
-/* NEW: allow dot placement while overlay is visible */
+/* Allow dot placement when overlay is visible */
 svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
 
 /* HUD + ROM */
@@ -511,7 +522,7 @@ document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";  
 document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
 document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving");    };
 
-/* Locks (unchanged) */
+/* Locks */
 let lock3D=false, lockGonio=false;
 function set3DLock(v){ lock3D=v; controls.enabled=!lock3D; lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked"); lock3DBtn.classList.toggle('lockOn', lock3D); }
 function setGonioLock(v){
@@ -524,7 +535,7 @@ set3DLock(false); setGonioLock(false);
 lock3DBtn.onclick = ()=> set3DLock(!lock3D);
 lockGonioBtn.onclick = ()=> setGonioLock(!lockGonio);
 
-/* Controllers: only one open + auto-locks (unchanged) */
+/* Controllers: only one open + auto-locks */
 const ctrlGonio = document.getElementById("ctrlGonio");
 const ctrlModel = document.getElementById("ctrlModel");
 [ctrlGonio, ctrlModel].forEach(d=>{
@@ -584,7 +595,7 @@ const clock = new THREE.Clock();
   requestAnimationFrame(animate);
 })();
 
-/* ===================== GONIOMETER MODULE (unchanged except pan guard) ===================== */
+/* ===================== GONIOMETER MODULE ===================== */
 const Gonio = (() => {
   const host  = document.getElementById('gonioHost');
   const svg   = document.getElementById('gonioSvg');
@@ -641,7 +652,7 @@ const Gonio = (() => {
 
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
   let baseRot=0, userRot=0, scale=1;
-  let zeroRef=0; // reference for ROM zero
+  let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
@@ -677,7 +688,7 @@ const Gonio = (() => {
   // Pan
   svg.addEventListener('pointerdown', e=>{
     if (lockGonio) return;
-    if (typeof target !== 'undefined' && target) return; // NEW: skip panning while placing a dot
+    if (typeof target !== 'undefined' && target) return; // skip panning while placing a dot
     if (e.target.closest('#armB_grp')) return;
     e.preventDefault(); draggingPan = true;
     lastPanScreen = { x: e.clientX, y: e.clientY };
@@ -734,16 +745,16 @@ const Gonio = (() => {
   function show(){ host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); clampPanToViewport(); applyView(); }
   function hide(){ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); }
 
-  // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
   function setPose(cx,cy,baseDeg,movDeg){
     panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
     clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
   }
 
   function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
+  function setZoom(k){ zoom=clamp(k||1,0.07,10); clampPanToViewport(); applyView(); } // NEW
+
   function degFromScreenVec(dx,dy){ return toDegUp(dx,dy); }
 
-  // Relative-zero API
   function zeroHere(){ zeroRef = clamp360(mov); }
   function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
   function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
@@ -751,15 +762,13 @@ const Gonio = (() => {
   function getUserRot(){ return clamp360(userRot); }
   function getMovDegAbs(){ return clamp360(mov); }
 
-  // expose pan getters/setters for sliders
   function setPan(x,y){ panX = x; panY = y; clampPanToViewport(); applyView(); }
   function getPan(){ return { x: panX, y: panY }; }
 
-  // Angle is shortest arc from zeroRef to mov (<=180°)
   function currentAngle(){ return shortest(mov, zeroRef); }
 
   return {
-    show, hide, setPose, setScale, degFromScreenVec, _clampNow:clampNow,
+    show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
     zeroHere, setMovDegRel, setMovDegAbs, setUserRot, getUserRot, getMovDegAbs,
     setPan, getPan,
     get angle(){ return currentAngle(); },
