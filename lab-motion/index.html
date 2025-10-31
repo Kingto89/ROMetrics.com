@@ -35,7 +35,7 @@ summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
 optgroup{color:#9fb0c9;font-style:normal}
 
-/* ROM modal */
+/* ROM modal (Upper/Lower only) */
 .modal{position:fixed;right:16px;bottom:16px;width:min(620px,92vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
 .modal.on{display:flex}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
@@ -50,8 +50,10 @@ optgroup{color:#9fb0c9;font-style:normal}
 .rom-nav button.on{background:#1a2741;color:#fff;border-color:#47618e}
 .rom-content{flex:1;overflow:auto;padding:12px}
 .rom-content h3{margin:.2em 0 .4em;font-size:14px}
-.rom-content h4{margin:.2em 0 .3em;font-size:13px;color:#b7c6e6}
-.rom-content p, .rom-content li{font-size:13px;line-height:1.45}
+.rom-content table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.rom-content td{padding:6px 8px;border-bottom:1px solid #1c2941;font-size:13px}
+.rom-content td:first-child{width:42%;font-weight:600}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -128,15 +130,15 @@ optgroup{color:#9fb0c9;font-style:normal}
     </div>
   </div>
 
-  <!-- ROM Reference Modal -->
+  <!-- ROM Reference Modal (UPPER / LOWER) -->
   <div class="modal" id="romModal" aria-modal="true" role="dialog">
     <div class="top">
       <h4>ROM Reference</h4>
       <button class="x" id="romClose" aria-label="Close">✕</button>
     </div>
     <div class="rom-tabs">
-      <button class="rom-tab on" id="tabActions">Actions</button>
-      <button class="rom-tab" id="tabRig">Advanced Rig</button>
+      <button class="rom-tab on" id="tabUpper">Upper Body</button>
+      <button class="rom-tab" id="tabLower">Lower Body</button>
     </div>
     <div class="body rom-wrap">
       <div class="rom-nav" id="romNav"></div>
@@ -158,17 +160,16 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
   const reloadBtn = document.getElementById("reload");
-
   const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
   const romClose = document.getElementById("romClose");
-  const tabActions = document.getElementById("tabActions");
-  const tabRig = document.getElementById("tabRig");
+  const tabUpper = document.getElementById("tabUpper");
+  const tabLower = document.getElementById("tabLower");
   const romNav = document.getElementById("romNav");
   const romContent = document.getElementById("romContent");
 
@@ -280,240 +281,116 @@ optgroup{color:#9fb0c9;font-style:normal}
     camera.lookAt(center);
   }
 
-  /* ===== Populate bones ===== */
-  function populateBones(){
-    boneSel.innerHTML = "";
-    if (!skeleton) {
-      const o = document.createElement("option");
-      o.value = ""; o.textContent = "(No skeleton)";
-      boneSel.appendChild(o);
-      return;
-    }
-    skeleton.bones.forEach((b,i)=>{
-      const o = document.createElement("option");
-      o.value = String(i);
-      o.textContent = b.name || `Bone ${i}`;
-      boneSel.appendChild(o);
-      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+  /* ===== Joint definitions for ROM + control (paired) ===== */
+  const UPPER = [
+    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'Sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
+    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'Frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
+    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'Transverse', neutral:0, min:-45, max:45,  hints:[/spine|chest|thor/i]},
+    {key:'cerv_fe',   pair:'Cervical Flex / Ext',           side:'', plane:'Sagittal',   neutral:0, min:-60, max:70,  hints:[/neck|cspine|head/i]},
+    {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',     side:'', plane:'Frontal',    neutral:0, min:-45, max:45,  hints:[/neck|cspine|head/i]},
+    {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',     side:'', plane:'Transverse', neutral:0, min:-80, max:80,  hints:[/neck|cspine|head/i]},
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',       side:'L', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',       side:'R', plane:'Sagittal',  neutral:0, min:-180, max:60, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',        side:'L', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',        side:'R', plane:'Frontal',   neutral:0, min:-180, max:40, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — Internal / External', side:'L', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — Internal / External', side:'R', plane:'Transverse', neutral:0, min:-70, max:90, hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',          side:'L', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',          side:'R', plane:'Sagittal',  neutral:0, min:-150, max:10, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'L', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'R', plane:'Transverse', neutral:0, min:-85, max:95, hints:[/lower.?arm|forearm|ulna|radius/i]},
+    {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',          side:'L', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',          side:'R', plane:'Sagittal',  neutral:0, min:-80, max:70, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',  side:'L', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ru_r',   pair:'Wrist R — Radial / Ulnar Dev',  side:'R', plane:'Frontal',   neutral:0, min:-20, max:40, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+  ];
+  const LOWER = [
+    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',            side:'L', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',            side:'R', plane:'Sagittal',  neutral:0, min:-120, max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',             side:'L', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',             side:'R', plane:'Frontal',   neutral:0, min:-45,  max:30, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_irer_l', pair:'Hip L — Internal / External',   side:'L', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'hip_irer_r', pair:'Hip R — Internal / External',   side:'R', plane:'Transverse',neutral:0, min:-45,  max:45, hints:[/upper.?leg|thigh|femur/i]},
+    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',           side:'L', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
+    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',           side:'R', plane:'Sagittal',  neutral:0, min:-150, max:5,  hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex', side:'L', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex', side:'R', plane:'Sagittal',  neutral:0, min:-20,  max:50, hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion', side:'L', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
+    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion', side:'R', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
+  ];
+
+  /* ===== ROM Reference builder (no markdown) ===== */
+  function buildRomList(which){
+    const list = (which==='upper') ? UPPER : LOWER;
+    romNav.innerHTML = '';
+    list.forEach((item, i)=>{
+      const btn = document.createElement('button');
+      btn.textContent = item.pair;
+      btn.onclick = ()=> selectRomItem(i, list);
+      romNav.appendChild(btn);
     });
-    if (skeleton.bones.length) boneSel.value = "0";
-    rx.value = "0"; ry.value = "0"; rz.value = "0";
-    setBoneRotationFromUI();
+    selectRomItem(0, list);
   }
-  function setBoneRotationFromUI(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
-    b.quaternion.copy(qBase).multiply(qDelta);
-  }
-  function zeroSelectedBone(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const qb = initialBoneRot.get(b);
-    if (qb) b.quaternion.copy(qb);
-    rx.value="0"; ry.value="0"; rz.value="0";
+  function selectRomItem(idx, list){
+    const buttons = [...romNav.querySelectorAll('button')];
+    buttons.forEach(b=>b.classList.remove('on'));
+    if (buttons[idx]) buttons[idx].classList.add('on');
+    const item = list[idx];
+    const min = item.min, max = item.max;
+    const side = item.side || '—';
+    const plane = item.plane || '—';
+    romContent.innerHTML = `
+      <h3>${item.pair} <span class="badge">${plane} plane</span> <span class="badge">Side: ${side}</span></h3>
+      <table>
+        <tr><td>Expected ROM (°)</td><td>${min}&nbsp;to&nbsp;${max}</td></tr>
+        <tr><td>Control Range (slider)</td><td>${min}&nbsp;to&nbsp;${max}</td></tr>
+        <tr><td>Notes</td><td>&nbsp;</td></tr>
+      </table>
+    `;
   }
 
-  /* ===== Rig profile detection & axis map ===== */
+  /* ===== Populate bones & drive motion (minimal for reference) ===== */
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/mixamorig/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
-    log(`Rig profile: ${RIG_PROFILE}`);
+    log(\`Rig profile: \${RIG_PROFILE}\`);
   }
-
-  // Return the local axis to drive for a given motion key under a profile
-  function axisFor(profile, motionKey, defaultAxis){
-    if (profile==='mixamo'){
-      const map = {
-        sh_fe_l:'x', sh_fe_r:'x',
-        sh_aa_l:'z', sh_aa_r:'z',
-        sh_irer_l:'y', sh_irer_r:'y',
-        el_fe_l:'x', el_fe_r:'x',
-        fa_ps_l:'y', fa_ps_r:'y',
-        wr_fe_l:'x', wr_fe_r:'x',
-        wr_ru_l:'z', wr_ru_r:'z',
-        hip_fe_l:'x', hip_fe_r:'x',
-        hip_aa_l:'z', hip_aa_r:'z',
-        hip_irer_l:'y', hip_irer_r:'y',
-        knee_fe_l:'x', knee_fe_r:'x',
-        ankle_dfpf_l:'x', ankle_dfpf_r:'x',
-        foot_invev_l:'z', foot_invev_r:'z',
-        trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
-        cerv_fe:'x', cerv_lat:'z', cerv_rot:'y'
-      };
-      if (motionKey in map) return map[motionKey];
-    }
-    return defaultAxis;
-  }
-
-  /* ===== Side-aware bone finding (no wrong-side fallback) ===== */
+  const JOINT_BIND = new Map();
   const EXCLUDE = /(pelvis|root|spine|clavicle|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
-    if (side==='l'){
-      return [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /\bleft(?=[A-Z_])/i, /mixamorig:.*left/i];
-    } else {
-      return [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /\bright(?=[A-Z_])/i, /mixamorig:.*right/i];
-    }
-  }
-  function findBoneBy(cfg){
-    if (!skeleton) return null;
-    const names = skeleton.bones.map(b=>b.name.toLowerCase());
-    const sideREs = sideRegex(cfg.side);
-    for (const cand of cfg.hints){
-      for (let i=0;i<names.length;i++){
-        if (EXCLUDE.test(names[i])) continue;
-        if (!sideREs.some(r=>r.test(names[i]))) continue;
-        if (cand.test(names[i])) return skeleton.bones[i];
-      }
-    }
-    if (!cfg.side){
-      for (const cand of cfg.hints){
-        for (let i=0;i<names.length;i++){
-          if (EXCLUDE.test(names[i])) continue;
-          if (cand.test(names[i])) return skeleton.bones[i];
-        }
-      }
-    }
-    return null;
+    return side==='l'
+      ? [/left/i, /_left/i, /\.l/i, /_l/i, /l(?![a-z])/i, /left(?=[A-Z_])/i, /mixamorig:.*left/i]
+      : [/right/i, /_right/i, /\.r/i, /_r/i, /r(?![a-z])/i, /right(?=[A-Z_])/i, /mixamorig:.*right/i];
   }
 
-  const JOINT_BIND = new Map();
-
-  /* ===== Neutral calibration helpers ===== */
-  function twistAngleAroundAxis(q, v){
-    const vx = v.x, vy = v.y, vz = v.z;
-    const s = vx*q.x + vy*q.y + vz*q.z;
-    let tx = vx*s, ty = vy*s, tz = vz*s, tw = q.w;
-    const len = Math.hypot(tx,ty,tz,tw);
-    if (len > 0) { tx/=len; ty/=len; tz/=len; tw/=len; }
-    const sinHalf = Math.hypot(tx,ty,tz);
-    let angle = 2*Math.atan2(sinHalf, Math.max(-1, Math.min(1, tw)));
-    const dot = tx*vx + ty*vy + tz*vz;
-    if (dot < 0) angle = -angle;
-    return angle;
-  }
-
-  function resolveBind(key,cfg){
-    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-    let bone = findBoneBy(cfg);
-    if (!bone && /^trunk_/.test(key) && skeleton){
-      const names = skeleton.bones.map(b=>b.name.toLowerCase());
-      const idx = names.findIndex(n=>/spine02|spine_?02|upper.?spine|chest|thor/i.test(n));
-      bone = idx>=0 ? skeleton.bones[idx] : skeleton.bones.find(b=>/spine|chest|thor/i.test(b.name.toLowerCase()));
-    }
-    if (!bone) { log(`No bind for ${key}`); return null; }
-    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x';
-    const axis = axisFor(RIG_PROFILE, key, baseAxis);
-    let neutralShiftDeg = 0;
-    try{
-      const parent = bone.parent && bone.parent.isBone ? bone.parent : null;
-      const qRel = parent ? parent.quaternion.clone().invert().multiply(qBind) : qBind.clone();
-      const v = new THREE.Vector3(+(axis==='x'), +(axis==='y'), +(axis==='z')).normalize();
-      const ang = twistAngleAroundAxis(qRel, v);
-      neutralShiftDeg = THREE.MathUtils.radToDeg(-ang);
-    }catch(e){ neutralShiftDeg = 0; }
-    const obj = {bone, qBind, axis, neutralShiftDeg};
-    JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis}, neutralShift ${neutralShiftDeg.toFixed(1)}°)`);
-    return obj;
-  }
-
-  function applyPairAngle(key,cfg,sliderDeg){
-    const bind = resolveBind(key,cfg);
-    if (!bind) return;
-    const {bone, qBind, axis, neutralShiftDeg} = bind;
-    const rad = THREE.MathUtils.degToRad(sliderDeg + (cfg.neutral||0) + (neutralShiftDeg||0));
-    const e = new THREE.Euler(0,0,0,"XYZ");
-    if (axis==='x') e.set(rad,0,0,"XYZ");
-    if (axis==='y') e.set(0,rad,0,"XYZ");
-    if (axis==='z') e.set(0,0,rad,"XYZ");
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    bone.quaternion.copy(qBind).multiply(qDelta);
-  }
-
-  /* ===== Joint definitions (paired) ===== */
-  const UPPER = [
-    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
-    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
-    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine|chest|thor/i]},
-
-    {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/neck|cspine|head/i]},
-    {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/neck|cspine|head/i]},
-    {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/neck|cspine|head/i]},
-
-    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-180, max:40,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-180, max:40,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-
-    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
-    {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
-
-    {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',       side:'l', plane:'frontal',   neutral:0, min:-20,  max:40,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_ru_r',   pair:'Wrist R — Radial / Ulnar Dev',       side:'r', plane:'frontal',   neutral:0, min:-20,  max:40,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-  ];
-
-  const LOWER = [
-    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-120, max:30,  hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-120, max:30,  hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-45,  max:30,  hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-45,  max:30,  hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/upper.?leg|thigh|femur/i]},
-    {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/upper.?leg|thigh|femur/i]},
-
-    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:5,   hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
-    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:5,   hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
-
-    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|heel|metatars/i]},
-    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|heel|metatars/i]},
-  ];
-
-  let CURRENT = UPPER;
-
-  /* ===== UI: actions ===== */
+  /* ===== UI: region & motion controls ===== */
+  let currentSide = 'upper';
   function fillActionMenu(){
     actionSel.innerHTML = "";
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
-
-    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    const CURRENT = currentSide==='upper' ? UPPER : LOWER;
     const og = document.createElement("optgroup");
-    og.label = (CURRENT===UPPER) ? "Cervical, Trunk, Shoulder & Arm" : "Hip, Leg & Foot";
-    for (const item of list){
+    og.label = currentSide==='upper' ? "Cervical, Trunk, Shoulder & Arm" : "Hip, Leg & Foot";
+    for (const item of CURRENT){
       const opt = document.createElement("option");
       opt.value = item.key;
       opt.textContent = item.pair;
       og.appendChild(opt);
     }
     actionSel.appendChild(og);
-
     actionSel.value = "";
     pairLabel.textContent = "Angle (°)";
     actionDeg.disabled = true;
     zeroAction.disabled = true;
   }
   function cfgFromKey(k){
-    const list = (CURRENT===UPPER) ? UPPER : LOWER;
-    return list.find(x=>x.key===k) || null;
+    const CURRENT = currentSide==='upper' ? UPPER : LOWER;
+    return CURRENT.find(x=>x.key===k) || null;
   }
   function syncActionUI(forceZero=false){
     const key = actionSel.value;
@@ -531,142 +408,45 @@ optgroup{color:#9fb0c9;font-style:normal}
     actionDeg.disabled = false;
     zeroAction.disabled = false;
   }
-
-  /* ===== Wire UI ===== */
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
-  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
-
+  segUpper.onclick = ()=>{ currentSide='upper'; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
+  segLower.onclick = ()=>{ currentSide='lower'; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
   actionSel.addEventListener("change", ()=>syncActionUI(true));
-  actionDeg.addEventListener("input", ()=>{
-    const key = actionSel.value; const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key,cfg, parseFloat(actionDeg.value)||0);
-  });
-  zeroAction.onclick = ()=>{
-    const key = actionSel.value; const cfg = cfgFromKey(key);
-    if (!cfg) return;
-    actionDeg.value = "0";
-    applyPairAngle(key,cfg, 0);
-  };
 
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
-  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
-  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
-    if (!model) return;
-    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-    model.scale.setScalar(parseInt(ms.value,10)/100);
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-  }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="50"; myaw.value="0";
-    if (model){
-      model.position.set(0,0,0.6);
-      model.scale.setScalar(0.5);
-      model.rotation.y = 0;
-    }
-    groundSnap();
-  };
-  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
-
-  /* ===== ROM (Tabbed & Clickable) ===== */
-  romBtn.onclick = async ()=>{
-    romModal.classList.add('on');
-    await loadRomTab('actions');
-  };
-  romClose.onclick = ()=> romModal.classList.remove('on');
-  tabActions.onclick = async ()=>{ tabActions.classList.add('on'); tabRig.classList.remove('on'); await loadRomTab('actions'); };
-  tabRig.onclick = async ()=>{ tabRig.classList.add('on'); tabActions.classList.remove('on'); await loadRomTab('rig'); };
-
-  async function loadRomTab(tab){
-    romNav.innerHTML = '';
-    romContent.textContent = 'Loading…';
-    try{
-      const md = await fetchMdFor(tab);
-      const sections = splitSections(md);
-      buildRomUI(sections);
-    }catch(e){
-      romContent.textContent = 'Failed to load ROM reference.';
-    }
-  }
-  async function fetchMdFor(tab){
-    const tryList = tab === 'actions'
-      ? ['./ROM_actions.md', './rom_actions.md', './ROM_reference.md']
-      : ['./ROM_rig.md', './rom_rig.md', './ROM_reference.md'];
-    for (const url of tryList){
-      try{
-        const res = await fetch(url + '?' + Date.now());
-        if (!res.ok) continue;
-        let md = await res.text();
-        if (url.toLowerCase().includes('rom_reference.md')){
-          md = extractSection(md, tab);
-        }
-        return md;
-      }catch(e){}
-    }
-    return '# Not found\nNo ROM reference file was found for this tab.';
-  }
-  function extractSection(md, tab){
-    md = md.replace(/\r\n?/g, '\n');
-    const want = tab==='actions' ? /(#+)\s*(actions?)\b/i : /(#+)\s*(advanced\s*rig|rig)\b/i;
-    const m = md.match(want);
-    if (!m) return md;
-    const lvl = m[1].length;
-    const start = md.indexOf(m[0]);
-    let rest = md.slice(start);
-    const reNext = new RegExp(`^#{1,${lvl}}\\s.*$`, 'gmi');
-    const matches = [...rest.matchAll(reNext)];
-    if (matches.length > 1){
-      const endIndex = matches[1].index;
-      rest = rest.slice(0, endIndex);
-    }
-    return rest;
-  }
-  function splitSections(md){
-    md = md.replace(/\r\n?/g, '\n');
-    const out = [];
-    const re = /^(###|##)\s+(.+)\s*$([\s\S]*?)(?=^###|^##|\Z)/gmi;
-    let m;
-    while ((m = re.exec(md))){
-      out.push({ title: m[2].trim(), body: m[3].trim() });
-    }
-    if (!out.length) out.push({ title: 'Overview', body: md.trim() });
-    return out;
-  }
-  function mdToHtml(txt){
-    return txt
-      .replace(/^\s*-\s+(.*)$/gmi, '<li>$1</li>')
-      .replace(/(<li>[\s\S]*?<\/li>)/gmi, '<ul>$1</ul>')
-      .replace(/^####\s*(.*)$/gmi,'<h4>$1</h4>')
-      .replace(/^###\s*(.*)$/gmi,'<h3>$1</h3>')
-      .replace(/^##\s*(.*)$/gmi,'<h3>$1</h3>')
-      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  }
-  function buildRomUI(sections){
-    romNav.innerHTML = '';
-    sections.forEach((s, i) => {
-      const btn = document.createElement('button');
-      btn.textContent = s.title;
-      btn.onclick = ()=>selectRomSection(i, sections);
-      romNav.appendChild(btn);
-    });
-    selectRomSection(0, sections);
-  }
-  function selectRomSection(idx, sections){
-    const buttons = [...romNav.querySelectorAll('button')];
-    buttons.forEach(b=>b.classList.remove('on'));
-    if (buttons[idx]) buttons[idx].classList.add('on');
-    romContent.innerHTML = mdToHtml(sections[idx].body);
-  }
-
-  /* ===== Load model ===== */
+  /* ===== Model load ===== */
+  let model=null,skeleton=null;
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
     initialBoneRot.clear(); JOINT_BIND.clear();
-    boneSel.innerHTML = "";
   }
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1220);
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+  camera.position.set(1.6,1.6,3.2);
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true });
+  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 0.6; controls.maxDistance = 6;
+  controls.target.set(0,1.1,0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
+  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  key.position.set(2.5,4,2.5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048);
+  key.shadow.camera.near = 0.1; key.shadow.camera.far = 15;
+  key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+  scene.add(key);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
+  ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+
   function loadModel(){
-    msg.textContent = "Loading…"; log("Loading model...");
+    document.getElementById("msg").textContent = "Loading…"; log("Loading model...");
     clearModel();
     loader.load(
       MODEL_URL,
@@ -681,25 +461,26 @@ optgroup{color:#9fb0c9;font-style:normal}
         model.scale.setScalar(parseInt(ms.value,10)/100);
         model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
         groundSnap();
-        msg.textContent = "✅ Model loaded";
+        document.getElementById("msg").textContent = "✅ Model loaded";
         log("Model load OK");
-        populateBones();
-        detectRigProfile();
-        CURRENT = UPPER;
-        segUpper.classList.add('on'); segLower.classList.remove('on');
         fillActionMenu();
+        detectRigProfile();
       },
-      (xhr) => {
-        msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
-      },
+      undefined,
       (err) => {
         console.error(err);
-        msg.textContent = "⚠️ Load error";
+        document.getElementById("msg").textContent = "⚠️ Load error";
         log(`Error: ${err?.message || err}`);
       }
     );
   }
   loadModel();
+
+  /* ===== ROM Modal wiring (Upper/Lower only) ===== */
+  romBtn.onclick = ()=>{ romModal.classList.add('on'); tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
+  romClose.onclick = ()=> romModal.classList.remove('on');
+  tabUpper.onclick = ()=>{ tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
+  tabLower.onclick = ()=>{ tabLower.classList.add('on'); tabUpper.classList.remove('on'); buildRomList('lower'); };
 
   /* ===== Render ===== */
   addEventListener("resize", () => {
@@ -715,4 +496,3 @@ optgroup{color:#9fb0c9;font-style:normal}
   </script>
 </body>
 </html>
-
