@@ -73,7 +73,7 @@
   #gonioHost svg{width:100vw;height:100vh;background:transparent;pointer-events:auto}
   .tick{stroke:#64748b;stroke-width:.9}.tickBig{stroke-width:1.6}
   .labelOuter{fill:#e5e7eb;font-size:11px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
-  .labelInner{fill:#fca5a5;font-size:8.2px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
+  .labelInner{fill:#fca5a5;font-size:8.2px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke-width:3px;stroke:#0b1220}
   .rulerTick{stroke:#94a3b8}
   .ruLbl{fill:#cbd5e1;font-size:9.5px;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
   .scrLine{stroke-width:2.2; stroke-linecap:round}
@@ -123,7 +123,7 @@
 
   <label>Range of Motion</label>
   <div class="row">
-    <button id="startROM">▶️ Start ROM</button>
+    <button id="startROM"▶️ Start ROM</button>
     <button id="resetROM">↺ Reset ROM</button>
     <button id="resetMeasurement" title="Clear dots + lines + goniometer">🧹 Reset Measurement</button>
   </div>
@@ -279,7 +279,7 @@ const modelScale = document.getElementById("modelScale");
 const modelYaw = document.getElementById("modelYaw");
 const resetPose = document.getElementById("resetPose");
 
-const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
 /* Motions list */
 const REGION_MOTIONS = {
@@ -443,6 +443,12 @@ function refreshScreenDots(){
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving, '#22c55e');
 
+  // NEW: show overlay as soon as any dot is placed (one-by-one reveal)
+  const host = document.getElementById('gonioHost');
+  const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
+  if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
+  else { host.classList.add('hide'); host.setAttribute('aria-hidden','true'); }
+
   if(scr.fulcrum && scr.stationary && scr.moving){
     // Align gonio to screen-space vectors
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
@@ -456,6 +462,7 @@ function refreshScreenDots(){
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
   } else {
+    // Keep goniometer hidden until all three points are defined
     Gonio.hide();
   }
 }
@@ -757,8 +764,8 @@ function mdToHtml(md){
     .replace(/^## (.*)$/gm, '<h4>$1</h4>')
     .replace(/^# (.*)$/gm, '<h3>$1</h3>')
     .replace(/^\* (.*)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(<li>[\\s\\S]*?<\\/li>)/g, '<ul>$1</ul>');
+  html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
   return html;
 }
 async function loadNote(region, motion){
@@ -767,7 +774,7 @@ async function loadNote(region, motion){
     const res = await fetch(url);
     if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
     const md = await res.text();
-    const re = new RegExp(`(^|\\n)##?\\s*${motion}\\s*\\n([\\s\\S]*?)(\\n##?\\s|$)`,'i');
+    const re = new RegExp(`(^|\\\\n)##?\\\\s*${motion}\\\\s*\\\\n([\\\\s\\\\S]*?)(\\\\n##?\\\\s|$)`,'i');
     const m = md.match(re);
     const section = m ? m[2].trim() : md;
     noteTitle.textContent = `${regionToTitle(region)} — ${motion}`;
