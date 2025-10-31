@@ -257,7 +257,7 @@ const romBtn = document.getElementById("romBtn");
   scene.background = new THREE.Color(0x0b1220);
 
   const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
-  camera.position.set(1.6, 1.6, 2.8);
+  camera.position.set(1.6, 1.6, 3.2);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
@@ -717,7 +717,7 @@ return;
     mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="50"; myaw.value="0";
     if (model){
       model.position.set(0,0,0.6);
-      model.scale.setScalar(1);
+      model.scale.setScalar(0.5);
       model.rotation.y = 0;
     }
     groundSnap();
@@ -756,7 +756,7 @@ return;
         model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
         model.scale.setScalar(parseInt(ms.value,10)/100);
         model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-        groundSnap(); autoScaleToHeight(1.75);
+        groundSnap(); 
 msg.textContent = "✅ Model loaded";
         log("Model load OK");
         populateBones();
