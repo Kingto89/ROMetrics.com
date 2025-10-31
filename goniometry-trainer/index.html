@@ -468,6 +468,7 @@ if(scr.fulcrum && scr.stationary && scr.moving){
   }
 }
 
+
 function pickOnScreen(e){
   if(!target) return;
   // ignore clicks on the left control panel or note
@@ -475,11 +476,31 @@ function pickOnScreen(e){
   if(leftPanel && leftPanel.contains(e.target)) return;
 
   const r = renderer.domElement.getBoundingClientRect();
-  // clamp into viewport
   const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
   const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
-
   const p = { x, y };
+
+  // Record selected point
+  scr[target] = p;
+
+  // Immediately show the overlay and the specific dot (no waiting)
+  const host = document.getElementById('gonioHost');
+  host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
+  const inst = document.getElementById('instrument');
+  if (inst) inst.style.display = 'none'; // instrument waits for all 3
+
+  // Draw the one dot instantly
+  if (target === 'fulcrum') { setDotEl(scrFulcrum, p); }
+  if (target === 'stationary') { setDotEl(scrStationary, p); }
+  if (target === 'moving') { setDotEl(scrMoving, p); }
+
+  // Update lines/detectors; if all three are set, show instrument
+  refreshScreenDots();
+
+  log(`${target} pinned @ ${x|0},${y|0}`);
+  target = null;
+}
+;
   scr[target] = p;
   // ensure overlay shows immediately after each placement
   (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
