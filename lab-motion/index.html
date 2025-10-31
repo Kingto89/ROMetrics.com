@@ -70,7 +70,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         <button id="segLower">Lower Body</button>
       </div>
 
-      <label>Action (Paired Motion)</label>
+      <label>Motion</label>
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
@@ -160,7 +160,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
@@ -253,13 +253,13 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
 
   let model = null, skeleton = null;
-  const initialBoneRot = new Map();
 
   function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
+    // Fallback to your known good filename; change to match your repo if needed
     return "./Athletic_Grace_1006002620_texture.glb";
   }
   let MODEL_URL = pickModelUrl();
@@ -270,18 +270,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
   }
-  function fitView(){
-    const box = new THREE.Box3().setFromObject(model || scene);
-    const size = new THREE.Vector3(); box.getSize(size);
-    const center = new THREE.Vector3(); box.getCenter(center);
-    controls.target.copy(center);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const dist = maxDim / (2 * Math.tan((camera.fov * Math.PI/180)/2));
-    camera.position.copy(center).add(new THREE.Vector3(0.8*dist, 0.8*dist, 1.2*dist));
-    camera.lookAt(center);
-  }
 
-  /* ===== Joint definitions for ROM + control (paired) ===== */
+  /* ===== Joint lists (ROM + control) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'Sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'Frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
@@ -343,30 +333,21 @@ optgroup{color:#9fb0c9;font-style:normal}
       <h3>${item.pair} <span class="badge">${plane} plane</span> <span class="badge">Side: ${side}</span></h3>
       <table>
         <tr><td>Expected ROM (°)</td><td>${min}&nbsp;to&nbsp;${max}</td></tr>
-        <tr><td>Control Range (slider)</td><td>${min}&nbsp;to&nbsp;${max}</td></tr>
         <tr><td>Notes</td><td>&nbsp;</td></tr>
       </table>
     `;
   }
 
-  /* ===== Populate bones & drive motion (minimal for reference) ===== */
+  /* ===== Rig helpers (minimal for now) ===== */
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/mixamorig/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
     log(\`Rig profile: \${RIG_PROFILE}\`);
   }
-  const JOINT_BIND = new Map();
-  const EXCLUDE = /(pelvis|root|spine|clavicle|scapula)/i;
-  function sideRegex(side){
-    if (!side) return [/.*/];
-    return side==='l'
-      ? [/left/i, /_left/i, /\.l/i, /_l/i, /l(?![a-z])/i, /left(?=[A-Z_])/i, /mixamorig:.*left/i]
-      : [/right/i, /_right/i, /\.r/i, /_r/i, /r(?![a-z])/i, /right(?=[A-Z_])/i, /mixamorig:.*right/i];
-  }
 
-  /* ===== UI: region & motion controls ===== */
+  /* ===== UI: region & motion ===== */
   let currentSide = 'upper';
   function fillActionMenu(){
     actionSel.innerHTML = "";
@@ -412,69 +393,69 @@ optgroup{color:#9fb0c9;font-style:normal}
   segLower.onclick = ()=>{ currentSide='lower'; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
   actionSel.addEventListener("change", ()=>syncActionUI(true));
 
-  /* ===== Model load ===== */
-  let model=null,skeleton=null;
+  /* ===== Load model (with graceful fallback) ===== */
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
-    initialBoneRot.clear(); JOINT_BIND.clear();
   }
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0b1220);
-  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
-  camera.position.set(1.6,1.6,3.2);
-  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true });
-  renderer.setPixelRatio(devicePixelRatio);
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.minDistance = 0.6; controls.maxDistance = 6;
-  controls.target.set(0,1.1,0);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
-  const key = new THREE.DirectionalLight(0xffffff, 1.2);
-  key.position.set(2.5,4,2.5);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048,2048);
-  key.shadow.camera.near = 0.1; key.shadow.camera.far = 15;
-  key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
-  scene.add(key);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
-  ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+  function addFallbackMannequin(){
+    // Simple placeholder so the lab is never empty
+    const group = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({color:0x9fb0c9, roughness:0.6, metalness:0.1});
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.6, 8, 16), mat); torso.position.y = 1.2; group.add(torso);
+    const head  = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 16), mat); head.position.y = 1.75; group.add(head);
+    const legL  = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.9, 16), mat); legL.position.set(-0.12,0.45,0); group.add(legL);
+    const legR  = legL.clone(); legR.position.x = 0.12; group.add(legR);
+    const armL  = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.6,16), mat); armL.position.set(-0.42,1.3,0); armL.rotation.z = 0.15; group.add(armL);
+    const armR  = armL.clone(); armR.position.x = 0.42; armR.rotation.z = -0.15; group.add(armR);
+    group.traverse(o=>o.castShadow=o.receiveShadow=true);
+    model = group;
+    scene.add(model);
+    model.scale.setScalar(0.5);
+    model.position.set(0,0,0.6);
+    groundSnap();
+    msg.textContent = "⚠️ Placeholder mannequin (GLB not found)";
+    log("Using fallback mannequin.");
+  }
 
   function loadModel(){
-    document.getElementById("msg").textContent = "Loading…"; log("Loading model...");
+    msg.textContent = "Loading…"; log("Loading model...");
     clearModel();
+    const url = MODEL_URL;
+    const onLoaded = ()=>{
+      scene.add(model);
+      model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+      model.scale.setScalar(parseInt(ms.value,10)/100);
+      model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+      groundSnap();
+      msg.textContent = "✅ Model loaded";
+      log("Model load OK");
+      detectRigProfile();
+      fillActionMenu();
+    };
     loader.load(
-      MODEL_URL,
+      url,
       (gltf) => {
         model = gltf.scene;
         model.traverse(o => {
           if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
           if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
         });
-        scene.add(model);
-        model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-        model.scale.setScalar(parseInt(ms.value,10)/100);
-        model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-        groundSnap();
-        document.getElementById("msg").textContent = "✅ Model loaded";
-        log("Model load OK");
-        fillActionMenu();
-        detectRigProfile();
+        onLoaded();
       },
-      undefined,
+      (xhr) => {
+        msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
+      },
       (err) => {
-        console.error(err);
-        document.getElementById("msg").textContent = "⚠️ Load error";
-        log(`Error: ${err?.message || err}`);
+        console.warn("Model load failed:", err);
+        addFallbackMannequin();
+        fillActionMenu();
       }
     );
   }
   loadModel();
+
+  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(\`Reload: \${MODEL_URL}\`); loadModel(); };
 
   /* ===== ROM Modal wiring (Upper/Lower only) ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
