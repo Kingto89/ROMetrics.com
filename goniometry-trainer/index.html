@@ -58,6 +58,7 @@
     position:fixed; right:16px; bottom:16px; width:min(520px, 90vw);
     background:rgba(2,6,23,.9); border:1px solid #334155; border-radius:12px;
     padding:14px 46px 14px 14px; z-index:45; backdrop-filter: blur(6px);
+    max-height:60vh; overflow:auto; /* UPDATED: smaller & scrollable */
   }
   .note h4{margin:0 0 6px 0}
   .note .x{
@@ -66,6 +67,7 @@
     cursor:pointer; border:0; background:transparent; color:#94a3b8; font-size:18px; display:block;
   }
   .note .md *{margin:0 0 6px 0; line-height:1.35}
+  .note .md{font-size:13px;} /* UPDATED: smaller text */
   .note .md ul{padding-left:18px}
 
   /* SVG goniometer + screen dots */
@@ -77,6 +79,10 @@
   .rulerTick{stroke:#94a3b8}
   .ruLbl{fill:#cbd5e1;font-size:9.5px;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
   .scrLine{stroke-width:2.2; stroke-linecap:round}
+
+  /* UX cursors for clarity */
+  #instrument{cursor:move;} /* UPDATED: drag head to pan */
+  #armB_handleKnob,#armB_handleShaft,#armB_knob{cursor:grab;} /* UPDATED: arm drag feels distinct */
 </style>
 </head>
 <body>
@@ -177,7 +183,7 @@
 <!-- SVG overlay: screen-space dots + lines (not transformed) -->
 <div id="gonioHost" class="hide" aria-hidden="true">
   <svg id="gonioSvg" aria-label="Universal goniometer">
-    <!-- Screen-space dots/lines sit outside any transform -->
+    <!-- Screen-space dots/lines -->
     <g id="screenDots">
       <line id="scrLineA" class="scrLine" stroke="#ef4444" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
       <line id="scrLineB" class="scrLine" stroke="#22c55e" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
@@ -281,7 +287,7 @@ const resetPose = document.getElementById("resetPose");
 
 const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-/* Motions list */
+/* Motions */
 const REGION_MOTIONS = {
   cervical_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
   thoracic_lumbar_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
@@ -316,8 +322,6 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-/* Important for touch */
 renderer.domElement.style.touchAction = 'none';
 
 const scene = new THREE.Scene();
@@ -349,7 +353,7 @@ key.shadow.camera.top = 4;
 key.shadow.camera.bottom = -4;
 scene.add(key);
 
-/* Ground plane (shadow catcher) */
+/* Ground plane */
 const groundGeo = new THREE.PlaneGeometry(20, 20);
 const groundMat = new THREE.ShadowMaterial({ opacity: 0.45 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -380,14 +384,12 @@ function addFallbackMannequin(){
   scene.add(g); model = g; msg.textContent = "⚠️ GLB missing/blocked — fallback mannequin shown";
   groundSnap();
 }
-
 function groundSnap(){
   if(!model) return;
   const box = new THREE.Box3().setFromObject(model);
   const minY = box.min.y;
-  model.position.y -= minY; // feet at y=0
+  model.position.y -= minY;
 }
-
 async function loadModel() {
   try {
     const head = await fetch(MODEL_URL, { method: "HEAD", cache: "no-store" });
@@ -413,7 +415,7 @@ async function loadModel() {
 }
 loadModel();
 
-/* ===================== SCREEN-SPACE DOTS (no 3D raycast) ===================== */
+/* ===================== SCREEN-SPACE DOTS ===================== */
 const scr = { fulcrum:null, stationary:null, moving:null };
 const svg = document.getElementById('gonioSvg');
 const scrFulcrum = document.getElementById('scrFulcrum');
@@ -436,7 +438,7 @@ function setLineEl(el, a, b, onColor){
   } else el.style.display='none';
 }
 
-/* --- Show dots/lines immediately; instrument only when all three are set & auto-fit on first reveal --- */
+/* Show dots/lines immediately; instrument when all three set — and auto-fit smaller */
 function refreshScreenDots(){
   setDotEl(scrFulcrum, scr.fulcrum);
   setDotEl(scrStationary, scr.stationary);
@@ -444,7 +446,7 @@ function refreshScreenDots(){
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
 
-  // Show overlay as soon as any point is placed
+  // Overlay visibility
   (function(){
     const host = document.getElementById('gonioHost');
     const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
@@ -461,12 +463,12 @@ function refreshScreenDots(){
     const firstReveal = inst.style.display !== 'block';
     inst.style.display = 'block';
 
-    // Auto-fit once (first time instrument appears)
     if (firstReveal) {
       Gonio.setZoom(1);
-      const targetFrac = 0.24; // smaller->0.20, larger->0.28
+      // UPDATED: smaller default footprint (~18% of short edge)
+      const targetFrac = 0.18;
       const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-      const autoScale = Math.max(0.35, Math.min(1.0, targetBound / 140)); // 140 ≈ bound used in clampPanToViewport
+      const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140)); // stricter cap
       Gonio.setScale(autoScale);
       sizeEl.value = Math.round(autoScale * 100);
     }
@@ -478,15 +480,16 @@ function refreshScreenDots(){
     rotateGonioEl.value = Math.round(Gonio.getUserRot());
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
+
+    // ensure unlocked for immediate pan/drag
+    setGonioLock(false);
   } else {
     document.getElementById('instrument').style.display = 'none';
-    // keep overlay visible; do not hide
   }
 }
 
 function pickOnScreen(e){
   if(!target) return;
-  // ignore clicks on the left control panel or note
   const leftPanel = document.querySelector('.panel');
   if(leftPanel && leftPanel.contains(e.target)) return;
 
@@ -497,7 +500,7 @@ function pickOnScreen(e){
   const p = { x, y };
   scr[target] = p;
 
-  // ensure overlay shows immediately after each placement
+  // show overlay immediately
   (function(){ const host = document.getElementById('gonioHost'); host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); })();
   log(`${target} pinned @ ${x|0},${y|0}`);
   target = null;
@@ -505,7 +508,6 @@ function pickOnScreen(e){
 }
 
 renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
-/* Allow dot placement when overlay is visible */
 svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
 
 /* HUD + ROM */
@@ -689,7 +691,14 @@ const Gonio = (() => {
   svg.addEventListener('pointerdown', e=>{
     if (lockGonio) return;
     if (typeof target !== 'undefined' && target) return; // skip panning while placing a dot
-    if (e.target.closest('#armB_grp')) return;
+
+    // UPDATED: allow pan except when grabbing the moving-arm handles
+    const onMovingArmHandle =
+      e.target.closest('#armB_handleKnob') ||
+      e.target.closest('#armB_handleShaft') ||
+      e.target.closest('#armB_knob');
+    if (onMovingArmHandle) return;
+
     e.preventDefault(); draggingPan = true;
     lastPanScreen = { x: e.clientX, y: e.clientY };
     svg.setPointerCapture?.(e.pointerId);
@@ -751,7 +760,7 @@ const Gonio = (() => {
   }
 
   function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
-  function setZoom(k){ zoom=clamp(k||1,0.07,10); clampPanToViewport(); applyView(); } // NEW
+  function setZoom(k){ zoom=clamp(k||1,0.07,10); clampPanToViewport(); applyView(); } // public zoom
 
   function degFromScreenVec(dx,dy){ return toDegUp(dx,dy); }
 
