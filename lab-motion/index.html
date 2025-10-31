@@ -35,24 +35,19 @@ summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
 optgroup{color:#9fb0c9;font-style:normal}
 
-/* ROM modal (Upper/Lower only) */
-.modal{position:fixed;right:16px;bottom:16px;width:min(620px,92vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
+/* ROM modal — single collapsible column */
+.modal{position:fixed;right:16px;bottom:16px;width:min(560px,92vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
 .modal.on{display:flex}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
 .modal .top h4{margin:0;font-size:14px}
 .modal .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
-.rom-tabs{display:flex;gap:8px;padding:10px;border-bottom:1px solid #162235;background:#0c1628}
-.rom-tab{padding:6px 10px;border-radius:8px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;cursor:pointer}
-.rom-tab.on{background:#1f2c43;color:#fff;border-color:#47618e}
-.rom-wrap{display:flex;width:100%}
-.rom-nav{width:40%;max-width:240px;border-right:1px solid #162235;overflow:auto;padding:8px;background:#0b1426}
-.rom-nav button{display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#101a2e;color:#cbd5e1;cursor:pointer}
-.rom-nav button.on{background:#1a2741;color:#fff;border-color:#47618e}
-.rom-content{flex:1;overflow:auto;padding:12px}
-.rom-content h3{margin:.2em 0 .4em;font-size:14px}
-.rom-content table{width:100%;border-collapse:separate;border-spacing:0 6px}
-.rom-content td{padding:6px 8px;border-bottom:1px solid #1c2941;font-size:13px}
-.rom-content td:first-child{width:42%;font-weight:600}
+.rom-scroll{overflow:auto;padding:12px}
+.rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0}
+.rom-item summary{padding:10px 12px;list-style:none}
+.rom-item summary::-webkit-details-marker{display:none}
+.rom-item .inner{padding:8px 12px;border-top:1px solid #1c2941}
+.rom-row{display:flex;gap:10px;font-size:13px;padding:4px 0}
+.rom-head{font-weight:700}
 .badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 </style>
 </head>
@@ -117,7 +112,7 @@ optgroup{color:#9fb0c9;font-style:normal}
           </div>
           <div style="flex:1">
             <label>Scale (%)</label>
-            <input type="range" min="40" max="200" step="1" value="50" id="ms">
+            <input type="range" min="40" max="200" step="1" value="62" id="ms">
           </div>
         </div>
         <label>Yaw (°)</label>
@@ -130,20 +125,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     </div>
   </div>
 
-  <!-- ROM Reference Modal (UPPER / LOWER) -->
+  <!-- ROM Reference Modal — one collapsible column -->
   <div class="modal" id="romModal" aria-modal="true" role="dialog">
     <div class="top">
       <h4>ROM Reference</h4>
       <button class="x" id="romClose" aria-label="Close">✕</button>
     </div>
-    <div class="rom-tabs">
-      <button class="rom-tab on" id="tabUpper">Upper Body</button>
-      <button class="rom-tab" id="tabLower">Lower Body</button>
-    </div>
-    <div class="body rom-wrap">
-      <div class="rom-nav" id="romNav"></div>
-      <div class="rom-content" id="romContent">Loading…</div>
-    </div>
+    <div class="rom-scroll" id="romScroll"></div>
   </div>
 
   <div id="msg">Loading…</div>
@@ -168,10 +156,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
   const romClose = document.getElementById("romClose");
-  const tabUpper = document.getElementById("tabUpper");
-  const tabLower = document.getElementById("tabLower");
-  const romNav = document.getElementById("romNav");
-  const romContent = document.getElementById("romContent");
+  const romScroll = document.getElementById("romScroll");
 
   const segUpper = document.getElementById("segUpper");
   const segLower = document.getElementById("segLower");
@@ -246,7 +231,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
   ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 
-  /* ===== Loader (kept as in your working build) ===== */
+  /* ===== Loader (same as working build) ===== */
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
@@ -270,137 +255,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
   }
-  function autoScaleToHeight(target=1.75){
-    const box = new THREE.Box3().setFromObject(model);
-    const h = box.max.y - box.min.y;
-    if (!isFinite(h) || h <= 0) return;
-    const s = target / h;
-    if (s < 0.4 || s > 2.5) { model.scale.multiplyScalar(s); log(`Scaled ×${s.toFixed(2)}`); }
-  }
-  function fitView(){
-    const box = new THREE.Box3().setFromObject(model || scene);
-    const size = new THREE.Vector3(); box.getSize(size);
-    const center = new THREE.Vector3(); box.getCenter(center);
-    controls.target.copy(center);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const dist = maxDim / (2 * Math.tan((camera.fov * Math.PI/180)/2));
-    camera.position.copy(center).add(new THREE.Vector3(0.8*dist, 0.8*dist, 1.2*dist));
-    camera.lookAt(center);
-  }
 
-  /* ===== Populate bones (unchanged) ===== */
-  function populateBones(){
-    boneSel.innerHTML = "";
-    if (!skeleton) {
-      const o = document.createElement("option");
-      o.value = ""; o.textContent = "(No skeleton)";
-      boneSel.appendChild(o);
-      return;
-    }
-    skeleton.bones.forEach((b,i)=>{
-      const o = document.createElement("option");
-      o.value = String(i);
-      o.textContent = b.name || `Bone ${i}`;
-      boneSel.appendChild(o);
-      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
-    });
-    if (skeleton.bones.length) boneSel.value = "0";
-    rx.value = "0"; ry.value = "0"; rz.value = "0";
-    setBoneRotationFromUI();
-  }
-  function setBoneRotationFromUI(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
-    b.quaternion.copy(qBase).multiply(qDelta);
-  }
-  function zeroSelectedBone(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const qb = initialBoneRot.get(b);
-    if (qb) b.quaternion.copy(qb);
-    rx.value="0"; ry.value="0"; rz.value="0";
-  }
-
-  /* ===== Minimal rig profile (unchanged) ===== */
-  let RIG_PROFILE = 'generic';
-  function detectRigProfile(){
-    const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
-    else RIG_PROFILE = 'generic';
-    log(`Rig profile: ${RIG_PROFILE}`);
-  }
-
-  const EXCLUDE = /(pelvis|root|spine|clavicle|scapula)/i;
-  function sideRegex(side){
-    if (!side) return [/.*/];
-    if (side==='l'){
-      return [
-        /\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i,
-        /\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
-      ];
-    } else {
-      return [
-        /\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i,
-        /\bright(?=[A-Z_])/i, /mixamorig:.*right/i
-      ];
-    }
-  }
-  function findBoneBy(cfg){
-    if (!skeleton) return null;
-    const names = skeleton.bones.map(b=>b.name.toLowerCase());
-    const sideREs = sideRegex(cfg.side);
-    for (const cand of cfg.hints){
-      for (let i=0;i<names.length;i++){
-        if (EXCLUDE.test(names[i])) continue;
-        if (!sideREs.some(r=>r.test(names[i]))) continue;
-        if (cand.test(names[i])) return skeleton.bones[i];
-      }
-    }
-    if (!cfg.side){
-      for (const cand of cfg.hints){
-        for (let i=0;i<names.length;i++){
-          if (EXCLUDE.test(names[i])) continue;
-          if (cand.test(names[i])) return skeleton.bones[i];
-        }
-      }
-    }
-    return null;
-  }
-  const JOINT_BIND = new Map();
-  function axisFor(profile, motionKey, def){ return def; } // keep simple
-
-  function resolveBind(key,cfg){
-    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-    let bone = findBoneBy(cfg);
-    if (!bone) { log(`No bind for ${key}`); return null; }
-    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane?.toLowerCase?.()] || 'x';
-    const axis = axisFor(RIG_PROFILE, key, baseAxis);
-    const obj = {bone, qBind, axis};
-    JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
-    return obj;
-  }
-  function applyPairAngle(key,cfg,deg){
-    const bind = resolveBind(key,cfg); if (!bind) return;
-    const {bone,qBind,axis} = bind;
-    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(0,0,0,"XYZ");
-    if (axis==='x') e.set(rad,0,0,"XYZ");
-    if (axis==='y') e.set(0,rad,0,"XYZ");
-    if (axis==='z') e.set(0,0,rad,"XYZ");
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    bone.quaternion.copy(qBind).multiply(qDelta);
-  }
-
-  /* ===== Joint definitions (same set used for ROM & control) ===== */
+  /* ===== Joint definitions (used for menu + ROM) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'Sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'Frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
@@ -438,33 +294,26 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion', side:'r', plane:'Frontal',   neutral:0, min:-20,  max:35, hints:[/foot|calcaneus|heel|metatars/i]},
   ];
 
-  /* ===== ROM Reference (Upper/Lower only) ===== */
-  function buildRomList(which){
-    const list = (which==='upper') ? UPPER : LOWER;
-    romNav.innerHTML = '';
-    list.forEach((item, i)=>{
-      const btn = document.createElement('button');
-      btn.textContent = item.pair;
-      btn.onclick = ()=> selectRomItem(i, list);
-      romNav.appendChild(btn);
-    });
-    selectRomItem(0, list);
-  }
-  function selectRomItem(idx, list){
-    const buttons = [...romNav.querySelectorAll('button')];
-    buttons.forEach(b=>b.classList.remove('on'));
-    if (buttons[idx]) buttons[idx].classList.add('on');
-    const item = list[idx];
-    const min = item.min, max = item.max;
-    const side = (item.side||'—').toUpperCase();
-    const plane = item.plane || '—';
-    romContent.innerHTML = `
-      <h3>${item.pair} <span class="badge">${plane} plane</span> <span class="badge">Side: ${side}</span></h3>
-      <table>
-        <tr><td>Expected ROM (°)</td><td>${min}&nbsp;to&nbsp;${max}</td></tr>
-        <tr><td>Notes</td><td>&nbsp;</td></tr>
-      </table>
-    `;
+  /* ===== ROM modal content (single column; collapsible) ===== */
+  function renderRom(){
+    const makeItem = (obj)=>{
+      const el = document.createElement('details');
+      el.className = 'rom-item';
+      const side = (obj.side||'—').toUpperCase();
+      el.innerHTML = \`
+        <summary>\${obj.pair} <span class="badge">\${obj.plane} plane</span> <span class="badge">Side: \${side}</span></summary>
+        <div class="inner">
+          <div class="rom-row"><div class="rom-head">Expected ROM (°)</div><div>\${obj.min} to \${obj.max}</div></div>
+        </div>\`;
+      return el;
+    };
+    romScroll.innerHTML = '';
+    const title = document.createElement('div');
+    title.style.padding = '0 4px 6px 4px';
+    title.style.fontWeight = '700';
+    title.textContent = 'All Motions';
+    romScroll.appendChild(title);
+    [...UPPER, ...LOWER].forEach(obj => romScroll.appendChild(makeItem(obj)));
   }
 
   /* ===== UI: actions ===== */
@@ -511,59 +360,80 @@ optgroup{color:#9fb0c9;font-style:normal}
     zeroAction.disabled = false;
   }
 
-  const segUpperBtn = segUpper, segLowerBtn = segLower;
   let CURRENT = UPPER;
-
-  segUpperBtn.onclick = ()=>{ CURRENT = UPPER; segUpperBtn.classList.add('on'); segLowerBtn.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
-  segLowerBtn.onclick = ()=>{ CURRENT = LOWER; segLowerBtn.classList.add('on'); segUpperBtn.classList.remove('on'); fillActionMenu(); };
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
+  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   actionSel.addEventListener("change", ()=>syncActionUI(true));
+
+  /* ===== Minimal motion apply (kept simple) ===== */
+  const JOINT_BIND = new Map();
+  const EXCLUDE = /(pelvis|root|spine|clavicle|scapula)/i;
+  function sideRegex(side){
+    if (!side) return [/.*/];
+    if (side==='l'){ return [/\.l\b/i, /_l\b/i, /\bleft\b/i, /mixamorig:.*left/i]; }
+    return [/\.r\b/i, /_r\b/i, /\bright\b/i, /mixamorig:.*right/i];
+  }
+  function findBoneBy(cfg){
+    if (!skeleton) return null;
+    const names = skeleton.bones.map(b=>b.name.toLowerCase());
+    const sideREs = sideRegex(cfg.side);
+    for (const cand of cfg.hints){
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (!sideREs.some(r=>r.test(names[i]))) continue;
+        if (cand.test(names[i])) return skeleton.bones[i];
+      }
+    }
+    return null;
+  }
+  function resolveBind(key,cfg){
+    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
+    const bone = findBoneBy(cfg);
+    if (!bone){ console.warn('No bind for', key); return null; }
+    const axis = ({Sagittal:'x', Frontal:'z', Transverse:'y'})[cfg.plane] || 'x';
+    const qBind = bone.quaternion.clone();
+    const o = {bone, axis, qBind};
+    JOINT_BIND.set(key,o);
+    return o;
+  }
+  function applyPairAngle(key,cfg,deg){
+    const o = resolveBind(key,cfg); if(!o) return;
+    const e = new THREE.Euler(0,0,0,"XYZ");
+    const r = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+    if (o.axis==='x') e.set(r,0,0,"XYZ");
+    if (o.axis==='y') e.set(0,r,0,"XYZ");
+    if (o.axis==='z') e.set(0,0,r,"XYZ");
+    const q = new THREE.Quaternion().setFromEuler(e);
+    o.bone.quaternion.copy(o.qBind).multiply(q);
+  }
   actionDeg.addEventListener("input", ()=>{
     const key = actionSel.value; const cfg = cfgFromKey(key);
     if (cfg) applyPairAngle(key,cfg, parseFloat(actionDeg.value)||0);
   });
-  zeroAction.onclick = ()=>{
-    const key = actionSel.value; const cfg = cfgFromKey(key);
-    if (!cfg) return;
-    actionDeg.value = "0";
-    applyPairAngle(key,cfg, 0);
-  };
+  zeroAction.onclick = ()=>{ const key = actionSel.value; const cfg = cfgFromKey(key); if (!cfg) return; actionDeg.value="0"; applyPairAngle(key,cfg,0); };
 
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
-  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+  /* ===== Populate bones (minimal) ===== */
+  function populateBones(){
+    boneSel.innerHTML = "";
+    if (!skeleton) { const o=document.createElement('option'); o.value=""; o.textContent="(No skeleton)"; boneSel.appendChild(o); return; }
+    skeleton.bones.forEach((b,i)=>{
+      const o=document.createElement('option'); o.value=String(i); o.textContent=b.name||`Bone ${i}`; boneSel.appendChild(o);
+    });
+  }
+  boneSel.onchange = ()=>{}; // keep quiet; advanced bone is optional
 
-  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
-    if (!model) return;
-    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-    model.scale.setScalar(parseInt(ms.value,10)/100);
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-  }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="50"; myaw.value="0";
-    if (model){
-      model.position.set(0,0,0.6);
-      model.scale.setScalar(0.5);
-      model.rotation.y = 0;
-    }
-    groundSnap();
-  };
-
-  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
-
-  /* ===== Load model (unchanged from your working logic) ===== */
+  /* ===== Load model ===== */
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
-    initialBoneRot.clear(); JOINT_BIND.clear();
     boneSel.innerHTML = "";
   }
   function loadModel(){
     msg.textContent = "Loading…"; log("Loading model...");
     clearModel();
-    const url = MODEL_URL;
     loader.load(
-      url,
+      MODEL_URL,
       (gltf) => {
         model = gltf.scene;
         model.traverse(o => {
@@ -572,15 +442,12 @@ optgroup{color:#9fb0c9;font-style:normal}
         });
         scene.add(model);
         model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-        model.scale.setScalar(parseInt(ms.value,10)/100);
+        model.scale.setScalar(parseInt(ms.value,10)/100); // default 62%
         model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-        groundSnap(); 
+        groundSnap();
         msg.textContent = "✅ Model loaded";
         log("Model load OK");
         populateBones();
-        detectRigProfile();
-        CURRENT = UPPER;
-        segUpperBtn.classList.add('on'); segLowerBtn.classList.remove('on');
         fillActionMenu();
       },
       (xhr) => {
@@ -595,11 +462,22 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   loadModel();
 
-  /* ===== ROM Modal wiring (Upper/Lower only) ===== */
-  romBtn.onclick = ()=>{ romModal.classList.add('on'); tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
+  // Reset model uses +25% scale too
+  resetModel.onclick = ()=>{
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="62"; myaw.value="0";
+    if (model){
+      model.position.set(0,0,0.6);
+      model.scale.setScalar(0.62);
+      model.rotation.y = 0;
+    }
+    groundSnap();
+  };
+
+  reloadBtn.onclick = ()=>{ MODEL_URL = (new URL(location.href)).searchParams.get("model") || MODEL_URL; loadModel(); };
+
+  /* ===== ROM Modal wiring (single column) ===== */
+  romBtn.onclick = ()=>{ renderRom(); romModal.classList.add('on'); };
   romClose.onclick = ()=> romModal.classList.remove('on');
-  tabUpper.onclick = ()=>{ tabUpper.classList.add('on'); tabLower.classList.remove('on'); buildRomList('upper'); };
-  tabLower.onclick = ()=>{ tabLower.classList.add('on'); tabUpper.classList.remove('on'); buildRomList('lower'); };
 
   /* ===== Render ===== */
   addEventListener("resize", () => {
