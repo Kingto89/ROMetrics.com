@@ -34,7 +34,7 @@ summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
 #msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
 optgroup{color:#9fb0c9;font-style:normal}
-.modal{position:fixed;right:16px;bottom:16px;width:min(560px,92vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
+.modal{position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
 .modal.on{display:flex}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
 .modal .top h4{margin:0;font-size:14px}
@@ -652,9 +652,9 @@ function resolveBind(key,cfg){
       const el = document.createElement('details');
       el.className = 'rom-item';
       const side = (m.side||'—').toUpperCase();
-      el.innerHTML = `<summary>${m.pair} <span class="badge">${m.plane} plane</span></summary>
+      el.innerHTML = `<summary>${m.pair}</summary>
         <div class="inner">
-          <div class="rom-row"><div class="rom-head">Expected ROM (°)</div><div>${m.min} to ${m.max}</div></div>
+          <div class="rom-row"><div class="rom-head">Expected ROM (°)</div><div>${m.min} to ${m.max}</div></div><div class="rom-row"><div class="rom-head">Plane</div><div><span class="badge">${m.plane} plane</span></div></div>
         </div>`;
       body.appendChild(el);
     });
