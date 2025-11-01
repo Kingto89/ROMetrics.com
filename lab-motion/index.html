@@ -89,7 +89,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         <button id="segLower">Lower Body</button>
       </div>
 
-      <label>Action (Paired Motion)</label>
+      <label>Motion</label>
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
@@ -352,43 +352,31 @@ const romBtn = document.getElementById("romBtn");
   // Return the local axis to drive for a given motion key under a profile
   
 function axisFor(profile, motionKey, defaultAxis){
-  // --- Shoulder-only override (profile-agnostic) ---
-  // Flexion/Extension -> sagittal (local X), Abduction/Adduction -> frontal (local Z)
-  if (motionKey === 'sh_fe_l' || motionKey === 'sh_fe_r') return 'x';
-  if (motionKey === 'sh_aa_l' || motionKey === 'sh_aa_r') return 'z';
+  // Hard overrides for known motions to guarantee correct planes:
+  // - Shoulder Flex/Ext  -> sagittal (local X)
+  // - Shoulder Abd/Add   -> frontal  (local Z)
+  if (motionKey==='sh_fe_l' || motionKey==='sh_fe_r') return 'x';
+  if (motionKey==='sh_aa_l' || motionKey==='sh_aa_r') return 'z';
 
-  // Existing behavior preserved for everything else:
   if (profile==='mixamo'){
     const map = {
-      // Shoulder (GH)
       sh_fe_l:'x', sh_fe_r:'x',
       sh_aa_l:'z', sh_aa_r:'z',
       sh_irer_l:'y', sh_irer_r:'y',
-
-      // Elbow (humeroulnar)
       el_fe_l:'x', el_fe_r:'x',
-
-      // Forearm
       fa_ps_l:'y', fa_ps_r:'y',
-
-      // Wrist
       wr_fe_l:'x', wr_fe_r:'x',
       wr_ru_l:'z', wr_ru_r:'z',
-
-      // Hip
       hip_fe_l:'x', hip_fe_r:'x',
       hip_aa_l:'z', hip_aa_r:'z',
       hip_irer_l:'y', hip_irer_r:'y',
-
-      // Knee
       knee_fe_l:'x', knee_fe_r:'x',
-
-      // Ankle / foot
       ankle_dfpf_l:'x', ankle_dfpf_r:'x',
       foot_invev_l:'z', foot_invev_r:'z'
     };
     if (motionKey in map) return map[motionKey];
   }
+  // Fallback: plane-based
   return defaultAxis;
 }
 ;
