@@ -89,7 +89,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         <button id="segLower">Lower Body</button>
       </div>
 
-      <label>Motion</label>
+      <label>Action (Paired Motion)</label>
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
@@ -637,41 +637,13 @@ function resolveBind(key,cfg){
 };
   reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
 // ROM modal
-  
-  // ROM modal -> single column collapsible
-  romBtn.onclick = ()=>{
+  romBtn.onclick = async ()=>{
     romModal.classList.add('on');
-    // Head-to-feet ordering
-    const byKey = {};
-    [...UPPER, ...LOWER].forEach(m => byKey[m.key] = m);
-    const orderKeys = [
-      'cerv_fe','cerv_lat','cerv_rot',
-      'trunk_fe','trunk_lat','trunk_rot',
-      'sh_fe_l','sh_fe_r','sh_aa_l','sh_aa_r','sh_irer_l','sh_irer_r',
-      'el_fe_l','el_fe_r','fa_ps_l','fa_ps_r',
-      'wr_fe_l','wr_fe_r','wr_ru_l','wr_ru_r',
-      'hip_fe_l','hip_fe_r','hip_aa_l','hip_aa_r','hip_irer_l','hip_irer_r',
-      'knee_fe_l','knee_fe_r',
-      'ankle_dfpf_l','ankle_dfpf_r',
-      'foot_invev_l','foot_invev_r'
-    ];
-    const motions = orderKeys.map(k => byKey[k]).filter(Boolean);
-    const body = document.getElementById('romBody');
-    body.innerHTML = '';
-    const title = document.createElement('div');
-    title.style.fontWeight='700'; title.style.margin='0 0 6px 2px';
-    title.textContent = 'All Motions';
-    body.appendChild(title);
-    motions.forEach(m=>{
-      const el = document.createElement('details');
-      el.className = 'rom-item';
-      const side = (m.side||'—').toUpperCase();
-      el.innerHTML = `<summary>${m.pair}</summary>
-        <div class="inner">
-          <div class="rom-row"><div class="rom-head">Expected ROM (°)</div><div>${m.min} to ${m.max}</div></div><div class="rom-row"><div class="rom-head">Plane</div><div><span class="badge">${m.plane} plane</span></div></div>
-        </div>`;
-      body.appendChild(el);
-    });
+    try{
+      const res = await fetch('./ROM_reference.md?'+Date.now());
+      const md = await res.text();
+      romBody.innerHTML = md.replace(/^\- (.*)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    }catch(e){ romBody.textContent='Failed to load ROM_reference.md'; }
   };
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
 
