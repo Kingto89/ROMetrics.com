@@ -648,28 +648,6 @@ function resolveBind(key,cfg){
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
 
   /* ===== Load model ===== */
-
-  /* ===== Anatomical Position Helper (no load behavior changes) ===== */
-  function setAnatomicalPose(){
-    const want = (key,deg)=> {
-      const cfg = cfgFromKey(key);
-      if (cfg) applyPairAngle(key,cfg,deg);
-    };
-// Shoulders slightly adducted (~–15°) to rest at sides
-want('sh_fe_l', 0);
-want('sh_fe_r', 0);
-want('sh_aa_l', -15);
-want('sh_aa_r', -15);
-
-// Keep rotation neutral, elbows extended, palms forward
-want('sh_irer_l', 0);
-want('sh_irer_r', 0);
-want('el_fe_l', 0);
-want('el_fe_r', 0);
-want('fa_ps_l', 90);
-want('fa_ps_r', 90);
-}
-
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
@@ -701,8 +679,6 @@ msg.textContent = "✅ Model loaded";
         // Force neutral start
         try{   }catch(e){}
         fillActionMenu();
-        // Apply anatomical position (palms forward)
-        setAnatomicalPose();
 },
       (xhr) => {
         msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
