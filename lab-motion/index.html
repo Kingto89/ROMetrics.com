@@ -42,14 +42,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 .modal .body{padding:12px;overflow:auto}
 
 
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.45)); cursor:grab; transform-origin:center center; }
-  position:absolute; right:-8px; bottom:-8px; font:700 10px/1 system-ui,Segoe UI,Roboto;
-  color:#0b1220; background:#f59e0b; border:1px solid rgba(0,0,0,.35);
-  border-radius:999px; padding:3px 6px; transform:translate(50%,50%); pointer-events:none;
-  box-shadow:0 2px 6px rgba(0,0,0,.45);
-}
-
-
 /* --- ROM single-column collapsible list --- */
 .rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
 .rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
@@ -68,7 +60,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
         <button id="romBtn" class="mini">📘 ROM Reference</button>
-        <!-- ADD-ONLY: Anatomical Position button -->
+        <!-- ADDITION ONLY: anatomic pose button -->
         <button id="anatomicBtn" class="mini">Anatomic Position</button>
       </div>
 
@@ -169,6 +161,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   const romModal = document.getElementById("romModal");
   const romBody = document.getElementById("romBody");
   const romClose = document.getElementById("romClose");
+  const anatomicBtn = document.getElementById("anatomicBtn"); // <-- added
 
   const postureSel = document.getElementById("postureSel");
   const applyPosture = document.getElementById("applyPosture");
@@ -194,9 +187,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ms = document.getElementById("ms");
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
-
-  /* ADD-ONLY: wire the new button */
-  const anatomicBtn = document.getElementById("anatomicBtn");
 
   /* ===== Draggable panel ===== */
   (function(){
@@ -350,7 +340,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         sh_fe_l:'x', sh_fe_r:'x',
         sh_aa_l:'z', sh_aa_r:'z',
         sh_irer_l:'y', sh_irer_r:'y',
-        // Elbow (humeroulnar)
+        // Elbow
         el_fe_l:'x', el_fe_r:'x',
         // Forearm
         fa_ps_l:'y', fa_ps_r:'y',
@@ -394,6 +384,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!skeleton) return null;
     const names = skeleton.bones.map(b=>b.name.toLowerCase());
     const sideREs = sideRegex(cfg.side);
+    // First pass: must match side (if specified) AND hint
     for (const cand of cfg.hints){
       for (let i=0;i<names.length;i++){
         if (EXCLUDE.test(names[i])) continue;
@@ -401,6 +392,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         if (cand.test(names[i])) return skeleton.bones[i];
       }
     }
+    // Second pass (only when no side specified): hint only
     if (!cfg.side){
       for (const cand of cfg.hints){
         for (let i=0;i<names.length;i++){
@@ -414,7 +406,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const JOINT_BIND = new Map();
 
-  /* ===== Neutral calibration helpers (NEW) ===== */
+  /* ===== Neutral calibration helpers ===== */
   function axisCharToVec(axis){
     if (axis==='x') return new THREE.Vector3(1,0,0);
     if (axis==='y') return new THREE.Vector3(0,1,0);
@@ -435,7 +427,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return angle;
   }
 
-  /* ===== Bind resolver with neutral shift (UPDATED) ===== */
+  /* ===== Bind resolver with neutral shift ===== */
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     let bone = findBoneBy(cfg);
@@ -462,7 +454,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return obj;
   }
 
-  /* ===== Apply motion using calibrated neutral (UPDATED) ===== */
+  /* ===== Apply motion using calibrated neutral ===== */
   function applyPairAngle(key,cfg,sliderDeg){
     const bind = resolveBind(key,cfg);
     if (!bind) return;
@@ -478,78 +470,24 @@ optgroup{color:#9fb0c9;font-style:normal}
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
 
-  /* === ADD-ONLY: Anatomical Position helper (safe, no throws) === */
-function setAnatomicPose(){
-  if (!skeleton) { log("No skeleton yet — load a rigged model first."); return; }
-
-  // Use real configs (with hints) so bones can be found
-  const S = (key, deg) => {
-    const cfg = cfgAny(key);
-    if (!cfg) { log(`No cfg for ${key}`); return; }
-    try { applyPairAngle(key, cfg, deg); } catch(e){}
-  };
-
-  // Trunk & cervical neutral
-  S('trunk_fe',   0);
-  S('trunk_lat',  0);
-  S('trunk_rot',  0);
-  S('cerv_fe',    0);
-  S('cerv_lat',   0);
-  S('cerv_rot',   0);
-
-  // Shoulders: arms at sides; palms forward path
-  S('sh_fe_l',    0);
-  S('sh_fe_r',    0);
-  S('sh_irer_l',  0);
-  S('sh_irer_r',  0);
-  // Adduct from the T-pose to sides
-  S('sh_aa_l',   -90);
-  S('sh_aa_r',    90);
-
-  // Elbows extended
-  S('el_fe_l',    0);
-  S('el_fe_r',    0);
-
-  // Forearms supinated (palms forward)
-  S('fa_ps_l',   90);
-  S('fa_ps_r',   90);
-
-  // Wrists neutral
-  S('wr_fe_l',    0);  S('wr_ru_l', 0);
-  S('wr_fe_r',    0);  S('wr_ru_r', 0);
-
-  // Lower limbs neutral; feet parallel
-  S('hip_fe_l',   0);  S('hip_aa_l', 0);  S('hip_irer_l', 0);
-  S('hip_fe_r',   0);  S('hip_aa_r', 0);  S('hip_irer_r', 0);
-  S('knee_fe_l',  0);  S('knee_fe_r', 0);
-  S('ankle_dfpf_l',0); S('ankle_dfpf_r',0);
-  S('foot_invev_l',0); S('foot_invev_r',0);
-
-  log("Applied Anatomical Position");
-}
-
   /* ===== Joint definitions (paired) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
     {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine|chest|thor/i]},
-
     {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/neck|cspine|head/i]},
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/neck|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/neck|cspine|head/i]},
-
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-180, max:40,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-180, max:40,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
-
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
-
     {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',       side:'l', plane:'frontal',   neutral:0, min:-20,  max:40,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
@@ -563,10 +501,8 @@ function setAnatomicPose(){
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-45,  max:30,  hints:[/upper.?leg|thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/upper.?leg|thigh|femur/i]},
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/upper.?leg|thigh|femur/i]},
-
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:5,   hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:5,   hints:[/lower.?leg|calf|shin|tibia|fibula/i]},
-
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|heel|metatars/i]},
@@ -620,6 +556,7 @@ function setAnatomicPose(){
     zeroAction.disabled = false;
   }
 
+  /* ===== Wire UI ===== */
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
@@ -656,6 +593,7 @@ function setAnatomicPose(){
     groundSnap();
   };
   reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
+
   // ROM modal
   romBtn.onclick = async ()=>{
     romModal.classList.add('on');
@@ -696,7 +634,7 @@ function setAnatomicPose(){
         detectRigProfile();
         CURRENT = UPPER;
         segUpper.classList.add('on'); segLower.classList.remove('on');
-        try{   }catch(e){}
+        try{}catch(e){}
         fillActionMenu();
       },
       (xhr) => {
@@ -710,6 +648,56 @@ function setAnatomicPose(){
     );
   }
   loadModel();
+
+  /* ===== Helper to fetch any config by key (ADDED) ===== */
+  function cfgAny(key){
+    return [...UPPER, ...LOWER].find(x => x.key === key) || null;
+  }
+
+  /* ===== Anatomical position (ADDED) ===== */
+  function setAnatomicPose(){
+    if (!skeleton){ log("No skeleton — load a rigged model first."); return; }
+
+    const S = (key, deg) => {
+      const cfg = cfgAny(key);
+      if (!cfg){ log(`No cfg for ${key}`); return; }
+      applyPairAngle(key, cfg, deg);
+    };
+
+    // Neutral trunk & cervical
+    S('trunk_fe',0); S('trunk_lat',0); S('trunk_rot',0);
+    S('cerv_fe',0);  S('cerv_lat',0);  S('cerv_rot',0);
+
+    // Arms at sides, palms forward
+    S('sh_fe_l',0); S('sh_fe_r',0);
+    S('sh_irer_l',0); S('sh_irer_r',0);
+    S('sh_aa_l',-90); S('sh_aa_r', 90);
+
+    // Elbows extended
+    S('el_fe_l',0); S('el_fe_r',0);
+
+    // Forearms supinated (palms forward)
+    S('fa_ps_l',90); S('fa_ps_r',90);
+
+    // Wrists neutral
+    S('wr_fe_l',0); S('wr_ru_l',0);
+    S('wr_fe_r',0); S('wr_ru_r',0);
+
+    // Lower limbs neutral; feet parallel
+    S('hip_fe_l',0); S('hip_aa_l',0); S('hip_irer_l',0);
+    S('hip_fe_r',0); S('hip_aa_r',0); S('hip_irer_r',0);
+    S('knee_fe_l',0); S('knee_fe_r',0);
+    S('ankle_dfpf_l',0); S('ankle_dfpf_r',0);
+    S('foot_invev_l',0); S('foot_invev_r',0);
+
+    log("Applied anatomical position.");
+  }
+
+  // Wire the button (ADDED)
+  anatomicBtn.onclick = ()=>{
+    log("Anatomic button clicked");
+    setAnatomicPose();
+  };
 
   /* ===== Render ===== */
   addEventListener("resize", () => {
