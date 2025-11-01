@@ -82,6 +82,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         <button id="applyPosture" class="mini" style="flex:0 0 34%">Apply</button>
       </div>
       <div class="row"><button id="zeroAll" class="mini">Zero All Joints</button></div>
+<div class="row"><button id="savePose" class="mini">Save Pose (Debug)</button></div>
 
       <label>Body Region</label>
       <div class="seg">
@@ -158,6 +159,20 @@ optgroup{color:#9fb0c9;font-style:normal}
   </div>
 
   <div id="msg">Loading…</div>
+  <div class="modal" id="poseModal" aria-modal="true" role="dialog">
+    <div class="top">
+      <h4>Saved Pose (Debug)</h4>
+      <button class="x" id="poseClose" aria-label="Close">✕</button>
+    </div>
+    <div class="body" style="gap:8px; display:flex; flex-direction:column;">
+      <textarea id="poseJson" style="width:100%;height:260px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px;padding:8px;font-size:12px;"></textarea>
+      <div class="row">
+        <button id="copyPose" class="mini">Copy JSON</button>
+        <button id="downloadPose" class="mini">Download JSON</button>
+      </div>
+    </div>
+  </div>
+
   <canvas id="c"></canvas>
 
   <script type="module">
@@ -706,5 +721,75 @@ msg.textContent = "✅ Model loaded";
 
 
   </script>
+  /* ===== DEBUG (non-invasive): Pose save utilities ===== */
+  function measurePairAngle(key, cfg){
+    try{
+      const bind = resolveBind(key, cfg);
+      if (!bind) return null;
+      const {bone, axis, neutralShiftDeg} = bind;
+      const parent = bone.parent && bone.parent.isBone ? bone.parent : null;
+      const qRel = parent ? parent.quaternion.clone().invert().multiply(bone.quaternion) : bone.quaternion.clone();
+      const v = new THREE.Vector3(+(axis==='x'), +(axis==='y'), +(axis==='z')).normalize();
+      const angRad = twistAngleAroundAxis(qRel, v);
+      const angDeg = THREE.MathUtils.radToDeg(angRad);
+      const sliderDeg = angDeg - (cfg.neutral||0) - (neutralShiftDeg||0);
+      return Math.round(sliderDeg*10)/10;
+    }catch(e){ return null; }
+  }
+  function collectPoseJSON(){
+    const list = [...UPPER, ...LOWER];
+    const out = {};
+    for (const item of list){
+      const val = measurePairAngle(item.key, item);
+      if (val===null || isNaN(val)) continue;
+      out[item.key] = val;
+    }
+    out.__model = {
+      position: model ? {x:model.position.x, y:model.position.y, z:model.position.z} : null,
+      scale:    model ? model.scale.x : null,
+      yawDeg:   model ? THREE.MathUtils.radToDeg(model.rotation.y) : null
+    };
+    return out;
+  }
+  function showPoseModal(jsonObj){
+    const poseModal = document.getElementById('poseModal');
+    const poseJson = document.getElementById('poseJson');
+    if (!poseModal || !poseJson) return;
+    poseJson.value = JSON.stringify(jsonObj, null, 2);
+    poseModal.classList.add('on');
+  }
+  function wireDebugButtons(){
+    const savePoseBtn = document.getElementById('savePose');
+    if (!savePoseBtn) return;
+    savePoseBtn.addEventListener('click', ()=>{
+      const json = collectPoseJSON();
+      console.log('DEBUG Pose JSON:', json);
+      log('Saved pose (debug). See console or modal.');
+      showPoseModal(json);
+    });
+    const poseClose = document.getElementById('poseClose');
+    const copyPose = document.getElementById('copyPose');
+    const downloadPose = document.getElementById('downloadPose');
+    poseClose?.addEventListener('click', ()=> document.getElementById('poseModal').classList.remove('on'));
+    copyPose?.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(document.getElementById('poseJson').value);
+        msg.textContent = "✅ Pose JSON copied";
+      }catch(e){ msg.textContent = "⚠️ Copy failed"; }
+    });
+    downloadPose?.addEventListener('click', ()=>{
+      const blob = new Blob([document.getElementById('poseJson').value], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'anatomical_pose.json';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    });
+  }
+  // Defer wiring until after the page has fully set up
+  window.addEventListener('load', wireDebugButtons);
+
 </body>
 </html>
