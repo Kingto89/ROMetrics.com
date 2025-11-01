@@ -67,10 +67,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="content">
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
-        <button id="pickLocal" class="mini">Load Local .glb</button>
 <button id="romBtn" class="mini">📘 ROM Reference</button>
       </div>
-      <input id="fileLocal" type="file" accept=".glb,.gltf" style="display:none">
 
       
 <label>Posture</label>
@@ -148,13 +146,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label>Event Log</label>
       <pre id="log"></pre>
-      <details open>
-        <summary>Diagnostics</summary>
-        <div class="rom-row"><div class="rom-head">Protocol</div><div id="diagProto"></div></div>
-        <div class="rom-row"><div class="rom-head">Page URL</div><div id="diagHref" style="word-break:break-all"></div></div>
-        <div class="rom-row"><div class="rom-head">Model URL</div><div id="diagModel" style="word-break:break-all"></div></div>
-      </details>
-
     </div>
   </div>
 
@@ -656,49 +647,6 @@ function resolveBind(key,cfg){
   };
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
 
-  
-  /* ===== Diagnostics + Local File Fallback (non-invasive) ===== */
-  function updateDiagnostics(){
-    const dP = document.getElementById('diagProto');
-    const dH = document.getElementById('diagHref');
-    const dM = document.getElementById('diagModel');
-    if (dP) dP.textContent = location.protocol;
-    if (dH) dH.textContent = location.href;
-    if (dM) dM.textContent = (typeof MODEL_URL !== 'undefined') ? MODEL_URL : '(not set yet)';
-  }
-  window.addEventListener('load', updateDiagnostics);
-
-  const pickLocalBtn = document.getElementById('pickLocal');
-  const fileLocal = document.getElementById('fileLocal');
-  pickLocalBtn?.addEventListener('click', ()=> fileLocal?.click());
-  fileLocal?.addEventListener('change', ()=>{
-    const f = fileLocal.files && fileLocal.files[0];
-    if (!f) return;
-    try{
-      const blobURL = URL.createObjectURL(f);
-      MODEL_URL = blobURL;  // override only for this session
-      log('Using local file: ' + f.name);
-      msg.textContent = "Loading local model…";
-      loadModel();
-      updateDiagnostics();
-    }catch(e){
-      log('Local file error: ' + (e?.message||e));
-      msg.textContent = "⚠️ Local file error";
-    }
-  });
-
-  // Keep diagnostics current on reload
-  document.getElementById('reload')?.addEventListener('click', updateDiagnostics);
-
-  // If loader errors, nudge user about protocol
-  const _origLoadModel = loadModel;
-  // Wrap loadModel so we can also update diagnostics each time
-  loadModel = function(){
-    updateDiagnostics();
-    return _origLoadModel();
-  };
-
-
   /* ===== Load model ===== */
   function clearModel(){
     if (model) scene.remove(model);
@@ -737,7 +685,7 @@ msg.textContent = "✅ Model loaded";
       },
       (err) => {
         console.error(err);
-        msg.textContent = "⚠️ Load error — if you're opening this file directly, try using a local server (http://), or pick a local .glb with the button above.";
+        msg.textContent = "⚠️ Load error";
         log(`Error: ${err?.message || err}`);
       }
     );
@@ -758,5 +706,103 @@ msg.textContent = "✅ Model loaded";
 
 
   </script>
+
+  <!-- DEBUG OVERLAY (non-invasive) -->
+  <style>
+    #dbgOverlay{position:fixed;right:12px;bottom:12px;z-index:9999;background:rgba(8,13,26,.96);
+      border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);box-shadow:0 8px 28px rgba(0,0,0,.4);
+      width:min(420px,50vw);max-height:70vh;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
+    #dbgOverlay .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628;color:#dbe7ff}
+    #dbgOverlay .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
+    #dbgOverlay .body{padding:10px;display:flex;flex-direction:column;gap:8px}
+    #dbgOverlay textarea{width:100%;height:220px;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:8px;padding:8px;font-size:12px}
+    #dbgFab{position:fixed;right:12px;bottom:12px;z-index:9998;background:#1f2c43;color:#fff;border:1px solid #47618e;border-radius:999px;
+      padding:10px 14px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  </style>
+  <div id="dbgFab" title="Open Debug">🐧 Debug</div>
+  <div id="dbgOverlay" style="display:none">
+    <div class="top"><strong>Pose Debug</strong><button class="x" id="dbgClose">✕</button></div>
+    <div class="body">
+      <div style="display:flex;gap:8px">
+        <button id="dbgSave" class="mini" style="flex:1;border:1px solid #334155;border-radius:10px;background:#142033;color:#cbd5e1;padding:8px 10px">Save Pose JSON</button>
+        <button id="dbgCopy" class="mini" style="flex:1;border:1px solid #334155;border-radius:10px;background:#142033;color:#cbd5e1;padding:8px 10px">Copy</button>
+        <button id="dbgDl" class="mini" style="flex:1;border:1px solid #334155;border-radius:10px;background:#142033;color:#cbd5e1;padding:8px 10px">Download</button>
+      </div>
+      <textarea id="dbgText" placeholder="Click Save Pose JSON after positioning the model..."></textarea>
+      <small id="dbgHint" style="color:#9fb0c9">Tip: Use your existing sliders (paired motion or bone) to set anatomical position, then click <em>Save Pose JSON</em>.</small>
+    </div>
+  </div>
+  <script type="module">
+    // Non-invasive: waits until everything exists, then wires a tiny overlay
+    function dbgInit(){
+      // Required helpers from your script must exist
+      if (typeof resolveBind!=='function' || typeof twistAngleAroundAxis!=='function') return;
+      // Build collectors
+      function measurePairAngle(key, cfg){
+        try{
+          const bind = resolveBind(key, cfg);
+          if (!bind) return null;
+          const {bone, axis, neutralShiftDeg} = bind;
+          const parent = bone.parent && bone.parent.isBone ? bone.parent : null;
+          const qRel = parent ? parent.quaternion.clone().invert().multiply(bone.quaternion) : bone.quaternion.clone();
+          const v = new THREE.Vector3(+(axis==='x'), +(axis==='y'), +(axis==='z')).normalize();
+          const angRad = twistAngleAroundAxis(qRel, v);
+          const angDeg = THREE.MathUtils.radToDeg(angRad);
+          const sliderDeg = angDeg - (cfg.neutral||0) - (neutralShiftDeg||0);
+          return Math.round(sliderDeg*10)/10;
+        }catch(e){ return null; }
+      }
+      function collectPoseJSON(){
+        // UPPER / LOWER are defined by your index; if not ready, try again later
+        if (typeof UPPER==='undefined' || typeof LOWER==='undefined') return {};
+        const list = [...UPPER, ...LOWER];
+        const out = {};
+        for (const item of list){
+          const val = measurePairAngle(item.key, item);
+          if (val===null || isNaN(val)) continue;
+          out[item.key] = val;
+        }
+        out.__model = {
+          position: (typeof model!=='undefined' && model) ? {x:model.position.x, y:model.position.y, z:model.position.z} : null,
+          scale:    (typeof model!=='undefined' && model) ? model.scale.x : null,
+          yawDeg:   (typeof model!=='undefined' && model) ? THREE.MathUtils.radToDeg(model.rotation.y) : null
+        };
+        return out;
+      }
+      // UI wiring
+      const fab = document.getElementById('dbgFab');
+      const box = document.getElementById('dbgOverlay');
+      const close = document.getElementById('dbgClose');
+      const save = document.getElementById('dbgSave');
+      const copy = document.getElementById('dbgCopy');
+      const dl = document.getElementById('dbgDl');
+      const ta = document.getElementById('dbgText');
+      fab?.addEventListener('click', ()=> box.style.display='flex');
+      close?.addEventListener('click', ()=> box.style.display='none');
+      save?.addEventListener('click', ()=>{
+        const json = collectPoseJSON();
+        ta.value = JSON.stringify(json, null, 2);
+        console.log('DEBUG Pose JSON:', json);
+        (window.msg? window.msg : console).textContent = "✅ Pose captured";
+      });
+      copy?.addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(ta.value); if (window.msg) msg.textContent="✅ Copied"; }catch(e){ if (window.msg) msg.textContent="⚠️ Copy failed";}
+      });
+      dl?.addEventListener('click', ()=>{
+        const blob = new Blob([ta.value||'{}'], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'anatomical_pose.json';
+        document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
+      });
+    }
+    // Try after load and again shortly in case skeleton binds are late
+    window.addEventListener('load', ()=>{
+      dbgInit();
+      setTimeout(dbgInit, 300);
+      setTimeout(dbgInit, 900);
+    });
+  </script>
+
 </body>
 </html>
