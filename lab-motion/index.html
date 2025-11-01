@@ -156,13 +156,14 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
   const reloadBtn = document.getElementById("reload");
   const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
+  const romBody = document.getElementById("romBody");
   const romClose = document.getElementById("romClose");
 
   const segUpper = document.getElementById("segUpper");
@@ -240,7 +241,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
   ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 
-  /* ===== Loader (unchanged) ===== */
+  /* ===== Loader ===== */
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
@@ -265,8 +266,9 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-  /* ===== Blender order for Advanced menu (Cervical → Toes) ===== */
+  /* ===== Blender order for Advanced menu ===== */
   const BLENDER_ORDER = [
+    "pelvis",
     "spine01","spine02","spine03",
     "neck","head",
     "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
@@ -282,12 +284,11 @@ optgroup{color:#9fb0c9;font-style:normal}
     "ring00_R","ring01_R","ring02_R","ring03_R",
     "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
     "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
-    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R",
-    "pelvis" /* placed last so it doesn't lead trunk */
+    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
   ];
   const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
 
-  /* ===== Populate bones (sorted & rigged) ===== */
+  /* ===== Populate bones (sorted) ===== */
   function populateBones(){
     boneSel.innerHTML = "";
     if (!skeleton) {
@@ -340,9 +341,9 @@ optgroup{color:#9fb0c9;font-style:normal}
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
-    log(\`Rig profile: \${RIG_PROFILE}\`);
+    log(`Rig profile: ${RIG_PROFILE}`);
   }
   function axisFor(profile, key, defAxis){
     if (profile==='mixamo'){
@@ -370,12 +371,13 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   /* ===== Bone finding ===== */
-  const EXCLUDE = /(pelvis|root|clavicle|scapula)/i; // allow spine*
+  // removed "spine" from exclude so trunk can bind
+  const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
-      ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
-      : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
+      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
   }
   function findBoneBy(cfg){
     if (!skeleton) return null;
@@ -383,8 +385,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const sideREs = sideRegex(cfg.side);
 
     const HINTS = cfg.hints || [];
-    // *** Prefer spine01 for trunk; neck for cervical (your requirement) ***
-    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/, /^spine02$/, /^spine03$/, /chest/, /upperchest/] :
+    // Try exact preferred spine chain first for trunk/cervical
+    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine03$/, /^spine02$/, /^spine01$/, /chest/, /upperchest/] :
                       (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
 
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
@@ -407,7 +409,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return null;
   }
 
-  /* ===== DRUJ proxy for wrist PS ===== */
+  /* ===== DRUJ proxy ===== */
   const DRUJ = { l:null, r:null };
   function ensureDRUJProxy(side){
     if (!skeleton) return null;
@@ -425,7 +427,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     hand.position.set(0,0,0); hand.quaternion.identity(); hand.scale.set(1,1,1);
     initialBoneRot.set(pivot, pivot.quaternion.clone());
     DRUJ[side] = { pivot };
-    log(\`Created DRUJ proxy for \${side.toUpperCase()}\`);
+    log(`Created DRUJ proxy for ${side.toUpperCase()}`);
     return DRUJ[side];
   }
 
@@ -437,13 +439,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
 
-    if (!bone) { log(\`No bind for \${key}\`); return null; }
+    if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
     const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
-    log(\`Bound \${key} → \${bone.name} (axis \${axis})\`);
+    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
     return obj;
   }
 
@@ -454,8 +456,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     b.qBind = b.bone.quaternion.clone();
   }
 
-  function applyPairAngleRaw(key,cfg,deg){
-    const bind = resolveBind(key,cfg); if (!bind) return false;
+  function applyPairAngle(key,cfg,deg){
+    const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
     const e = new THREE.Euler(
@@ -466,74 +468,17 @@ optgroup{color:#9fb0c9;font-style:normal}
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
-    return true;
-  }
-
-  /* ===== Simple self-collision guard (all actions) ===== */
-  const PREV_ANGLE = new Map(); // key -> last accepted signed angle
-  function getBoneWorldPos(name){
-    const b = skeleton?.bones.find(x => (x.name||'').toLowerCase() === name);
-    if (!b) return null;
-    const v = new THREE.Vector3();
-    b.getWorldPosition(v);
-    return v;
-  }
-  function approxTorsoCenter(){
-    // Use spine02 if present, else spine01
-    let c = getBoneWorldPos('spine02') || getBoneWorldPos('spine01');
-    if (!c){ c = new THREE.Vector3(0,1.0,0); }
-    return c.clone();
-  }
-  function approxScale(){
-    // crude heuristic by model height
-    if (!model) return 1;
-    const box = new THREE.Box3().setFromObject(model);
-    const h = Math.max(1e-3, box.max.y - box.min.y);
-    return h / 1.75; // ~1.75m reference
-  }
-  function wouldSelfIntersect(){
-    const s = approxScale();
-    const torsoC = approxTorsoCenter();
-    const torsoR = 0.18 * s; // conservative torso radius
-    const checkNames = [
-      'hand_l','hand_r','lowerarm_l','lowerarm_r',
-      'upperarm_l','upperarm_r',
-      'foot_l','foot_r','calf_l','calf_r','thigh_l','thigh_r'
-    ];
-    for (const nm of checkNames){
-      const p = getBoneWorldPos(nm);
-      if (!p) continue;
-      if (p.distanceTo(torsoC) < torsoR) return true;
-    }
-    return false;
-  }
-  function safeApplyPairAngle(key,cfg,signedDeg){
-    // apply candidate
-    const b = resolveBind(key,cfg); if (!b) return false;
-    const before = b.bone.quaternion.clone();
-    const okRaw = applyPairAngleRaw(key,cfg,signedDeg);
-    if (!okRaw) return false;
-
-    // collision test
-    if (wouldSelfIntersect()){
-      // revert and keep previous accepted
-      b.bone.quaternion.copy(before);
-      return false;
-    }
-    // accept + remember
-    PREV_ANGLE.set(key, signedDeg);
-    return true;
   }
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
-    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine01|spine02|spine03|chest|upperchest/i]},
-    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine01|spine02|spine03|chest|upperchest/i]},
-    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine01|spine02|spine03|chest|upperchest/i]},
+    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
+    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
+    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
 
-    {key:'cerv_fe',   pair:'Cervical — Flex / Ext',              side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
-    {key:'cerv_lat',  pair:'Cervical — Lateral Flex (L / R)',    side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
-    {key:'cerv_rot',  pair:'Cervical — Rotation (L / R)',        side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
@@ -648,7 +593,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       const og = document.createElement("optgroup"); og.label = group;
       catalog[group].forEach(entry=>{
         const opt = document.createElement("option");
-        opt.value = \`sep:\${entry.key}:\${entry.sign}:\${entry.max}\`;
+        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
         opt.textContent = entry.label;
         og.appendChild(opt);
       });
@@ -664,7 +609,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){ actionDeg.disabled=true; zeroAction.disabled=true; pairLabel.textContent="Angle (°)"; return; }
-    pairLabel.textContent = \`\${CURRENT_ACTION.label} — Angle (°)\`;
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
     actionDeg.min = "0";
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
@@ -674,7 +619,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
-  // === Anatomic preset (hidden tuner; Shift+Click to reveal) ===
+  // === Anatomic preset (preloaded; window hidden by default) ===
   const ANAT = { addL:-42, psL:-2, wpsL:-73 };
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
@@ -683,13 +628,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     setPair('fa_ps_r', -ANAT.psL);
     setPair('wr_ps_l', ANAT.wpsL);
     setPair('wr_ps_r', -ANAT.wpsL);
-    log(\`Anatomic baseline applied (L/R) → ADD \${ANAT.addL}/\${-ANAT.addL}, Forearm PS \${ANAT.psL}/\${-ANAT.psL}, Wrist PS \${ANAT.wpsL}/\${-ANAT.wpsL}\`);
+    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
   }
 
-  function handleActionSelect(){
-    applyAnatomicBaseline(); // actions always begin from anatomic
+  actionSel.addEventListener("change", ()=>{
+    // Apply baseline, then freeze so slider 0 = anatomic
+    applyAnatomicBaseline();
     CURRENT_ACTION = null;
-
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
       const [, key, signStr, maxStr] = v.split(":");
@@ -701,34 +646,24 @@ optgroup{color:#9fb0c9;font-style:normal}
         max: parseFloat(maxStr),
         label: actionSel.options[actionSel.selectedIndex].textContent
       };
-      PREV_ANGLE.set(key, 0);
-      freezeBindBaseFor(key,cfg);   // 0° = anatomic
-      actionDeg.disabled = false;
-      zeroAction.disabled = false;
+      freezeBindBaseFor(key,cfg);
       syncActionUI(true);
       return;
     }
     syncActionUI(true);
-  }
-  actionSel.addEventListener("change", handleActionSelect);
-  actionSel.addEventListener("input",  handleActionSelect);
+  });
 
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
-    if (actionDeg.disabled){ actionDeg.disabled = false; zeroAction.disabled = false; }
     const val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
     const signed = CURRENT_ACTION.sign * val;
-    const ok = safeApplyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    if (!ok){
-      const last = Math.abs(PREV_ANGLE.get(CURRENT_ACTION.key) || 0);
-      actionDeg.value = String(last);
-    }
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
 
   zeroAction.onclick = ()=>{
     if (!CURRENT_ACTION) return;
     actionDeg.value="0";
-    safeApplyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   };
 
   /* ===== Model load/reset/reload ===== */
@@ -757,19 +692,36 @@ optgroup{color:#9fb0c9;font-style:normal}
         detectRigProfile();
         fillActionMenu();
       },
-      (xhr) => { msg.textContent = xhr.lengthComputable ? \`Loading \${Math.round((xhr.loaded/xhr.total)*100)}%\` : "Loading…"; },
-      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(\`Error: \${err?.message || err}\`); }
+      (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
+      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
     );
   }
   loadModel();
+
   reloadBtn.onclick = ()=>{ loadModel(); };
+
+  /* ===== Advanced controls wiring ===== */
+  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
+  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
+    if (!model) return;
+    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+    model.scale.setScalar(parseInt(ms.value,10)/100);
+    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+  }));
+  zeroBone.onclick = zeroSelectedBone;
+  resetModel.onclick = ()=>{
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
+    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
+    groundSnap();
+  };
 
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
     if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
     const cfg = cfgFromKey(key);
-    if (cfg) safeApplyPairAngle(key,cfg,deg);
+    if (cfg) applyPairAngle(key,cfg,deg);
   }
 
   function getExactBoneByName(name){
@@ -783,7 +735,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!wrist){
       wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
     }
-    if (!wrist){ log(\`No wrist bone for \${side}\`); return; }
+    if (!wrist){ log(`No wrist bone for ${side}`); return; }
 
     const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
@@ -793,16 +745,11 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (axis==='x') e.set(rad,0,0,'XYZ');
     if (axis==='y') e.set(0,rad,0,'XYZ');
     if (axis==='z') e.set(0,0,rad,'XYZ');
-    const before = wrist.quaternion.clone();
     wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    if (wouldSelfIntersect()){
-      wrist.quaternion.copy(before);
-      return;
-    }
-    log(\`Wrist \${side.toUpperCase()} (hand_\${side}) PS = \${deg}°\`);
+    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
-  /* ===== Hidden Anatomic Tuner (dev-only, hidden by default) ===== */
+  /* ===== Hidden Anatomic Tuner (dev-only) ===== */
   let tunerEl = null, tunerVisible = false;
   function ensureAnatomicTuner(){
     if (tunerEl) return tunerEl;
@@ -812,7 +759,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       background:'rgba(8,13,26,.96)', border:'1px solid #334155',
       borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0',
       font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
-      display:'none'
+      display:'none'  // hidden by default
     });
     tunerEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -891,26 +838,9 @@ optgroup{color:#9fb0c9;font-style:normal}
     tunerEl.style.display = tunerVisible ? 'block' : 'none';
   }
 
-  btnAnatomic.addEventListener('click',(e)=>{
+  btnAnatomic.onclick = (e)=>{
     applyAnatomicBaseline();
-    log('✅ Anatomic baseline applied');
-    if (e.shiftKey) { toggleTuner(true); } // reveal ONLY on Shift+Click
-  });
-
-  /* ===== Advanced controls wiring ===== */
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
-  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
-  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
-    if (!model) return;
-    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-    model.scale.setScalar(parseInt(ms.value,10)/100);
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-  }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
-    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
-    groundSnap();
+    if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
   };
 
   /* ===== ROM modal wiring ===== */
