@@ -564,20 +564,123 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   loadModel();
 
-  /* ===== Anatomic Position — HANDS ONLY ===== */
-  function setPair(key,deg){ const cfg=cfgFromKey(key); if (cfg) applyPairAngle(key,cfg,deg); }
-  function poseAnatomicHandsOnly(){
-    if (!skeleton){ log("No skeleton"); return; }
-    // 1) Slight shoulder adduction (~15°) to bring A-pose arms a bit closer to sides.
-    setPair('sh_aa_l', -15);
-    setPair('sh_aa_r', -15);
-    // 2) Supinate forearms so palms face forward.
-    //    Use aliases so it also works if you pick “Wrist — Pronation/Supination”.
-    setPair('fa_ps_l', 90);
-    setPair('fa_ps_r', 90);
-    log("✅ Anatomic (hands-only): shoulders adduct 15°, forearms supinated");
+/* ===== Anatomic Position — HANDS ONLY (Tunable + Mirror) ===== */
+function setPair(key,deg){ const cfg=cfgFromKey(key); if (cfg) applyPairAngle(key,cfg,deg); }
+
+let tunerEl = null;
+function ensureAnatomicTuner(){
+  if (tunerEl) return tunerEl;
+
+  // build a tiny floating panel
+  tunerEl = document.createElement('div');
+  Object.assign(tunerEl.style,{
+    position:'fixed', right:'16px', top:'16px', zIndex:40,
+    background:'rgba(8,13,26,.96)', border:'1px solid #334155',
+    borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0',
+    font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)'
+  });
+  tunerEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <strong style="font-size:13px;">Anatomic Tuner</strong>
+      <span style="margin-left:auto;opacity:.7">hands only</span>
+      <button id="anatX" title="Close" style="margin-left:6px;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+
+    <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
+    <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+      <input id="addL" type="number" step="1" value="-15">
+      <input id="addR" type="number" step="1" value="-15">
+    </div>
+
+    <div style="margin:6px 0 8px;">
+      <label style="display:inline-flex;align-items:center;gap:6px;">
+        <input id="mirror" type="checkbox" checked> Mirror R from L
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-left:10px;">
+        <input id="invert" type="checkbox"> Invert R sign
+      </label>
+    </div>
+
+    <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
+    <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+      <input id="psL" type="number" step="1" value="90">
+      <input id="psR" type="number" step="1" value="90">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="anatApply" class="mini" style="flex:1">Apply</button>
+      <button id="anatZero"  class="mini">Zero</button>
+      <button id="anatSave"  class="mini">Save</button>
+    </div>
+  `;
+  document.body.appendChild(tunerEl);
+
+  // wire mirror behavior
+  const addL = tunerEl.querySelector('#addL');
+  const addR = tunerEl.querySelector('#addR');
+  const psL  = tunerEl.querySelector('#psL');
+  const psR  = tunerEl.querySelector('#psR');
+  const mirror = tunerEl.querySelector('#mirror');
+  const invert = tunerEl.querySelector('#invert');
+
+  function syncMirror(){
+    if (!mirror.checked) return;
+    const s = invert.checked ? -1 : 1;
+    addR.value = String((+addL.value||0)*s);
+    psR.value  = String((+psL.value||0)*s);
   }
-  btnAnatomic.onclick = poseAnatomicHandsOnly;
+  addL.addEventListener('input', syncMirror);
+  psL.addEventListener('input', syncMirror);
+  mirror.addEventListener('change', syncMirror);
+  invert.addEventListener('change', syncMirror);
+
+  // apply, zero, save
+  tunerEl.querySelector('#anatApply').onclick = ()=>{
+    // shoulders: adduction only
+    setPair('sh_aa_l', +addL.value||0);
+    setPair('sh_aa_r', +addR.value||0);
+    // forearm/wrist PS (DRUJ)
+    // use both aliases so it works whichever bind resolved first
+    const L = +psL.value||0, R = +psR.value||0;
+    setPair('fa_ps_l', L); setPair('wr_ps_l', L);
+    setPair('fa_ps_r', R); setPair('wr_ps_r', R);
+    log(`Anatomic applied → ADD L/R: ${addL.value}/${addR.value}, PS L/R: ${psL.value}/${psR.value}`);
+  };
+  tunerEl.querySelector('#anatZero').onclick = ()=>{
+    addL.value = addR.value = '0';
+    psL.value  = psR.value  = '0';
+    tunerEl.querySelector('#anatApply').click();
+  };
+  tunerEl.querySelector('#anatSave').onclick = ()=>{
+    const payload = {
+      addL:+addL.value||0, addR:+addR.value||0,
+      psL:+psL.value||0,   psR:+psR.value||0,
+      mirror:mirror.checked, invert:invert.checked
+    };
+    localStorage.setItem('anatomicHands', JSON.stringify(payload));
+    log('💾 Saved anatomic defaults.');
+  };
+  tunerEl.querySelector('#anatX').onclick = ()=> tunerEl.remove();
+
+  // restore saved
+  try{
+    const saved = JSON.parse(localStorage.getItem('anatomicHands')||'null');
+    if (saved){
+      addL.value=saved.addL; addR.value=saved.addR; psL.value=saved.psL; psR.value=saved.psR;
+      mirror.checked=!!saved.mirror; invert.checked=!!saved.invert;
+    }
+  }catch{}
+
+  return tunerEl;
+}
+
+function poseAnatomicHandsOnly(){
+  ensureAnatomicTuner();              // open tuner (so you can tweak)
+  // also apply current values right away
+  tunerEl.querySelector('#anatApply').click();
+}
+btnAnatomic.onclick = poseAnatomicHandsOnly;
+
 
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
