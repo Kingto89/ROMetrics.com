@@ -394,13 +394,13 @@ const romBtn = document.getElementById("romBtn");
     if (!side) return [/.*/];
     if (side==='l'){
       return [
-        /\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i,
-        /\\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
+        /\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i,
+        /\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
       ];
     } else {
       return [
-        /\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i,
-        /\\bright(?=[A-Z_])/i, /mixamorig:.*right/i
+        /\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i,
+        /\bright(?=[A-Z_])/i, /mixamorig:.*right/i
       ];
     }
   }
@@ -456,7 +456,8 @@ const romBtn = document.getElementById("romBtn");
   }
 
   /* ===== Bind resolver with neutral shift (UPDATED) ===== */
-  function resolveBind(key,cfg){
+  
+function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     let bone = findBoneBy(cfg);
     // Fallbacks for trunk if generic search fails
@@ -483,6 +484,7 @@ const romBtn = document.getElementById("romBtn");
     return obj;
   }
 
+
   /* ===== Apply motion using calibrated neutral (UPDATED) ===== */
   function applyPairAngle(key,cfg,sliderDeg){
     const bind = resolveBind(key,cfg);
@@ -500,15 +502,19 @@ const romBtn = document.getElementById("romBtn");
   }
 
   /* ===== Joint definitions (paired) ===== */
+  // Hints prefer specific limb bones (avoid scapula/clavicle for GH; avoid forearm for wrist)
   const UPPER = [
+    // NEW trunk/thoracic motions
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
     {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine|chest|thor/i]},
 
+    // Cervical
     {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/neck|cspine|head/i]},
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/neck|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/neck|cspine|head/i]},
 
+    // Shoulder
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-180, max:60,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-180, max:40,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
@@ -516,11 +522,13 @@ const romBtn = document.getElementById("romBtn");
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-70,  max:90,  hints:[/upper.?arm|humerus|shoulder|arm(?!.*lower)/i]},
 
+    // Elbow / Forearm
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
     {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/lower.?arm|forearm|ulna|radius/i]},
 
+    // Wrist
     {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',       side:'l', plane:'frontal',   neutral:0, min:-20,  max:40,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
@@ -549,6 +557,7 @@ const romBtn = document.getElementById("romBtn");
   /* ===== UI: actions ===== */
   function fillActionMenu(){
     actionSel.innerHTML = "";
+    // Placeholder (no selection)
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
@@ -564,12 +573,12 @@ const romBtn = document.getElementById("romBtn");
     }
     actionSel.appendChild(og);
 
+    // Do not auto-select/apply a motion
     actionSel.value = "";
     pairLabel.textContent = "Angle (°)";
     actionDeg.disabled = true;
     zeroAction.disabled = true;
-  }
-  function cfgFromKey(k){
+  }  function cfgFromKey(k){
     const list = (CURRENT===UPPER) ? UPPER : LOWER;
     return list.find(x=>x.key===k) || null;
   }
@@ -587,11 +596,10 @@ const romBtn = document.getElementById("romBtn");
     actionDeg.min = String(cfg.min);
     actionDeg.max = String(cfg.max);
     if (forceZero) actionDeg.value = "0";
+    // Enable but DO NOT apply until user moves the slider
     actionDeg.disabled = false;
     zeroAction.disabled = false;
-  }
-
-  /* ===== Wire UI ===== */
+  }  /* ===== Wire UI ===== */
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
@@ -628,54 +636,49 @@ const romBtn = document.getElementById("romBtn");
     groundSnap();
 };
   reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
-  // ROM modal
+// ROM modal
   romBtn.onclick = async ()=>{
     romModal.classList.add('on');
     try{
       const res = await fetch('./ROM_reference.md?'+Date.now());
       const md = await res.text();
-      romBody.innerHTML = md.replace(/^\\- (.*)$/gm,'<li>$1</li>').replace(/(<li>[\\s\\S]*?<\\/li>)/g,'<ul>$1</ul>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>');
+      romBody.innerHTML = md.replace(/^\- (.*)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
     }catch(e){ romBody.textContent='Failed to load ROM_reference.md'; }
   };
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
 
-  /* ===== Anatomical Position Helper ===== */
+  /* ===== Load model ===== */
+
+  /* ===== Anatomical Position Helper (no load behavior changes) ===== */
   function setAnatomicalPose(){
     const want = (key,deg)=> {
       const cfg = cfgFromKey(key);
       if (cfg) applyPairAngle(key,cfg,deg);
     };
-    // Trunk & Cervical neutral
+    // Head & trunk neutral
     want('trunk_fe',0);  want('trunk_lat',0);  want('trunk_rot',0);
     want('cerv_fe',0);   want('cerv_lat',0);   want('cerv_rot',0);
-
-    // Shoulders at sides; neutral rotations
+    // Shoulders down at sides; neutral rotations
     want('sh_fe_l',0);   want('sh_fe_r',0);
     want('sh_aa_l',0);   want('sh_aa_r',0);
     want('sh_irer_l',0); want('sh_irer_r',0);
-
     // Elbows extended
     want('el_fe_l',0);   want('el_fe_r',0);
-
     // Forearm supinated → palms forward
     want('fa_ps_l',90);  want('fa_ps_r',90);
-
     // Wrists neutral
     want('wr_fe_l',0);   want('wr_fe_r',0);
     want('wr_ru_l',0);   want('wr_ru_r',0);
-
-    // Lower body neutral
+    // Lower body neutral stance
     want('hip_fe_l',0);  want('hip_fe_r',0);
     want('hip_aa_l',0);  want('hip_aa_r',0);
     want('hip_irer_l',0);want('hip_irer_r',0);
-
     want('knee_fe_l',0); want('knee_fe_r',0);
-
     want('ankle_dfpf_l',0); want('ankle_dfpf_r',0);
     want('foot_invev_l',0); want('foot_invev_r',0);
   }
 
-  /* ===== Load model ===== */
+
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
@@ -698,23 +701,18 @@ const romBtn = document.getElementById("romBtn");
         model.scale.setScalar(parseInt(ms.value,10)/100);
         model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
         groundSnap(); 
-        msg.textContent = "✅ Model loaded";
+msg.textContent = "✅ Model loaded";
         log("Model load OK");
         populateBones();
         detectRigProfile();
-
-        // Start with Upper-body list (no motion selected)
         CURRENT = UPPER;
-        segUpper.classList.add('on'); 
-        segLower.classList.remove('on');
+        segUpper.classList.add('on'); segLower.classList.remove('on');
+        // Force neutral start
+        try{   }catch(e){}
         fillActionMenu();
-
-        // Apply **anatomical position**
+        // Apply anatomical position (palms forward)
         setAnatomicalPose();
-
-        // Keep framing sane
-        fitView();
-      },
+},
       (xhr) => {
         msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
       },
