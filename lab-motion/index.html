@@ -131,14 +131,14 @@ optgroup{color:#9fb0c9;font-style:normal}
       <button class="x" id="romClose" aria-label="Close">✕</button>
     </div>
     <div class="body" id="romBody">
-      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
-      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
-      <div class="rom-item"><summary>Forearm</summary><div class="inner">Sup 0–95°, Pro 0–85°</div></div>
-      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°</div></div>
-      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
-      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
-      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
-      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
+      <details class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></details>
+      <details class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></details>
+      <details class="rom-item"><summary>Forearm</summary><div class="inner">Sup 0–95°, Pro 0–85°</div></details>
+      <details class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°</div></details>
+      <details class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></details>
+      <details class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></details>
+      <details class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></details>
+      <details class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></details>
     </div>
   </div>
 
@@ -156,14 +156,13 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
   const reloadBtn = document.getElementById("reload");
   const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
-  const romBody = document.getElementById("romBody");
   const romClose = document.getElementById("romClose");
 
   const segUpper = document.getElementById("segUpper");
@@ -341,9 +340,9 @@ optgroup{color:#9fb0c9;font-style:normal}
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
-    log(`Rig profile: ${RIG_PROFILE}`);
+    log(\`Rig profile: \${RIG_PROFILE}\`);
   }
   function axisFor(profile, key, defAxis){
     if (profile==='mixamo'){
@@ -371,22 +370,22 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   /* ===== Bone finding ===== */
-  // removed "spine" from exclude so trunk can bind
+  // Do NOT exclude spine; exclude pelvis/root/shoulder girdle only
   const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
-      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
-      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
+      ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
   }
   function findBoneBy(cfg){
     if (!skeleton) return null;
     const names = skeleton.bones.map(b=>b.name.toLowerCase());
     const sideREs = sideRegex(cfg.side);
-
     const HINTS = cfg.hints || [];
-    // Try exact preferred spine chain first for trunk/cervical
-    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine03$/, /^spine02$/, /^spine01$/, /chest/, /upperchest/] :
+
+    // Prefer spine01 first for trunk
+    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/, /^spine02$/, /^spine03$/, /chest/, /upperchest/] :
                       (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
 
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
@@ -427,7 +426,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     hand.position.set(0,0,0); hand.quaternion.identity(); hand.scale.set(1,1,1);
     initialBoneRot.set(pivot, pivot.quaternion.clone());
     DRUJ[side] = { pivot };
-    log(`Created DRUJ proxy for ${side.toUpperCase()}`);
+    log(\`Created DRUJ proxy for \${side.toUpperCase()}\`);
     return DRUJ[side];
   }
 
@@ -439,13 +438,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
 
-    if (!bone) { log(`No bind for ${key}`); return null; }
+    if (!bone) { log(\`No bind for \${key}\`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
     const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
+    log(\`Bound \${key} → \${bone.name} (axis \${axis})\`);
     return obj;
   }
 
@@ -468,6 +467,59 @@ optgroup{color:#9fb0c9;font-style:normal}
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
+  }
+
+  /* ===== Functional ROM caps + light self-collision guard ===== */
+  const SAFE_LIMITS = {
+    trunk_fe:{plus:80,minus:60}, trunk_lat:{plus:40,minus:40}, trunk_rot:{plus:45,minus:45},
+    cerv_fe:{plus:70,minus:60},  cerv_lat:{plus:45,minus:45},  cerv_rot:{plus:80,minus:80},
+    sh_fe_l:{plus:180,minus:60}, sh_fe_r:{plus:180,minus:60},
+    sh_aa_l:{plus:180,minus:40}, sh_aa_r:{plus:180,minus:40},
+    sh_irer_l:{plus:70,minus:90}, sh_irer_r:{plus:70,minus:90},
+    el_fe_l:{plus:150,minus:10}, el_fe_r:{plus:150,minus:10},
+    fa_ps_l:{plus:95,minus:85},  fa_ps_r:{plus:95,minus:85},
+    wr_fe_l:{plus:80,minus:70},  wr_fe_r:{plus:80,minus:70},
+    wr_ru_l:{plus:40,minus:20},  wr_ru_r:{plus:40,minus:20},
+    wr_ps_l:{plus:95,minus:85},  wr_ps_r:{plus:95,minus:85},
+    hip_fe_l:{plus:120,minus:30},hip_fe_r:{plus:120,minus:30},
+    hip_aa_l:{plus:45,minus:30}, hip_aa_r:{plus:45,minus:30},
+    hip_irer_l:{plus:45,minus:45}, hip_irer_r:{plus:45,minus:45},
+    knee_fe_l:{plus:150,minus:5}, knee_fe_r:{plus:150,minus:5},
+    ankle_dfpf_l:{plus:50,minus:20}, ankle_dfpf_r:{plus:50,minus:20},
+    foot_invev_l:{plus:35,minus:20}, foot_invev_r:{plus:35,minus:20}
+  };
+
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
+  function getBoneWorldPos(b){
+    const v = new THREE.Vector3(); b.getWorldPosition(v); return v;
+  }
+  function getTorsoAnchor(){
+    return getExactBoneByName('spine02') || getExactBoneByName('chest') || getExactBoneByName('upperchest') || getExactBoneByName('spine01') || null;
+  }
+  function selfCollisionGuard(key, cfg, signedDeg){
+    // Guard shoulder Internal Rotation approaching torso
+    if (!/^sh_irer_/.test(key) || signedDeg <= 0) return signedDeg; // +deg = IR
+    const handName = key.endsWith('_l') ? 'hand_l' : 'hand_r';
+    const hand = getExactBoneByName(handName);
+    const torso = getTorsoAnchor();
+    if (!hand || !torso) return signedDeg;
+
+    const handPos = getBoneWorldPos(hand);
+    const torsoPos = getBoneWorldPos(torso);
+    const lateralDist = Math.abs(handPos.x - torsoPos.x);
+    const forwardDist = Math.abs(handPos.z - torsoPos.z);
+
+    const nearLat = 0.10, nearFwd = 0.12; // meters
+    if (lateralDist < nearLat && forwardDist < nearFwd){
+      const proximity = Math.max(lateralDist/nearLat, forwardDist/nearFwd); // 0..1
+      const maxIR = 20 + 20*proximity; // 20..40°
+      return Math.min(signedDeg, maxIR);
+    }
+    return signedDeg;
   }
 
   /* ===== Motions (paired configs; UI splits) ===== */
@@ -593,7 +645,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       const og = document.createElement("optgroup"); og.label = group;
       catalog[group].forEach(entry=>{
         const opt = document.createElement("option");
-        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
+        opt.value = \`sep:\${entry.key}:\${entry.sign}:\${entry.max}\`;
         opt.textContent = entry.label;
         og.appendChild(opt);
       });
@@ -609,9 +661,14 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){ actionDeg.disabled=true; zeroAction.disabled=true; pairLabel.textContent="Angle (°)"; return; }
-    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+    pairLabel.textContent = \`\${CURRENT_ACTION.label} — Angle (°)\`;
+
+    // Functional clamp per direction; slider is 0..cap
+    const lim = SAFE_LIMITS[CURRENT_ACTION.key];
+    const cap = lim ? (CURRENT_ACTION.sign > 0 ? lim.plus : lim.minus) : CURRENT_ACTION.max;
     actionDeg.min = "0";
-    actionDeg.max = String(CURRENT_ACTION.max);
+    actionDeg.max = String(Math.max(0, cap));
+
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false; zeroAction.disabled = false;
   }
@@ -628,7 +685,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     setPair('fa_ps_r', -ANAT.psL);
     setPair('wr_ps_l', ANAT.wpsL);
     setPair('wr_ps_r', -ANAT.wpsL);
-    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
+    log(\`Anatomic baseline applied (L/R) → ADD \${ANAT.addL}/\${-ANAT.addL}, Forearm PS \${ANAT.psL}/\${-ANAT.psL}, Wrist PS \${ANAT.wpsL}/\${-ANAT.wpsL}\`);
   }
 
   actionSel.addEventListener("change", ()=>{
@@ -655,8 +712,14 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
-    const val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
-    const signed = CURRENT_ACTION.sign * val;
+    const lim = SAFE_LIMITS[CURRENT_ACTION.key];
+    const cap = lim ? (CURRENT_ACTION.sign > 0 ? lim.plus : lim.minus) : CURRENT_ACTION.max;
+    let val = Math.max(0, Math.min(cap, parseFloat(actionDeg.value)||0));
+    let signed = CURRENT_ACTION.sign * val;
+
+    // Light self-collision guard for shoulder IR
+    signed = selfCollisionGuard(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
 
@@ -692,12 +755,11 @@ optgroup{color:#9fb0c9;font-style:normal}
         detectRigProfile();
         fillActionMenu();
       },
-      (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
-      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
+      (xhr) => { msg.textContent = xhr.lengthComputable ? \`Loading \${Math.round((xhr.loaded/xhr.total)*100)}%\` : "Loading…"; },
+      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(\`Error: \${err?.message || err}\`); }
     );
   }
   loadModel();
-
   reloadBtn.onclick = ()=>{ loadModel(); };
 
   /* ===== Advanced controls wiring ===== */
@@ -724,18 +786,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (cfg) applyPairAngle(key,cfg,deg);
   }
 
-  function getExactBoneByName(name){
-    if (!skeleton) return null;
-    const lname = String(name).toLowerCase();
-    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
     let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
     if (!wrist){
       wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
     }
-    if (!wrist){ log(`No wrist bone for ${side}`); return; }
+    if (!wrist){ log(\`No wrist bone for \${side}\`); return; }
 
     const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
@@ -746,7 +803,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (axis==='y') e.set(0,rad,0,'XYZ');
     if (axis==='z') e.set(0,0,rad,'XYZ');
     wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
+    log(\`Wrist \${side.toUpperCase()} (hand_\${side}) PS = \${deg}°\`);
   }
 
   /* ===== Hidden Anatomic Tuner (dev-only) ===== */
@@ -759,7 +816,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       background:'rgba(8,13,26,.96)', border:'1px solid #334155',
       borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0',
       font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
-      display:'none'  // hidden by default
+      display:'none'
     });
     tunerEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -840,10 +897,13 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   btnAnatomic.onclick = (e)=>{
     applyAnatomicBaseline();
-    if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
+    // Always enabled, dev reveal only with Shift
+    if (e.shiftKey) { toggleTuner(true); }
   };
 
   /* ===== ROM modal wiring ===== */
+  const romBody = document.getElementById("romBody");
+  const romBtn = document.getElementById("romBtn");
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
   window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
