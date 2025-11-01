@@ -565,13 +565,58 @@ optgroup{color:#9fb0c9;font-style:normal}
   loadModel();
 
 /* ===== Anatomic Position — HANDS ONLY (Tunable + Mirror) ===== */
-function setPair(key,deg){ const cfg=cfgFromKey(key); if (cfg) applyPairAngle(key,cfg,deg); }
+function setPair(key,deg){
+  // Intercept wrist PS keys to drive wrist bones (hand_l / hand_r)
+  if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
+  if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
+  const cfg = cfgFromKey(key);
+  if (cfg) applyPairAngle(key,cfg,deg);
+}
 
+/* --- helpers: exact wrist twist on hand_l / hand_r (safe fallback) --- */
+function getExactBoneByName(name){
+  if (!skeleton) return null;
+  const lname = String(name).toLowerCase();
+  return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+}
+
+function rotateSideWristPS(side, deg){
+  if (!skeleton) return;
+
+  // 1) Try exact names first
+  let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
+
+  // 2) Fallback to existing heuristic if exact name is absent
+  if (!wrist){
+    wrist = findBoneBy({
+      side,
+      hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]
+    });
+  }
+  if (!wrist){ log(`No wrist bone found for side ${side}`); return; }
+
+  // Use same axis mapping as forearm PS so direction matches DRUJ
+  const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
+  const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
+
+  // Rotate around bind (neutral preserved by your calibration)
+  const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
+  const rad = THREE.MathUtils.degToRad(deg);
+  const e = new THREE.Euler(0,0,0,'XYZ');
+  if (axis === 'x') e.set(rad,0,0,'XYZ');
+  if (axis === 'y') e.set(0,rad,0,'XYZ');
+  if (axis === 'z') e.set(0,0,rad,'XYZ');
+
+  wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+  log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
+}
+
+/* --- UI (unchanged except it now drives wrist PS via wr_ps_*) --- */
 let tunerEl = null;
 function ensureAnatomicTuner(){
   if (tunerEl) return tunerEl;
 
-  // build a tiny floating panel
+  // tiny floating panel
   tunerEl = document.createElement('div');
   Object.assign(tunerEl.style,{
     position:'fixed', right:'16px', top:'16px', zIndex:40,
@@ -615,7 +660,7 @@ function ensureAnatomicTuner(){
   `;
   document.body.appendChild(tunerEl);
 
-  // wire mirror behavior
+  // mirror behavior
   const addL = tunerEl.querySelector('#addL');
   const addR = tunerEl.querySelector('#addR');
   const psL  = tunerEl.querySelector('#psL');
@@ -636,14 +681,15 @@ function ensureAnatomicTuner(){
 
   // apply, zero, save
   tunerEl.querySelector('#anatApply').onclick = ()=>{
-    // shoulders: adduction only
+    // shoulders (ADD only)
     setPair('sh_aa_l', +addL.value||0);
     setPair('sh_aa_r', +addR.value||0);
-    // forearm/wrist PS (DRUJ)
-    // use both aliases so it works whichever bind resolved first
+
+    // DRUJ forearm PS (paired system) + wrist PS on hand_l / hand_r
     const L = +psL.value||0, R = +psR.value||0;
     setPair('fa_ps_l', L); setPair('wr_ps_l', L);
     setPair('fa_ps_r', R); setPair('wr_ps_r', R);
+
     log(`Anatomic applied → ADD L/R: ${addL.value}/${addR.value}, PS L/R: ${psL.value}/${psR.value}`);
   };
   tunerEl.querySelector('#anatZero').onclick = ()=>{
@@ -675,9 +721,8 @@ function ensureAnatomicTuner(){
 }
 
 function poseAnatomicHandsOnly(){
-  ensureAnatomicTuner();              // open tuner (so you can tweak)
-  // also apply current values right away
-  tunerEl.querySelector('#anatApply').click();
+  ensureAnatomicTuner();              // open tuner to tweak
+  tunerEl.querySelector('#anatApply').click(); // apply immediately
 }
 btnAnatomic.onclick = poseAnatomicHandsOnly;
 
