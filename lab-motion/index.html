@@ -479,59 +479,54 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   /* === ADD-ONLY: Anatomical Position helper (safe, no throws) === */
-  function setAnatomicPose(){
-    if (!skeleton) { log("No skeleton yet — load a rigged model first."); return; }
-    const S = (key,cfg,deg)=>{ try { applyPairAngle(key,cfg,deg); } catch(e){} };
+function setAnatomicPose(){
+  if (!skeleton) { log("No skeleton yet — load a rigged model first."); return; }
 
-    // Trunk & cervical neutral
-    S('trunk_fe',  {side:'', plane:'sagittal'},    0);
-    S('trunk_lat', {side:'', plane:'frontal'},     0);
-    S('trunk_rot', {side:'', plane:'transverse'},  0);
-    S('cerv_fe',   {side:'', plane:'sagittal'},    0);
-    S('cerv_lat',  {side:'', plane:'frontal'},     0);
-    S('cerv_rot',  {side:'', plane:'transverse'},  0);
+  // Use real configs (with hints) so bones can be found
+  const S = (key, deg) => {
+    const cfg = cfgAny(key);
+    if (!cfg) { log(`No cfg for ${key}`); return; }
+    try { applyPairAngle(key, cfg, deg); } catch(e){}
+  };
 
-    // Shoulders: arms to sides, palms forward path
-    S('sh_fe_l',   {side:'l', plane:'sagittal'},    0);
-    S('sh_fe_r',   {side:'r', plane:'sagittal'},    0);
-    S('sh_irer_l', {side:'l', plane:'transverse'},  0);
-    S('sh_irer_r', {side:'r', plane:'transverse'},  0);
-    S('sh_aa_l',   {side:'l', plane:'frontal'},    -90); // adduction from T
-    S('sh_aa_r',   {side:'r', plane:'frontal'},     90);
+  // Trunk & cervical neutral
+  S('trunk_fe',   0);
+  S('trunk_lat',  0);
+  S('trunk_rot',  0);
+  S('cerv_fe',    0);
+  S('cerv_lat',   0);
+  S('cerv_rot',   0);
 
-    // Elbows extended
-    S('el_fe_l',   {side:'l', plane:'sagittal'},    0);
-    S('el_fe_r',   {side:'r', plane:'sagittal'},    0);
+  // Shoulders: arms at sides; palms forward path
+  S('sh_fe_l',    0);
+  S('sh_fe_r',    0);
+  S('sh_irer_l',  0);
+  S('sh_irer_r',  0);
+  // Adduct from the T-pose to sides
+  S('sh_aa_l',   -90);
+  S('sh_aa_r',    90);
 
-    // Forearms supinated (palms forward)
-    S('fa_ps_l',   {side:'l', plane:'transverse'}, 90);
-    S('fa_ps_r',   {side:'r', plane:'transverse'}, 90);
+  // Elbows extended
+  S('el_fe_l',    0);
+  S('el_fe_r',    0);
 
-    // Wrists neutral
-    S('wr_fe_l',   {side:'l', plane:'sagittal'},    0);
-    S('wr_fe_r',   {side:'r', plane:'sagittal'},    0);
-    S('wr_ru_l',   {side:'l', plane:'frontal'},     0);
-    S('wr_ru_r',   {side:'r', plane:'frontal'},     0);
+  // Forearms supinated (palms forward)
+  S('fa_ps_l',   90);
+  S('fa_ps_r',   90);
 
-    // Lower limbs neutral; feet parallel
-    S('hip_fe_l',   {side:'l', plane:'sagittal'},    0);
-    S('hip_fe_r',   {side:'r', plane:'sagittal'},    0);
-    S('hip_aa_l',   {side:'l', plane:'frontal'},     0);
-    S('hip_aa_r',   {side:'r', plane:'frontal'},     0);
-    S('hip_irer_l', {side:'l', plane:'transverse'},  0);
-    S('hip_irer_r', {side:'r', plane:'transverse'},  0);
+  // Wrists neutral
+  S('wr_fe_l',    0);  S('wr_ru_l', 0);
+  S('wr_fe_r',    0);  S('wr_ru_r', 0);
 
-    S('knee_fe_l',  {side:'l', plane:'sagittal'},    0);
-    S('knee_fe_r',  {side:'r', plane:'sagittal'},    0);
+  // Lower limbs neutral; feet parallel
+  S('hip_fe_l',   0);  S('hip_aa_l', 0);  S('hip_irer_l', 0);
+  S('hip_fe_r',   0);  S('hip_aa_r', 0);  S('hip_irer_r', 0);
+  S('knee_fe_l',  0);  S('knee_fe_r', 0);
+  S('ankle_dfpf_l',0); S('ankle_dfpf_r',0);
+  S('foot_invev_l',0); S('foot_invev_r',0);
 
-    S('ankle_dfpf_l',{side:'l', plane:'sagittal'},   0);
-    S('ankle_dfpf_r',{side:'r', plane:'sagittal'},   0);
-    S('foot_invev_l',{side:'l', plane:'frontal'},    0);
-    S('foot_invev_r',{side:'r', plane:'frontal'},    0);
-
-    log("Applied Anatomical Position");
-  }
-  if (anatomicBtn) anatomicBtn.addEventListener("click", setAnatomicPose);
+  log("Applied Anatomical Position");
+}
 
   /* ===== Joint definitions (paired) ===== */
   const UPPER = [
