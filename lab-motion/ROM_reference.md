@@ -1,11 +1,5 @@
 # ROM Reference (Clinical Norms)
 
-> **Legend**
-> - **Plane**: Sagittal / Frontal / Transverse  
-> - **ROM**: Typical adult values (°), rounded for practical use  
-> - **Neutral**: Anatomical starting angle (may be non-zero for some joints)
-
----
 
 <details>
 <summary><strong>Upper Body</strong></summary>
