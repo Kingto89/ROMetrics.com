@@ -18,12 +18,12 @@
 :root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid --line;border:1px solid #1f2937;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
 .content{padding:12px;overflow:auto}
 label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
-select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
+select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:var(--text)}
 .row{display:flex;gap:8px}.row>button{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
 .seg{display:flex;gap:8px}
@@ -58,6 +58,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
         <button id="romBtn" class="mini">📘 ROM Reference</button>
+        <!-- ADD-ON ONLY -->
         <button id="btnAnatomic" class="mini">Anatomic Position</button>
       </div>
 
@@ -153,6 +154,11 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
+  const reloadBtn = document.getElementById("reload");
+  const romBtn = document.getElementById("romBtn");
+  const romModal = document.getElementById("romModal");
+  const romBody = document.getElementById("romBody");
+  const romClose = document.getElementById("romClose");
 
   const segUpper = document.getElementById("segUpper");
   const segLower = document.getElementById("segLower");
@@ -340,7 +346,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     for (const cand of cfg.hints){
       for (let i=0;i<names.length;i++){
         if (EXCLUDE.test(names[i])) continue;
-        if (!sideREs.some(r=>r.test(names[i]))) continue;
+        if (!sideREs.some(r=>r.test(names[i])) ) continue;
         if (cand.test(names[i])) return skeleton.bones[i];
       }
     }
@@ -392,6 +398,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
     return obj;
   }
 
@@ -432,8 +439,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|lower.?arm|radius|ulna|wrist|hand/i]},
     {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|lower.?arm|radius|ulna|wrist|hand/i]},
 
-    {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-    {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|lower.?arm|radius|ulna|wrist|hand/i]},
+    {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|lower.?arm|radius|ulna|wrist|hand/i]},
 
     {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-80,  max:70,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
@@ -500,7 +507,24 @@ optgroup{color:#9fb0c9;font-style:normal}
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
-  actionSel.addEventListener("change", ()=>syncActionUI(true));
+  // === baseline anatomic preset (from screenshot) ===
+  const ANAT = { addL:-42, psL:-2, wpsL:-73 };
+  function applyAnatomicBaseline(){
+    // L values from preset; R values are mirrored with inverted sign
+    setPair('sh_aa_l', ANAT.addL);
+    setPair('sh_aa_r', -ANAT.addL);
+    setPair('fa_ps_l', ANAT.psL);
+    setPair('fa_ps_r', -ANAT.psL);
+    setPair('wr_ps_l', ANAT.wpsL);
+    setPair('wr_ps_r', -ANAT.wpsL);
+    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
+  }
+
+  actionSel.addEventListener("change", ()=>{
+    // always begin actions from anatomic baseline
+    applyAnatomicBaseline();
+    syncActionUI(true);
+  });
   actionDeg.addEventListener("input", ()=>{
     const cfg = cfgFromKey(actionSel.value); if (cfg) applyPairAngle(cfg.key,cfg, parseFloat(actionDeg.value)||0);
   });
@@ -547,9 +571,6 @@ optgroup{color:#9fb0c9;font-style:normal}
         populateBones();
         detectRigProfile();
         fillActionMenu();
-
-        // Apply anatomic baseline on load so all actions start from it
-        applyAnatomicFromDefaults(true);
       },
       (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
       (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
@@ -557,14 +578,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   loadModel();
 
-  /* ===== Anatomic Position (hands + shoulders only) ===== */
-  // Preloaded values from your screenshot
-  const ANATOMIC_DEFAULTS = {
-    addL:-42, addR:42,
-    faL:-2,  faR:2,
-    wrL:-73, wrR:73
-  };
-
+  /* ===== Paired-joint helpers (unchanged) ===== */
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
     if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
@@ -594,9 +608,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (axis==='y') e.set(0,rad,0,'XYZ');
     if (axis==='z') e.set(0,0,rad,'XYZ');
     wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
-  // UI (minimal, no dev wording)
+  /* --- Minimal Anatomic Tuner (preloads −42 / −2 / −73 and applies) --- */
   let tunerEl = null;
   function ensureAnatomicTuner(){
     if (tunerEl) return tunerEl;
@@ -615,114 +630,78 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
       <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="addL" type="number" step="1" value="${ANATOMIC_DEFAULTS.addL}">
-        <input id="addR" type="number" step="1" value="${ANATOMIC_DEFAULTS.addR}">
+        <input id="addL" type="number" step="1">
+        <input id="addR" type="number" step="1" disabled>
       </div>
 
-      <label style="display:block;opacity:.8;margin-top:8px;">Forearm PS (°) — sup(+), pro(−)</label>
+      <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
       <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="psL" type="number" step="1" value="${ANATOMIC_DEFAULTS.faL}">
-        <input id="psR" type="number" step="1" value="${ANATOMIC_DEFAULTS.faR}">
+        <input id="psL" type="number" step="1">
+        <input id="psR" type="number" step="1" disabled>
       </div>
 
-      <label style="display:block;opacity:.8;margin-top:8px;">Wrist PS (°)</label>
+      <label style="display:block;opacity:.8; margin-top:8px;">Wrist PS (°)</label>
       <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="wpsL" type="number" step="1" value="${ANATOMIC_DEFAULTS.wrL}">
-        <input id="wpsR" type="number" step="1" value="${ANATOMIC_DEFAULTS.wrR}">
+        <input id="wpsL" type="number" step="1">
+        <input id="wpsR" type="number" step="1" disabled>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button id="anatApply" class="mini" style="flex:1">Apply</button>
         <button id="anatZero"  class="mini">Zero</button>
-        <button id="anatSave"  class="mini">Save</button>
       </div>
     `;
     document.body.appendChild(tunerEl);
 
-    const addL = tunerEl.querySelector('#addL');
-    const addR = tunerEl.querySelector('#addR');
-    const psL  = tunerEl.querySelector('#psL');
-    const psR  = tunerEl.querySelector('#psR');
-    const wpsL = tunerEl.querySelector('#wpsL');
-    const wpsR = tunerEl.querySelector('#wpsR');
+    const addL=tunerEl.querySelector('#addL'), addR=tunerEl.querySelector('#addR');
+    const psL =tunerEl.querySelector('#psL'),  psR =tunerEl.querySelector('#psR');
+    const wpsL=tunerEl.querySelector('#wpsL'), wpsR=tunerEl.querySelector('#wpsR');
 
-    tunerEl.querySelector('#anatApply').onclick = ()=> {
-      setPair('sh_aa_l', +addL.value||0);
-      setPair('sh_aa_r', +addR.value||0);
-      setPair('fa_ps_l', +psL.value||0);
-      setPair('fa_ps_r', +psR.value||0);
-      setPair('wr_ps_l', +wpsL.value||0);
-      setPair('wr_ps_r', +wpsR.value||0);
-      log(`Anatomic applied (ADD L/R ${addL.value}/${addR.value}, FA PS ${psL.value}/${psR.value}, Wrist PS ${wpsL.value}/${wpsR.value})`);
+    function preload(){
+      // preload from screenshot values
+      addL.value = String(ANAT.addL);
+      psL.value  = String(ANAT.psL);
+      wpsL.value = String(ANAT.wpsL);
+      // mirror + invert (forced, hidden)
+      addR.value = String(-ANAT.addL);
+      psR.value  = String(-ANAT.psL);
+      wpsR.value = String(-ANAT.wpsL);
+    }
+    function syncRight(){
+      addR.value = String(-(+addL.value||0));
+      psR.value  = String(-( +psL.value||0));
+      wpsR.value = String(-( +wpsL.value||0));
+    }
+    preload();
+    addL.addEventListener('input', syncRight);
+    psL.addEventListener('input', syncRight);
+    wpsL.addEventListener('input', syncRight);
+
+    tunerEl.querySelector('#anatApply').onclick = ()=>{
+      ANAT.addL = +addL.value||0;
+      ANAT.psL  = +psL.value||0;
+      ANAT.wpsL = +wpsL.value||0;
+      applyAnatomicBaseline();
     };
     tunerEl.querySelector('#anatZero').onclick = ()=>{
-      addL.value=addR.value=0; psL.value=psR.value=0; wpsL.value=wpsR.value=0;
-      tunerEl.querySelector('#anatApply').click();
-    };
-    tunerEl.querySelector('#anatSave').onclick = ()=>{
-      const payload = { addL:+addL.value||0, addR:+addR.value||0, faL:+psL.value||0, faR:+psR.value||0, wrL:+wpsL.value||0, wrR:+wpsR.value||0 };
-      localStorage.setItem('anatomicDefaults', JSON.stringify(payload));
-      log('Saved anatomic defaults');
+      addL.value = psL.value = wpsL.value = '0';
+      syncRight();
+      ANAT.addL = ANAT.psL = ANAT.wpsL = 0;
+      applyAnatomicBaseline();
     };
     tunerEl.querySelector('#anatX').onclick = ()=> tunerEl.remove();
 
-    // restore custom saved defaults if user saved
-    try{
-      const saved = JSON.parse(localStorage.getItem('anatomicDefaults')||'null');
-      if (saved){
-        addL.value=saved.addL; addR.value=saved.addR;
-        psL.value=saved.faL;   psR.value=saved.faR;
-        wpsL.value=saved.wrL;  wpsR.value=saved.wrR;
-      }
-    }catch{}
     return tunerEl;
   }
 
-  function rebaseToCurrentPose(){
-    // After we pose anatomic, record all current bone quaternions as new baseline
-    if (!skeleton) return;
-    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-    JOINT_BIND.clear(); // so binds recapture with new qBind
-  }
-
-  function applyAnatomicFromDefaults(rebase=false){
-    // Use saved overrides if any; else ANATOMIC_DEFAULTS
-    let v = ANATOMIC_DEFAULTS;
-    try{
-      const saved = JSON.parse(localStorage.getItem('anatomicDefaults')||'null');
-      if (saved) v = saved;
-    }catch{}
-    setPair('sh_aa_l', v.addL);
-    setPair('sh_aa_r', v.addR);
-    setPair('fa_ps_l', v.faL);
-    setPair('fa_ps_r', v.faR);
-    setPair('wr_ps_l', v.wrL);
-    setPair('wr_ps_r', v.wrR);
-    if (rebase) rebaseToCurrentPose();
-  }
-
-  function openTunerAndApply(){
+  function openAndApplyAnatomic(){
     ensureAnatomicTuner();
-    // preload fields from saved/defaults each time it opens
-    const d = JSON.parse(localStorage.getItem('anatomicDefaults')||'null') || ANATOMIC_DEFAULTS;
-    tunerEl.querySelector('#addL').value = d.addL;
-    tunerEl.querySelector('#addR').value = d.addR;
-    tunerEl.querySelector('#psL').value  = d.faL;
-    tunerEl.querySelector('#psR').value  = d.faR;
-    tunerEl.querySelector('#wpsL').value = d.wrL;
-    tunerEl.querySelector('#wpsR').value = d.wrR;
-
-    tunerEl.querySelector('#anatApply').click();
-    // rebase so subsequent Actions start from anatomic
-    rebaseToCurrentPose();
+    // force the preset to be shown and applied right away
+    const applyBtn = tunerEl.querySelector('#anatApply');
+    applyBtn?.click();
   }
 
-  document.getElementById("reload").onclick = loadModel;
-  document.getElementById("romBtn").onclick = ()=> document.getElementById("romModal").classList.add("on");
-  document.getElementById("romClose").onclick = ()=> document.getElementById("romModal").classList.remove("on");
-
-  const btnAnatomic = document.getElementById("btnAnatomic");
-  btnAnatomic.onclick = openTunerAndApply;
+  btnAnatomic.onclick = openAndApplyAnatomic;
 
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
