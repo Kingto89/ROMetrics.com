@@ -67,7 +67,9 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="content">
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
-<button id="romBtn" class="mini">📘 ROM Reference</button>
+        <button id="romBtn" class="mini">📘 ROM Reference</button>
+        <!-- ADDED: Anatomic Position button (add-on) -->
+        <button id="anatomicBtn" class="mini">Anatomic Position</button>
       </div>
 
       <label>Body Region</label>
@@ -158,12 +160,12 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
   const reloadBtn = document.getElementById("reload");
-const romBtn = document.getElementById("romBtn");
+  const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
   const romBody = document.getElementById("romBody");
   const romClose = document.getElementById("romClose");
@@ -192,6 +194,9 @@ const romBtn = document.getElementById("romBtn");
   const ms = document.getElementById("ms");
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
+
+  // ADDED: Anatomic button
+  const anatomicBtn = document.getElementById("anatomicBtn");
 
   /* ===== Draggable panel ===== */
   (function(){
@@ -257,7 +262,7 @@ const romBtn = document.getElementById("romBtn");
   function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
-    if (q && /^https?:\/\//i.test(q)) return q;
+    if (q && /^https?:\\/\\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
     return "./Athletic_Grace_1006002620_texture.glb";
   }
@@ -274,7 +279,7 @@ const romBtn = document.getElementById("romBtn");
     const h = box.max.y - box.min.y;
     if (!isFinite(h) || h <= 0) return;
     const s = target / h;
-    if (s < 0.4 || s > 2.5) { model.scale.multiplyScalar(s); log(`Scaled ×${s.toFixed(2)}`); }
+    if (s < 0.4 || s > 2.5) { model.scale.multiplyScalar(s); log(\`Scaled ×\${s.toFixed(2)}\`); }
   }
   function fitView(){
     const box = new THREE.Box3().setFromObject(model || scene);
@@ -299,7 +304,7 @@ const romBtn = document.getElementById("romBtn");
     skeleton.bones.forEach((b,i)=>{
       const o = document.createElement("option");
       o.value = String(i);
-      o.textContent = b.name || `Bone ${i}`;
+      o.textContent = b.name || \`Bone \${i}\`;
       boneSel.appendChild(o);
       if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
     });
@@ -331,9 +336,9 @@ const romBtn = document.getElementById("romBtn");
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
-    log(`Rig profile: ${RIG_PROFILE}`);
+    log(\`Rig profile: \${RIG_PROFILE}\`);
   }
 
   // Return the local axis to drive for a given motion key under a profile
@@ -381,13 +386,13 @@ const romBtn = document.getElementById("romBtn");
     if (!side) return [/.*/];
     if (side==='l'){
       return [
-        /\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i,
-        /\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
+        /\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i,
+        /\\bleft(?=[A-Z_])/i, /mixamorig:.*left/i
       ];
     } else {
       return [
-        /\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i,
-        /\bright(?=[A-Z_])/i, /mixamorig:.*right/i
+        /\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i,
+        /\\bright(?=[A-Z_])/i, /mixamorig:.*right/i
       ];
     }
   }
@@ -443,8 +448,7 @@ const romBtn = document.getElementById("romBtn");
   }
 
   /* ===== Bind resolver with neutral shift (UPDATED) ===== */
-  
-function resolveBind(key,cfg){
+  function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     let bone = findBoneBy(cfg);
     // Fallbacks for trunk if generic search fails
@@ -453,7 +457,7 @@ function resolveBind(key,cfg){
       const idx = names.findIndex(n=>/spine02|spine_?02|upper.?spine|chest|thor/i.test(n));
       bone = idx>=0 ? skeleton.bones[idx] : skeleton.bones.find(b=>/spine|chest|thor/i.test(b.name.toLowerCase()));
     }
-    if (!bone) { log(`No bind for ${key}`); return null; }
+    if (!bone) { log(\`No bind for \${key}\`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
     const baseAxis = ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
@@ -467,10 +471,9 @@ function resolveBind(key,cfg){
     }catch(e){ neutralShiftDeg = 0; }
     const obj = {bone, qBind, axis, neutralShiftDeg};
     JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis}, neutralShift ${neutralShiftDeg.toFixed(1)}°)`);
+    log(\`Bound \${key} → \${bone.name} (axis \${axis}, neutralShift \${neutralShiftDeg.toFixed(1)}°)\`);
     return obj;
   }
-
 
   /* ===== Apply motion using calibrated neutral (UPDATED) ===== */
   function applyPairAngle(key,cfg,sliderDeg){
@@ -622,14 +625,14 @@ function resolveBind(key,cfg){
     }
     groundSnap();
 };
-  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(`Reload: ${MODEL_URL}`); loadModel(); };
+  reloadBtn.onclick = ()=>{ MODEL_URL = pickModelUrl(); log(\`Reload: \${MODEL_URL}\`); loadModel(); };
 // ROM modal
   romBtn.onclick = async ()=>{
     romModal.classList.add('on');
     try{
       const res = await fetch('./ROM_reference.md?'+Date.now());
       const md = await res.text();
-      romBody.innerHTML = md.replace(/^\- (.*)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+      romBody.innerHTML = md.replace(/^\\- (.*)$/gm,'<li>$1</li>').replace(/(<li>[\\s\\S]*?<\\/li>)/g,'<ul>$1</ul>').replace(/^# (.*)$/gm,'<h3>$1</h3>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>');
     }catch(e){ romBody.textContent='Failed to load ROM_reference.md'; }
   };
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
@@ -657,7 +660,7 @@ function resolveBind(key,cfg){
         model.scale.setScalar(parseInt(ms.value,10)/100);
         model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
         groundSnap(); 
-msg.textContent = "✅ Model loaded";
+        msg.textContent = "✅ Model loaded";
         log("Model load OK");
         populateBones();
         detectRigProfile();
@@ -666,14 +669,14 @@ msg.textContent = "✅ Model loaded";
         // Force neutral start
         try{   }catch(e){}
         fillActionMenu();
-},
+      },
       (xhr) => {
-        msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…";
+        msg.textContent = xhr.lengthComputable ? \`Loading \${Math.round((xhr.loaded/xhr.total)*100)}%\` : "Loading…";
       },
       (err) => {
         console.error(err);
         msg.textContent = "⚠️ Load error";
-        log(`Error: ${err?.message || err}`);
+        log(\`Error: \${err?.message || err}\`);
       }
     );
   }
@@ -692,6 +695,71 @@ msg.textContent = "✅ Model loaded";
   })();
 
 
+  /* ====== ADDED: Anatomic Position routine (non-destructive) ====== */
+  function setPair(key, deg){
+    const list = [...UPPER, ...LOWER];
+    const cfg = list.find(x=>x.key===key);
+    if (!cfg){ log(\`No cfg for \${key}\`); return; }
+    applyPairAngle(key, cfg, deg);
+  }
+
+  function goAnatomic(){
+    if (!skeleton){ log("No skeleton, cannot set anatomical."); return; }
+    log("Applying Anatomical Position…");
+
+    // Head & trunk neutral
+    setPair('trunk_fe', 0);
+    setPair('trunk_lat', 0);
+    setPair('trunk_rot', 0);
+    setPair('cerv_fe', 0);
+    setPair('cerv_lat', 0);
+    setPair('cerv_rot', 0);
+
+    // Shoulders down to sides (adduction), neutral flex/ext & rotation
+    // Heuristic that works from T-pose and A-pose:
+    setPair('sh_aa_l', -80);
+    setPair('sh_aa_r', -80);
+    setPair('sh_fe_l', 0);
+    setPair('sh_fe_r', 0);
+    setPair('sh_irer_l', 0);
+    setPair('sh_irer_r', 0);
+
+    // Elbows extended
+    setPair('el_fe_l', 0);
+    setPair('el_fe_r', 0);
+
+    // Forearms supinated (palms forward)
+    setPair('fa_ps_l', 85);
+    setPair('fa_ps_r', 85);
+
+    // Wrists neutral
+    setPair('wr_fe_l', 0);
+    setPair('wr_fe_r', 0);
+    setPair('wr_ru_l', 0);
+    setPair('wr_ru_r', 0);
+
+    // Hips/knees/ankles/feet neutral, feet parallel
+    setPair('hip_fe_l', 0);
+    setPair('hip_fe_r', 0);
+    setPair('hip_aa_l', 0);
+    setPair('hip_aa_r', 0);
+    setPair('hip_irer_l', 0);
+    setPair('hip_irer_r', 0);
+    setPair('knee_fe_l', 0);
+    setPair('knee_fe_r', 0);
+    setPair('ankle_dfpf_l', 0);
+    setPair('ankle_dfpf_r', 0);
+    setPair('foot_invev_l', 0);
+    setPair('foot_invev_r', 0);
+
+    // Keep model yaw facing forward
+    myaw.value = "0";
+    if (model) model.rotation.y = 0;
+
+    log("Anatomical Position applied.");
+  }
+
+  anatomicBtn.addEventListener('click', goAnatomic);
   </script>
 </body>
 </html>
