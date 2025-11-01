@@ -34,7 +34,7 @@ summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
 #msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
 optgroup{color:#9fb0c9;font-style:normal}
-.modal{position:fixed;right:16px;bottom:16px;width:min(560px,92vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
+.modal{position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
 .modal.on{display:flex}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
 .modal .top h4{margin:0;font-size:14px}
@@ -48,6 +48,16 @@ optgroup{color:#9fb0c9;font-style:normal}
   border-radius:999px; padding:3px 6px; transform:translate(50%,50%); pointer-events:none;
   box-shadow:0 2px 6px rgba(0,0,0,.45);
 }
+
+
+/* --- ROM single-column collapsible list --- */
+.rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
+.rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
+.rom-item summary::-webkit-details-marker{display:none}
+.rom-item .inner{padding:8px 12px;border-top:1px solid #1c2941}
+.rom-row{display:flex;gap:10px;font-size:13px;padding:4px 0}
+.rom-head{width:160px;color:#9fb0c9}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 
 </style>
 </head>
@@ -126,7 +136,7 @@ optgroup{color:#9fb0c9;font-style:normal}
           </div>
           <div style="flex:1">
             <label>Scale (%)</label>
-            <input type="range" min="40" max="200" step="1" value="100" id="ms">
+            <input type="range" min="40" max="200" step="1" value="125" id="ms">
           </div>
         </div>
         <label>Yaw (°)</label>
@@ -342,23 +352,38 @@ const romBtn = document.getElementById("romBtn");
   // Return the local axis to drive for a given motion key under a profile
   
 function axisFor(profile, motionKey, defaultAxis){
-  // Minimal override: ensure correct shoulder planes
-  if (motionKey==='sh_fe_l' || motionKey==='sh_fe_r') return 'x'; // sagittal
-  if (motionKey==='sh_aa_l' || motionKey==='sh_aa_r') return 'z'; // frontal
+  // --- Shoulder-only override (profile-agnostic) ---
+  // Flexion/Extension -> sagittal (local X), Abduction/Adduction -> frontal (local Z)
+  if (motionKey === 'sh_fe_l' || motionKey === 'sh_fe_r') return 'x';
+  if (motionKey === 'sh_aa_l' || motionKey === 'sh_aa_r') return 'z';
 
+  // Existing behavior preserved for everything else:
   if (profile==='mixamo'){
     const map = {
+      // Shoulder (GH)
       sh_fe_l:'x', sh_fe_r:'x',
       sh_aa_l:'z', sh_aa_r:'z',
       sh_irer_l:'y', sh_irer_r:'y',
+
+      // Elbow (humeroulnar)
       el_fe_l:'x', el_fe_r:'x',
+
+      // Forearm
       fa_ps_l:'y', fa_ps_r:'y',
+
+      // Wrist
       wr_fe_l:'x', wr_fe_r:'x',
       wr_ru_l:'z', wr_ru_r:'z',
+
+      // Hip
       hip_fe_l:'x', hip_fe_r:'x',
       hip_aa_l:'z', hip_aa_r:'z',
       hip_irer_l:'y', hip_irer_r:'y',
+
+      // Knee
       knee_fe_l:'x', knee_fe_r:'x',
+
+      // Ankle / foot
       ankle_dfpf_l:'x', ankle_dfpf_r:'x',
       foot_invev_l:'z', foot_invev_r:'z'
     };
@@ -613,10 +638,10 @@ function resolveBind(key,cfg){
   }));
   zeroBone.onclick = zeroSelectedBone;
   resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="50"; myaw.value="0";
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="62"; myaw.value="0";
     if (model){
       model.position.set(0,0,0.6);
-      model.scale.setScalar(0.5);
+      model.scale.setScalar(0.62);
       model.rotation.y = 0;
     }
     groundSnap();
