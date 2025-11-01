@@ -655,29 +655,20 @@ function resolveBind(key,cfg){
       const cfg = cfgFromKey(key);
       if (cfg) applyPairAngle(key,cfg,deg);
     };
-    // Head & trunk neutral
-    want('trunk_fe',0);  want('trunk_lat',0);  want('trunk_rot',0);
-    want('cerv_fe',0);   want('cerv_lat',0);   want('cerv_rot',0);
-    // Shoulders down at sides; neutral rotations
-    want('sh_fe_l',0);   want('sh_fe_r',0);
-    want('sh_aa_l',0);   want('sh_aa_r',0);
-    want('sh_irer_l',0); want('sh_irer_r',0);
-    // Elbows extended
-    want('el_fe_l',0);   want('el_fe_r',0);
-    // Forearm supinated → palms forward
-    want('fa_ps_l',90);  want('fa_ps_r',90);
-    // Wrists neutral
-    want('wr_fe_l',0);   want('wr_fe_r',0);
-    want('wr_ru_l',0);   want('wr_ru_r',0);
-    // Lower body neutral stance
-    want('hip_fe_l',0);  want('hip_fe_r',0);
-    want('hip_aa_l',0);  want('hip_aa_r',0);
-    want('hip_irer_l',0);want('hip_irer_r',0);
-    want('knee_fe_l',0); want('knee_fe_r',0);
-    want('ankle_dfpf_l',0); want('ankle_dfpf_r',0);
-    want('foot_invev_l',0); want('foot_invev_r',0);
-  }
+// Shoulders slightly adducted (~–15°) to rest at sides
+want('sh_fe_l', 0);
+want('sh_fe_r', 0);
+want('sh_aa_l', -15);
+want('sh_aa_r', -15);
 
+// Keep rotation neutral, elbows extended, palms forward
+want('sh_irer_l', 0);
+want('sh_irer_r', 0);
+want('el_fe_l', 0);
+want('el_fe_r', 0);
+want('fa_ps_l', 90);
+want('fa_ps_r', 90);
+}
 
   function clearModel(){
     if (model) scene.remove(model);
