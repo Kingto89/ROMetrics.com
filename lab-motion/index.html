@@ -58,7 +58,6 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
         <button id="romBtn" class="mini">📘 ROM Reference</button>
-        <!-- ADD-ON ONLY -->
         <button id="btnAnatomic" class="mini">Anatomic Position</button>
       </div>
 
@@ -388,7 +387,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     let bone = findBoneBy(cfg);
 
-    // alias: wrist PS uses DRUJ/forearm twist
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
 
@@ -400,6 +398,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     JOINT_BIND.set(key,obj);
     log(`Bound ${key} → ${bone.name} (axis ${axis})`);
     return obj;
+  }
+
+  // Freeze the current bone pose as the baseline for this key (0° = current)
+  function freezeBindBaseFor(key,cfg){
+    const b = resolveBind(key,cfg);
+    if (!b) return;
+    b.qBind = b.bone.quaternion.clone();
   }
 
   function applyPairAngle(key,cfg,deg){
@@ -416,7 +421,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
 
-  /* ===== Motions (paired definitions remain unchanged) ===== */
+  /* ===== Motions (paired configs kept; we’ll split in the UI) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine|chest|thor/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine|chest|thor/i]},
@@ -467,77 +472,53 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   let CURRENT = UPPER;
 
-  /* ===== Individual-action menu (NEW) ===== */
+  /* ===== Build separated entries (incl. Trunk & Cervical now) ===== */
   function dirEntriesFromPair(cfg){
-    // build separated actions (name, sign, maxForThisDir)
     const absMin = Math.abs(cfg.min);
     const maxPos = cfg.max;
-
-    const push = (arr, label, sign, maxVal) => {
-      arr.push({
-        key: cfg.key,
-        side: cfg.side,
-        label,
-        sign,
-        max: maxVal
-      });
-    };
-
     const out = [];
-    // Shoulder/Elbow/Hip/Knee Flex/Ext type
-    if (/_fe_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-    }
-    // Abd/Add
-    else if (/_aa_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
-    }
-    // Internal/External
-    else if (/_irer_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
-    }
-    // Pronation/Supination (positive = second term in our ranges)
-    else if (/fa_ps_|wr_ps_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Supination'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Pronation'), -1, absMin);
-    }
-    // Wrist Flex/Ext
-    else if (/wr_fe_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-    }
-    // Wrist Radial/Ulnar (positive = Ulnar in given ranges)
-    else if (/wr_ru_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
-    }
-    // Ankle Dorsi/Plantar (positive = Plantar)
-    else if (/ankle_dfpf_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
-    }
-    // Foot Inversion/Eversion (positive = Eversion)
-    else if (/foot_invev_/.test(cfg.key)){
-      push(out, cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
-      push(out, cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
-    }
+    const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
 
+    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe' || cfg.key==='cerv_fe'){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/_aa_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
+    } else if (/_irer_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+    } else if (cfg.key==='trunk_lat' || cfg.key==='cerv_lat'){
+      push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), -1, absMin);
+    } else if (cfg.key==='trunk_rot' || cfg.key==='cerv_rot' || /fa_ps_|wr_ps_/.test(cfg.key)){
+      // positive = right rotation / supination by our ranges
+      const isRot = (cfg.key==='trunk_rot'||cfg.key==='cerv_rot');
+      push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Supination'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Pronation'), -1, absMin);
+    } else if (/wr_fe_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/wr_ru_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
+    } else if (/ankle_dfpf_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
+    } else if (/foot_invev_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+    }
     return out;
   }
 
   function buildSeparatedCatalog(list){
     const cat = {};
-    const add = (grp, entries)=>{
-      if (!cat[grp]) cat[grp] = [];
-      cat[grp].push(...entries);
-    };
+    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat[grp].push(...entries); };
     list.forEach(cfg=>{
-      // leave trunk/cervical paired untouched (not scripted)
-      if (/^trunk_|^cerv_/.test(cfg.key)) return;
-      if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
+      if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
+      else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
+      else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
       else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
       else if (/^fa_/.test(cfg.key)) add('Forearm', dirEntriesFromPair(cfg));
       else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
@@ -549,11 +530,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     return cat;
   }
 
-  // cached lookups for selected action
-  let CURRENT_ACTION = null; // {key,label,sign,max}
-  function cfgFromKey(k){
-    return [...UPPER,...LOWER].find(x=>x.key===k) || null;
-  }
+  let CURRENT_ACTION = null; // {mode:'sep', key,cfg,sign,max,label}
+  function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
   function fillActionMenu(){
     actionSel.innerHTML = "";
@@ -561,26 +539,12 @@ optgroup{color:#9fb0c9;font-style:normal}
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
 
-    // Group 1: Trunk/Cervical — unchanged, still paired and informational
-    const pairedOg = document.createElement("optgroup"); pairedOg.label = "Trunk & Cervical (paired)";
-    [ 'trunk_fe','trunk_lat','trunk_rot','cerv_fe','cerv_lat','cerv_rot' ].forEach(k=>{
-      const c = cfgFromKey(k); if(!c) return;
-      const opt = document.createElement("option");
-      opt.value = `paired:${c.key}`;
-      opt.textContent = c.pair;
-      pairedOg.appendChild(opt);
-    });
-    actionSel.appendChild(pairedOg);
-
-    // Group 2: Separated upper or lower catalog based on CURRENT
     const list = (CURRENT===UPPER) ? UPPER : LOWER;
     const catalog = buildSeparatedCatalog(list);
-    Object.keys(catalog).forEach(groupName=>{
-      const og = document.createElement("optgroup");
-      og.label = groupName;
-      catalog[groupName].forEach(entry=>{
+    Object.keys(catalog).forEach(group=>{
+      const og = document.createElement("optgroup"); og.label = group;
+      catalog[group].forEach(entry=>{
         const opt = document.createElement("option");
-        // encode sign and key
         opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
         opt.textContent = entry.label;
         og.appendChild(opt);
@@ -598,15 +562,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){ actionDeg.disabled=true; zeroAction.disabled=true; pairLabel.textContent="Angle (°)"; return; }
     pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
-    // separated entries: 0..max, paired (trunk/cervical): use pair cfg min/max
-    if (CURRENT_ACTION.mode==='sep'){
-      actionDeg.min = "0";
-      actionDeg.max = String(CURRENT_ACTION.max);
-    } else {
-      const c = cfgFromKey(CURRENT_ACTION.key);
-      actionDeg.min = String(c.min);
-      actionDeg.max = String(c.max);
-    }
+    actionDeg.min = "0";
+    actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false; zeroAction.disabled = false;
   }
@@ -627,64 +584,44 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   actionSel.addEventListener("change", ()=>{
-    // always begin actions from anatomic baseline
+    // 1) Apply anatomic preset
     applyAnatomicBaseline();
 
-    const v = actionSel.value || "";
+    // 2) Decode selection
     CURRENT_ACTION = null;
-
+    const v = actionSel.value || "";
     if (v.startsWith("sep:")){
       const [, key, signStr, maxStr] = v.split(":");
       const cfg = cfgFromKey(key);
       CURRENT_ACTION = {
-        mode: 'sep',
-        key,
-        cfg,
+        mode:'sep',
+        key, cfg,
         sign: parseInt(signStr,10),
         max: parseFloat(maxStr),
         label: actionSel.options[actionSel.selectedIndex].textContent
       };
-      syncActionUI(true);
-      return;
-    }
-    if (v.startsWith("paired:")){
-      const [, key] = v.split(":");
-      const cfg = cfgFromKey(key);
-      CURRENT_ACTION = {
-        mode: 'paired',
-        key,
-        cfg,
-        sign: 1,
-        max: cfg.max,
-        label: cfg.pair
-      };
-      syncActionUI(true);
-      return;
-    }
 
+      // 3) Freeze current pose as baseline so 0° = anatomic
+      freezeBindBaseFor(key,cfg);
+
+      // 4) Reset slider to 0 visually + logically
+      syncActionUI(true);
+      return;
+    }
     syncActionUI(true);
   });
 
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
-    if (CURRENT_ACTION.mode === 'sep'){
-      const val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
-      const signed = CURRENT_ACTION.sign * val;
-      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    } else {
-      const v = parseFloat(actionDeg.value)||0;
-      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, v);
-    }
+    const val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+    const signed = CURRENT_ACTION.sign * val;
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
 
   zeroAction.onclick = ()=>{
     if (!CURRENT_ACTION) return;
     actionDeg.value="0";
-    if (CURRENT_ACTION.mode==='sep'){
-      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
-    } else {
-      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
-    }
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   };
 
   /* ===== Load model ===== */
@@ -719,7 +656,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   loadModel();
 
-  /* ===== Paired-joint helpers (unchanged) ===== */
+  /* ===== Paired-joint helpers (unchanged API) ===== */
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
     if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
@@ -731,7 +668,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!skeleton) return null;
     const lname = String(name).toLowerCase();
     return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
+    }
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
     let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
