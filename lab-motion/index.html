@@ -67,8 +67,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="content">
       <div class="row">
         <button id="reload" class="mini">Reload Model</button>
+        <button id="pickLocal" class="mini">Load Local .glb</button>
 <button id="romBtn" class="mini">📘 ROM Reference</button>
       </div>
+      <input id="fileLocal" type="file" accept=".glb,.gltf" style="display:none">
 
       
 <label>Posture</label>
@@ -146,6 +148,13 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label>Event Log</label>
       <pre id="log"></pre>
+      <details open>
+        <summary>Diagnostics</summary>
+        <div class="rom-row"><div class="rom-head">Protocol</div><div id="diagProto"></div></div>
+        <div class="rom-row"><div class="rom-head">Page URL</div><div id="diagHref" style="word-break:break-all"></div></div>
+        <div class="rom-row"><div class="rom-head">Model URL</div><div id="diagModel" style="word-break:break-all"></div></div>
+      </details>
+
     </div>
   </div>
 
@@ -158,20 +167,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   </div>
 
   <div id="msg">Loading…</div>
-  <div class="modal" id="modelModal" aria-modal="true" role="dialog">
-    <div class="top">
-      <h4>Model URL</h4>
-      <button class="x" id="modelClose" aria-label="Close">✕</button>
-    </div>
-    <div class="body" style="gap:8px; display:flex; flex-direction:column;">
-      <p>Model failed to load. Paste a direct .glb/.gltf URL (or drag the file into the same folder and try again).</p>
-      <input id="modelUrlInput" placeholder="https://.../your_model.glb" style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e2e8f0">
-      <div class="row">
-        <button id="applyModelUrl" class="mini">Load This Model</button>
-      </div>
-    </div>
-  </div>
-
   <canvas id="c"></canvas>
 
   <script type="module">
@@ -662,33 +657,46 @@ function resolveBind(key,cfg){
   document.getElementById("romClose").onclick = ()=> romModal.classList.remove('on');
 
   
-  /* ===== Model Load Fallback (UI prompt on error) ===== */
-  function openModelPrompt(){
-    const m = document.getElementById('modelModal');
-    m?.classList.add('on');
+  /* ===== Diagnostics + Local File Fallback (non-invasive) ===== */
+  function updateDiagnostics(){
+    const dP = document.getElementById('diagProto');
+    const dH = document.getElementById('diagHref');
+    const dM = document.getElementById('diagModel');
+    if (dP) dP.textContent = location.protocol;
+    if (dH) dH.textContent = location.href;
+    if (dM) dM.textContent = (typeof MODEL_URL !== 'undefined') ? MODEL_URL : '(not set yet)';
   }
-  function wireModelPrompt(){
-    const btn = document.getElementById('applyModelUrl');
-    const close = document.getElementById('modelClose');
-    const input = document.getElementById('modelUrlInput');
-    if (btn){
-      btn.addEventListener('click', ()=>{
-        const v = (input?.value||'').trim();
-        if (!v) { msg.textContent = "⚠️ Enter a model URL"; return; }
-        try{
-          // Overwrite MODEL_URL and reload model
-          MODEL_URL = v;
-          msg.textContent = "Loading custom model…";
-          loadModel();
-          document.getElementById('modelModal')?.classList.remove('on');
-        }catch(e){
-          msg.textContent = "⚠️ Could not apply model URL";
-        }
-      });
+  window.addEventListener('load', updateDiagnostics);
+
+  const pickLocalBtn = document.getElementById('pickLocal');
+  const fileLocal = document.getElementById('fileLocal');
+  pickLocalBtn?.addEventListener('click', ()=> fileLocal?.click());
+  fileLocal?.addEventListener('change', ()=>{
+    const f = fileLocal.files && fileLocal.files[0];
+    if (!f) return;
+    try{
+      const blobURL = URL.createObjectURL(f);
+      MODEL_URL = blobURL;  // override only for this session
+      log('Using local file: ' + f.name);
+      msg.textContent = "Loading local model…";
+      loadModel();
+      updateDiagnostics();
+    }catch(e){
+      log('Local file error: ' + (e?.message||e));
+      msg.textContent = "⚠️ Local file error";
     }
-    close?.addEventListener('click', ()=> document.getElementById('modelModal')?.classList.remove('on'));
-  }
-  window.addEventListener('load', wireModelPrompt);
+  });
+
+  // Keep diagnostics current on reload
+  document.getElementById('reload')?.addEventListener('click', updateDiagnostics);
+
+  // If loader errors, nudge user about protocol
+  const _origLoadModel = loadModel;
+  // Wrap loadModel so we can also update diagnostics each time
+  loadModel = function(){
+    updateDiagnostics();
+    return _origLoadModel();
+  };
 
 
   /* ===== Load model ===== */
@@ -729,9 +737,8 @@ msg.textContent = "✅ Model loaded";
       },
       (err) => {
         console.error(err);
-        msg.textContent = "⚠️ Load error";
+        msg.textContent = "⚠️ Load error — if you're opening this file directly, try using a local server (http://), or pick a local .glb with the button above.";
         log(`Error: ${err?.message || err}`);
-        openModelPrompt();
       }
     );
   }
