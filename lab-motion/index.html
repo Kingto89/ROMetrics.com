@@ -656,7 +656,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     actionDeg.disabled = false;
   }
 
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true;
+};
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
@@ -735,6 +736,9 @@ optgroup{color:#9fb0c9;font-style:normal}
         // Start in anatomic every time
         resetAllBonesToInitial();
         applyAnatomicBaseline();
+        COLLIM.enabled = true;
+        if (antiBox) antiBox.checked = true;
+        log("Anticollision default ON.");
         log("Anatomic baseline applied on load.");
       },
       (xhr) => { 
