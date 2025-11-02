@@ -953,7 +953,7 @@ actionDeg.addEventListener("input", ()=>{
     if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
   };
 
-  /* ===== Collision Tuner (dev-only) ===== */
+ /* ===== Collision Tuner (dev-only) ===== */
 let colTunerEl = null, colTunerVisible = false;
 
 function ensureCollisionTuner(){
@@ -996,28 +996,55 @@ function ensureCollisionTuner(){
 
   const colL = colTunerEl.querySelector('#colTrunkLatL');
   const colR = colTunerEl.querySelector('#colTrunkLatR');
+
   const preload = ()=>{
     colL.value = String(COLLIM.trunkLatLMax);
     colR.value = String(COLLIM.trunkLatRMax);
   };
   preload();
 
+  // === Apply: update caps AND immediately clamp current trunk-lat pose (if active) ===
   colTunerEl.querySelector('#colApply').onclick = ()=>{
+    // 1) Update limits from inputs
     COLLIM.trunkLatLMax = Math.max(0, Math.min(90, +colL.value || 0));
     COLLIM.trunkLatRMax = Math.max(0, Math.min(90, +colR.value || 0));
-    log(`Tuned Safe ROM Line → Trunk Lat: Left ${COLLIM.trunkLatLMax}°, Right ${COLLIM.trunkLatRMax}°`);
+
+    // 2) If we are currently using Trunk Lateral Flexion, enforce now
+    if (CURRENT_ACTION && CURRENT_ACTION.key === 'trunk_lat') {
+      let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value) || 0));
+      const cap = (CURRENT_ACTION.sign > 0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+
+      if (COLLIM.enabled && val > cap) {
+        val = cap;
+        actionDeg.value = String(val);              // reflect in UI
+        pairLabel.style.color = '#fca5a5';          // brief visual hint
+        setTimeout(()=> pairLabel.style.color = '', 350);
+        log(`Anticollision limit applied now → ${cap}° (${CURRENT_ACTION.sign>0?'Left':'Right'})`);
+      } else {
+        log('Collision limits updated.');
+      }
+
+      // re-apply pose at possibly clamped value
+      const signed = CURRENT_ACTION.sign * val;
+      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    } else {
+      log('Collision limits updated (not on Trunk Lat; enforcement will occur when used).');
+    }
   };
+
   colTunerEl.querySelector('#colSave').onclick = ()=>{
     COLLIM.trunkLatLMax = Math.max(0, Math.min(90, +colL.value || 0));
     COLLIM.trunkLatRMax = Math.max(0, Math.min(90, +colR.value || 0));
     COLLIM.save();
     log('Collision limits saved.');
   };
+
   colTunerEl.querySelector('#colReset').onclick = ()=>{
     COLLIM.trunkLatLMax = 30; COLLIM.trunkLatRMax = 30;
     COLLIM.save(); preload();
     log('Collision limits reset to defaults (30°/30°).');
   };
+
   colTunerEl.querySelector('#colX').onclick = ()=>{ toggleCollisionTuner(false); };
   return colTunerEl;
 }
