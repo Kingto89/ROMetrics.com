@@ -701,16 +701,39 @@ optgroup{color:#9fb0c9;font-style:normal}
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
 
-  // Advanced resets (now lives in Advanced section)
-  zeroAction.onclick = ()=>{ if (!CURRENT_ACTION) return; actionDeg.value="0"; applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0); };
-  zeroAll.onclick = ()=>{
+// Zero Current (robust inside <details>)
+if (zeroAction) {
+  zeroAction.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if (!CURRENT_ACTION){
+      log('Pick an Action first, then “Zero Current”.');
+      return;
+    }
+    // Re-freeze so 0° = your current anatomic baseline
+    freezeBindBaseFor(CURRENT_ACTION.key, CURRENT_ACTION.cfg);
+
+    actionDeg.value = "0";
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
+    log(`Zeroed: ${CURRENT_ACTION.label} → 0°`);
+  });
+}
+
+// Zero All (same behavior, with null-guards)
+if (zeroAll) {
+  zeroAll.addEventListener('click', ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
-    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; zeroAction.disabled = true;
+
+    actionSel.value = "";
+    actionDeg.value = "0";
+    actionDeg.disabled = true;
+    if (zeroAction) zeroAction.disabled = true;
+
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     pairLabel.textContent = "Angle (°)";
     log("All motions zeroed → returned to anatomic baseline.");
-  };
+  });
+}
 
   /* ===== Model load ===== */
   function clearModel(){
