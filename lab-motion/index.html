@@ -97,10 +97,6 @@ optgroup{color:#9fb0c9;font-style:normal}
           <button id="zeroAction" class="mini">Zero Current</button>
           <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
         </div>
-
-        <div class="row" style="margin-top:6px">
-          <button id="zeroBone" class="mini">Zero Bone</button>
-        </div>
       </details>
 
       <details>
@@ -187,7 +183,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const rx = document.getElementById("rx");
   const ry = document.getElementById("ry");
   const rz = document.getElementById("rz");
-  const zeroBone = document.getElementById("zeroBone");
 
   const mx = document.getElementById("mx");
   const my = document.getElementById("my");
@@ -198,7 +193,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   /* ===== Collision limits (dev-tuned) ===== */
   const COLLIM = {
-    enabled: false,
+    enabled: true,
     trunkLatLMax: 30,
     trunkLatRMax: 30,
     load(){ try{ const raw = localStorage.getItem('rometrics_collim'); if(!raw)return; const o=JSON.parse(raw); if(typeof o.trunkLatLMax==='number') this.trunkLatLMax=o.trunkLatLMax; if(typeof o.trunkLatRMax==='number') this.trunkLatRMax=o.trunkLatRMax; }catch(e){} },
@@ -765,12 +760,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     model.scale.setScalar(parseInt(ms.value,10)/100);
     model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
   }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
-    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
-    groundSnap();
-  };
 
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
