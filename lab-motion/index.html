@@ -70,10 +70,14 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
-      <div class="row">
-      <button id="zeroAction" class="mini">Zero Current</button>
-      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-      </div>
+      <div class="row" style="align-items:center">
+  <button id="zeroAction" class="mini">Zero Current</button>
+  <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+  <label style="display:flex;gap:6px;align-items:center;margin:0;">
+    <input id="antiBox" type="checkbox" />
+    <span title="Shift+Click to open developer tuner">Anticollision</span>
+  </label>
+</div>
 
       <details>
         <summary>Bone (Advanced)</summary>
@@ -191,6 +195,44 @@ optgroup{color:#9fb0c9;font-style:normal}
   const resetModel = document.getElementById("resetModel");
 
   const btnAnatomic = document.getElementById("btnAnatomic");
+  /* ===== Collision limits (dev-tuned) =====
+   Only Trunk Lateral Flexion for now (Left/Right have their own caps).
+   Values are in degrees.
+*/
+const COLLIM = {
+  enabled: false,           // student toggle
+  trunkLatLMax: 30,         // default cap for Left lateral flexion
+  trunkLatRMax: 30,         // default cap for Right lateral flexion
+  load(){
+    try{
+      const raw = localStorage.getItem('rometrics_collim');
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (typeof o.trunkLatLMax === 'number') this.trunkLatLMax = o.trunkLatLMax;
+      if (typeof o.trunkLatRMax === 'number') this.trunkLatRMax = o.trunkLatRMax;
+    }catch(e){}
+  },
+  save(){
+    try{
+      localStorage.setItem('rometrics_collim', JSON.stringify({
+        trunkLatLMax: this.trunkLatLMax,
+        trunkLatRMax: this.trunkLatRMax
+      }));
+    }catch(e){}
+  }
+};
+COLLIM.load();
+
+const antiBox = document.getElementById('antiBox');
+if (antiBox){
+  antiBox.checked = COLLIM.enabled;
+  antiBox.addEventListener('click', (e)=>{
+    // SHIFT+Click opens tuner (dev)
+    if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
+    COLLIM.enabled = !!antiBox.checked;
+    log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
+  });
+}
 
   /* ===== Draggable panel ===== */
   (function(){
@@ -687,12 +729,23 @@ function syncActionUI(forceZero=false){
     syncActionUI(true);
   });
 
-  actionDeg.addEventListener("input", ()=>{
-    if (!CURRENT_ACTION) return;
-    const val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
-    const signed = CURRENT_ACTION.sign * val;
-    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-  });
+actionDeg.addEventListener("input", ()=>{
+  if (!CURRENT_ACTION) return;
+  let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+
+  // Anticollision enforcement for Trunk Lateral Flexion
+  if (COLLIM.enabled && CURRENT_ACTION.key === 'trunk_lat'){
+    const cap = (CURRENT_ACTION.sign > 0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    if (val > cap){
+      val = cap;
+      actionDeg.value = String(val);
+      log(`Anticollision limit hit (Trunk Lat ${CURRENT_ACTION.sign>0?'Left':'Right'}): max ${cap}°`);
+    }
+  }
+
+  const signed = CURRENT_ACTION.sign * val;
+  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+});
 
   zeroAction.onclick = ()=>{
     if (!CURRENT_ACTION) return;
@@ -900,6 +953,81 @@ function syncActionUI(forceZero=false){
     if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
   };
 
+  /* ===== Collision Tuner (dev-only) ===== */
+let colTunerEl = null, colTunerVisible = false;
+
+function ensureCollisionTuner(){
+  if (colTunerEl) return colTunerEl;
+  colTunerEl = document.createElement('div');
+  Object.assign(colTunerEl.style,{
+    position:'fixed', right:'16px', top:'220px', zIndex:41,
+    background:'rgba(8,13,26,.96)', border:'1px solid #334155',
+    borderRadius:'12px', padding:'10px', width:'320px', color:'#e2e8f0',
+    font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
+    display:'none'
+  });
+  colTunerEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <strong style="font-size:13px;">Collision Tuner (dev)</strong>
+      <span class="badge">Safe ROM Line</span>
+      <button id="colX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+
+    <div class="rom-row">
+      <div class="rom-head">Trunk Lateral Flex — Left max (°)</div>
+      <div style="flex:1"><input id="colTrunkLatL" type="number" step="1" min="0" max="90" style="width:100%"></div>
+    </div>
+    <div class="rom-row">
+      <div class="rom-head">Trunk Lateral Flex — Right max (°)</div>
+      <div style="flex:1"><input id="colTrunkLatR" type="number" step="1" min="0" max="90" style="width:100%"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="colApply" class="mini" style="flex:1">Apply</button>
+      <button id="colSave"  class="mini">Save</button>
+      <button id="colReset" class="mini">Reset</button>
+    </div>
+    <div style="opacity:.7;margin-top:6px;">
+      Tip: with the student checkbox <em>Anticollision</em> ON, these caps are enforced.
+      Shift+Click the checkbox to reopen this tuner.
+    </div>
+  `;
+  document.body.appendChild(colTunerEl);
+
+  const colL = colTunerEl.querySelector('#colTrunkLatL');
+  const colR = colTunerEl.querySelector('#colTrunkLatR');
+  const preload = ()=>{
+    colL.value = String(COLLIM.trunkLatLMax);
+    colR.value = String(COLLIM.trunkLatRMax);
+  };
+  preload();
+
+  colTunerEl.querySelector('#colApply').onclick = ()=>{
+    COLLIM.trunkLatLMax = Math.max(0, Math.min(90, +colL.value || 0));
+    COLLIM.trunkLatRMax = Math.max(0, Math.min(90, +colR.value || 0));
+    log(`Tuned Safe ROM Line → Trunk Lat: Left ${COLLIM.trunkLatLMax}°, Right ${COLLIM.trunkLatRMax}°`);
+  };
+  colTunerEl.querySelector('#colSave').onclick = ()=>{
+    COLLIM.trunkLatLMax = Math.max(0, Math.min(90, +colL.value || 0));
+    COLLIM.trunkLatRMax = Math.max(0, Math.min(90, +colR.value || 0));
+    COLLIM.save();
+    log('Collision limits saved.');
+  };
+  colTunerEl.querySelector('#colReset').onclick = ()=>{
+    COLLIM.trunkLatLMax = 30; COLLIM.trunkLatRMax = 30;
+    COLLIM.save(); preload();
+    log('Collision limits reset to defaults (30°/30°).');
+  };
+  colTunerEl.querySelector('#colX').onclick = ()=>{ toggleCollisionTuner(false); };
+  return colTunerEl;
+}
+
+function toggleCollisionTuner(show){
+  ensureCollisionTuner();
+  colTunerVisible = (show===undefined) ? !colTunerVisible : !!show;
+  colTunerEl.style.display = colTunerVisible ? 'block' : 'none';
+}
+  
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
