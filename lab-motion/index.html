@@ -701,24 +701,17 @@ optgroup{color:#9fb0c9;font-style:normal}
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
 
-// --- Zero buttons (drop-in) ---
-zeroAction.type = 'button';
-zeroAction.onclick = ()=>{
-  if (!CURRENT_ACTION) return;
+// --- Zero buttons (final) ---
+zeroAction.addEventListener('click', ()=>{
+  if (!CURRENT_ACTION){
+    log('Pick an Action first, then “Zero Current”.');
+    return;
+  }
+  // 0° relative to the frozen baseline for this action
   actionDeg.value = "0";
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   log(`Zeroed: ${CURRENT_ACTION.label || 'Current'} → 0°`);
-};
-
-  // Make sure UI is enabled
-  zeroAction.disabled = false;
-  actionDeg.disabled = false;
-
-  // Re-bind so 0° means “current baseline”, then apply 0
-  actionDeg.value = "0";
-  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
-  log(`Zeroed: ${CURRENT_ACTION.label} → 0°`);
-};
+});
 
 zeroAll.onclick = (e)=>{
   e.preventDefault();
