@@ -727,6 +727,18 @@ zeroAll.onclick = (e)=>{
   pairLabel.textContent = "Angle (°)";
   log("All motions zeroed → returned to anatomic baseline.");
 };
+// Zero Current — same style as Zero All but only undoes last action
+zeroAction.onclick = (e)=>{
+  e.preventDefault();
+  if(!CURRENT_ACTION) return;
+
+  // drive that one action back to neutral baseline
+  actionDeg.value = "0";
+  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
+
+  log(`Zeroed current: ${CURRENT_ACTION.label || 'Current'} → 0°`);
+};
+
 
 // Keep button state sane when Advanced <details> is toggled
 document.querySelector('details')?.addEventListener('toggle', ()=>{
