@@ -386,7 +386,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const HINTS = cfg.hints || [];
     // Try exact preferred spine chain first for trunk/cervical
-    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine03$/, /^spine02$/, /^spine01$/, /chest/, /upperchest/] :
+    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
                       (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
 
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
