@@ -702,12 +702,14 @@ optgroup{color:#9fb0c9;font-style:normal}
   });
 
 // --- Zero buttons (drop-in) ---
-zeroAction.onclick = (e)=>{
-  e.preventDefault();
-  if (!CURRENT_ACTION){
-    log('Pick an Action first, then “Zero Current”.');
-    return;
-  }
+zeroAction.type = 'button';
+zeroAction.onclick = ()=>{
+  if (!CURRENT_ACTION) return;
+  actionDeg.value = "0";
+  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
+  log(`Zeroed: ${CURRENT_ACTION.label || 'Current'} → 0°`);
+};
+
   // Make sure UI is enabled
   zeroAction.disabled = false;
   actionDeg.disabled = false;
