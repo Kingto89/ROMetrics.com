@@ -434,6 +434,18 @@ optgroup{color:#9fb0c9;font-style:normal}
   const JOINT_BIND = new Map();
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
+    // Force Trunk to spine01 explicitly (matches Advanced control)
+if (/^trunk_/.test(key)) {
+  const b = getExactBoneByName('spine01');
+  if (b) {
+    const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
+    const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+    const obj = { bone: b, qBind, axis };
+    JOINT_BIND.set(key, obj);
+    log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
+    return obj;
+  }
+}
     let bone = findBoneBy({...cfg, key});
 
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
@@ -472,9 +484,9 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
-    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
-    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
-    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/spine03|spine02|spine01|chest|upperchest/i]},
+    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
+    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
+    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
 
     {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
