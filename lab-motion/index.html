@@ -71,8 +71,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
       <div class="row">
-      <button id="zeroAction" class="mini">Zero Current</button>
-      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+        <button id="zeroAction" class="mini">Zero Current</button>
+        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
       </div>
 
       <details>
@@ -119,10 +119,9 @@ optgroup{color:#9fb0c9;font-style:normal}
         <label>Yaw (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="myaw">
         <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
-        
-        <label><input id="collideOn" type="checkbox" checked style="margin-right:8px"> Anti-collision (beta)</label>
-        </details>
 
+        <label><input id="collideOn" type="checkbox" checked style="margin-right:8px"> Anti-collision (beta)</label>
+      </details>
 
       <label>Event Log</label>
       <pre id="log"></pre>
@@ -179,7 +178,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const zeroAction = document.getElementById("zeroAction");
   const zeroAll = document.getElementById("zeroAll");
 
-
   const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
   const ry = document.getElementById("ry");
@@ -192,14 +190,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ms = document.getElementById("ms");
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
-  const collideOn = document.getElementById("collideOn");
-if (collideOn){
-  COLLIDE.enabled = !!collideOn.checked;               // set initial state
-  collideOn.addEventListener('change', () => {
-    COLLIDE.enabled = !!collideOn.checked;              // live toggle
-    log(`Anti-collision ${COLLIDE.enabled ? 'ON' : 'OFF'}.`);
-  });
-}
 
   const btnAnatomic = document.getElementById("btnAnatomic");
 
@@ -350,18 +340,17 @@ if (collideOn){
     if (qb) b.quaternion.copy(qb);
     rx.value="0"; ry.value="0"; rz.value="0";
   }
-function resetAllBonesToInitial(){
-  if (!skeleton) return;
-  // Restore every bone to its captured initial quaternion
-  skeleton.bones.forEach(b=>{
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
-  // Refresh all joint bind baselines to match the reset pose
-  JOINT_BIND.forEach(obj=>{
-    if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
-  });
-}
+  function resetAllBonesToInitial(){
+    if (!skeleton) return;
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+    JOINT_BIND.forEach(obj=>{
+      if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
+    });
+  }
+
   /* ===== Rig profile & axis ===== */
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
@@ -396,7 +385,6 @@ function resetAllBonesToInitial(){
   }
 
   /* ===== Bone finding ===== */
-  // removed "spine" from exclude so trunk can bind
   const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
@@ -408,12 +396,9 @@ function resetAllBonesToInitial(){
     if (!skeleton) return null;
     const names = skeleton.bones.map(b=>b.name.toLowerCase());
     const sideREs = sideRegex(cfg.side);
-
     const HINTS = cfg.hints || [];
-    // Try exact preferred spine chain first for trunk/cervical
     const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
                       (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
-
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
 
     for (const cand of tryList){
@@ -433,156 +418,150 @@ function resetAllBonesToInitial(){
     }
     return null;
   }
-/* ===== Anti-collision (universal) ===== */
-const COLLIDE = { enabled: true };
 
-function getBone(name){ return getExactBoneByName(name) || null; }
-function wp(obj, out=new THREE.Vector3()){ obj.updateWorldMatrix(true,false); return out.setFromMatrixPosition(obj.matrixWorld); }
-function segClosestDistanceSq(p1, q1, p2, q2){
-  // segment-segment squared distance
-  const d1 = new THREE.Vector3().subVectors(q1,p1);
-  const d2 = new THREE.Vector3().subVectors(q2,p2);
-  const r  = new THREE.Vector3().subVectors(p1,p2);
-  const a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r);
-  let s,t;
-  if (a<=1e-9 && e<=1e-9) return r.lengthSq();
-  if (a<=1e-9){ s=0; t=THREE.MathUtils.clamp(f/e,0,1); }
-  else{
-    const c = d1.dot(r);
-    if (e<=1e-9){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
+  /* ===== Anti-collision (universal) ===== */
+  const COLLIDE = { enabled: true };
+
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
+  function getBone(name){ return getExactBoneByName(name) || null; }
+  function wp(obj, out=new THREE.Vector3()){
+    if (!obj) return out.set(0,0,0);
+    obj.updateWorldMatrix(true,false);
+    return out.setFromMatrixPosition(obj.matrixWorld);
+  }
+  function segClosestDistanceSq(p1, q1, p2, q2){
+    const d1 = new THREE.Vector3().subVectors(q1,p1);
+    const d2 = new THREE.Vector3().subVectors(q2,p2);
+    const r  = new THREE.Vector3().subVectors(p1,p2);
+    const a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r);
+    let s,t;
+    if (a<=1e-9 && e<=1e-9) return r.lengthSq();
+    if (a<=1e-9){ s=0; t=THREE.MathUtils.clamp(f/e,0,1); }
     else{
-      const b = d1.dot(d2);
-      const denom = a*e - b*b;
-      s = denom!==0 ? THREE.MathUtils.clamp((b*f - c*e)/denom,0,1) : 0;
-      t = (b*s + f)/e;
-      if (t<0){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
-      else if (t>1){ t=1; s=THREE.MathUtils.clamp((b - c)/a,0,1); }
+      const c = d1.dot(r);
+      if (e<=1e-9){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
+      else{
+        const b = d1.dot(d2);
+        const denom = a*e - b*b;
+        s = denom!==0 ? THREE.MathUtils.clamp((b*f - c*e)/denom,0,1) : 0;
+        t = (b*s + f)/e;
+        if (t<0){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
+        else if (t>1){ t=1; s=THREE.MathUtils.clamp((b - c)/a,0,1); }
+      }
     }
+    const c1 = new THREE.Vector3().copy(p1).addScaledVector(d1,s);
+    const c2 = new THREE.Vector3().copy(p2).addScaledVector(d2,t);
+    return c1.distanceToSquared(c2);
   }
-  const c1 = new THREE.Vector3().copy(p1).addScaledVector(d1,s);
-  const c2 = new THREE.Vector3().copy(p2).addScaledVector(d2,t);
-  return c1.distanceToSquared(c2);
-}
-function pointSegDistanceSq(p, a, b){
-  const ab = new THREE.Vector3().subVectors(b,a);
-  const t = THREE.MathUtils.clamp(new THREE.Vector3().subVectors(p,a).dot(ab)/ab.lengthSq(), 0, 1);
-  const c = new THREE.Vector3().copy(a).addScaledVector(ab, t);
-  return c.distanceToSquared(p);
-}
-
-/* Collider defs (simple primitives parented to bones) */
-const COLLIDERS = {
-  torso:      { type:'capsule', a:'pelvis',   b:'spine03',     r:0.13 },
-  thigh_L:    { type:'capsule', a:'thigh_L',  b:'calf_L',      r:0.095 },
-  thigh_R:    { type:'capsule', a:'thigh_R',  b:'calf_R',      r:0.095 },
-  upperarm_L: { type:'capsule', a:'upperarm_L', b:'lowerarm_L', r:0.070 },
-  upperarm_R: { type:'capsule', a:'upperarm_R', b:'lowerarm_R', r:0.070 },
-  hand_L:     { type:'sphere',  c:'hand_L',   r:0.065 },
-  hand_R:     { type:'sphere',  c:'hand_R',   r:0.065 },
-  calf_L:     { type:'capsule', a:'calf_L',   b:'foot_L',      r:0.07  },
-  calf_R:     { type:'capsule', a:'calf_R',   b:'foot_R',      r:0.07  },
-};
-
-/* Resolve bones once per model load */
-function buildColliders(){
-  Object.values(COLLIDERS).forEach(cd=>{
-    if (cd.a) cd._a = getBone(cd.a);
-    if (cd.b) cd._b = getBone(cd.b);
-    if (cd.c) cd._c = getBone(cd.c);
-  });
-  log('Anti-collision: colliders bound.');
-}
-
-/* Fetch current world shapes */
-function worldCapsule(cd){
-  if (!(cd?._a && cd?._b)) return null;
-  return { a: wp(cd._a.clone()), b: wp(cd._b.clone()), r: cd.r };
-}
-function worldSphere(cd){
-  if (!cd?._c) return null;
-  return { c: wp(cd._c.clone()), r: cd.r };
-}
-
-/* Narrow-phase tests */
-function collideSphereCapsule(sp, cap){
-  if (!sp || !cap) return false;
-  const d2 = pointSegDistanceSq(sp.c, cap.a, cap.b);
-  const R  = sp.r + cap.r;
-  return d2 < (R*R);
-}
-function collideCapsuleCapsule(c1, c2){
-  if (!c1 || !c2) return false;
-  const R = c1.r + c2.r;
-  const d2 = segClosestDistanceSq(c1.a, c1.b, c2.a, c2.b);
-  return d2 < (R*R);
-}
-
-/* Which pairs to check per action key */
-function colliderPairsForKey(key){
-  const P = [];
-  // universal upper-limb vs torso/thigh
-  P.push(['hand_L','thigh_L'], ['hand_R','thigh_R'], ['hand_L','torso'], ['hand_R','torso']);
-  // upperarm block against torso for ADD/cross-body & trunk motions
-  P.push(['upperarm_L','torso'], ['upperarm_R','torso']);
-  // knee compression (deep flexion)
-  if (/^knee_/.test(key)) P.push(['calf_L','thigh_L'], ['calf_R','thigh_R']);
-  return P;
-}
-
-/* Run all relevant tests */
-function anyCollisionForKey(key){
-  if (!COLLIDE.enabled) return false;
-  const pairs = colliderPairsForKey(key);
-  for (const [A,B] of pairs){
-    const a = COLLIDERS[A], b = COLLIDERS[B];
-    if (!a || !b) continue;
-    const aw = (a.type==='sphere') ? worldSphere(a) : worldCapsule(a);
-    const bw = (b.type==='sphere') ? worldSphere(b) : worldCapsule(b);
-    if (a.type==='sphere' && b.type==='capsule' && collideSphereCapsule(aw,bw)) return true;
-    if (a.type==='capsule' && b.type==='sphere' && collideSphereCapsule(bw,aw)) return true;
-    if (a.type==='capsule' && b.type==='capsule' && collideCapsuleCapsule(aw,bw)) return true;
-  }
-  return false;
-}
-
-/* Clamp utility: try target; if collision, binary-search toward 0 */
-function clampAngleWithCollision(key, bind, cfg, targetDeg){
-  const { bone, qBind, axis } = bind;
-  const oldQ = bone.quaternion.clone();
-
-  function setAt(deg){
-    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
-      'XYZ'
-    );
-    bone.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+  function pointSegDistanceSq(p, a, b){
+    const ab = new THREE.Vector3().subVectors(b,a);
+    const t = THREE.MathUtils.clamp(new THREE.Vector3().subVectors(p,a).dot(ab)/ab.lengthSq(), 0, 1);
+    const c = new THREE.Vector3().copy(a).addScaledVector(ab, t);
+    return c.distanceToSquared(p);
   }
 
-  // Try full
-  setAt(targetDeg);
-  if (!anyCollisionForKey(key)) return targetDeg;
+  const COLLIDERS = {
+    torso:      { type:'capsule', a:'pelvis',   b:'spine03',     r:0.13 },
+    thigh_L:    { type:'capsule', a:'thigh_L',  b:'calf_L',      r:0.095 },
+    thigh_R:    { type:'capsule', a:'thigh_R',  b:'calf_R',      r:0.095 },
+    upperarm_L: { type:'capsule', a:'upperarm_L', b:'lowerarm_L', r:0.070 },
+    upperarm_R: { type:'capsule', a:'upperarm_R', b:'lowerarm_R', r:0.070 },
+    hand_L:     { type:'sphere',  c:'hand_L',   r:0.065 },
+    hand_R:     { type:'sphere',  c:'hand_R',   r:0.065 },
+    calf_L:     { type:'capsule', a:'calf_L',   b:'foot_L',      r:0.07  },
+    calf_R:     { type:'capsule', a:'calf_R',   b:'foot_R',      r:0.07  },
+  };
 
-  // Binary search between 0 and target
-  let lo = 0, hi = targetDeg, best = 0;
-  // If moving negative, ensure lo < hi
-  if (hi < lo) [lo,hi] = [hi,lo];
-
-  for (let i=0;i<18;i++){ // ~1/2 degree resolution
-    const mid = (lo+hi)/2;
-    setAt(mid);
-    const hit = anyCollisionForKey(key);
-    if (hit){ hi = mid; }
-    else { best = mid; lo = mid; }
+  function buildColliders(){
+    Object.values(COLLIDERS).forEach(cd=>{
+      if (cd.a) cd._a = getBone(cd.a);
+      if (cd.b) cd._b = getBone(cd.b);
+      if (cd.c) cd._c = getBone(cd.c);
+    });
+    log('Anti-collision: colliders bound.');
   }
-  // Restore final and log
-  setAt(best);
-  const clamped = (Math.sign(targetDeg) < 0) ? -Math.abs(best) : Math.abs(best);
-  log(`🛑 Collision guard: ${targetDeg.toFixed(1)}° → ${clamped.toFixed(1)}° (${key})`);
-  return clamped;
-}
+
+  function worldCapsule(cd){
+    if (!(cd?._a && cd?._b)) return null;
+    return { a: wp(cd._a), b: wp(cd._b), r: cd.r };
+  }
+  function worldSphere(cd){
+    if (!cd?._c) return null;
+    return { c: wp(cd._c), r: cd.r };
+  }
+
+  function collideSphereCapsule(sp, cap){
+    if (!sp || !cap) return false;
+    const d2 = pointSegDistanceSq(sp.c, cap.a, cap.b);
+    const R  = sp.r + cap.r;
+    return d2 < (R*R);
+  }
+  function collideCapsuleCapsule(c1, c2){
+    if (!c1 || !c2) return false;
+    const R = c1.r + c2.r;
+    const d2 = segClosestDistanceSq(c1.a, c1.b, c2.a, c2.b);
+    return d2 < (R*R);
+  }
+
+  function colliderPairsForKey(key){
+    const P = [];
+    P.push(['hand_L','thigh_L'], ['hand_R','thigh_R'], ['hand_L','torso'], ['hand_R','torso']);
+    P.push(['upperarm_L','torso'], ['upperarm_R','torso']);
+    if (/^knee_/.test(key)) P.push(['calf_L','thigh_L'], ['calf_R','thigh_R']);
+    return P;
+  }
+
+  function anyCollisionForKey(key){
+    if (!COLLIDE.enabled) return false;
+    const pairs = colliderPairsForKey(key);
+    for (const [A,B] of pairs){
+      const a = COLLIDERS[A], b = COLLIDERS[B];
+      if (!a || !b) continue;
+      const aw = (a.type==='sphere') ? worldSphere(a) : worldCapsule(a);
+      const bw = (b.type==='sphere') ? worldSphere(b) : worldCapsule(b);
+      if (a.type==='sphere' && b.type==='capsule' && collideSphereCapsule(aw,bw)) return true;
+      if (a.type==='capsule' && b.type==='sphere' && collideSphereCapsule(bw,aw)) return true;
+      if (a.type==='capsule' && b.type==='capsule' && collideCapsuleCapsule(aw,bw)) return true;
+    }
+    return false;
+  }
+
+  function clampAngleWithCollision(key, bind, cfg, targetDeg){
+    const { bone, qBind, axis } = bind;
+
+    function setAt(deg){
+      const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+      const e = new THREE.Euler(
+        axis==='x'?rad:0,
+        axis==='y'?rad:0,
+        axis==='z'?rad:0,
+        'XYZ'
+      );
+      bone.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    }
+
+    setAt(targetDeg);
+    if (!anyCollisionForKey(key)) return targetDeg;
+
+    let lo = 0, hi = targetDeg, best = 0;
+    if (hi < lo) [lo,hi] = [hi,lo];
+
+    for (let i=0;i<18;i++){
+      const mid = (lo+hi)/2;
+      setAt(mid);
+      const hit = anyCollisionForKey(key);
+      if (hit){ hi = mid; }
+      else { best = mid; lo = mid; }
+    }
+    setAt(best);
+    const clamped = (Math.sign(targetDeg) < 0) ? -Math.abs(best) : Math.abs(best);
+    log(`🛑 Collision guard: ${targetDeg.toFixed(1)}° → ${clamped.toFixed(1)}° (${key})`);
+    return clamped;
+  }
 
   /* ===== DRUJ proxy ===== */
   const DRUJ = { l:null, r:null };
@@ -609,18 +588,18 @@ function clampAngleWithCollision(key, bind, cfg, targetDeg){
   const JOINT_BIND = new Map();
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-    // Force Trunk to spine01 explicitly (matches Advanced control)
-if (/^trunk_/.test(key)) {
-  const b = getExactBoneByName('spine01');
-  if (b) {
-    const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-    const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
-    const obj = { bone: b, qBind, axis };
-    JOINT_BIND.set(key, obj);
-    log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
-    return obj;
-  }
-}
+    // hard-bind trunk to spine01
+    if (/^trunk_/.test(key)) {
+      const b = getExactBoneByName('spine01');
+      if (b) {
+        const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
+        const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+        const obj = { bone: b, qBind, axis };
+        JOINT_BIND.set(key, obj);
+        log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
+        return obj;
+      }
+    }
     let bone = findBoneBy({...cfg, key});
 
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
@@ -636,17 +615,25 @@ if (/^trunk_/.test(key)) {
     return obj;
   }
 
-  // Freeze current bone pose as baseline (0° = current)
   function freezeBindBaseFor(key,cfg){
     const b = resolveBind(key,cfg);
     if (!b) return;
     b.qBind = b.bone.quaternion.clone();
   }
-function applyPairAngle(key,cfg,deg){
-  const bind = resolveBind(key,cfg); if (!bind) return;
-  // Try target; if it collides, clamp and commit inside this helper
-  clampAngleWithCollision(key, bind, cfg, deg);
-}
+  function applyPairAngle(key,cfg,deg){
+    const bind = resolveBind(key,cfg); if (!bind) return;
+    clampAngleWithCollision(key, bind, cfg, deg);
+  }
+
+  /* === Bind the UI toggle NOW that COLLIDE exists === */
+  const collideOn = document.getElementById("collideOn");
+  if (collideOn){
+    COLLIDE.enabled = !!collideOn.checked;
+    collideOn.addEventListener('change', () => {
+      COLLIDE.enabled = !!collideOn.checked;
+      log(`Anti-collision ${COLLIDE.enabled ? 'ON' : 'OFF'}.`);
+    });
+  }
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
@@ -699,7 +686,7 @@ function applyPairAngle(key,cfg,deg){
 
   let CURRENT = UPPER;
 
-  /* ===== Build separated entries (Trunk & Cervical included) ===== */
+  /* ===== Build separated entries ===== */
   function dirEntriesFromPair(cfg){
     const absMin = Math.abs(cfg.min);
     const maxPos = cfg.max;
@@ -785,22 +772,22 @@ function applyPairAngle(key,cfg,deg){
     CURRENT_ACTION = null;
   }
 
-function syncActionUI(forceZero=false){
-  if (!CURRENT_ACTION){
-    actionDeg.disabled = true;
-    zeroAction.disabled = true;
-    if (zeroAll) zeroAll.disabled = false;   // always allowed
-    pairLabel.textContent = "Angle (°)";
-    return;
+  function syncActionUI(forceZero=false){
+    if (!CURRENT_ACTION){
+      actionDeg.disabled = true;
+      zeroAction.disabled = true;
+      if (zeroAll) zeroAll.disabled = false;
+      pairLabel.textContent = "Angle (°)";
+      return;
+    }
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+    actionDeg.min = "0";
+    actionDeg.max = String(CURRENT_ACTION.max);
+    if (forceZero) actionDeg.value = "0";
+    actionDeg.disabled = false;
+    zeroAction.disabled = false;
+    if (zeroAll) zeroAll.disabled = false;
   }
-  pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
-  actionDeg.min = "0";
-  actionDeg.max = String(CURRENT_ACTION.max);
-  if (forceZero) actionDeg.value = "0";
-  actionDeg.disabled = false;
-  zeroAction.disabled = false;
-  if (zeroAll) zeroAll.disabled = false;     // always allowed
-}
 
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
@@ -818,7 +805,6 @@ function syncActionUI(forceZero=false){
   }
 
   actionSel.addEventListener("change", ()=>{
-    // Apply baseline, then freeze so slider 0 = anatomic
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
@@ -852,25 +838,17 @@ function syncActionUI(forceZero=false){
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   };
   zeroAll.onclick = ()=>{
-  // 1) Zero every joint to its captured neutral
-  resetAllBonesToInitial();
-
-  // 2) Re-apply your anatomic baseline (ADD −42°, Forearm PS −2°, Wrist PS −73°)
-  applyAnatomicBaseline();
-
-  // 3) Reset UI: clear selection and sliders
-  actionSel.value = "";
-  actionDeg.value = "0";
-  actionDeg.disabled = true;
-  zeroAction.disabled = true;
-  if (zeroAll) zeroAll.disabled = false;
-
-  // Advanced sliders back to zero
-  rx.value = "0"; ry.value = "0"; rz.value = "0";
-
-  pairLabel.textContent = "Angle (°)";
-  log("All motions zeroed → returned to anatomic baseline.");
-};
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    actionSel.value = "";
+    actionDeg.value = "0";
+    actionDeg.disabled = true;
+    zeroAction.disabled = true;
+    if (zeroAll) zeroAll.disabled = false;
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    pairLabel.textContent = "Angle (°)";
+    log("All motions zeroed → returned to anatomic baseline.");
+  };
 
   /* ===== Model load/reset/reload ===== */
   function clearModel(){
@@ -897,9 +875,16 @@ function syncActionUI(forceZero=false){
         populateBones();
         detectRigProfile();
         fillActionMenu();
-        buildColliders(); 
+        buildColliders();
       },
-      (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
+      (xhr) => {
+        if (xhr.lengthComputable){
+          const pct = Math.max(0, Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)));
+          msg.textContent = `Loading ${pct}%`;
+        } else {
+          msg.textContent = "Loading…";
+        }
+      },
       (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
     );
   }
@@ -931,11 +916,6 @@ function syncActionUI(forceZero=false){
     if (cfg) applyPairAngle(key,cfg,deg);
   }
 
-  function getExactBoneByName(name){
-    if (!skeleton) return null;
-    const lname = String(name).toLowerCase();
-    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
     let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
@@ -966,7 +946,7 @@ function syncActionUI(forceZero=false){
       background:'rgba(8,13,26,.96)', border:'1px solid #334155',
       borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0',
       font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
-      display:'none'  // hidden by default
+      display:'none'
     });
     tunerEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -1047,7 +1027,7 @@ function syncActionUI(forceZero=false){
 
   btnAnatomic.onclick = (e)=>{
     applyAnatomicBaseline();
-    if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
+    if (e.shiftKey) { toggleTuner(true); }
   };
 
   /* ===== ROM modal wiring ===== */
