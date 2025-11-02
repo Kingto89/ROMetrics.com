@@ -909,32 +909,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   };
 
   /* ===== Paired-joint helpers ===== */
-  function setPair(key,deg){
-    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
-    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
-    const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key,cfg,deg);
-  }
-
-  function rotateSideWristPS(side, deg){
-    if (!skeleton) return;
-    let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
-    if (!wrist){
-      wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
-    }
-    if (!wrist){ log(`No wrist bone for ${side}`); return; }
-
-    const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
-    const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
-    const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
-    const rad = THREE.MathUtils.degToRad(deg);
-    const e = new THREE.Euler(0,0,0,'XYZ');
-    if (axis==='x') e.set(rad,0,0,'XYZ');
-    if (axis==='y') e.set(0,rad,0,'XYZ');
-    if (axis==='z') e.set(0,0,rad,'XYZ');
-    wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
-  }
+function setPair(key, deg){
+  const cfg = cfgFromKey(key);
+  if (cfg) applyPairAngle(key, cfg, deg);
+}
 
   /* ===== Hidden Anatomic Tuner (dev-only) ===== */
   let tunerEl = null, tunerVisible = false;
@@ -1026,9 +1004,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   btnAnatomic.onclick = (e)=>{
-    applyAnatomicBaseline();
-    if (e.shiftKey) { toggleTuner(true); }
-  };
+  resetAllBonesToInitial();   // ensure true neutral on both sides
+  applyAnatomicBaseline();    // then apply your symmetric baseline
+  if (e.shiftKey) { toggleTuner(true); } // reveal dev tuner on Shift
+};
 
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
