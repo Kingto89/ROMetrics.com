@@ -735,6 +735,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         // Start in anatomic every time
         resetAllBonesToInitial();
         applyAnatomicBaseline();
+        antiCollide.checked = true;
         log("Anatomic baseline applied on load.");
       },
       (xhr) => { 
