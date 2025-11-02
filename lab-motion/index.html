@@ -1014,15 +1014,16 @@ function ensureCollisionTuner(){
       let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value) || 0));
       const cap = (CURRENT_ACTION.sign > 0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
 
-      if (COLLIM.enabled && val > cap) {
-        val = cap;
-        actionDeg.value = String(val);              // reflect in UI
-        pairLabel.style.color = '#fca5a5';          // brief visual hint
-        setTimeout(()=> pairLabel.style.color = '', 350);
-        log(`Anticollision limit applied now → ${cap}° (${CURRENT_ACTION.sign>0?'Left':'Right'})`);
-      } else {
-        log('Collision limits updated.');
-      }
+// Preview NOW regardless of checkbox state
+if (val > cap){
+  val = cap;
+  actionDeg.value = String(val);              // reflect in UI
+  pairLabel.style.color = '#fca5a5';          // brief visual hint
+  setTimeout(()=> pairLabel.style.color = '', 350);
+  log(`Previewed Safe ROM Line → ${cap}° (${CURRENT_ACTION.sign>0?'Left':'Right'})`);
+} else {
+  log(`Safe ROM unchanged (≤ ${cap}°).`);
+}
 
       // re-apply pose at possibly clamped value
       const signed = CURRENT_ACTION.sign * val;
