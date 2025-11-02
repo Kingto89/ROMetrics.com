@@ -71,7 +71,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
       <div class="row">
-        <button id="zeroAction" class="mini">Zero Motion</button>
+      <button id="zeroAction" class="mini">Zero Current</button>
+      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
       </div>
 
       <details>
@@ -173,6 +174,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
   const zeroAction = document.getElementById("zeroAction");
+  const zeroAll = document.getElementById("zeroAll");
+
 
   const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
@@ -336,7 +339,18 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (qb) b.quaternion.copy(qb);
     rx.value="0"; ry.value="0"; rz.value="0";
   }
-
+function resetAllBonesToInitial(){
+  if (!skeleton) return;
+  // Restore every bone to its captured initial quaternion
+  skeleton.bones.forEach(b=>{
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+  // Refresh all joint bind baselines to match the reset pose
+  JOINT_BIND.forEach(obj=>{
+    if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
+  });
+}
   /* ===== Rig profile & axis ===== */
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
@@ -619,14 +633,22 @@ if (/^trunk_/.test(key)) {
     CURRENT_ACTION = null;
   }
 
-  function syncActionUI(forceZero=false){
-    if (!CURRENT_ACTION){ actionDeg.disabled=true; zeroAction.disabled=true; pairLabel.textContent="Angle (°)"; return; }
-    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
-    actionDeg.min = "0";
-    actionDeg.max = String(CURRENT_ACTION.max);
-    if (forceZero) actionDeg.value = "0";
-    actionDeg.disabled = false; zeroAction.disabled = false;
+function syncActionUI(forceZero=false){
+  if (!CURRENT_ACTION){
+    actionDeg.disabled = true;
+    zeroAction.disabled = true;
+    if (zeroAll) zeroAll.disabled = false;   // always allowed
+    pairLabel.textContent = "Angle (°)";
+    return;
   }
+  pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+  actionDeg.min = "0";
+  actionDeg.max = String(CURRENT_ACTION.max);
+  if (forceZero) actionDeg.value = "0";
+  actionDeg.disabled = false;
+  zeroAction.disabled = false;
+  if (zeroAll) zeroAll.disabled = false;     // always allowed
+}
 
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
@@ -677,6 +699,26 @@ if (/^trunk_/.test(key)) {
     actionDeg.value="0";
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   };
+  zeroAll.onclick = ()=>{
+  // 1) Zero every joint to its captured neutral
+  resetAllBonesToInitial();
+
+  // 2) Re-apply your anatomic baseline (ADD −42°, Forearm PS −2°, Wrist PS −73°)
+  applyAnatomicBaseline();
+
+  // 3) Reset UI: clear selection and sliders
+  actionSel.value = "";
+  actionDeg.value = "0";
+  actionDeg.disabled = true;
+  zeroAction.disabled = true;
+  if (zeroAll) zeroAll.disabled = false;
+
+  // Advanced sliders back to zero
+  rx.value = "0"; ry.value = "0"; rz.value = "0";
+
+  pairLabel.textContent = "Angle (°)";
+  log("All motions zeroed → returned to anatomic baseline.");
+};
 
   /* ===== Model load/reset/reload ===== */
   function clearModel(){
