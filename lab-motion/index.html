@@ -93,14 +93,11 @@ optgroup{color:#9fb0c9;font-style:normal}
         <input type="range" min="-180" max="180" step="1" value="0" id="rz">
 
         <!-- Moved here per your spec -->
-        <div class="row" style="margin-top:6px">
-          <button id="zeroAction" class="mini">Zero Current</button>
+                <div class="row" style="margin-top:6px">
+          <button id="zeroBone" class="mini">Zero Bone</button>
           <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
         </div>
 
-        <div class="row" style="margin-top:6px">
-          <button id="zeroBone" class="mini">Zero Bone</button>
-        </div>
       </details>
 
       <details>
@@ -180,7 +177,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
-  const zeroAction = document.getElementById("zeroAction");
   const zeroAll = document.getElementById("zeroAll");
 
   const boneSel = document.getElementById("boneSel");
@@ -644,14 +640,12 @@ optgroup{color:#9fb0c9;font-style:normal}
     actionSel.value = "";
     pairLabel.textContent = "Angle (°)";
     actionDeg.disabled = true;
-    zeroAction.disabled = true;
     CURRENT_ACTION = null;
   }
 
   function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){
       actionDeg.disabled = true;
-      zeroAction.disabled = true;
       pairLabel.textContent = "Angle (°)";
       return;
     }
@@ -660,7 +654,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false;
-    zeroAction.disabled = false;
   }
 
   segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; zeroAction.disabled=true; };
@@ -705,13 +698,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
-
-  // Advanced resets (now lives in Advanced section)
-  zeroAction.onclick = ()=>{ if (!CURRENT_ACTION) return; actionDeg.value="0"; applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0); };
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
-    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; zeroAction.disabled = true;
+    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     pairLabel.textContent = "Angle (°)";
     log("All motions zeroed → returned to anatomic baseline.");
