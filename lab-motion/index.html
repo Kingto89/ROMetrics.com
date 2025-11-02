@@ -50,14 +50,13 @@ optgroup{color:#9fb0c9;font-style:normal}
 </style>
 </head>
 <body>
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
-    <div class="content">
-      <div class="row">
-        <button id="reload" class="mini">Reload Model</button>
-        <button id="romBtn" class="mini">📘 ROM Reference</button>
-        <button id="btnAnatomic" class="mini" title="Shift+Click to reveal dev tuner">Anatomic Position</button>
-      </div>
+<div class="row">
+  <button id="romBtn" class="mini">📘 ROM Reference</button>
+  <label style="display:flex;gap:6px;align-items:center;margin:0 0 0 6px;">
+    <input id="antiBox" type="checkbox"/>
+    <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+  </label>
+</div>
 
       <label>Body Region</label>
       <div class="seg">
@@ -165,7 +164,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
-  const reloadBtn = document.getElementById("reload");
   const romBtn = document.getElementById("romBtn");
   const romModal = document.getElementById("romModal");
   const romBody = document.getElementById("romBody");
@@ -194,7 +192,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
 
-  const btnAnatomic = document.getElementById("btnAnatomic");
   /* ===== Collision limits (dev-tuned) =====
    Only Trunk Lateral Flexion for now (Left/Right have their own caps).
    Values are in degrees.
@@ -798,6 +795,10 @@ actionDeg.addEventListener("input", ()=>{
         populateBones();
         detectRigProfile();
         fillActionMenu();
+        // after: populateBones(); detectRigProfile(); fillActionMenu();
+resetAllBonesToInitial();
+applyAnatomicBaseline();
+log("Anatomic baseline applied on load.");
       },
       (xhr) => { 
   const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
@@ -808,7 +809,6 @@ actionDeg.addEventListener("input", ()=>{
   }
   loadModel();
 
-  reloadBtn.onclick = ()=>{ loadModel(); };
 
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
@@ -947,11 +947,6 @@ actionDeg.addEventListener("input", ()=>{
     tunerVisible = (show===undefined) ? !tunerVisible : !!show;
     tunerEl.style.display = tunerVisible ? 'block' : 'none';
   }
-
-  btnAnatomic.onclick = (e)=>{
-    applyAnatomicBaseline();
-    if (e.shiftKey) { toggleTuner(true); } // reveal only on Shift+Click
-  };
 
  /* ===== Collision Tuner (dev-only) ===== */
 let colTunerEl = null, colTunerVisible = false;
