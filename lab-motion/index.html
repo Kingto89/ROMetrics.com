@@ -746,7 +746,10 @@ function syncActionUI(forceZero=false){
         detectRigProfile();
         fillActionMenu();
       },
-      (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
+      (xhr) => { 
+  const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
+  msg.textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
+},
       (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
     );
   }
