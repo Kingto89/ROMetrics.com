@@ -119,7 +119,10 @@ optgroup{color:#9fb0c9;font-style:normal}
         <label>Yaw (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="myaw">
         <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
-      </details>
+        
+        <label><input id="collideOn" type="checkbox" checked style="margin-right:8px"> Anti-collision (beta)</label>
+        </details>
+
 
       <label>Event Log</label>
       <pre id="log"></pre>
@@ -189,6 +192,14 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ms = document.getElementById("ms");
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
+  const collideOn = document.getElementById("collideOn");
+if (collideOn){
+  COLLIDE.enabled = !!collideOn.checked;               // set initial state
+  collideOn.addEventListener('change', () => {
+    COLLIDE.enabled = !!collideOn.checked;              // live toggle
+    log(`Anti-collision ${COLLIDE.enabled ? 'ON' : 'OFF'}.`);
+  });
+}
 
   const btnAnatomic = document.getElementById("btnAnatomic");
 
@@ -422,6 +433,156 @@ function resetAllBonesToInitial(){
     }
     return null;
   }
+/* ===== Anti-collision (universal) ===== */
+const COLLIDE = { enabled: true };
+
+function getBone(name){ return getExactBoneByName(name) || null; }
+function wp(obj, out=new THREE.Vector3()){ obj.updateWorldMatrix(true,false); return out.setFromMatrixPosition(obj.matrixWorld); }
+function segClosestDistanceSq(p1, q1, p2, q2){
+  // segment-segment squared distance
+  const d1 = new THREE.Vector3().subVectors(q1,p1);
+  const d2 = new THREE.Vector3().subVectors(q2,p2);
+  const r  = new THREE.Vector3().subVectors(p1,p2);
+  const a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r);
+  let s,t;
+  if (a<=1e-9 && e<=1e-9) return r.lengthSq();
+  if (a<=1e-9){ s=0; t=THREE.MathUtils.clamp(f/e,0,1); }
+  else{
+    const c = d1.dot(r);
+    if (e<=1e-9){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
+    else{
+      const b = d1.dot(d2);
+      const denom = a*e - b*b;
+      s = denom!==0 ? THREE.MathUtils.clamp((b*f - c*e)/denom,0,1) : 0;
+      t = (b*s + f)/e;
+      if (t<0){ t=0; s=THREE.MathUtils.clamp(-c/a,0,1); }
+      else if (t>1){ t=1; s=THREE.MathUtils.clamp((b - c)/a,0,1); }
+    }
+  }
+  const c1 = new THREE.Vector3().copy(p1).addScaledVector(d1,s);
+  const c2 = new THREE.Vector3().copy(p2).addScaledVector(d2,t);
+  return c1.distanceToSquared(c2);
+}
+function pointSegDistanceSq(p, a, b){
+  const ab = new THREE.Vector3().subVectors(b,a);
+  const t = THREE.MathUtils.clamp(new THREE.Vector3().subVectors(p,a).dot(ab)/ab.lengthSq(), 0, 1);
+  const c = new THREE.Vector3().copy(a).addScaledVector(ab, t);
+  return c.distanceToSquared(p);
+}
+
+/* Collider defs (simple primitives parented to bones) */
+const COLLIDERS = {
+  torso:      { type:'capsule', a:'pelvis',   b:'spine03',     r:0.13 },
+  thigh_L:    { type:'capsule', a:'thigh_L',  b:'calf_L',      r:0.095 },
+  thigh_R:    { type:'capsule', a:'thigh_R',  b:'calf_R',      r:0.095 },
+  upperarm_L: { type:'capsule', a:'upperarm_L', b:'lowerarm_L', r:0.070 },
+  upperarm_R: { type:'capsule', a:'upperarm_R', b:'lowerarm_R', r:0.070 },
+  hand_L:     { type:'sphere',  c:'hand_L',   r:0.065 },
+  hand_R:     { type:'sphere',  c:'hand_R',   r:0.065 },
+  calf_L:     { type:'capsule', a:'calf_L',   b:'foot_L',      r:0.07  },
+  calf_R:     { type:'capsule', a:'calf_R',   b:'foot_R',      r:0.07  },
+};
+
+/* Resolve bones once per model load */
+function buildColliders(){
+  Object.values(COLLIDERS).forEach(cd=>{
+    if (cd.a) cd._a = getBone(cd.a);
+    if (cd.b) cd._b = getBone(cd.b);
+    if (cd.c) cd._c = getBone(cd.c);
+  });
+  log('Anti-collision: colliders bound.');
+}
+
+/* Fetch current world shapes */
+function worldCapsule(cd){
+  if (!(cd?._a && cd?._b)) return null;
+  return { a: wp(cd._a.clone()), b: wp(cd._b.clone()), r: cd.r };
+}
+function worldSphere(cd){
+  if (!cd?._c) return null;
+  return { c: wp(cd._c.clone()), r: cd.r };
+}
+
+/* Narrow-phase tests */
+function collideSphereCapsule(sp, cap){
+  if (!sp || !cap) return false;
+  const d2 = pointSegDistanceSq(sp.c, cap.a, cap.b);
+  const R  = sp.r + cap.r;
+  return d2 < (R*R);
+}
+function collideCapsuleCapsule(c1, c2){
+  if (!c1 || !c2) return false;
+  const R = c1.r + c2.r;
+  const d2 = segClosestDistanceSq(c1.a, c1.b, c2.a, c2.b);
+  return d2 < (R*R);
+}
+
+/* Which pairs to check per action key */
+function colliderPairsForKey(key){
+  const P = [];
+  // universal upper-limb vs torso/thigh
+  P.push(['hand_L','thigh_L'], ['hand_R','thigh_R'], ['hand_L','torso'], ['hand_R','torso']);
+  // upperarm block against torso for ADD/cross-body & trunk motions
+  P.push(['upperarm_L','torso'], ['upperarm_R','torso']);
+  // knee compression (deep flexion)
+  if (/^knee_/.test(key)) P.push(['calf_L','thigh_L'], ['calf_R','thigh_R']);
+  return P;
+}
+
+/* Run all relevant tests */
+function anyCollisionForKey(key){
+  if (!COLLIDE.enabled) return false;
+  const pairs = colliderPairsForKey(key);
+  for (const [A,B] of pairs){
+    const a = COLLIDERS[A], b = COLLIDERS[B];
+    if (!a || !b) continue;
+    const aw = (a.type==='sphere') ? worldSphere(a) : worldCapsule(a);
+    const bw = (b.type==='sphere') ? worldSphere(b) : worldCapsule(b);
+    if (a.type==='sphere' && b.type==='capsule' && collideSphereCapsule(aw,bw)) return true;
+    if (a.type==='capsule' && b.type==='sphere' && collideSphereCapsule(bw,aw)) return true;
+    if (a.type==='capsule' && b.type==='capsule' && collideCapsuleCapsule(aw,bw)) return true;
+  }
+  return false;
+}
+
+/* Clamp utility: try target; if collision, binary-search toward 0 */
+function clampAngleWithCollision(key, bind, cfg, targetDeg){
+  const { bone, qBind, axis } = bind;
+  const oldQ = bone.quaternion.clone();
+
+  function setAt(deg){
+    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+    const e = new THREE.Euler(
+      axis==='x'?rad:0,
+      axis==='y'?rad:0,
+      axis==='z'?rad:0,
+      'XYZ'
+    );
+    bone.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+  }
+
+  // Try full
+  setAt(targetDeg);
+  if (!anyCollisionForKey(key)) return targetDeg;
+
+  // Binary search between 0 and target
+  let lo = 0, hi = targetDeg, best = 0;
+  // If moving negative, ensure lo < hi
+  if (hi < lo) [lo,hi] = [hi,lo];
+
+  for (let i=0;i<18;i++){ // ~1/2 degree resolution
+    const mid = (lo+hi)/2;
+    setAt(mid);
+    const hit = anyCollisionForKey(key);
+    if (hit){ hi = mid; }
+    else { best = mid; lo = mid; }
+  }
+  // Restore final and log
+  setAt(best);
+  const clamped = (Math.sign(targetDeg) < 0) ? -Math.abs(best) : Math.abs(best);
+  log(`🛑 Collision guard: ${targetDeg.toFixed(1)}° → ${clamped.toFixed(1)}° (${key})`);
+  return clamped;
+}
 
   /* ===== DRUJ proxy ===== */
   const DRUJ = { l:null, r:null };
@@ -481,20 +642,11 @@ if (/^trunk_/.test(key)) {
     if (!b) return;
     b.qBind = b.bone.quaternion.clone();
   }
-
-  function applyPairAngle(key,cfg,deg){
-    const bind = resolveBind(key,cfg); if (!bind) return;
-    const {bone, qBind, axis} = bind;
-    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
-      "XYZ"
-    );
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    bone.quaternion.copy(qBind).multiply(qDelta);
-  }
+function applyPairAngle(key,cfg,deg){
+  const bind = resolveBind(key,cfg); if (!bind) return;
+  // Try target; if it collides, clamp and commit inside this helper
+  clampAngleWithCollision(key, bind, cfg, deg);
+}
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
@@ -745,6 +897,7 @@ function syncActionUI(forceZero=false){
         populateBones();
         detectRigProfile();
         fillActionMenu();
+        buildColliders(); 
       },
       (xhr) => { msg.textContent = xhr.lengthComputable ? `Loading ${Math.round((xhr.loaded/xhr.total)*100)}%` : "Loading…"; },
       (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
