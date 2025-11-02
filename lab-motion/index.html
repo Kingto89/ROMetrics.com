@@ -713,7 +713,6 @@ zeroAction.onclick = (e)=>{
   actionDeg.disabled = false;
 
   // Re-bind so 0° means “current baseline”, then apply 0
-  freezeBindBaseFor(CURRENT_ACTION.key, CURRENT_ACTION.cfg);
   actionDeg.value = "0";
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, 0);
   log(`Zeroed: ${CURRENT_ACTION.label} → 0°`);
