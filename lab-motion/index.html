@@ -595,12 +595,12 @@ function dirEntriesFromPair(cfg){
     push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
     push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
   } else if (cfg.key==='trunk_lat'){
-    push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), -1, absMin);
+    push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), -1, absMin);
   } else if (cfg.key==='trunk_rot' || /fa_ps_|wr_ps_/.test(cfg.key)){
     const isRot = (cfg.key==='trunk_rot');
-    push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Supination'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Pronation'), -1, absMin);
+    push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Supination'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Pronation'), -1, absMin);
   } else if (/wr_fe_/.test(cfg.key)){
     push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
     push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
