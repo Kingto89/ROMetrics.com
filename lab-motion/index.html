@@ -270,14 +270,30 @@ optgroup{color:#9fb0c9;font-style:normal}
   let model = null, skeleton = null;
   const initialBoneRot = new Map();
 
-  function pickModelUrl(){
+  // --- Robust model locator (supports ?model=... and fallbacks)
+  async function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
-    if (q && /^https?:\/\//i.test(q)) return q;
-    if (q && q.trim()) return new URL(q, location.href).href;
-    return "./Athletic_Grace_1006002620_texture.glb";
+    const candidate = q && q.trim()
+      ? (/^https?:\/\//i.test(q) ? q : new URL(q, location.href).href)
+      : null;
+
+    const fallbacks = [
+      candidate,
+      "./Athletic_Grace_1006002620_texture.glb",
+      "./Athletic_Grace_1006002620_textured.glb",
+      "./Grace.glb",
+      "./models/Grace.glb"
+    ].filter(Boolean);
+
+    for (const url of fallbacks){
+      try{
+        const r = await fetch(url, { method:"HEAD" });
+        if (r.ok) return url;
+      }catch(_){}
+    }
+    throw new Error("Could not locate a .glb. Pass ?model=path/to/file.glb or fix the default filename/path.");
   }
-  let MODEL_URL = pickModelUrl();
 
   function groundSnap(){
     if (!model) return;
@@ -525,6 +541,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lowerarm|forearm|ulna|radius/i]},
 
     /* Forearm pronation/supination removed per your request */
+
     {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
 
@@ -559,6 +576,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const out = [];
     const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
 
+    // Cervical exact order/labels
     if (cfg.key === 'cerv_fe'){
       push('Cervical Flexion',  +1, maxPos);
       push('Cervical Extension', -1, absMin);
@@ -575,6 +593,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       return out;
     }
 
+    // Defaults
     if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
       push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
@@ -669,11 +688,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-42, wpsL:-73, psL: -2 /* retained for tuner symmetry only */ };
+  const ANAT = { addL:-42, wpsL:-73, psL:-2 /* kept for tuner symmetry only */ };
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
-    // Forearm PS removed from UI; keep wrist PS neutral preload
     setPair('wr_ps_l', ANAT.wpsL);
     setPair('wr_ps_r', -ANAT.wpsL);
     log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
@@ -723,20 +741,14 @@ optgroup{color:#9fb0c9;font-style:normal}
   function clampAntiCollision(key, sign, val){
     // Cervical Rotation ±65°
     if (key==='cerv_rot'){ return Math.min(val, 65); }
-
-    // Shoulder Extension (negative sign in our scheme)
+    // Shoulder Extension (negative sign)
     if ((key==='sh_fe_l'||key==='sh_fe_r') && sign<0){ return Math.min(val, 45); }
-
     // Shoulder Adduction (negative sign)
     if ((key==='sh_aa_l'||key==='sh_aa_r') && sign<0){ return Math.min(val, 15); }
-
     // Elbow Extension (negative sign) → allow up to 5° hyperext
     if ((key==='el_fe_l'||key==='el_fe_r') && sign<0){ return Math.min(val, 5); }
-
     // Wrist Supination (positive sign)
     if ((key==='wr_ps_l'||key==='wr_ps_r') && sign>0){ return Math.min(val, 90); }
-
-    // Existing trunk lateral caps still handled below via tuner
     return val;
   }
 
@@ -748,7 +760,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
-    // Use DRUJ proxy axis from wrist pair config
     const keyForAxis = side === 'l' ? 'wr_ps_l' : 'wr_ps_r';
     const cfg = cfgFromKey(keyForAxis);
     const bind = resolveBind(keyForAxis, cfg);
@@ -763,13 +774,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   // ===== Menu & interaction =====
   function applyShoulderRotWithCoupling(key, signedDegrees){
     const side = key.endsWith('_l') ? 'L' : 'R';
-    const isIR = (signedDegrees > 0); // our menu: + = IR, − = ER
-    // 1) Elbow to 90°
-    setElbowFlex(side, 90);
-    // 2) Bias add/abd a few degrees toward/away from midline
-    biasShoulderAddAbd(side, isIR ? +8 : -8);
-    // 3) Apply axial rotation via the normal bind (preserves base)
-    const cfg = cfgFromKey(key);
+    const isIR = (signedDegrees > 0); // + = IR, − = ER
+    setElbowFlex(side, 90);                  // 1) elbow to 90°
+    biasShoulderAddAbd(side, isIR ? +8 : -8); // 2) bias add/abd toward/away from midline
+    const cfg = cfgFromKey(key);             // 3) apply rotation
     applyPairAngle(key, cfg, signedDegrees);
     log(`Shoulder ${isIR?'IR':'ER'} (${side}) → elbow 90°, ${isIR?'adduct':'abduct'} bias`);
   }
@@ -819,10 +827,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!CURRENT_ACTION) return;
     let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
 
-    // Per-joint anticollision caps you asked for
+    // Per-joint anticollision caps
     val = clampAntiCollision(CURRENT_ACTION.key, CURRENT_ACTION.sign, val);
 
-    // Existing trunk lateral flex caps (from the tuner UI)
+    // Trunk lateral flex caps (tuner)
     if (COLLIM.enabled && CURRENT_ACTION.key === 'trunk_lat'){
       const cap = (CURRENT_ACTION.sign > 0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
       if (val > cap){ val = cap; actionDeg.value = String(val); log(`Anticollision limit hit (Trunk Lat ${CURRENT_ACTION.sign>0?'Left':'Right'}): max ${cap}°`); }
@@ -830,7 +838,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     let signed = CURRENT_ACTION.sign * val;
 
-    // Right Shoulder Abduction used to move as Adduction → flip sign so it abducts correctly
+    // Fix: Right shoulder abduction used to move as adduction → flip sign so it abducts correctly
     if (CURRENT_ACTION.key === 'sh_aa_r' && CURRENT_ACTION.sign > 0){ signed = -signed; }
 
     // Shoulder IR/ER coupling: elbow 90°, bias add/abd, then rotate
@@ -860,9 +868,17 @@ optgroup{color:#9fb0c9;font-style:normal}
     boneSel.innerHTML = "";
     DRUJ.l = DRUJ.r = null;
   }
-  function loadModel(){
+  async function loadModel(){
     msg.textContent = "Loading…"; log("Loading model...");
     clearModel();
+    let MODEL_URL;
+    try{
+      MODEL_URL = await pickModelUrl();
+    }catch(err){
+      msg.textContent = "⚠️ Model not found";
+      log(String(err.message||err));
+      return;
+    }
     loader.load(
       MODEL_URL,
       (gltf) => {
@@ -888,7 +904,12 @@ optgroup{color:#9fb0c9;font-style:normal}
         const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
         msg.textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
       },
-      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
+      (err) => {
+        msg.textContent = "⚠️ Load error";
+        const e = String(err?.message||err);
+        log(`Error while loading model\n• Fix the path/filename or pass ?model=./path/to/your.glb\n• If running from file://, serve with a local server.\nRaw: ${e}`);
+        console.error(err);
+      }
     );
   }
   loadModel();
