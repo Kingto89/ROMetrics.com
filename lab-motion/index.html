@@ -559,43 +559,63 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   let CURRENT = UPPER;
 
-  function dirEntriesFromPair(cfg){
-    const absMin = Math.abs(cfg.min);
-    const maxPos = cfg.max;
-    const out = [];
-    const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
+function dirEntriesFromPair(cfg){
+  const absMin = Math.abs(cfg.min);
+  const maxPos = cfg.max;
+  const out = [];
+  const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
 
-    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe' || cfg.key==='cerv_fe'){
-      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-    } else if (/_aa_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
-    } else if (/_irer_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
-    } else if (cfg.key==='trunk_lat' || cfg.key==='cerv_lat'){
-      push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), -1, absMin);
-    } else if (cfg.key==='trunk_rot' || cfg.key==='cerv_rot' || /fa_ps_|wr_ps_/.test(cfg.key)){
-      const isRot = (cfg.key==='trunk_rot'||cfg.key==='cerv_rot');
-      push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Supination'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Pronation'), -1, absMin);
-    } else if (/wr_fe_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-    } else if (/wr_ru_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
-    } else if (/ankle_dfpf_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
-    } else if (/foot_invev_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
-    }
+  // ---- Cervical (exact labels + order you requested) ----
+  if (cfg.key === 'cerv_fe'){
+    push('Cervical Flexion',  +1, maxPos);
+    push('Cervical Extension', -1, absMin);
     return out;
   }
+  if (cfg.key === 'cerv_lat'){
+    // Right first, then Left
+    push('Cervical Lateral Flexion — Right', -1, absMin);
+    push('Cervical Lateral Flexion — Left',  +1, maxPos);
+    return out;
+  }
+  if (cfg.key === 'cerv_rot'){
+    // Left first, then Right
+    push('Cervical Rotation — Left',  -1, absMin);
+    push('Cervical Rotation — Right', +1, maxPos);
+    return out;
+  }
+
+  // ---- Default behavior for all other joints (unchanged) ----
+  if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+    push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+  } else if (/_aa_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
+  } else if (/_irer_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+  } else if (cfg.key==='trunk_lat'){
+    push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), -1, absMin);
+  } else if (cfg.key==='trunk_rot' || /fa_ps_|wr_ps_/.test(cfg.key)){
+    const isRot = (cfg.key==='trunk_rot');
+    push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Supination'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Pronation'), -1, absMin);
+  } else if (/wr_fe_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+  } else if (/wr_ru_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
+  } else if (/ankle_dfpf_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
+  } else if (/foot_invev_/.test(cfg.key)){
+    push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
+    push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+  }
+  return out;
+}
 
   function buildSeparatedCatalog(list){
     const cat = {};
