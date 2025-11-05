@@ -573,14 +573,14 @@ function dirEntriesFromPair(cfg){
   }
   if (cfg.key === 'cerv_lat'){
     // Right first, then Left
-    push('Cervical Lateral Flexion — Right', -1, absMin);
-    push('Cervical Lateral Flexion — Left',  +1, maxPos);
+    push('Cervical Lateral Flexion — Left', -1, absMin);
+    push('Cervical Lateral Flexion — Right',  +1, maxPos);
     return out;
   }
   if (cfg.key === 'cerv_rot'){
     // Left first, then Right
-    push('Cervical Rotation — Left',  -1, absMin);
-    push('Cervical Rotation — Right', +1, maxPos);
+    push('Cervical Rotation — Right',  -1, absMin);
+    push('Cervical Rotation — Left', +1, maxPos);
     return out;
   }
 
