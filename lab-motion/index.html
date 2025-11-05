@@ -50,7 +50,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 </style>
 </head>
 <body>
-  <!-- Restored panel shell so drag works & script doesn’t crash -->
   <div class="panel" id="panel">
     <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
     <div class="content">
@@ -92,12 +91,10 @@ optgroup{color:#9fb0c9;font-style:normal}
         <label>Rotate Z (°)</label>
         <input type="range" min="-180" max="180" step="1" value="0" id="rz">
 
-        <!-- Moved here per your spec -->
-                <div class="row" style="margin-top:6px">
+        <div class="row" style="margin-top:6px">
           <button id="zeroBone" class="mini">Zero Bone</button>
           <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
         </div>
-
       </details>
 
       <details>
@@ -385,7 +382,6 @@ optgroup{color:#9fb0c9;font-style:normal}
         sh_aa_l:'z', sh_aa_r:'z',
         sh_irer_l:'y', sh_irer_r:'y',
         el_fe_l:'x', el_fe_r:'x',
-        fa_ps_l:'y', fa_ps_r:'y',
         wr_ps_l:'y', wr_ps_r:'y',
         wr_fe_l:'x', wr_fe_r:'x',
         wr_ru_l:'z', wr_ru_r:'z',
@@ -439,7 +435,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return null;
   }
 
-  /* ===== DRUJ proxy ===== */
+  /* ===== DRUJ proxy (for wrist PS) ===== */
   const DRUJ = { l:null, r:null };
   function ensureDRUJProxy(side){
     if (!skeleton) return null;
@@ -476,8 +472,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       }
     }
     let bone = findBoneBy({...cfg, key});
-    if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
-    if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
+    if ((!bone) && (key==='wr_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
+    if ((!bone) && (key==='wr_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
     const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
@@ -528,9 +524,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lowerarm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150, max:10,  hints:[/lowerarm|forearm|ulna|radius/i]},
 
-    {key:'fa_ps_l',   pair:'Forearm L — Pronation / Supination', side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|radius|ulna|wrist|hand/i]},
-    {key:'fa_ps_r',   pair:'Forearm R — Pronation / Supination', side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/forearm|radius|ulna|wrist|hand/i]},
-
+    /* Forearm pronation/supination removed per your request */
     {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-85,  max:95,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
 
@@ -559,63 +553,59 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   let CURRENT = UPPER;
 
-function dirEntriesFromPair(cfg){
-  const absMin = Math.abs(cfg.min);
-  const maxPos = cfg.max;
-  const out = [];
-  const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
+  function dirEntriesFromPair(cfg){
+    const absMin = Math.abs(cfg.min);
+    const maxPos = cfg.max;
+    const out = [];
+    const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
 
-  // ---- Cervical (exact labels + order you requested) ----
-  if (cfg.key === 'cerv_fe'){
-    push('Cervical Flexion',  +1, maxPos);
-    push('Cervical Extension', -1, absMin);
-    return out;
-  }
-  if (cfg.key === 'cerv_lat'){
-    // Right first, then Left
-    push('Cervical Lateral Flexion — Left', -1, absMin);
-    push('Cervical Lateral Flexion — Right',  +1, maxPos);
-    return out;
-  }
-  if (cfg.key === 'cerv_rot'){
-    // Left first, then Right
-    push('Cervical Rotation — Right',  -1, absMin);
-    push('Cervical Rotation — Left', +1, maxPos);
-    return out;
-  }
+    if (cfg.key === 'cerv_fe'){
+      push('Cervical Flexion',  +1, maxPos);
+      push('Cervical Extension', -1, absMin);
+      return out;
+    }
+    if (cfg.key === 'cerv_lat'){
+      push('Cervical Lateral Flexion — Left', -1, absMin);
+      push('Cervical Lateral Flexion — Right',  +1, maxPos);
+      return out;
+    }
+    if (cfg.key === 'cerv_rot'){
+      push('Cervical Rotation — Right',  -1, absMin);
+      push('Cervical Rotation — Left', +1, maxPos);
+      return out;
+    }
 
-  // ---- Default behavior for all other joints (unchanged) ----
-  if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
-    push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-  } else if (/_aa_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
-  } else if (/_irer_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
-  } else if (cfg.key==='trunk_lat'){
-    push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), -1, absMin);
-  } else if (cfg.key==='trunk_rot' || /fa_ps_|wr_ps_/.test(cfg.key)){
-    const isRot = (cfg.key==='trunk_rot');
-    push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Supination'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Pronation'), -1, absMin);
-  } else if (/wr_fe_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-  } else if (/wr_ru_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
-  } else if (/ankle_dfpf_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
-  } else if (/foot_invev_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/_aa_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
+    } else if (/_irer_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+    } else if (cfg.key==='trunk_lat'){
+      push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), -1, absMin);
+    } else if (cfg.key==='trunk_rot' || /wr_ps_/.test(cfg.key)){
+      const isRot = (cfg.key==='trunk_rot');
+      push(cfg.pair.replace(/—.*$/, isRot?'— Left Rotation':'— Supination'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, isRot?'— Right Rotation':'— Pronation'), -1, absMin);
+    } else if (/wr_fe_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/wr_ru_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), -1, absMin);
+    } else if (/ankle_dfpf_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
+    } else if (/foot_invev_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+    }
+    return out;
   }
-  return out;
-}
 
   function buildSeparatedCatalog(list){
     const cat = {};
@@ -625,7 +615,6 @@ function dirEntriesFromPair(cfg){
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
       else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
       else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
-      else if (/^fa_/.test(cfg.key)) add('Forearm', dirEntriesFromPair(cfg));
       else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
       else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
       else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
@@ -676,23 +665,140 @@ function dirEntriesFromPair(cfg){
     actionDeg.disabled = false;
   }
 
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true;
-};
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-42, psL:-2, wpsL:-73 };
+  const ANAT = { addL:-42, wpsL:-73, psL: -2 /* retained for tuner symmetry only */ };
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
-    setPair('fa_ps_l', ANAT.psL);
-    setPair('fa_ps_r', -ANAT.psL);
+    // Forearm PS removed from UI; keep wrist PS neutral preload
     setPair('wr_ps_l', ANAT.wpsL);
     setPair('wr_ps_r', -ANAT.wpsL);
-    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
+    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
   }
 
-  // Always return to anatomic when changing actions; then freeze bind
+  // ===== Helpers for coupled motions =====
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
+  function setJointRotationSafe(bone, axis, deg){
+    try {
+      const b = typeof bone === 'string' ? getExactBoneByName(bone) : bone;
+      if (!b) return false;
+      const q0 = initialBoneRot.get(b) || b.quaternion.clone();
+      const rad = THREE.MathUtils.degToRad(deg);
+      const e = new THREE.Euler(axis==='x'?rad:0, axis==='y'?rad:0, axis==='z'?rad:0,"XYZ");
+      b.quaternion.copy(q0).multiply(new THREE.Quaternion().setFromEuler(e));
+      return true;
+    } catch { return false; }
+  }
+  function addJointRotationSafe(bone, axis, deltaDeg){
+    try {
+      const b = typeof bone === 'string' ? getExactBoneByName(bone) : bone;
+      if (!b) return false;
+      const rad = THREE.MathUtils.degToRad(deltaDeg);
+      const e = new THREE.Euler(axis==='x'?rad:0, axis==='y'?rad:0, axis==='z'?rad:0,"XYZ");
+      b.quaternion.multiply(new THREE.Quaternion().setFromEuler(e));
+      return true;
+    } catch { return false; }
+  }
+  function setElbowFlex(side, deg){
+    const names = side==='L' ? ["lowerarm_L","elbow_L","forearm_L"] : ["lowerarm_R","elbow_R","forearm_R"];
+    for (const n of names){ if (setJointRotationSafe(n,'x',deg)) return true; }
+    log(`(warn) Couldn’t set ${side} elbow flex to ${deg}°`);
+    return false;
+  }
+  function biasShoulderAddAbd(side, deg){
+    const names = side==='L' ? ["upperarm_L","humerus_L","shoulder_L"] : ["upperarm_R","humerus_R","shoulder_R"];
+    const signed = side==='R' ? -deg : +deg; // mirror
+    for (const n of names){ if (addJointRotationSafe(n,'z',signed)) return true; }
+    return false;
+  }
+
+  // ===== Anti-collision for the requested motions =====
+  function clampAntiCollision(key, sign, val){
+    // Cervical Rotation ±65°
+    if (key==='cerv_rot'){ return Math.min(val, 65); }
+
+    // Shoulder Extension (negative sign in our scheme)
+    if ((key==='sh_fe_l'||key==='sh_fe_r') && sign<0){ return Math.min(val, 45); }
+
+    // Shoulder Adduction (negative sign)
+    if ((key==='sh_aa_l'||key==='sh_aa_r') && sign<0){ return Math.min(val, 15); }
+
+    // Elbow Extension (negative sign) → allow up to 5° hyperext
+    if ((key==='el_fe_l'||key==='el_fe_r') && sign<0){ return Math.min(val, 5); }
+
+    // Wrist Supination (positive sign)
+    if ((key==='wr_ps_l'||key==='wr_ps_r') && sign>0){ return Math.min(val, 90); }
+
+    // Existing trunk lateral caps still handled below via tuner
+    return val;
+  }
+
+  function setPair(key,deg){
+    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
+    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
+    const cfg = cfgFromKey(key);
+    if (cfg) applyPairAngle(key,cfg,deg);
+  }
+  function rotateSideWristPS(side, deg){
+    if (!skeleton) return;
+    // Use DRUJ proxy axis from wrist pair config
+    const keyForAxis = side === 'l' ? 'wr_ps_l' : 'wr_ps_r';
+    const cfg = cfgFromKey(keyForAxis);
+    const bind = resolveBind(keyForAxis, cfg);
+    if (!bind) { log(`No wrist bind for ${side}`); return; }
+    const { bone, qBind, axis } = bind;
+    const rad = THREE.MathUtils.degToRad(deg);
+    const e = new THREE.Euler(axis==='x'?rad:0, axis==='y'?rad:0, axis==='z'?rad:0, "XYZ");
+    bone.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    log(`Wrist ${side.toUpperCase()} PS = ${deg}°`);
+  }
+
+  // ===== Menu & interaction =====
+  function applyShoulderRotWithCoupling(key, signedDegrees){
+    const side = key.endsWith('_l') ? 'L' : 'R';
+    const isIR = (signedDegrees > 0); // our menu: + = IR, − = ER
+    // 1) Elbow to 90°
+    setElbowFlex(side, 90);
+    // 2) Bias add/abd a few degrees toward/away from midline
+    biasShoulderAddAbd(side, isIR ? +8 : -8);
+    // 3) Apply axial rotation via the normal bind (preserves base)
+    const cfg = cfgFromKey(key);
+    applyPairAngle(key, cfg, signedDegrees);
+    log(`Shoulder ${isIR?'IR':'ER'} (${side}) → elbow 90°, ${isIR?'adduct':'abduct'} bias`);
+  }
+
+  function fillActionMenu(){
+    actionSel.innerHTML = "";
+    const ph = document.createElement("option");
+    ph.value = ""; ph.textContent = "(Select a motion…)";
+    actionSel.appendChild(ph);
+
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    const catalog = buildSeparatedCatalog(list);
+    Object.keys(catalog).forEach(group=>{
+      const og = document.createElement("optgroup"); og.label = group;
+      catalog[group].forEach(entry=>{
+        const opt = document.createElement("option");
+        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
+        opt.textContent = entry.label;
+        og.appendChild(opt);
+      });
+      actionSel.appendChild(og);
+    });
+
+    actionSel.value = "";
+    pairLabel.textContent = "Angle (°)";
+    actionDeg.disabled = true;
+    CURRENT_ACTION = null;
+  }
+
   actionSel.addEventListener("change", ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
@@ -712,13 +818,31 @@ function dirEntriesFromPair(cfg){
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
     let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+
+    // Per-joint anticollision caps you asked for
+    val = clampAntiCollision(CURRENT_ACTION.key, CURRENT_ACTION.sign, val);
+
+    // Existing trunk lateral flex caps (from the tuner UI)
     if (COLLIM.enabled && CURRENT_ACTION.key === 'trunk_lat'){
       const cap = (CURRENT_ACTION.sign > 0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
       if (val > cap){ val = cap; actionDeg.value = String(val); log(`Anticollision limit hit (Trunk Lat ${CURRENT_ACTION.sign>0?'Left':'Right'}): max ${cap}°`); }
     }
-    const signed = CURRENT_ACTION.sign * val;
+
+    let signed = CURRENT_ACTION.sign * val;
+
+    // Right Shoulder Abduction used to move as Adduction → flip sign so it abducts correctly
+    if (CURRENT_ACTION.key === 'sh_aa_r' && CURRENT_ACTION.sign > 0){ signed = -signed; }
+
+    // Shoulder IR/ER coupling: elbow 90°, bias add/abd, then rotate
+    if (CURRENT_ACTION.key === 'sh_irer_l' || CURRENT_ACTION.key === 'sh_irer_r'){
+      applyShoulderRotWithCoupling(CURRENT_ACTION.key, signed);
+      return;
+    }
+
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
   });
+
+  // Zero All
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
@@ -753,7 +877,6 @@ function dirEntriesFromPair(cfg){
         populateBones();
         detectRigProfile();
         fillActionMenu();
-        // Start in anatomic every time
         resetAllBonesToInitial();
         applyAnatomicBaseline();
         COLLIM.enabled = true;
@@ -785,37 +908,6 @@ function dirEntriesFromPair(cfg){
     if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
     groundSnap();
   };
-
-  /* ===== Paired-joint helpers ===== */
-  function setPair(key,deg){
-    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
-    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
-    const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key,cfg,deg);
-  }
-  function getExactBoneByName(name){
-    if (!skeleton) return null;
-    const lname = String(name).toLowerCase();
-    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
-  function rotateSideWristPS(side, deg){
-    if (!skeleton) return;
-    let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
-    if (!wrist){
-      wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
-    }
-    if (!wrist){ log(`No wrist bone for ${side}`); return; }
-    const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
-    const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
-    const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
-    const rad = THREE.MathUtils.degToRad(deg);
-    const e = new THREE.Euler(0,0,0,'XYZ');
-    if (axis==='x') e.set(rad,0,0,'XYZ');
-    if (axis==='y') e.set(0,rad,0,'XYZ');
-    if (axis==='z') e.set(0,0,rad,'XYZ');
-    wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
-  }
 
   /* ===== Hidden Anatomic Tuner (dev-only) ===== */
   let tunerEl = null, tunerVisible = false;
