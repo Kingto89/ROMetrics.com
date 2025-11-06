@@ -225,18 +225,17 @@ optgroup{color:#9fb0c9;font-style:normal}
   COLLIM.load();
 
   function capFor(action){
-    if(!COLLIM.enabled || !action) return null; // no cap
-    const { key, sign } = action; // sign: +1 or -1
-    // Cervical rotation L/R
-    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-    // Shoulder flex/ext → cap extension only (sign -1)
-    if(/^sh_fe_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.shExtLMax : COLLIM.shExtRMax;
-    }
-    // Shoulder Abd/Add → cap adduction only (sign -1)
-    if(/^sh_aa_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.shAddLMax : COLLIM.shAddRMax;
-    }
+// Shoulder Abd/Add → cap Adduction only
+if (/^sh_aa_/.test(key)) {
+  const isRight = key.endsWith('_r');
+  // LEFT: Adduction = negative (sign < 0)
+  // RIGHT: Adduction = positive (sign > 0) [labels flipped for your rig]
+  const isAdductionDir = isRight ? (sign > 0) : (sign < 0);
+  if (isAdductionDir) {
+    return isRight ? COLLIM.shAddRMax : COLLIM.shAddLMax;
+  }
+}
+
     // Elbow Flex/Ext → cap extension only (sign -1)
     if(/^el_fe_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
