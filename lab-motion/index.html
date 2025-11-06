@@ -207,6 +207,11 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
+        // NEW caps — Shoulder Flexion & Abduction
+    shFlexLMax: 170,
+    shFlexRMax: 170,
+    shAbdLMax: 170,
+    shAbdRMax: 170,
     load(){
       try{
         const raw = localStorage.getItem('rometrics_collim');
@@ -229,13 +234,26 @@ optgroup{color:#9fb0c9;font-style:normal}
     const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-    // Shoulder flex/ext → cap extension only (sign -1)
-    if(/^sh_fe_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.shExtLMax : COLLIM.shExtRMax;
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    if (/^sh_fe_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (sign > 0) { // Flexion
+        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      }
     }
-    // Shoulder Abd/Add → cap adduction only (sign -1)
-    if(/^sh_aa_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.shAddLMax : COLLIM.shAddRMax;
+
+    // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
+    if (/^sh_aa_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (isLeft) {
+        // Left: + = Abduction, − = Adduction (normal)
+        return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+      } else {
+        // Right (your UI labels flipped): + = Adduction, − = Abduction
+        return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+      }
     }
     // Elbow Flex/Ext → cap extension only (sign -1)
     if(/^el_fe_/.test(key) && sign<0){
@@ -962,6 +980,20 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
+            <div class="rom-row">
+        <div class="rom-head">Shoulder Flex — L/R max (°)</div>
+        <div style="flex:1;display:flex;gap:6px">
+          <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
+          <input id="shFlexR" type="number" step="1" min="0" max="180" style="width:100%">
+        </div>
+      </div>
+      <div class="rom-row">
+        <div class="rom-head">Shoulder Abd — L/R max (°)</div>
+        <div style="flex:1;display:flex;gap:6px">
+          <input id="shAbdL" type="number" step="1" min="0" max="180" style="width:100%">
+          <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
+        </div>
+      </div>
       <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
       <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
@@ -982,6 +1014,10 @@ optgroup{color:#9fb0c9;font-style:normal}
       $('#elExtR').value = String(COLLIM.elExtRMax);
       $('#wrSupL').value = String(COLLIM.wrSupLMax);
       $('#wrSupR').value = String(COLLIM.wrSupRMax);
+      $('#shFlexL').value = String(COLLIM.shFlexLMax);
+      $('#shFlexR').value = String(COLLIM.shFlexRMax);
+      $('#shAbdL').value  = String(COLLIM.shAbdLMax);
+      $('#shAbdR').value  = String(COLLIM.shAbdRMax);
     }; preload();
 
     colTunerEl.querySelector('#colApply').onclick = ()=>{
@@ -994,6 +1030,10 @@ optgroup{color:#9fb0c9;font-style:normal}
         shExtRMax:+$('#shExtR').value||0,
         shAddLMax:+$('#shAddL').value||0,
         shAddRMax:+$('#shAddR').value||0,
+        shFlexLMax:+$('#shFlexL').value||0,
+        shFlexRMax:+$('#shFlexR').value||0,
+        shAbdLMax:+$('#shAbdL').value||0,
+        shAbdRMax:+$('#shAbdR').value||0,
         elExtLMax:+$('#elExtL').value||0,
         elExtRMax:+$('#elExtR').value||0,
         wrSupLMax:+$('#wrSupL').value||0,
@@ -1021,6 +1061,8 @@ optgroup{color:#9fb0c9;font-style:normal}
         cervRotLMax:80, cervRotRMax:80,
         shExtLMax:60, shExtRMax:60,
         shAddLMax:30, shAddRMax:30,
+        shFlexLMax:170, shFlexRMax:170,
+        shAbdLMax:170,  shAbdRMax:170,
         elExtLMax:10, elExtRMax:10,
         wrSupLMax:95, wrSupRMax:95,
       });
