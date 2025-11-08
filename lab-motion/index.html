@@ -499,6 +499,37 @@ optgroup{color:#9fb0c9;font-style:normal}
         }
       }
     }
+    
+    // Shoulder fallback: climb up from hand to find upper arm / shoulder if not found
+    if (/^sh_/.test(cfg.key) && cfg.side){
+      // Try to locate the hand (or wrist) on that side, then climb parents
+      let handIdx = -1;
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (sideRegex(cfg.side).some(r=>r.test(names[i])) && /(hand|wrist)/i.test(skeleton.bones[i].name)){
+          handIdx = i; break;
+        }
+      }
+      if (handIdx !== -1){
+        let p = skeleton.bones[handIdx].parent;
+        let guard = 0;
+        while (p && guard++ < 8){ // climb a few levels max
+          const nm = (p.name||'').toLowerCase();
+          if (!EXCLUDE.test(nm) && /(upperarm|humerus|shoulder|arm)/i.test(nm)){
+            return p;
+          }
+          p = p.parent;
+        }
+      }
+      // As a last resort, pick first bone on that side containing 'arm' but not 'lower'
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (sideRegex(cfg.side).some(r=>r.test(names[i])) && /arm/i.test(names[i]) && !/lower/.test(names[i])){
+          return skeleton.bones[i];
+        }
+      }
+    }
+
     return null;
   }
 
@@ -525,6 +556,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   const JOINT_BIND = new Map();
+  const NO_BIND_LOGGED = new Set();
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     if (/^trunk_/.test(key)) {
@@ -541,7 +573,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     let bone = findBoneBy({...cfg, key});
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
-    if (!bone) { log(`No bind for ${key}`); return null; }
+    if (!bone) { if(!NO_BIND_LOGGED.has(key)){ log(`No bind for ${key}`); NO_BIND_LOGGED.add(key);} return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
     const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
