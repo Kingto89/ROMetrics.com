@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>3D Motion Lab — Joint Trainer</title>
+<title>3D Motion Lab — Joint Trainer (Fixed)</title>
 
 <script type="importmap">
 {
@@ -134,7 +134,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <button class="x" id="romClose" aria-label="Close">✕</button>
     </div>
     <div class="body" id="romBody">
-      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
+      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–190°, ER 0–90°, IR 0–70°</div></div>
       <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
       <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
       <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
@@ -157,7 +157,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
@@ -186,16 +186,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
 
-  // === MOVED OUT OF COLLIM (fix) ===
-  // Scapulohumeral rhythm + anti-clavicle helper
-  const FLEX_KICK = {
-    abdMax: 12,       // small helper abduction (°)
-    abdRampEnd: 60,   // finish adding by ~60° flex
-    erMax: 35,        // up to ~35° ER during flex
-    erRampEnd: 120,   // finish ER ramp by ~120° flex
-    scapScale: 0.50   // clavicle/scap upward rotation scale
-  };
-
   const COLLIM = {
     enabled: false,
     trunkLatLMax: 30,
@@ -212,8 +202,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     wrSupRMax: 95,
     shFlexLMax: 170,
     shFlexRMax: 170,
-    shAbdLMax: 170,
-    shAbdRMax: 170,
+    shAbdLMax: 190,  // +10° headroom
+    shAbdRMax: 190,  // +10° headroom
     load(){
       try{
         const raw = localStorage.getItem('rometrics_collim');
@@ -230,6 +220,15 @@ optgroup{color:#9fb0c9;font-style:normal}
     }
   };
   COLLIM.load();
+
+  // Scapulohumeral rhythm + coupling profile (used for ABDUCTION now)
+  const FLEX_KICK = {
+    abdMax: 12,        // tiny helper abd (not used in abduction path, kept for potential future use)
+    abdRampEnd: 60,
+    erMax: 45,         // allow more ER
+    erRampEnd: 120,
+    scapScale: 0.50    // clavicle/scap upward rotation scale
+  };
 
   function capFor(action){
     if(!COLLIM.enabled || !action) return null;
@@ -409,15 +408,13 @@ optgroup{color:#9fb0c9;font-style:normal}
       const q0 = initialBoneRot.get(b);
       if (q0) b.quaternion.copy(q0);
     });
-    JOINT_BIND.forEach(obj=>{
-      if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
-    });
+    JOINT_BIND.clear();
   }
 
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
     log(`Rig profile: ${RIG_PROFILE}`);
   }
@@ -450,8 +447,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
-      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
-      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
+      ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
   }
   function findBoneBy(cfg){
     if (!skeleton) return null;
@@ -560,8 +557,8 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:190, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:190, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
@@ -660,7 +657,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   function buildSeparatedCatalog(list){
     const cat = {};
-    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat.push ? cat.push() : 0; cat[grp].push(...entries); };
+    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat[grp].push(...entries); };
     list.forEach(cfg=>{
       if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
@@ -789,23 +786,22 @@ optgroup{color:#9fb0c9;font-style:normal}
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    // Scapulohumeral rhythm on flexion (uses global FLEX_KICK)
-    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+    // === Coupling MOVED to ABDUCTION ===
+    // During abduction → gradual ER (negative on your rig) + clavicle/scap upward rotation.
+    if (/^sh_aa_/.test(CURRENT_ACTION.key) && signed > 0){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      const flex = signed;
+      const abd = signed;
 
-      const abdKick = (flex <= FLEX_KICK.abdRampEnd)
-        ? (FLEX_KICK.abdMax * (flex / FLEX_KICK.abdRampEnd))
-        : FLEX_KICK.abdMax;
-      setPair(`sh_aa_${side}`, abdKick);
+      // ER ramp up to erMax (45°) by erRampEnd
+      const erAmt = Math.min(FLEX_KICK.erMax, (abd / FLEX_KICK.erRampEnd) * FLEX_KICK.erMax);
+      setPair(`sh_irer_${side}`, -erAmt); // negative = ER mapping
 
-      const erAmt = Math.min(FLEX_KICK.erMax, (flex / FLEX_KICK.erRampEnd) * FLEX_KICK.erMax);
-      setPair(`sh_irer_${side}`, -erAmt);
-
-      rotateClavicle(side, flex * FLEX_KICK.scapScale);
+      // Scap/clav upward rotation proportional to abduction
+      rotateClavicle(side, abd * FLEX_KICK.scapScale);
     }
 
-    // Shoulder IR/ER coupling extras: slight Abd/Add + elbow @ 90° while rotating
+    // During pure flexion — NO auto-coupling (kept intentionally empty).
+    // Shoulder IR/ER interaction keeps elbow at 90° and a tiny abd/add bias.
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       setPair(`el_fe_${side}`, 90);
@@ -976,8 +972,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="rom-row">
         <div class="rom-head">Shoulder Abd — L/R max (°)</div>
         <div style="flex:1;display:flex;gap:6px">
-          <input id="shAbdL" type="number" step="1" min="0" max="180" style="width:100%">
-          <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
+          <input id="shAbdL" type="number" step="1" min="0" max="190" style="width:100%">  <!-- reflect new max -->
+          <input id="shAbdR" type="number" step="1" min="0" max="190" style="width:100%">
         </div>
       </div>
       <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
@@ -1047,7 +1043,7 @@ optgroup{color:#9fb0c9;font-style:normal}
         shExtLMax:60, shExtRMax:60,
         shAddLMax:30, shAddRMax:30,
         shFlexLMax:170, shFlexRMax:170,
-        shAbdLMax:170,  shAbdRMax:170,
+        shAbdLMax:190,  shAbdRMax:190,
         elExtLMax:10, elExtRMax:10,
         wrSupLMax:95, wrSupRMax:95,
       });
