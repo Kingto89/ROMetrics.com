@@ -18,7 +18,7 @@
 :root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid #1f2937;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
 .content{padding:12px;overflow:auto}
@@ -411,6 +411,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     else RIG_PROFILE = 'generic';
     log(`Rig profile: ${RIG_PROFILE}`);
   }
+
+  // Axis resolver stays as-is; mixamo uses 'x' for shoulder flex/ext
   function axisFor(profile, key, defAxis){
     if (profile==='mixamo'){
       const map = {
@@ -432,11 +434,9 @@ optgroup{color:#9fb0c9;font-style:normal}
         cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
       };
       if (key in map) return map[key];
+    }
+    return defAxis;
   }
-  // force shoulder Flex/Ext to sagittal always even non mixamo rigs
-if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
-  return defAxis;
-}
 
   const EXCLUDE = /(pelvis|root)/i;
   function sideRegex(side){
@@ -527,17 +527,15 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
     b.qBind = b.bone.quaternion.clone();
   }
 
+  // STRICT plane rotation using axis-angle (no hidden coupling)
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
-      "XYZ"
-    );
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
+    const axisVec = axis==='x' ? new THREE.Vector3(1,0,0)
+                  : axis==='y' ? new THREE.Vector3(0,1,0)
+                                : new THREE.Vector3(0,0,1);
+    const qDelta = new THREE.Quaternion().setFromAxisAngle(axisVec, rad);
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
 
@@ -575,7 +573,6 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
 
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
@@ -726,7 +723,6 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
   actionSel.addEventListener("change", ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
-    JOINT_BIND.clear();   // <<< ADDED: rebind so updated axis/targets take effect
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
@@ -782,31 +778,15 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    // Pin abduction/adduction while scrubbing FLEX/EXT so it can't drift
-if (/^sh_fe_/.test(CURRENT_ACTION.key)) {
-  const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-  setPair(`sh_aa_${side}`, side === 'l' ? ANAT.addL : -ANAT.addL);
-}
 
-    // Scapulohumeral rhythm on flexion/abduction (unchanged)
-    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      rotateClavicle(side, signed * 0.5);
-    }
+    // ✂️ Removed all FLEXION coupling (no clavicle auto-rotation, no auto ER during sh_fe_*)
+    // Keep optional clavicle rhythm ONLY for pure abduction if you want:
     if (/^sh_aa_/.test(CURRENT_ACTION.key) && signed > 0){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       rotateClavicle(side, signed * 0.5);
     }
 
-    // ✅ NEW: External rotation coupling during FLEXION
-    // Your mapping: for sh_irer_*  negative = ER, positive = IR
-    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      const erAmt = Math.min(45, Math.max(0, signed * 0.25)); // up to ~45°
-      setPair(`sh_irer_${side}`, -erAmt); // negative → ER
-    }
-
-    // Shoulder IR/ER coupling extras (unchanged): slight Abd/Add + elbow @ 90° while rotating
+    // Shoulder IR/ER coupling extras remain: slight Abd/Add + elbow @ 90° while rotating
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       setPair(`el_fe_${side}`, 90);
@@ -818,7 +798,6 @@ if (/^sh_fe_/.test(CURRENT_ACTION.key)) {
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
-    JOINT_BIND.clear();   // <<< ADDED: ensure next motion rebinds with fresh axis
     actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     pairLabel.textContent = "Angle (°)";
@@ -898,11 +877,11 @@ if (/^sh_fe_/.test(CURRENT_ACTION.key)) {
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
     const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
     const rad = THREE.MathUtils.degToRad(deg);
-    const e = new THREE.Euler(0,0,0,'XYZ');
-    if (axis==='x') e.set(rad,0,0,'XYZ');
-    if (axis==='y') e.set(0,rad,0,'XYZ');
-    if (axis==='z') e.set(0,0,rad,'XYZ');
-    wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    const axisVec = axis==='x' ? new THREE.Vector3(1,0,0)
+                  : axis==='y' ? new THREE.Vector3(0,1,0)
+                                : new THREE.Vector3(0,0,1);
+    const qDelta = new THREE.Quaternion().setFromAxisAngle(axisVec, rad);
+    wrist.quaternion.copy(qBind).multiply(qDelta);
     log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
