@@ -563,11 +563,17 @@ optgroup{color:#9fb0c9;font-style:normal}
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
+    // ---- Force correct human planes/axes for shoulder pairs ----
+    let axis2 = axis;
+    if (key==='sh_fe_l' || key==='sh_fe_r') axis2 = 'x';          // Sagittal (flex/ext)
+    else if (key==='sh_aa_l' || key==='sh_aa_r') axis2 = 'y';      // Coronal (abd/add)
+    else if (key==='sh_irer_l' || key==='sh_irer_r') axis2 = 'z';  // Transverse (IR/ER)
+    // ------------------------------------------------------------
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
     const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
+      axis2==='x'?rad:0,
+      axis2==='y'?rad:0,
+      axis2==='z'?rad:0,
       "XYZ"
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
