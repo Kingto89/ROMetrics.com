@@ -433,7 +433,6 @@ optgroup{color:#9fb0c9;font-style:normal}
       };
       if (key in map) return map[key];
     }
-    // default passthrough
     return defAxis;
   }
 
@@ -540,34 +539,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
 
-  /* ===== NEW: strict-sagittal shoulder flex support ===== */
-  const WORLD_ML = new THREE.Vector3(1,0,0); // world Medial–Lateral axis
-  function worldToLocalAxis(qLocalBind, worldAxis){
-    // convert a world axis into the bone's local axis at its bind pose
-    const inv = qLocalBind.clone().invert();
-    return worldAxis.clone().applyQuaternion(inv).normalize();
-  }
-  function applyShoulderFlex(key, cfg, degSigned){
-    // 1) Rotate clavicle/scapula FIRST for upward rotation (prevents clavicle clash)
-    const side = key.endsWith('_l') ? 'l' : 'r';
-    if (degSigned > 0) rotateClavicle(side, degSigned * 0.5); else rotateClavicle(side, 0);
-
-    // 2) Compute humerus flex strictly about world ML projected to bone local at bind
-    const bind = resolveBind(key, cfg); if (!bind) return;
-    const { bone } = bind;
-    const qBindNow = bind.qBind.clone(); // local base (relative to parent) captured at selection
-    const axisLocal = worldToLocalAxis(qBindNow, WORLD_ML);
-    const qDelta = new THREE.Quaternion().setFromAxisAngle(axisLocal, THREE.MathUtils.degToRad(degSigned));
-    bone.quaternion.copy(qBindNow).multiply(qDelta);
-
-    // 3) Maintain ER coupling during flexion (kept)
-    if (degSigned > 0){
-      const erAmt = Math.min(45, Math.max(0, degSigned * 0.25)); // up to ~45°
-      setPair(`sh_irer_${side}`, -erAmt); // negative = ER on your rig
-    }
-  }
-  /* ===== end NEW ===== */
-
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
@@ -602,10 +573,11 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
+
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
@@ -805,27 +777,32 @@ optgroup{color:#9fb0c9;font-style:normal}
     }
 
     const signed = CURRENT_ACTION.sign * val;
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    if (/^sh_fe_/.test(CURRENT_ACTION.key)){
-      // ✅ FLEX: parent-first rhythm, then strictly-sagittal humerus rotation
-      applyShoulderFlex(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    } else {
-      // others unchanged
-      applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    // Scapulohumeral rhythm on flexion/abduction (unchanged)
+    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      rotateClavicle(side, signed * 0.5);
+    }
+    if (/^sh_aa_/.test(CURRENT_ACTION.key) && signed > 0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      rotateClavicle(side, signed * 0.5);
+    }
 
-      // keep rhythm on abduction only
-      if (/^sh_aa_/.test(CURRENT_ACTION.key) && signed > 0){
-        const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-        rotateClavicle(side, signed * 0.5);
-      }
+    // ✅ NEW: External rotation coupling during FLEXION
+    // Your mapping: for sh_irer_*  negative = ER, positive = IR
+    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      const erAmt = Math.min(45, Math.max(0, signed * 0.25)); // up to ~45°
+      setPair(`sh_irer_${side}`, -erAmt); // negative → ER
+    }
 
-      // rotation coupling & elbow @ 90° while rotating
-      if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
-        const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-        setPair(`el_fe_${side}`, 90);
-        const amt = Math.min(30, Math.abs(signed)*0.3);
-        setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
-      }
+    // Shoulder IR/ER coupling extras (unchanged): slight Abd/Add + elbow @ 90° while rotating
+    if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      setPair(`el_fe_${side}`, 90);
+      const amt = Math.min(30, Math.abs(signed)*0.3);
+      setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
     }
   });
 
