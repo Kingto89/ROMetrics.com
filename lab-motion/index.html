@@ -161,7 +161,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
@@ -207,7 +207,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
-        // NEW caps — Shoulder Flexion & Abduction
+    // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
     shAbdLMax: 170,
@@ -234,7 +234,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
     if (/^sh_fe_/.test(key)) {
       const isLeft = key.endsWith('_l');
       if (sign > 0) { // Flexion
@@ -243,15 +243,12 @@ optgroup{color:#9fb0c9;font-style:normal}
         return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
       }
     }
-
     // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
     if (/^sh_aa_/.test(key)) {
       const isLeft = key.endsWith('_l');
       if (isLeft) {
-        // Left: + = Abduction, − = Adduction (normal)
         return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
       } else {
-        // Right (your UI labels flipped): + = Adduction, − = Abduction
         return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
       }
     }
@@ -342,7 +339,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
-    if (q && /^https?:\/\//i.test(q)) return q;
+    if (q && /^https?:\/\\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
     return "./Athletic_Grace_1006002620_texture.glb";
   }
@@ -440,7 +437,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
     log(`Rig profile: ${RIG_PROFILE}`);
   }
@@ -474,8 +471,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
-      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
-      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
+      ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
   }
   function findBoneBy(cfg){
     if (!skeleton) return null;
@@ -574,33 +571,54 @@ optgroup{color:#9fb0c9;font-style:normal}
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
 
+  // ===== Shoulder Flexion Coupling (ER + Abd + Scap mechanics) =====
+  function shoulderFlexCoupling(side, flexDeg){
+    flexDeg = Math.max(0, flexDeg||0);
+
+    // ramps
+    const er  = Math.max(0, Math.min(35, (flexDeg - 80) * 0.45));
+    const abd = Math.max(0, Math.min(12, (flexDeg - 60) * 0.12));
+    const scapUp = Math.max(0, Math.min(25, (flexDeg - 60) * 0.22));
+    const scapPostTilt = Math.max(0, Math.min(8, (flexDeg - 80) * 0.10));
+
+    const keyER = side==='l' ? 'sh_irer_l' : 'sh_irer_r';
+    const cfgER = cfgFromKey(keyER);
+    if (cfgER) applyPairAngle(keyER, cfgER, +er);
+
+    const keyAA = side==='l' ? 'sh_aa_l' : 'sh_aa_r';
+    const cfgAA = cfgFromKey(keyAA);
+    if (cfgAA) applyPairAngle(keyAA, cfgAA, +abd);
+
+    const clav = findBoneBy({ side, key:'clav_adj', hints:[/clavicle|scap/i] }) 
+              || findBoneBy({ side, key:'upperarm_adj', hints:[/upperarm|shoulder|humerus/i] });
+    if (clav){
+      const q0 = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
+      const rx = THREE.MathUtils.degToRad(-scapPostTilt); // posterior tilt (−X)
+      const rz = THREE.MathUtils.degToRad(+scapUp);       // upward rotation (+Z)
+      const qTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,0,0,'XYZ'));
+      const qUp   = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,rz,'XYZ'));
+      clav.quaternion.copy(q0).multiply(qUp).multiply(qTilt);
+    }
+  }
+
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
     {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
-
     {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
-
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-
-    // ELBOW — fix so Flexion moves (150), Extension small (10)
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
-
-    // REMOVED forearm entries from menu per your instruction
-
-    // Keep wrist PS (proxy) but we will relabel signs below
     {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
-
     {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-70,  max:80,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-70,  max:80,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',       side:'l', plane:'frontal',   neutral:0, min:-40,  max:20,  hints:[/wrist|hand(?!.*thumb|.*index|.*.*ring|.*pinky)/i]},
@@ -614,10 +632,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
-
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
@@ -651,7 +667,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     // Shoulder Abd/Add — special-case Right side label flip you reported
     if (cfg.key==='sh_aa_r'){
-      // On R side your rig behaves inverted; map + to Adduction label, - to Abduction
       push('Shoulder R — Adduction', +1, maxPos);
       push('Shoulder R — Abduction', -1, absMin);
       return out;
@@ -673,14 +688,12 @@ optgroup{color:#9fb0c9;font-style:normal}
       push(cfg.pair.replace(/—.*$/, '— Left Rotation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Right Rotation'), -1, absMin);
     } else if (/wr_ps_/.test(cfg.key)){
-      // SWAP LABELS per your report: + == PRONATION, - == SUPINATION
       push(cfg.pair.replace(/—.*$/, '— Pronation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Supination'), -1, absMin);
     } else if (/wr_fe_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
     } else if (/wr_ru_/.test(cfg.key)){
-      // SWAP LABELS per your report: + == RADIAL, - == ULNAR
       push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), -1, absMin);
     } else if (/ankle_dfpf_/.test(cfg.key)){
@@ -701,7 +714,6 @@ optgroup{color:#9fb0c9;font-style:normal}
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
       else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
       else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
-      // Forearm group intentionally NOT added (removed from UI)
       else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
       else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
       else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
@@ -760,7 +772,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
-    // keep tiny forearm PS baseline internally (even though menu hidden)
     setPair('fa_ps_l', ANAT.psL);
     setPair('fa_ps_r', -ANAT.psL);
     setPair('wr_ps_l', ANAT.wpsL);
@@ -793,11 +804,11 @@ optgroup{color:#9fb0c9;font-style:normal}
     syncActionUI(true);
   });
 
+  // === INPUT SCRUB: correct order (apply → coupling) ===
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
     let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
 
-    // Apply anticollision caps based on joint/direction
     const cap = capFor(CURRENT_ACTION);
     if (typeof cap === 'number' && val > cap){
       val = cap; actionDeg.value = String(val);
@@ -806,54 +817,18 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    // ===== Shoulder Flexion Coupling (ER + Abd + Scap mechanics) =====
-function shoulderFlexCoupling(side, flexDeg){
-  // side: 'l' or 'r', flexDeg: 0..180 (we only use the positive flex amount)
-  flexDeg = Math.max(0, flexDeg||0);
 
-  // --- Humerus external rotation scales after ~80°
-  // ramp: 0° ER below 80°, up to ~35° ER by 170–180°
-  const er = Math.max(0, Math.min(35, (flexDeg - 80) * 0.45));
-
-  // --- Slight abduction to clear chest (up to ~12°)
-  const abd = Math.max(0, Math.min(12, (flexDeg - 60) * 0.12));
-
-  // --- Scapular upward rotation (to ~25°) + posterior tilt (~8°)
-  // simple smooth ramps; tweak if you want more/less motion
-  const scapUp = Math.max(0, Math.min(25, (flexDeg - 60) * 0.22));
-  const scapPostTilt = Math.max(0, Math.min(8, (flexDeg - 80) * 0.10));
-
-  // Apply via existing paired system where possible
-  // 1) Humeral ER
-  const keyER  = side==='l' ? 'sh_irer_l' : 'sh_irer_r';
-  const cfgER  = cfgFromKey(keyER);
-  if (cfgER) applyPairAngle(keyER, cfgER, +er);   // + = Internal in your map, but axisFor() maps correctly per profile
-
-  // 2) Add a touch of abduction
-  const keyAA  = side==='l' ? 'sh_aa_l' : 'sh_aa_r';
-  const cfgAA  = cfgFromKey(keyAA);
-  if (cfgAA)   applyPairAngle(keyAA, cfgAA, +abd);
-
-  // 3) Clavicle / scapula: rotate bone directly (upward rot + posterior tilt)
-  //    We’ll bind to clavicle_<side> if present; fallback to upperarm as parent frame.
-  const clav = findBoneBy({ side, key:'clav_adj', hints:[/clavicle|scap/i] }) || findBoneBy({ side, key:'upperarm_adj', hints:[/upperarm|shoulder|humerus/i] });
-  if (clav){
-    const q0 = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
-    // Choose reasonable local axes: X ~ sagittal (tilt), Z ~ frontal (upward rotation)
-    const rx = THREE.MathUtils.degToRad(-scapPostTilt); // posterior tilt (negative X)
-    const rz = THREE.MathUtils.degToRad(+scapUp);       // upward rotation (positive Z)
-    const qTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,0,0,'XYZ'));
-    const qUp   = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,rz,'XYZ'));
-    clav.quaternion.copy(q0).multiply(qUp).multiply(qTilt);
-  }
-}
+    // === COUPLING for Shoulder Flexion (adds ER + Abd + scap mechanics)
+    if (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      const flexOnly = Math.max(0, signed); // only when moving into FLEX
+      shoulderFlexCoupling(side, flexOnly);
+    }
 
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      // Keep elbow flexed (stability)
       setPair(`el_fe_${side}`, 90);
-      // Couple small Abd/Add with rotation: IR → toward midline (Add), ER → away (Abd)
       const amt = Math.min(30, Math.abs(signed)*0.3); // up to 30° coupling
       setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
     }
@@ -1021,7 +996,7 @@ function shoulderFlexCoupling(side, flexDeg){
       <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
-            <div class="rom-row">
+      <div class="rom-row">
         <div class="rom-head">Shoulder Flex — L/R max (°)</div>
         <div style="flex:1;display:flex;gap:6px">
           <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
@@ -1081,11 +1056,10 @@ function shoulderFlexCoupling(side, flexDeg){
         wrSupRMax:+$('#wrSupR').value||0,
       };
       Object.assign(COLLIM, vals);
-      // live preview if current action is one of the capped ones
       if (CURRENT_ACTION){
         const cap = capFor(CURRENT_ACTION);
         if (typeof cap==='number'){
-          const typed = cap; // just use cap as preview value
+          const typed = cap;
           const val = Math.max(0, Math.min(CURRENT_ACTION.max, typed));
           actionDeg.value = String(val);
           const signed = CURRENT_ACTION.sign * val;
