@@ -448,21 +448,21 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (profile==='mixamo'){
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
-        sh_aa_l:'y', sh_aa_r:'y',
-        sh_irer_l:'z', sh_irer_r:'z',
+        sh_aa_l:'z', sh_aa_r:'z',
+        sh_irer_l:'y', sh_irer_r:'y',
         el_fe_l:'x', el_fe_r:'x',
-        fa_ps_l:'z', fa_ps_r:'z',
-        wr_ps_l:'z', wr_ps_r:'z',
+        fa_ps_l:'y', fa_ps_r:'y',
+        wr_ps_l:'y', wr_ps_r:'y',
         wr_fe_l:'x', wr_fe_r:'x',
-        wr_ru_l:'y', wr_ru_r:'y',
+        wr_ru_l:'z', wr_ru_r:'z',
         hip_fe_l:'x', hip_fe_r:'x',
-        hip_aa_l:'y', hip_aa_r:'y',
-        hip_irer_l:'z', hip_irer_r:'z',
+        hip_aa_l:'z', hip_aa_r:'z',
+        hip_irer_l:'y', hip_irer_r:'y',
         knee_fe_l:'x', knee_fe_r:'x',
         ankle_dfpf_l:'x', ankle_dfpf_r:'x',
-        foot_invev_l:'y', foot_invev_r:'y',
-        trunk_fe:'x', trunk_lat:'y', trunk_rot:'z',
-        cerv_fe:'x',  cerv_lat:'y',  cerv_rot:'z'
+        foot_invev_l:'z', foot_invev_r:'z',
+        trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
+        cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
       };
       if (key in map) return map[key];
     }
@@ -534,7 +534,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       const b = getExactBoneByName('spine01');
       if (b) {
         const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-        const axis = axisFor(RIG_PROFILE, key, ({'sagittal':'x','frontal':'y','transverse':'z'})[cfg.plane] || 'x');
+        const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
         const obj = { bone: b, qBind, axis };
         JOINT_BIND.set(key, obj);
         log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
@@ -546,7 +546,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({'sagittal':'x','frontal':'y','transverse':'z'})[cfg.plane] || 'x';
+    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
@@ -562,16 +562,19 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
-    let {bone, qBind, axis} = bind;
-    if (key==='sh_fe_l'||key==='sh_fe_r') axis='x';
-    else if (key==='sh_aa_l'||key==='sh_aa_r') axis='y';
-    else if (key==='sh_irer_l'||key==='sh_irer_r') axis='z';
+    const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(axis==='x'?rad:0, axis==='y'?rad:0, axis==='z'?rad:0, "XYZ");
+    const e = new THREE.Euler(
+      axis==='x'?rad:0,
+      axis==='y'?rad:0,
+      axis==='z'?rad:0,
+      "XYZ"
+    );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
-/* ===== Motions (paired configs; UI splits) ===== */
+
+  /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
@@ -753,7 +756,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-22, psL:-2, wpsL:-73 };
+  const ANAT = { addL:-32, psL:-2, wpsL:-73 };
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
@@ -777,8 +780,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-      
-      if ((key==='sh_fe_l' || key==='sh_fe_r') && CURRENT_ACTION.sign>0){ toggleShFlex(true); }// Shoulder IR/ER → set elbow to 90° baseline immediately
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
       if (key==='sh_irer_l' || key==='sh_irer_r'){
         const side = key.endsWith('_l') ? 'l' : 'r';
         setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
@@ -801,13 +803,6 @@ optgroup{color:#9fb0c9;font-style:normal}
       val = cap; actionDeg.value = String(val);
       log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
     }
-    // Intercept Shoulder Flexion (forward) to enforce sagittal path
-    if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r') && CURRENT_ACTION.sign>0){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      applyShoulderFlexPath(side, val);
-      return;
-    }
-
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
@@ -1078,175 +1073,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
 
-  
-  /* ===== SHOULDER FLEXION PATH TUNER (correct axes: Flex=X, ER=Z, AbdCorr=Y) ===== */
-  let shFlexTunerEl = null, shFlexVisible = false;
-  const SHFLEX = {
-    l: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-         ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'y', clavPro:'z', scapUp:'y', scapTilt:'x' } },
-    r: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-         ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'y', clavPro:'z', scapUp:'y', scapTilt:'x' } },
-    load(){ try{ const raw=localStorage.getItem('rometrics_shflex_tuner'); if(!raw) return; const o=JSON.parse(raw); if(o?.l) Object.assign(this.l,o.l); if(o?.r) Object.assign(this.r,o.r);}catch(e){} },
-    save(){ try{ localStorage.setItem('rometrics_shflex_tuner', JSON.stringify({l:this.l,r:this.r})); }catch(e){} }
-  }; SHFLEX.load();
-
-  function qAxis(axis, deg){
-    const r = THREE.MathUtils.degToRad(deg);
-    const e = axis==='x' ? new THREE.Euler(r,0,0,'XYZ') :
-              axis==='y' ? new THREE.Euler(0,r,0,'XYZ') :
-                           new THREE.Euler(0,0,r,'XYZ');
-    return new THREE.Quaternion().setFromEuler(e);
-  }
-  function getBoneRE(re){ return skeleton?.bones.find(b => re.test((b.name||''))) || null; }
-  function getSide(basename, side){
-    const R = side==='l' ? /_l\b|\.l\b|left/i : /_r\b|\.r\b|right/i;
-    const rx = new RegExp(basename, 'i');
-    const arr = skeleton?.bones || [];
-    return arr.find(b => R.test(b.name||'') && rx.test(b.name||'')) || arr.find(b => rx.test(b.name||'')) || null;
-  }
-  function bindQ(b){ return (initialBoneRot.get(b) || b.quaternion.clone()).clone(); }
-
-  const SH_BIND = { l:null, r:null };
-  function ensureBind(side){
-    if (SH_BIND[side]) return SH_BIND[side];
-    const hum  = getSide('upperarm|humerus', side);
-    const clav = getSide('clavicle', side);
-    const scap = getSide('scap', side);
-    SH_BIND[side] = { hum, clav, scap, qHum: hum?bindQ(hum):null, qClav:clav?bindQ(clav):null, qScap:scap?bindQ(scap):null };
-    return SH_BIND[side];
-  }
-  function freezeBind(side){
-    const b = ensureBind(side);
-    if (b.hum)  b.qHum  = bindQ(b.hum);
-    if (b.clav) b.qClav = bindQ(b.clav);
-    if (b.scap) b.qScap = bindQ(b.scap);
-  }
-  function applyShoulderFlexPath(side, flexDeg){
-    const cfg = SHFLEX[side]; if (!cfg) return;
-    const b = ensureBind(side);
-    const t = Math.max(0, Math.min(180, flexDeg))/180;
-    if (b.hum){
-      const ghFlex = t * cfg.ghFlexMax;
-      const ghER   = t * cfg.ghERatEnd;
-      const ghAbd  = t * (cfg.abdCorrectPer100 * 1.8);
-      b.hum.quaternion.copy(b.qHum)
-        .multiply(qAxis(cfg.ax.ghFlex, ghFlex))
-        .multiply(qAxis(cfg.ax.ghER, ghER))
-        .multiply(qAxis(cfg.ax.ghAbd, ghAbd));
-    }
-    if (b.clav){
-      const elev = t * (cfg.clavElevPer100 * 1.8);
-      const pro  = t * (cfg.clavProPer100  * 1.8);
-      b.clav.quaternion.copy(b.qClav)
-        .multiply(qAxis(cfg.ax.clavElev, elev))
-        .multiply(qAxis(cfg.ax.clavPro,  pro));
-    }
-    if (b.scap){
-      const up   = t * (cfg.scapUpRotPer100    * 1.8);
-      const tilt = t * (cfg.scapPostTiltPer100 * 1.8);
-      b.scap.quaternion.copy(b.qScap)
-        .multiply(qAxis(cfg.ax.scapUp,   up))
-        .multiply(qAxis(cfg.ax.scapTilt, tilt));
-    }
-  }
-  function ensureShoulderFlexTuner(){
-    if (shFlexTunerEl) return shFlexTunerEl;
-    shFlexTunerEl = document.createElement('div');
-    Object.assign(shFlexTunerEl.style,{position:'fixed', right:'16px', top:'120px', zIndex:42, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'380px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
-    shFlexTunerEl.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <strong style="font-size:13px;">Shoulder Flexion Path Tuner</strong>
-        <span class="badge">X (sagittal) / Y (coronal) / Z (transverse)</span>
-        <button id="shfX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button id="shfSideL" class="mini" style="flex:1">Left</button>
-        <button id="shfSideR" class="mini" style="flex:1">Right</button>
-      </div>
-      <div id="shfBody"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="shfApply" class="mini" style="flex:1">Apply</button>
-        <button id="shfSave"  class="mini">Save</button>
-        <button id="shfReset" class="mini">Reset</button>
-      </div>`;
-    document.body.appendChild(shFlexTunerEl);
-    const $ = (q)=>shFlexTunerEl.querySelector(q);
-    let currentSide = 'l';
-    const axisOpts = sel => ['x','y','z'].map(a=>`<option value="${a}" ${a==sel?'selected':''}>${a.toUpperCase()}</option>`).join('');
-    function draw(side){
-      const C = SHFLEX[side];
-      shFlexTunerEl.querySelector('#shfBody').innerHTML = `
-        <div class="rom-item"><summary>GH (Humerus)</summary>
-          <div class="inner">
-            <div class="rom-row"><div class="rom-head">Flex Max @ 180 (°)</div><div style="flex:1"><input id="ghFlexMax" type="number" step="1" min="0" max="200" value="${C.ghFlexMax}"></div></div>
-            <div class="rom-row"><div class="rom-head">ER at End (°)</div><div style="flex:1"><input id="ghER" type="number" step="1" min="0" max="90" value="${C.ghERatEnd}"></div></div>
-            <div class="rom-row"><div class="rom-head">Abd correction /100° (°)</div><div style="flex:1"><input id="ghAbdCorr" type="number" step="1" min="-60" max="60" value="${C.abdCorrectPer100}"></div></div>
-            <div class="rom-row"><div class="rom-head">Axes (Flex / ER / Abd)</div>
-              <div style="flex:1;display:flex;gap:6px">
-                <select id="axGhF">${axisOpts(C.ax.ghFlex)}</select>
-                <select id="axGhER">${axisOpts(C.ax.ghER)}</select>
-                <select id="axGhAbd">${axisOpts(C.ax.ghAbd)}</select>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="rom-item"><summary>Clavicle</summary>
-          <div class="inner">
-            <div class="rom-row"><div class="rom-head">Elevation /100° (°)</div><div style="flex:1"><input id="clavElev" type="number" step="1" min="-40" max="40" value="${C.clavElevPer100}"></div></div>
-            <div class="rom-row"><div class="rom-head">Protraction /100° (°)</div><div style="flex:1"><input id="clavPro" type="number" step="1" min="-40" max="40" value="${C.clavProPer100}"></div></div>
-            <div class="rom-row"><div class="rom-head">Axes (Elev / Pro)</div>
-              <div style="flex:1;display:flex;gap:6px">
-                <select id="axClavElev">${axisOpts(C.ax.clavElev)}</select>
-                <select id="axClavPro">${axisOpts(C.ax.clavPro)}</select>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="rom-item"><summary>Scapula</summary>
-          <div class="inner">
-            <div class="rom-row"><div class="rom-head">Up-Rot /100° (°)</div><div style="flex:1"><input id="scapUp" type="number" step="1" min="-60" max="60" value="${C.scapUpRotPer100}"></div></div>
-            <div class="rom-row"><div class="rom-head">Posterior Tilt /100° (°)</div><div style="flex:1"><input id="scapTilt" type="number" step="1" min="-60" max="60" value="${C.scapPostTiltPer100}"></div></div>
-            <div class="rom-row"><div class="rom-head">Axes (Up / Tilt)</div>
-              <div style="flex:1;display:flex;gap:6px">
-                <select id="axScapUp">${axisOpts(C.ax.scapUp)}</select>
-                <select id="axScapTilt">${axisOpts(C.ax.scapTilt)}</select>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }
-    $('#shfSideL').onclick = ()=>{ currentSide='l'; draw('l'); };
-    $('#shfSideR').onclick = ()=>{ currentSide='r'; draw('r'); };
-    $('#shfApply').onclick = ()=>{
-      const R = (id)=>Number(shFlexTunerEl.querySelector('#'+id).value);
-      const S = (id)=>shFlexTunerEl.querySelector('#'+id).value;
-      const C = SHFLEX[currentSide];
-      C.ghFlexMax = R('ghFlexMax'); C.ghERatEnd = R('ghER'); C.abdCorrectPer100 = R('ghAbdCorr');
-      C.clavElevPer100 = R('clavElev'); C.clavProPer100 = R('clavPro'); C.scapUpRotPer100 = R('scapUp'); C.scapPostTiltPer100 = R('scapTilt');
-      C.ax.ghFlex = S('axGhF'); C.ax.ghER = S('axGhER'); C.ax.ghAbd = S('axGhAbd');
-      C.ax.clavElev = S('axClavElev'); C.ax.clavPro = S('axClavPro'); C.ax.scapUp = S('axScapUp'); C.ax.scapTilt = S('axScapTilt');
-      SHFLEX.save();
-      if (CURRENT_ACTION && /^sh_fe_/.test(CURRENT_ACTION.key)){
-        const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-        freezeBind(side);
-        const val = Math.abs(parseFloat(actionDeg.value)||0);
-        applyShoulderFlexPath(side, val);
-        pairLabel.style.color = '#a5f3fc'; setTimeout(()=> pairLabel.style.color='', 300);
-      }
-    };
-    $('#shfSave').onclick  = ()=> SHFLEX.save();
-    $('#shfReset').onclick = ()=>{
-      Object.assign(SHFLEX[currentSide], { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-        ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'y', clavPro:'z', scapUp:'y', scapTilt:'x' } });
-      SHFLEX.save(); draw(currentSide);
-    };
-    shFlexTunerEl.querySelector('#shfX').onclick = ()=>{ shFlexTunerEl.style.display='none'; shFlexVisible=false; };
-    draw('l');
-    return shFlexTunerEl;
-  }
-  function toggleShFlex(show){ ensureShoulderFlexTuner(); shFlexVisible = (show===undefined)?!shFlexVisible:!!show; shFlexTunerEl.style.display = shFlexVisible?'block':'none'; }
-  /* ===== /SHOULDER FLEXION PATH TUNER ===== */
-/* ===== ROM modal wiring ===== */
+  /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
   window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
