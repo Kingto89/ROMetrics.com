@@ -574,6 +574,61 @@ optgroup{color:#9fb0c9;font-style:normal}
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
+  // ===== Dynamic Shoulder Flex Axis Detection (minimal, cached) =====
+  const FLEX_AXIS_CACHE = { l:null, r:null };
+
+  function getHandBone(side){
+    const exact = getExactBoneByName(side==='l' ? 'hand_l' : 'hand_r');
+    if (exact) return exact;
+    return findBoneBy({ side, hints:[/hand|wrist/i], key: side==='l' ? 'wr_ps_l' : 'wr_ps_r' });
+  }
+
+  function chooseAxisForShoulderFlex(bind, side){
+    if (!bind || !bind.bone) return bind && bind.axis || 'x';
+    if (FLEX_AXIS_CACHE[side]) { bind.axis = FLEX_AXIS_CACHE[side]; return bind.axis; }
+
+    const bone = bind.bone;
+    const hand = getHandBone(side);
+    if (!hand){ return bind.axis || 'x'; }
+
+    // Measure world-space hand position baseline
+    const baselinePos = new THREE.Vector3();
+    hand.getWorldPosition(baselinePos);
+
+    // Try small test rotation on each axis and see which moves the hand most along Z (anterior/posterior)
+    const axes = ['x','y','z'];
+    const scores = {x:0,y:0,z:0};
+    const qBind = bind.qBind.clone();
+
+    for (const ax of axes){
+      // apply small +10° on that axis
+      const rad = THREE.MathUtils.degToRad(10);
+      const e = new THREE.Euler(ax==='x'?rad:0, ax==='y'?rad:0, ax==='z'?rad:0, 'XYZ');
+      const qTest = new THREE.Quaternion().copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+
+      // Temporarily set, sample, then revert
+      const tmp = bone.quaternion.clone();
+      bone.quaternion.copy(qTest);
+      const testPos = new THREE.Vector3();
+      hand.getWorldPosition(testPos);
+      bone.quaternion.copy(tmp);
+
+      const delta = testPos.clone().sub(baselinePos);
+      // Prefer movement in Z (forward/back) for FLEX vs X (lateral) for ABD
+      // Score: prioritize |dz|, penalize |dx| a little
+      scores[ax] = Math.abs(delta.z) - 0.4*Math.abs(delta.x);
+    }
+
+    // Pick best axis
+    let bestAx = 'x', bestScore = -1e9;
+    for (const ax of axes){
+      if (scores[ax] > bestScore){ bestScore = scores[ax]; bestAx = ax; }
+    }
+    FLEX_AXIS_CACHE[side] = bestAx;
+    bind.axis = bestAx;
+    return bestAx;
+  }
+
   // ===== Shoulder flexion coupling: ER + slight Abd + scapula mechanics (minimal) =====
   function shoulderFlexCoupling(side, flexDeg){
     if (!side) return;
