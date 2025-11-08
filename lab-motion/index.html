@@ -806,6 +806,47 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    // ===== Shoulder Flexion Coupling (ER + Abd + Scap mechanics) =====
+function shoulderFlexCoupling(side, flexDeg){
+  // side: 'l' or 'r', flexDeg: 0..180 (we only use the positive flex amount)
+  flexDeg = Math.max(0, flexDeg||0);
+
+  // --- Humerus external rotation scales after ~80°
+  // ramp: 0° ER below 80°, up to ~35° ER by 170–180°
+  const er = Math.max(0, Math.min(35, (flexDeg - 80) * 0.45));
+
+  // --- Slight abduction to clear chest (up to ~12°)
+  const abd = Math.max(0, Math.min(12, (flexDeg - 60) * 0.12));
+
+  // --- Scapular upward rotation (to ~25°) + posterior tilt (~8°)
+  // simple smooth ramps; tweak if you want more/less motion
+  const scapUp = Math.max(0, Math.min(25, (flexDeg - 60) * 0.22));
+  const scapPostTilt = Math.max(0, Math.min(8, (flexDeg - 80) * 0.10));
+
+  // Apply via existing paired system where possible
+  // 1) Humeral ER
+  const keyER  = side==='l' ? 'sh_irer_l' : 'sh_irer_r';
+  const cfgER  = cfgFromKey(keyER);
+  if (cfgER) applyPairAngle(keyER, cfgER, +er);   // + = Internal in your map, but axisFor() maps correctly per profile
+
+  // 2) Add a touch of abduction
+  const keyAA  = side==='l' ? 'sh_aa_l' : 'sh_aa_r';
+  const cfgAA  = cfgFromKey(keyAA);
+  if (cfgAA)   applyPairAngle(keyAA, cfgAA, +abd);
+
+  // 3) Clavicle / scapula: rotate bone directly (upward rot + posterior tilt)
+  //    We’ll bind to clavicle_<side> if present; fallback to upperarm as parent frame.
+  const clav = findBoneBy({ side, key:'clav_adj', hints:[/clavicle|scap/i] }) || findBoneBy({ side, key:'upperarm_adj', hints:[/upperarm|shoulder|humerus/i] });
+  if (clav){
+    const q0 = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
+    // Choose reasonable local axes: X ~ sagittal (tilt), Z ~ frontal (upward rotation)
+    const rx = THREE.MathUtils.degToRad(-scapPostTilt); // posterior tilt (negative X)
+    const rz = THREE.MathUtils.degToRad(+scapUp);       // upward rotation (positive Z)
+    const qTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,0,0,'XYZ'));
+    const qUp   = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,rz,'XYZ'));
+    clav.quaternion.copy(q0).multiply(qUp).multiply(qTilt);
+  }
+}
 
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
