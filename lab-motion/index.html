@@ -562,44 +562,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
-    const {bone, qBind, axis}
-  /* ===== Shoulder Flex coupling (scapular upward rotation + humeral ER) ===== */
-  function rotateBoneByName(name, axis, deg){
-    if (!skeleton) return;
-    const b = getExactBoneByName(name);
-    if (!b) return;
-    const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-    const rad = THREE.MathUtils.degToRad(deg);
-    const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
-      "XYZ"
-    );
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    b.quaternion.copy(qBind).multiply(qDelta);
-  }
-
-  function applyShoulderFlexCoupling(side, flexVal){
-    // Keep motion in sagittal: hold Abd/Add near anatomic baseline
-    const addBase = (side==='l') ? ANAT.addL : -ANAT.addL;
-    setPair(`sh_aa_${side}`, addBase);
-
-    // Gentle external rotation with flexion to avoid impingement/deform
-    const er = Math.min(30, flexVal * 0.2); // up to ~30° ER by ~150° flexion
-    setPair(`sh_irer_${side}`, -er); // negative == External Rotation in our mapping
-
-    // Scapulothoracic upward rotation (~2:1 GH:ST) → up to ~60° by full flexion
-    const stUp = Math.min(60, flexVal * (1/3));
-    const scapName = side==='l' ? 'scapula_L' : 'scapula_R';
-    const clavName = side==='l' ? 'clavicle_L' : 'clavicle_R';
-    if (getExactBoneByName(scapName)){
-      rotateBoneByName(scapName, 'z', stUp);
-    } else if (getExactBoneByName(clavName)){
-      rotateBoneByName(clavName, 'z', stUp * 0.7);
-    }
-  }
- = bind;
+    const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
     const e = new THREE.Euler(
       axis==='x'?rad:0,
@@ -843,11 +806,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-    // Shoulder flexion coupling: scapular upward rotation + humeral ER
-    if (/^sh_fe_/.test(CURRENT_ACTION.key)){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      applyShoulderFlexCoupling(side, val);
-    }
 
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
