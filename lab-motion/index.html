@@ -492,25 +492,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     return DRUJ[side];
   }
 
-  // ---------- NEW: choose best local axis for a requested plane ----------
-  function pickAxisCharForPlane(bone, qBind, plane){
-    const target = plane==='sagittal'   ? new THREE.Vector3(1,0,0)
-                 : plane==='frontal'    ? new THREE.Vector3(0,0,1)
-                 :                         new THREE.Vector3(0,1,0);
-    const basis = {
-      x: new THREE.Vector3(1,0,0).applyQuaternion(qBind),
-      y: new THREE.Vector3(0,1,0).applyQuaternion(qBind),
-      z: new THREE.Vector3(0,0,1).applyQuaternion(qBind)
-    };
-    let best = 'x', bestDot = -1;
-    for (const k of ['x','y','z']){
-      const d = Math.abs(basis[k].dot(target));
-      if (d > bestDot){ bestDot = d; best = k; }
-    }
-    return best;
-  }
-  // ----------------------------------------------------------------------
-
   const JOINT_BIND = new Map();
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
@@ -530,16 +511,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-
-    // base axis by plane
     const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
-    // start with rig profile mapping
-    let axis = axisFor(RIG_PROFILE, key, baseAxis);
-    // ✅ ensure shoulder FLEX/EXT truly uses sagittal by picking best local axis at bind
-    if (/^sh_fe_/.test(key)) {
-      axis = pickAxisCharForPlane(bone, qBind, 'sagittal');
-    }
-
+    const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
     log(`Bound ${key} → ${bone.name} (axis ${axis})`);
@@ -552,10 +525,27 @@ optgroup{color:#9fb0c9;font-style:normal}
     b.qBind = b.bone.quaternion.clone();
   }
 
+  // === Helpers for pure sagittal FLEXION ===
+  const WORLD_ML = new THREE.Vector3(1,0,0); // medial–lateral in world space
+  function worldToLocalAxis(qBind, worldAxis){
+    const inv = qBind.clone().invert();
+    return worldAxis.clone().applyQuaternion(inv).normalize();
+  }
+
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+
+    // 🔒 Lock FLEXION to sagittal plane (no Abd drift)
+    if (/^sh_fe_/.test(key)) {
+      const axisLocal = worldToLocalAxis(qBind, WORLD_ML);
+      const qDelta = new THREE.Quaternion().setFromAxisAngle(axisLocal, rad);
+      bone.quaternion.copy(qBind).multiply(qDelta);
+      return;
+    }
+
+    // Default for all other motions
     const e = new THREE.Euler(
       axis==='x'?rad:0,
       axis==='y'?rad:0,
@@ -600,8 +590,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
 
@@ -806,7 +796,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    // Scapulohumeral rhythm on flexion/abduction
+    // Scapulohumeral rhythm on flexion/abduction (kept)
     if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       rotateClavicle(side, signed * 0.5);
@@ -816,15 +806,15 @@ optgroup{color:#9fb0c9;font-style:normal}
       rotateClavicle(side, signed * 0.5);
     }
 
-    // External rotation coupling during FLEXION (kept)
-    // Mapping: for sh_irer_*  negative = ER, positive = IR
+    // ER coupling during FLEXION (kept)
+    // Your mapping: for sh_irer_* negative = ER, positive = IR
     if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       const erAmt = Math.min(45, Math.max(0, signed * 0.25)); // up to ~45°
       setPair(`sh_irer_${side}`, -erAmt); // negative → ER
     }
 
-    // Shoulder IR/ER coupling extras (unchanged): slight Abd/Add + elbow @ 90° while rotating
+    // Shoulder IR/ER coupling extras (kept)
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       setPair(`el_fe_${side}`, 90);
