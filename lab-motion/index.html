@@ -474,7 +474,59 @@ optgroup{color:#9fb0c9;font-style:normal}
       ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
       : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
   }
-  function findBoneBy(cfg){
+  
+  // Heuristic: robustly find the shoulder (upper arm) bone for a given side
+  function getShoulderBone(side){
+    if (!skeleton) return null;
+    const lname = (b)=> (b.name||'').toLowerCase();
+    const isSide = (nm)=> sideRegex(side).some(r=>r.test(nm));
+    // Preferred exact-ish candidates in order
+    const candidates = [
+      /\bupperarm\b/i, /\bhumerus\b/i, /\bshoulder\b/i,
+      /\barm\b(?!.*lower)/i, /mixamorig:.*arm(?!.*lower)/i
+    ];
+    // 1) Try direct name matches
+    for (const rx of candidates){
+      for (const b of skeleton.bones){
+        const nm = lname(b);
+        if (EXCLUDE.test(nm)) continue;
+        if (!isSide(nm)) continue;
+        if (rx.test(nm)) return b;
+      }
+    }
+    // 2) Climb up from hand → lowerarm → parent chain
+    let hand = null, fore = null;
+    for (const b of skeleton.bones){
+      const nm = lname(b);
+      if (!isSide(nm)) continue;
+      if (/(hand|wrist)/i.test(nm)) { hand = b; break; }
+    }
+    if (!hand){
+      for (const b of skeleton.bones){
+        const nm = lname(b);
+        if (!isSide(nm)) continue;
+        if (/(lowerarm|forearm|ulna|radius)/i.test(nm)) { fore = b; break; }
+      }
+    }
+    let climb = hand or fore;
+    let guard = 0;
+    while (climb && guard++ < 10){
+      const nm = lname(climb);
+      if (!EXCLUDE.test(nm) && /(upperarm|humerus|shoulder|arm)/i.test(nm) && !/lower/.test(nm)){
+        return climb;
+      }
+      climb = climb.parent;
+    }
+    // 3) Last resort: pick any bone on that side with 'arm' but not 'lower'
+    for (const b of skeleton.bones){
+      const nm = lname(b);
+      if (EXCLUDE.test(nm)) continue;
+      if (!isSide(nm)) continue;
+      if (/arm/i.test(nm) && !/lower/.test(nm)) return b;
+    }
+    return null;
+  }
+function findBoneBy(cfg){
     if (!skeleton) return null;
     const names = skeleton.bones.map(b=>b.name.toLowerCase());
     const sideREs = sideRegex(cfg.side);
@@ -571,6 +623,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       }
     }
     let bone = findBoneBy({...cfg, key});
+    if (!bone && /^sh_/.test(key) && cfg.side){ bone = getShoulderBone(cfg.side); }
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { if(!NO_BIND_LOGGED.has(key)){ log(`No bind for ${key}`); NO_BIND_LOGGED.add(key);} return null; }
