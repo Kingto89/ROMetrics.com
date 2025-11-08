@@ -1183,9 +1183,39 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   function ensureShoulderFlexTuner(){
+  function clampTunerInView(){
+    if(!shFlexTunerEl) return;
+    const r = shFlexTunerEl.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = r.left, y = r.top;
+    if (r.right > vw) x -= (r.right - vw + 8);
+    if (r.bottom > vh) y -= (r.bottom - vh + 8);
+    if (r.left < 0) x = 8;
+    if (r.top < 0) y = 8;
+    shFlexTunerEl.style.left = x + 'px';
+    shFlexTunerEl.style.top  = y + 'px';
+    shFlexTunerEl.style.right = 'auto';
+  }
+  function makeDraggable(el, handle){
+    let sx=0, sy=0, ox=0, oy=0, dragging=false;
+    handle.style.cursor = 'move';
+    handle.addEventListener('mousedown', (e)=>{
+      dragging=true; sx=e.clientX; sy=e.clientY;
+      const rect = el.getBoundingClientRect(); ox=rect.left; oy=rect.top;
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e)=>{
+      if(!dragging) return;
+      const nx = ox + (e.clientX - sx);
+      const ny = oy + (e.clientY - sy);
+      el.style.left = nx+'px'; el.style.top = ny+'px'; el.style.right='auto';
+    });
+    window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; clampTunerInView(); } });
+  }
+
     if (shFlexTunerEl) return shFlexTunerEl;
     shFlexTunerEl = document.createElement('div');
-    Object.assign(shFlexTunerEl.style,{position:'fixed', right:'16px', top:'420px', zIndex:42, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'380px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
+    Object.assign(shFlexTunerEl.style,{position:'fixed', right:'16px', top:'120px', zIndex:42, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'380px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
     shFlexTunerEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
         <strong style="font-size:13px;">Shoulder Flexion Path Tuner</strong>
@@ -1205,7 +1235,10 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div style="opacity:.7;margin-top:6px;">Auto-opens when you select a Shoulder Flexion action. Settings save per side.</div>
     `;
     document.body.appendChild(shFlexTunerEl);
-    const $ = (q)=>shFlexTunerEl.querySelector(q);
+  const header = shFlexTunerEl.querySelector('div');
+  makeDraggable(shFlexTunerEl, header);
+  window.addEventListener('resize', clampTunerInView);
+const $ = (q)=>shFlexTunerEl.querySelector(q);
 
     let currentSide = 'l';
     function axisOpts(sel){ return ['x','y','z'].map(a=>`<option value="${a}" ${a==sel?'selected':''}>${a.toUpperCase()}</option>`).join(''); }
@@ -1273,11 +1306,15 @@ optgroup{color:#9fb0c9;font-style:normal}
       C.ax.clavElev = S('axClavElev'); C.ax.clavPro = S('axClavPro');
       C.ax.scapUp = S('axScapUp'); C.ax.scapTilt = S('axScapTilt');
       SHFLEX.save();
-      if (CURRENT_ACTION && /^sh_fe_/.test(CURRENT_ACTION.key) && CURRENT_ACTION.sign>0){
-        freezeShFlexBind(currentSide);
-        applyShoulderFlexPath(currentSide, parseFloat(actionDeg.value)||0);
-        pairLabel.style.color = '#a5f3fc'; setTimeout(()=> pairLabel.style.color='', 300);
-      }
+      
+    if (CURRENT_ACTION && /^sh_fe_/.test(CURRENT_ACTION.key)){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      freezeShFlexBind(side);
+      const val = Math.abs(parseFloat(actionDeg.value)||0);
+      applyShoulderFlexPath(side, val);
+      pairLabel.style.color = '#a5f3fc'; setTimeout(()=> pairLabel.style.color='', 300);
+    }
+
     };
     $('#shfSave').onclick  = ()=> SHFLEX.save();
     $('#shfReset').onclick = ()=>{
