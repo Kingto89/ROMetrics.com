@@ -782,6 +782,11 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    // Pin abduction/adduction while scrubbing FLEX/EXT so it can't drift
+if (/^sh_fe_/.test(CURRENT_ACTION.key)) {
+  const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+  setPair(`sh_aa_${side}`, side === 'l' ? ANAT.addL : -ANAT.addL);
+}
 
     // Scapulohumeral rhythm on flexion/abduction (unchanged)
     if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
