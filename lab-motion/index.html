@@ -584,8 +584,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
-    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal_true',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal_true',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
@@ -810,7 +810,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       val = cap; actionDeg.value = String(val);
       log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
     }
-    // Shoulder Flexion Path Tuner intercept
+    // Shoulder Flex (sagittal_true) intercept
     if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r') && CURRENT_ACTION.sign>0){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       applyShoulderFlexPath(side, val);
