@@ -584,12 +584,12 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
-    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal_true',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal_true',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal', axis:'x',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal', axis:'x',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'coronal', axis:'y',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'coronal', axis:'y',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse', axis:'z',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse', axis:'z',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
     // ELBOW — fix so Flexion moves (150), Extension small (10)
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
@@ -1093,9 +1093,9 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const SHFLEX = {
     l: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-         ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
+         ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
     r: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-         ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
+         ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
     enabled: true,
     load(){
       try{ const raw = localStorage.getItem('rometrics_shflex_tuner');
@@ -1320,10 +1320,10 @@ const $ = (q)=>shFlexTunerEl.querySelector(q);
     $('#shfReset').onclick = ()=>{
       Object.assign(SHFLEX[currentSide], (currentSide==='l'?{
         ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-        ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
+        ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
       }:{
         ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
-        ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
+        ax:{ ghFlex:'x', ghER:'z', ghAbd:'y', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
       }));
       SHFLEX.save(); render(); log('Shoulder Flex Path reset.');
     };
