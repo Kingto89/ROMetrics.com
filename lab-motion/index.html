@@ -18,7 +18,7 @@
 :root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid #1f2937;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
 .content{padding:12px;overflow:auto}
@@ -575,6 +575,7 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
 
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
@@ -725,6 +726,7 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
   actionSel.addEventListener("change", ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
+    JOINT_BIND.clear();   // <<< ADDED: rebind so updated axis/targets take effect
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
@@ -811,6 +813,7 @@ if (key === 'sh_fe_l' || key === 'sh_fe_r') return 'y';
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
+    JOINT_BIND.clear();   // <<< ADDED: ensure next motion rebinds with fresh axis
     actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     pairLabel.textContent = "Angle (°)";
