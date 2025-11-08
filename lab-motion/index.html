@@ -186,6 +186,16 @@ optgroup{color:#9fb0c9;font-style:normal}
   const myaw = document.getElementById("myaw");
   const resetModel = document.getElementById("resetModel");
 
+  // === MOVED OUT OF COLLIM (fix) ===
+  // Scapulohumeral rhythm + anti-clavicle helper
+  const FLEX_KICK = {
+    abdMax: 12,       // small helper abduction (°)
+    abdRampEnd: 60,   // finish adding by ~60° flex
+    erMax: 35,        // up to ~35° ER during flex
+    erRampEnd: 120,   // finish ER ramp by ~120° flex
+    scapScale: 0.50   // clavicle/scap upward rotation scale
+  };
+
   const COLLIM = {
     enabled: false,
     trunkLatLMax: 30,
@@ -204,14 +214,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     shFlexRMax: 170,
     shAbdLMax: 170,
     shAbdRMax: 170,
-    // Scapulohumeral rhythm + anti-clavicle flex helper
-const FLEX_KICK = {
-  abdMax: 12,
-  abdRampEnd: 60,
-  erMax: 35,
-  erRampEnd: 120,
-  scapScale: 0.50
-};
     load(){
       try{
         const raw = localStorage.getItem('rometrics_collim');
@@ -658,7 +660,7 @@ const FLEX_KICK = {
 
   function buildSeparatedCatalog(list){
     const cat = {};
-    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat[grp].push(...entries); };
+    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat.push ? cat.push() : 0; cat[grp].push(...entries); };
     list.forEach(cfg=>{
       if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
@@ -787,23 +789,23 @@ const FLEX_KICK = {
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    // Scapulohumeral rhythm on flexion/abduction (unchanged)
-if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
-  const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-  const flex = signed;
+    // Scapulohumeral rhythm on flexion (uses global FLEX_KICK)
+    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      const flex = signed;
 
-  const abdKick = (flex <= FLEX_KICK.abdRampEnd)
-    ? (FLEX_KICK.abdMax * (flex / FLEX_KICK.abdRampEnd))
-    : FLEX_KICK.abdMax;
-  setPair(`sh_aa_${side}`, abdKick);
+      const abdKick = (flex <= FLEX_KICK.abdRampEnd)
+        ? (FLEX_KICK.abdMax * (flex / FLEX_KICK.abdRampEnd))
+        : FLEX_KICK.abdMax;
+      setPair(`sh_aa_${side}`, abdKick);
 
-  const erAmt = Math.min(FLEX_KICK.erMax, (flex / FLEX_KICK.erRampEnd) * FLEX_KICK.erMax);
-  setPair(`sh_irer_${side}`, -erAmt);
+      const erAmt = Math.min(FLEX_KICK.erMax, (flex / FLEX_KICK.erRampEnd) * FLEX_KICK.erMax);
+      setPair(`sh_irer_${side}`, -erAmt);
 
-  rotateClavicle(side, flex * FLEX_KICK.scapScale);
-}
+      rotateClavicle(side, flex * FLEX_KICK.scapScale);
+    }
 
-    // Shoulder IR/ER coupling extras (unchanged): slight Abd/Add + elbow @ 90° while rotating
+    // Shoulder IR/ER coupling extras: slight Abd/Add + elbow @ 90° while rotating
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       setPair(`el_fe_${side}`, 90);
