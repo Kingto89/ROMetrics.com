@@ -470,7 +470,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   /* ===== Bone finding ===== */
-  const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
+  const EXCLUDE = /(pelvis|root)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
@@ -806,6 +806,13 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+      // Scapulohumeral rhythm for FLEXION (Blender/MB-Lab):
+  // ~0.5° scapular upward rotation per 1° GH flexion, only when flexing (+)
+  if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+    const scapDeg = signed * 0.5; // 120° GH → ~60° scap
+    rotateClavicle(side, scapDeg);
+  }
 
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
@@ -889,6 +896,28 @@ optgroup{color:#9fb0c9;font-style:normal}
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
     if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
+    function rotateClavicle(side, deg){
+  if (!skeleton) return;
+  // Upward rotation range ~0–60°, clamp to keep it sane
+  const target = Math.max(0, Math.min(60, deg||0));
+
+  // Prefer exact names, else fall back to finder
+  let clav = side==='l' ? getExactBoneByName('clavicle_L') : getExactBoneByName('clavicle_R');
+  if (!clav){
+    clav = findBoneBy({ side, hints:[/clavicle|scapula/i], key:`clav_${side}` });
+  }
+  if (!clav){ log(`No clavicle for ${side}`); return; }
+
+  // MB-Lab (Blender) rigs: clavicle upward rotation is typically the Z axis
+  const axis = 'z';
+  const qBind = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
+  const rad  = THREE.MathUtils.degToRad(target);
+  const e = axis==='x' ? new THREE.Euler(rad,0,0,'XYZ')
+        : axis==='y' ? new THREE.Euler(0,rad,0,'XYZ')
+                      : new THREE.Euler(0,0,rad,'XYZ');
+  clav.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+  log(`Clavicle ${side.toUpperCase()} upward rot = ${target.toFixed(1)}°`);
+}
     const cfg = cfgFromKey(key);
     if (cfg) applyPairAngle(key,cfg,deg);
   }
