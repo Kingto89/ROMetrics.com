@@ -207,7 +207,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
-        // NEW caps — Shoulder Flexion & Abduction
+    // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
     shAbdLMax: 170,
@@ -234,7 +234,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+
+    // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
     if (/^sh_fe_/.test(key)) {
       const isLeft = key.endsWith('_l');
       if (sign > 0) { // Flexion
@@ -595,9 +596,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
 
-    // REMOVED forearm entries from menu per your instruction
-
-    // Keep wrist PS (proxy) but we will relabel signs below
+    // Keep wrist PS (proxy)
     {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
 
@@ -701,7 +700,6 @@ optgroup{color:#9fb0c9;font-style:normal}
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
       else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
       else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
-      // Forearm group intentionally NOT added (removed from UI)
       else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
       else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
       else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
@@ -793,6 +791,35 @@ optgroup{color:#9fb0c9;font-style:normal}
     syncActionUI(true);
   });
 
+  // ===== Scapulohumeral rhythm helper (GLOBAL) =====
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
+  function rotateClavicle(side, deg){
+    if (!skeleton) return;
+    // Upward rotation range ~0–60°, clamp to keep it sane
+    const target = Math.max(0, Math.min(60, deg||0));
+
+    // Prefer exact names, else fall back to finder
+    let clav = side==='l' ? getExactBoneByName('clavicle_L') : getExactBoneByName('clavicle_R');
+    if (!clav){
+      clav = findBoneBy({ side, hints:[/clavicle|scapula/i], key:`clav_${side}` });
+    }
+    if (!clav){ log(`No clavicle for ${side}`); return; }
+
+    // MB-Lab / Mixamo: upward rotation commonly Z
+    const axis = 'z';
+    const qBind = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
+    const rad  = THREE.MathUtils.degToRad(target);
+    const e = axis==='x' ? new THREE.Euler(rad,0,0,'XYZ')
+          : axis==='y' ? new THREE.Euler(0,rad,0,'XYZ')
+                        : new THREE.Euler(0,0,rad,'XYZ');
+    clav.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    // log(`Clavicle ${side.toUpperCase()} upward rot = ${target.toFixed(1)}°`);
+  }
+
   actionDeg.addEventListener("input", ()=>{
     if (!CURRENT_ACTION) return;
     let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
@@ -806,13 +833,16 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-      // Scapulohumeral rhythm for FLEXION (Blender/MB-Lab):
-  // ~0.5° scapular upward rotation per 1° GH flexion, only when flexing (+)
-  if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
-    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-    const scapDeg = signed * 0.5; // 120° GH → ~60° scap
-    rotateClavicle(side, scapDeg);
-  }
+
+    // Scapulohumeral rhythm (≈2:1 GH:scapula) — upward rotation with GH flexion/abduction
+    if (/^sh_fe_/.test(CURRENT_ACTION.key) && signed > 0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      rotateClavicle(side, signed * 0.5); // 120° GH → ~60° clav/scap
+    }
+    if (/^sh_aa_/.test(CURRENT_ACTION.key) && signed > 0){ // abduction only (+)
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      rotateClavicle(side, signed * 0.5);
+    }
 
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
@@ -896,36 +926,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
     if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
-    function rotateClavicle(side, deg){
-  if (!skeleton) return;
-  // Upward rotation range ~0–60°, clamp to keep it sane
-  const target = Math.max(0, Math.min(60, deg||0));
-
-  // Prefer exact names, else fall back to finder
-  let clav = side==='l' ? getExactBoneByName('clavicle_L') : getExactBoneByName('clavicle_R');
-  if (!clav){
-    clav = findBoneBy({ side, hints:[/clavicle|scapula/i], key:`clav_${side}` });
-  }
-  if (!clav){ log(`No clavicle for ${side}`); return; }
-
-  // MB-Lab (Blender) rigs: clavicle upward rotation is typically the Z axis
-  const axis = 'z';
-  const qBind = (initialBoneRot.get(clav) || clav.quaternion.clone()).clone();
-  const rad  = THREE.MathUtils.degToRad(target);
-  const e = axis==='x' ? new THREE.Euler(rad,0,0,'XYZ')
-        : axis==='y' ? new THREE.Euler(0,rad,0,'XYZ')
-                      : new THREE.Euler(0,0,rad,'XYZ');
-  clav.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-  log(`Clavicle ${side.toUpperCase()} upward rot = ${target.toFixed(1)}°`);
-}
     const cfg = cfgFromKey(key);
     if (cfg) applyPairAngle(key,cfg,deg);
   }
-  function getExactBoneByName(name){
-    if (!skeleton) return null;
-    const lname = String(name).toLowerCase();
-    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
+
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
     let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
@@ -1009,7 +1013,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
-            <div class="rom-row">
+      <div class="rom-row">
         <div class="rom-head">Shoulder Flex — L/R max (°)</div>
         <div style="flex:1;display:flex;gap:6px">
           <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
