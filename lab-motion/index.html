@@ -448,21 +448,21 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (profile==='mixamo'){
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
-        sh_aa_l:'z', sh_aa_r:'z',
-        sh_irer_l:'y', sh_irer_r:'y',
+        sh_aa_l:'y', sh_aa_r:'y',
+        sh_irer_l:'z', sh_irer_r:'z',
         el_fe_l:'x', el_fe_r:'x',
-        fa_ps_l:'y', fa_ps_r:'y',
-        wr_ps_l:'y', wr_ps_r:'y',
+        fa_ps_l:'z', fa_ps_r:'z',
+        wr_ps_l:'z', wr_ps_r:'z',
         wr_fe_l:'x', wr_fe_r:'x',
-        wr_ru_l:'z', wr_ru_r:'z',
+        wr_ru_l:'y', wr_ru_r:'y',
         hip_fe_l:'x', hip_fe_r:'x',
-        hip_aa_l:'z', hip_aa_r:'z',
-        hip_irer_l:'y', hip_irer_r:'y',
+        hip_aa_l:'y', hip_aa_r:'y',
+        hip_irer_l:'z', hip_irer_r:'z',
         knee_fe_l:'x', knee_fe_r:'x',
         ankle_dfpf_l:'x', ankle_dfpf_r:'x',
-        foot_invev_l:'z', foot_invev_r:'z',
-        trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
-        cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
+        foot_invev_l:'y', foot_invev_r:'y',
+        trunk_fe:'x', trunk_lat:'y', trunk_rot:'z',
+        cerv_fe:'x',  cerv_lat:'y',  cerv_rot:'z'
       };
       if (key in map) return map[key];
     }
@@ -534,7 +534,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       const b = getExactBoneByName('spine01');
       if (b) {
         const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-        const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+        const axis = axisFor(RIG_PROFILE, key, ({'sagittal':'x','frontal':'y','transverse':'z'})[cfg.plane] || 'x');
         const obj = { bone: b, qBind, axis };
         JOINT_BIND.set(key, obj);
         log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
@@ -546,7 +546,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
+    const baseAxis = ({'sagittal':'x','frontal':'y','transverse':'z'})[cfg.plane] || 'x';
     const axis = axisFor(RIG_PROFILE, key, baseAxis);
     const obj = {bone, qBind, axis};
     JOINT_BIND.set(key,obj);
@@ -561,18 +561,17 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   function applyPairAngle(key,cfg,deg){
-    const bind = resolveBind(key,cfg); if (!bind) return;
-    const {bone, qBind, axis} = bind;
-    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
-    const e = new THREE.Euler(
-      axis==='x'?rad:0,
-      axis==='y'?rad:0,
-      axis==='z'?rad:0,
-      "XYZ"
-    );
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    bone.quaternion.copy(qBind).multiply(qDelta);
-  }
+  const bind = resolveBind(key,cfg); if (!bind) return;
+  let {bone, qBind, axis} = bind;
+  // Shoulder axis overrides (FE=X, AA=Y, IR/ER=Z)
+  if (key==='sh_fe_l'||key==='sh_fe_r') axis='x';
+  else if (key==='sh_aa_l'||key==='sh_aa_r') axis='y';
+  else if (key==='sh_irer_l'||key==='sh_irer_r') axis='z';
+  const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+  const e = new THREE.Euler(axis==='x'?rad:0, axis==='y'?rad:0, axis==='z'?rad:0, "XYZ");
+  const qDelta = new THREE.Quaternion().setFromEuler(e);
+  bone.quaternion.copy(qBind).multiply(qDelta);
+}
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
