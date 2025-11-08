@@ -753,7 +753,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-42, psL:-2, wpsL:-73 };
+  const ANAT = { addL:-22, psL:-2, wpsL:-73 };
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
