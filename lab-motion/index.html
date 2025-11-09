@@ -344,7 +344,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "../assets/Roma_ROMetrics.glb?v=1";
+    return "./assets/Roma_ROMetrics.glb?v=1";
   }
   let MODEL_URL = pickModelUrl();
 
@@ -469,12 +469,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return defAxis;
   }
 
-  
-  // === FLEXION BRUTE FIX (adds ER + scaption after 110° to avoid clavicle crash) ===
-  const FLEX_FIX_START = 110;
-  const FLEX_FIX_ER_MAX = 18;   // deg external rotation added by 150°
-  const FLEX_FIX_SCAP_MAX = 12; // deg scaption (Z) added by 150°
-/* ===== Bone finding ===== */
+  /* ===== Bone finding ===== */
   const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
@@ -565,29 +560,9 @@ optgroup{color:#9fb0c9;font-style:normal}
     b.qBind = b.bone.quaternion.clone();
   }
 
-  
-function applyPairAngle(key,cfg,deg){
+  function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
-
-    // Shoulder Flexion brute fix: add ER + scaption after 110°
-    if (key==='sh_fe_l' || key==='sh_fe_r'){
-      const val = deg + (cfg.neutral||0);
-      const clamped = Math.max(0, Math.min(180, val));
-      const t = (clamped <= FLEX_FIX_START) ? 0 : Math.min(1, (clamped - FLEX_FIX_START) / (150 - FLEX_FIX_START));
-      const rx = clamped;                          // Flexion (X)
-      const ry = FLEX_FIX_ER_MAX * t;              // External Rotation (Y)
-      const rz = FLEX_FIX_SCAP_MAX * t;            // Scaption drift (Z)
-
-      const e = new THREE.Euler(THREE.MathUtils.degToRad(rx),
-                                THREE.MathUtils.degToRad(ry),
-                                THREE.MathUtils.degToRad(rz),
-                                "XYZ");
-      const qDelta = new THREE.Quaternion().setFromEuler(e);
-      bone.quaternion.copy(qBind).multiply(qDelta);
-      return;
-    }
-
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
     const e = new THREE.Euler(
       axis==='x'?rad:0,
@@ -597,8 +572,9 @@ function applyPairAngle(key,cfg,deg){
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
-}
-/* ===== Motions (paired configs; UI splits) ===== */
+  }
+
+  /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
