@@ -12,6 +12,40 @@
     "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
+
+// === Shoulder Flex Manual Tuner: robust toggle on action change ===
+actionSel.addEventListener('change', ()=>{
+  const val = actionSel.value || "";
+  let key = null;
+  if (val.startsWith('sep:')){
+    // format: sep:key:sign:max (observed in file)
+    const parts = val.split(':');
+    key = parts[1] || null;
+  }
+  if (key==='sh_fe_l' || key==='sh_fe_r'){
+    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
+    SH_FLEX_MAN.show();
+  } else {
+    SH_FLEX_MAN.hide();
+  }
+});
+
+// Initialize visibility on load
+document.addEventListener('DOMContentLoaded', ()=>{
+  const val = actionSel?.value || "";
+  let key = null;
+  if (val.startsWith('sep:')){
+    const parts = val.split(':');
+    key = parts[1] || null;
+  }
+  if (key==='sh_fe_l' || key==='sh_fe_r'){
+    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
+    SH_FLEX_MAN.show();
+  } else {
+    SH_FLEX_MAN.hide();
+  }
+});
+
 </script>
 
 <style>
