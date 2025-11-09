@@ -75,7 +75,27 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
 
-      <details>
+      
+      <!-- Shoulder Flex Finish Tuner (auto-shows for Shoulder Flex L/R) -->
+      <div id="shFlexTuner" class="rom-item" style="display:none;margin-top:6px">
+        <summary>Shoulder Flexion Tuner</summary>
+        <div class="inner">
+          <div class="rom-row">
+            <div class="rom-head">Side</div>
+            <div style="flex:1;display:flex;gap:6px">
+              <button type="button" id="shFlexSideL" class="mini">L</button>
+              <button type="button" id="shFlexSideR" class="mini">R</button>
+            </div>
+          </div>
+          <div class="rom-row">
+            <div class="rom-head">UpperArm Rotate Z (°)</div>
+            <div style="flex:1">
+              <input id="shFlexZ" type="range" min="-45" max="45" step="1" value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+    <details>
         <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
@@ -344,8 +364,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "./Athletic_Grace_1006002620_texture.glb";
-  }
+    return "assets/Roma_ROMetrics.glb?v=1";
+}
   let MODEL_URL = pickModelUrl();
 
   function groundSnap(){
@@ -1089,6 +1109,104 @@ optgroup{color:#9fb0c9;font-style:normal}
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
-  </script>
+  
+// ===== Shoulder Flex Finish Tuner (non-invasive) =====
+(function(){
+  const actionSel = document.getElementById('actionSel');
+  const actionDeg = document.getElementById('actionDeg');
+  const zeroAll   = document.getElementById('zeroAll');
+  const box = document.getElementById('shFlexTuner');
+  const btnL = document.getElementById('shFlexSideL');
+  const btnR = document.getElementById('shFlexSideR');
+  const zInp = document.getElementById('shFlexZ');
+
+  if (!actionSel || !actionDeg || !box || !btnL || !btnR || !zInp) return;
+
+  const state = { side: 'l', zL: 0, zR: 0 };
+
+  function showTuner(){ box.style.display = 'block'; }
+  function hideTuner(){ box.style.display = 'none'; }
+  function isFlexKey(key){ return key==='sh_fe_l' || key==='sh_fe_r'; }
+  function sideFromKey(key){ return key.endsWith('_l') ? 'l' : 'r'; }
+
+  function getUpperarm(side){
+    const nameU = side==='l' ? 'upperarm_L' : 'upperarm_R';
+    const nameL = side==='l' ? 'upperarm_l' : 'upperarm_r';
+    if (typeof getExactBoneByName === 'function'){
+      const b1 = getExactBoneByName(nameL) || getExactBoneByName(nameU);
+      if (b1) return b1;
+    }
+    return (window.model && (model.getObjectByName(nameL) || model.getObjectByName(nameU))) || null;
+  }
+  function applyUpperarmZ(side, degZ){
+    const hum = getUpperarm(side);
+    if (!hum) return;
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,THREE.MathUtils.degToRad(degZ),'XYZ'));
+    hum.quaternion.multiply(q);
+  }
+
+  function selectSide(s){
+    state.side = s;
+    btnL.classList.toggle('on', s==='l');
+    btnR.classList.toggle('on', s==='r');
+    zInp.value = String(s==='l' ? state.zL : state.zR);
+  }
+
+  btnL.addEventListener('click', (e)=>{ e.preventDefault(); selectSide('l'); reapplyZ(); });
+  btnR.addEventListener('click', (e)=>{ e.preventDefault(); selectSide('r'); reapplyZ(); });
+  zInp.addEventListener('input', ()=>{
+    const v = parseFloat(zInp.value)||0;
+    if (state.side==='l') state.zL = v; else state.zR = v;
+    reapplyZ();
+  });
+
+  function parseKeyFromActionSel(){
+    const v = actionSel.value || "";
+    if (!v.startsWith('sep:')) return null;
+    const parts = v.split(':');
+    return parts[1] || null;
+  }
+
+  function reapplyZ(){
+    // run AFTER your core flex logic; we only layer Z on top
+    const key = (window.CURRENT_ACTION && window.CURRENT_ACTION.key) || parseKeyFromActionSel();
+    if (!key || !isFlexKey(key)) return;
+    applyUpperarmZ(state.side, state.side==='l' ? state.zL : state.zR);
+  }
+
+  // When action changes → toggle the tuner
+  actionSel.addEventListener('change', ()=>{
+    const key = parseKeyFromActionSel();
+    if (key && isFlexKey(key)){
+      selectSide(sideFromKey(key));
+      showTuner();
+    } else {
+      hideTuner();
+    }
+    // let your original handler run first; we only toggle visibility here
+    setTimeout(reapplyZ, 0);
+  });
+
+  // When angle slider moves → layer Z on top if flex is active
+  actionDeg.addEventListener('input', ()=>{
+    // allow your original handler to run first
+    setTimeout(reapplyZ, 0);
+  });
+
+  // Hide tuner on Zero All (without overriding your existing handler)
+  zeroAll && zeroAll.addEventListener('click', ()=> hideTuner());
+
+  // On load: if Shoulder Flex already selected, show tuner
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const key = parseKeyFromActionSel();
+    if (key && isFlexKey(key)){
+      selectSide(sideFromKey(key));
+      showTuner();
+      setTimeout(reapplyZ, 0);
+    }
+  });
+})();
+
+</script>
 </body>
 </html>
