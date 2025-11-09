@@ -560,7 +560,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     b.qBind = b.bone.quaternion.clone();
   }
 
-  function applyPairAngle(key,cfg,deg){
+  function airAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
@@ -810,6 +810,25 @@ if (key==='sh_fe_l' || key==='sh_fe_r'){
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    // --- Seamless flex→abd coupling (do not move) ---
+if (CURRENT_ACTION && (CURRENT_ACTION.key === 'sh_fe_l' || CURRENT_ACTION.key === 'sh_fe_r')) {
+  // Hard cap flexion to 165° (end motion)
+  if (val > 165) { val = 165; actionDeg.value = "165"; }
+
+  const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+  const flex = (CURRENT_ACTION.sign > 0) ? (parseFloat(actionDeg.value) || 0) : 0; // only during FLEX
+
+  // After 100° → +10°, after 120° → +20°, after 140° → +30°
+  let abd = 0;
+  if (flex > 140) abd = 30;
+  else if (flex > 120) abd = 20;
+  else if (flex > 100) abd = 10;
+
+  // Right side uses flipped sign for abduction in your rig
+  const abdSigned = (side === 'l') ? abd : -abd;
+  setPair(`sh_aa_${side}`, abdSigned);
+}
+
 
 // === NEW: replay saved shoulder-flexion path on slider scrub
 if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r')) {
