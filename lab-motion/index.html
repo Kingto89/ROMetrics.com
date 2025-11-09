@@ -1169,8 +1169,13 @@ function ensureFlexionTuner(){
     const key = (FLEX_SIDE==='l') ? 'sh_fe_l' : 'sh_fe_r';
     const cfg = cfgFromKey(key);
     if (!cfg) return;
-    // 1) apply flexion angle to shoulder
-    setPair(key, +deg);
+    // 1) apply flexion angle to shoulder (realtime, force correct axis)
+const bind = resolveBind(key, cfg);
+if (bind){
+  bind.axis = 'x';              // if it still abducts, change to 'z'
+  bind.qBind = bind.bone.quaternion.clone(); // refresh baseline each tick
+}
+setPair(key, +deg);
 
     // 2) apply sequential upperarm offset (only the single step being previewed)
     const ua = getUpperarm(FLEX_SIDE);
