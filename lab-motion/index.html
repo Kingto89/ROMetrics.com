@@ -1090,5 +1090,136 @@ optgroup{color:#9fb0c9;font-style:normal}
     requestAnimationFrame(animate);
   })();
   </script>
+
+<!-- === ROMetrics: GLB Animation Bridge (non-destructive add-on) === -->
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+
+// Guard: don't double-install
+if (!window.ROMX) {
+  const urlParam = new URL(location.href).searchParams.get("model");
+  const MODEL_URL = urlParam && urlParam.trim()
+      ? (urlParam.match(/^https?:/i) ? urlParam : new URL(urlParam, location.href).href)
+      : "./assets/models/ROMetrics_MB-Lab_ROM_noScap.glb";
+
+  // Reuse existing scene/camera/renderer if available; else create headless anchors
+  const three = window.THREE || THREE;
+  const scene  = (window.scene && window.scene.isScene) ? window.scene : (new three.Scene());
+  const renderer = window.renderer || null; // optional
+  const camera = window.camera || null; // optional
+
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
+  const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); if(renderer){ ktx2.detectSupport(renderer); } loader.setKTX2Loader(ktx2);
+
+  const state = { model:null, mixer:null, actions:{}, active:null, clips:[] };
+
+  function groundSnap(obj){
+    try{
+      const box = new three.Box3().setFromObject(obj);
+      if (isFinite(box.min.y)) obj.position.y -= box.min.y;
+    }catch(e){}
+  }
+
+  function setActive(name){
+    if (!state.mixer || !state.actions[name]) return false;
+    Object.values(state.actions).forEach(a=>{ a.enabled=false; a.weight=0; a.stop(); });
+    const act = state.actions[name];
+    act.enabled = true; act.weight = 1.0; act.clampWhenFinished = true; act.setLoop(three.LoopOnce,1); act.paused = true; act.play();
+    state.active = act;
+    // Sync known UI buttons if the page uses these ids:
+    const map = {
+      "Sh_Flex_L_0to150":"btnFlexL","Sh_Flex_R_0to150":"btnFlexR",
+      "Sh_Abd_L_0to150":"btnAbdL","Sh_Abd_R_0to150":"btnAbdR",
+      "Sh_IrEr_L_-70to90_at90Abd":"btnIrerL","Sh_IrEr_R_-70to90_at90Abd":"btnIrerR"
+    };
+    const btnId = map[name];
+    if (btnId && document.getElementById(btnId)){
+      ["btnFlexL","btnFlexR","btnAbdL","btnAbdR","btnIrerL","btnIrerR"].forEach(id=>{
+        const el = document.getElementById(id); if (el) el.classList.remove("on");
+      });
+      document.getElementById(btnId).classList.add("on");
+    }
+    return true;
+  }
+
+  function scrub01(t01){
+    if (!state.active || !state.mixer) return;
+    const d = state.active.getClip().duration || 1.0;
+    state.mixer.setTime(Math.max(0, Math.min(1, t01)) * d);
+  }
+
+  // Try to attach to an existing render loop if one exists
+  (function attachMixerTick(){
+    const tick = ()=>{
+      if (state.mixer && state.active && !state.active.paused){
+        // if someone's playing it, let it run; scrub01 will override when slider moves
+        state.mixer.update(1/60);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  })();
+
+  loader.load(MODEL_URL, (gltf)=>{
+    state.model = gltf.scene;
+    if (scene && state.model){ scene.add(state.model); groundSnap(state.model); }
+    state.mixer = new three.AnimationMixer(state.model);
+    state.actions = {};
+    state.clips = (gltf.animations||[]).map(c=>c.name);
+    (gltf.animations||[]).forEach(clip=>{ state.actions[clip.name] = state.mixer.clipAction(clip); });
+
+    // Expose a small bridge API
+    window.ROMX = {
+      url: MODEL_URL,
+      scene, mixer: state.mixer,
+      clips: state.clips.slice(),
+      setActive, scrub: scrub01
+    };
+
+    // Auto-wire known button ids if they exist on this page:
+    const wire = (id, name)=>{ const el = document.getElementById(id); if(el) el.onclick = ()=> setActive(name); };
+    wire("btnFlexL","Sh_Flex_L_0to150");
+    wire("btnFlexR","Sh_Flex_R_0to150");
+    wire("btnAbdL","Sh_Abd_L_0to150");
+    wire("btnAbdR","Sh_Abd_R_0to150");
+    wire("btnIrerL","Sh_IrEr_L_-70to90_at90Abd");
+    wire("btnIrerR","Sh_IrEr_R_-70to90_at90Abd");
+
+    // Hook generic slider ids if present:
+    const s = document.getElementById("scrub") || document.getElementById("romSlider") || document.querySelector('input[type="range"]');
+    if (s){
+      s.addEventListener("input", ()=>{
+        const v = parseFloat(s.value);
+        // If slider is 0..150 degrees, normalize
+        if (s.max && Number(s.max) > 1) {
+          scrub01(v / Number(s.max));
+        } else {
+          scrub01(v);
+        }
+      });
+    }
+
+    // Choose a default action if available
+    const prefer = ["Sh_Flex_L_0to150","Sh_Flex_R_0to150","Sh_Abd_L_0to150","Sh_Abd_R_0to150"];
+    for (const p of prefer){
+      if (state.clips.includes(p)){ setActive(p); break; }
+    }
+    console.log("[ROMX] Ready. Clips:", state.clips);
+  },
+  undefined,
+  (err)=>{
+    console.warn("[ROMX] glb load error", err);
+    window.ROMX = { url: MODEL_URL, error: String(err) };
+  });
+}
+</script>
+<!-- === /ROMetrics GLB Bridge === -->
+
 </body>
 </html>
