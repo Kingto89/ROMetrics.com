@@ -574,6 +574,48 @@ const SH_FLEX_RHYTHM = {
     if(!hum || !scap || !clav) return;
 
     const d2r = THREE.MathUtils.degToRad;
+    /* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
+const SH_FLEX_RHYTHM = {
+  enabled: true,
+  scapRatio: 0.33,   // ~1/3 rule
+  clavRatio: 0.18,   // small clav posterior rot assist
+  // Fallbacks (used only if SH_FLEX_Z isn't present)
+  splitDeg: 100,
+  zFinishL: 25,
+  zFinishR: 25,
+
+  apply(side,deg){
+    if (!model) return;
+    if (deg <= 0) return; // FLEX only
+
+    const hum  = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
+    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
+    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
+    if(!hum || !scap || !clav) return;
+
+    const d2r = THREE.MathUtils.degToRad;
+
+    // --- your existing scap/clav rhythm math goes here ---
+    // (keep whatever you already do for scap/clav based on deg, scapRatio, clavRatio)
+    // e.g., scap.quaternion.multiply(...), clav.quaternion.multiply(...)
+
+    // === Add UpperArm Z "finish" beyond splitDeg (your discovery) ===
+    // Prefer values from SH_FLEX_Z if present; otherwise use fallbacks above.
+    const split   = (typeof SH_FLEX_Z?.splitDeg === 'number') ? SH_FLEX_Z.splitDeg : this.splitDeg;
+    const zAtFull = (typeof SH_FLEX_Z?.zL === 'number' && typeof SH_FLEX_Z?.zR === 'number')
+      ? (side === "L" ? SH_FLEX_Z.zL : SH_FLEX_Z.zR)
+      : (side === "L" ? this.zFinishL : this.zFinishR);
+
+    const over = Math.max(0, deg - split);
+    if (over > 0){
+      const fullFlex = 170;                 // adjust if your cap differs
+      const span = Math.max(1, fullFlex - split);
+      const zNowDeg = zAtFull * (over / span);     // 0→zAtFull as you go from split→full
+      const qZ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, d2r(zNowDeg), "XYZ"));
+      hum.quaternion.multiply(qZ);                 // rotate UpperArm around local Z
+    }
+  }
+};
     // --- main GH flex is still controlled by applyPairAngle ---
     // tuner only adds coupled contributions:
 
