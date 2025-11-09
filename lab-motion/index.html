@@ -1089,242 +1089,85 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     }
 
   // === Apply UpperArm manual XYZ after flex (relative to bind OR current) ===
-  function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
-    if (!skeleton || !model) return;
+  
+function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
+  try{
+    if (!window.skeleton || !window.model) return;
     const name = (side==='L') ? 'upperarm_L' : 'upperarm_R';
-    const bone = getExactBoneByName(name) || findBoneBy({ side: side.toLowerCase(), hints:[/upperarm|humerus|shoulder/i], key: side==='L'?'sh_fe_l':'sh_fe_r' });
-    if (!bone) { log(`No upperarm bone for ${side}`); return; }
-
-  // === Shoulder Flex Manual Tuner wiring ===
-  shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); };
-  shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); };
-
-  let _syncing = false;
-  function applyManualFlexAndXYZ(){
-    if (!CURRENT_ACTION) return;
-    const side = SH_FLEX_MAN.side;
-    const vals = SH_FLEX_MAN.vals[side];
-    // 1) Drive main flex pair for that side
-    const key = (side==='L') ? 'sh_fe_l' : 'sh_fe_r';
-    setPair(key, vals.flex);
-    // keep the UI slider in sync if shoulder flex is the active action
-    if (!_syncing && (CURRENT_ACTION.key===key)){
-      _syncing = true
-
-      actionDeg.value = String(vals.flex);
-      _syncing = false;
-    }
-    // 2) Apply manual upperarm XYZ on top
-    applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
-  }
-
-  [shFlexVal, shUX, shUY, shUZ].forEach(el=>{
-    el.addEventListener('input', ()=>{ SH_FLEX_MAN.readFromUI(); applyManualFlexAndXYZ(); });
-  });
-
-  shFlexReset.onclick = (e)=>{
-    e.preventDefault();
-    const s = SH_FLEX_MAN.side;
-    SH_FLEX_MAN.vals[s] = { flex:0, x:0, y:0, z:25 };
-    SH_FLEX_MAN.syncToUI();
-    applyManualFlexAndXYZ();
-  };
-  shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); };
-
-    // multiply a post-flex delta around local axes
+    const bone =
+      (typeof getExactBoneByName==='function' && getExactBoneByName(name)) ||
+      (typeof findBoneBy==='function' && findBoneBy({ side: side.toLowerCase(), hints:[/upperarm|humerus|shoulder/i], key: side==='L'?'sh_fe_l':'sh_fe_r' })) ||
+      (window.model && window.model.getObjectByName(name));
+    if (!bone) { console.warn(`[ShoulderTuner] No upperarm bone for ${side}`); return; }
     const ex = THREE.MathUtils.degToRad(xDeg||0);
     const ey = THREE.MathUtils.degToRad(yDeg||0);
     const ez = THREE.MathUtils.degToRad(zDeg||0);
     const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
     bone.quaternion.multiply(qDelta);
+  }catch(err){
+    console.error('[ShoulderTuner] applyUpperarmXYZ error', err);
   }
+}
 
-    if (!wrist){ log(`No wrist bone for ${side}`); return; }
-    const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
-    const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
-    const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
-    const rad = THREE.MathUtils.degToRad(deg);
-    const e = new THREE.Euler(0,0,0,'XYZ');
-    if (axis==='x') e.set(rad,0,0,'XYZ');
-    if (axis==='y') e.set(0,rad,0,'XYZ');
-    if (axis==='z') e.set(0,0,rad,'XYZ');
-    wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
+// === Shoulder Flex Manual Tuner wiring ===
+shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); };
+shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); };
+
+let _syncing = false;
+function applyManualFlexAndXYZ(){
+  if (!window.CURRENT_ACTION) return;
+  const side = SH_FLEX_MAN.side;
+  const vals = SH_FLEX_MAN.vals[side];
+  // 1) Drive main flex pair for that side
+  const key = (side==='L') ? 'sh_fe_l' : 'sh_fe_r';
+  if (typeof setPair==='function') setPair(key, vals.flex);
+  // keep the UI slider in sync if shoulder flex is the active action
+  if (!_syncing && window.CURRENT_ACTION && (window.CURRENT_ACTION.key===key)){
+    _syncing = true;
+    const actionDeg = document.getElementById('actionDeg');
+    if (actionDeg) actionDeg.value = String(vals.flex);
+    _syncing = false;
   }
+  // 2) Apply manual upperarm XYZ on top
+  applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
+}
 
-  /* ===== Hidden Anatomic Tuner (dev-only) ===== */
-  let tunerEl = null, tunerVisible = false;
-  function ensureAnatomicTuner(){
-    if (tunerEl) return tunerEl;
-    tunerEl = document.createElement('div');
-    Object.assign(tunerEl.style,{position:'fixed', right:'16px', top:'16px', zIndex:40, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
-    tunerEl.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <strong style="font-size:13px;">Anatomic Position Tuner (dev)</strong>
-        <button id="anatX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
-      </div>
-      <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="addL" type="number" step="1">
-        <input id="addR" type="number" step="1" disabled>
-      </div>
-      <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="psL" type="number" step="1">
-        <input id="psR" type="number" step="1" disabled>
-      </div>
-      <label style="display:block;opacity:.8; margin-top:8px;">Wrist PS (°)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="wpsL" type="number" step="1">
-        <input id="wpsR" type="number" step="1" disabled>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="anatApply" class="mini" style="flex:1">Apply</button>
-        <button id="anatZero"  class="mini">Zero</button>
-      </div>
-    `;
-    document.body.appendChild(tunerEl);
-    const addL=tunerEl.querySelector('#addL'), addR=tunerEl.querySelector('#addR');
-    const psL =tunerEl.querySelector('#psL'),  psR =tunerEl.querySelector('#psR');
-    const wpsL=tunerEl.querySelector('#wpsL'), wpsR=tunerEl.querySelector('#wpsR');
-    function preload(){ addL.value=String(ANAT.addL); psL.value=String(ANAT.psL); wpsL.value=String(ANAT.wpsL); addR.value=String(-ANAT.addL); psR.value=String(-ANAT.psL); wpsR.value=String(-ANAT.wpsL); }
-    function syncRight(){ addR.value=String(-(+addL.value||0)); psR.value=String(-( +psL.value||0)); wpsR.value=String(-( +wpsL.value||0)); }
-    preload(); addL.addEventListener('input', syncRight); psL.addEventListener('input', syncRight); wpsL.addEventListener('input', syncRight);
-    tunerEl.querySelector('#anatApply').onclick = ()=>{ ANAT.addL=+addL.value||0; ANAT.psL=+psL.value||0; ANAT.wpsL=+wpsL.value||0; applyAnatomicBaseline(); };
-    tunerEl.querySelector('#anatZero').onclick  = ()=>{ addL.value = psL.value = wpsL.value = '0'; syncRight(); ANAT.addL = ANAT.psL = ANAT.wpsL = 0; applyAnatomicBaseline(); };
-    tunerEl.querySelector('#anatX').onclick = ()=>{ tunerEl.style.display='none'; tunerVisible=false; };
-    return tunerEl;
+[shFlexVal, shUX, shUY, shUZ].forEach(el=>{
+  el.addEventListener('input', ()=>{ SH_FLEX_MAN.readFromUI(); applyManualFlexAndXYZ(); });
+});
+
+shFlexReset.onclick = (e)=>{
+  e.preventDefault();
+  const s = SH_FLEX_MAN.side;
+  SH_FLEX_MAN.vals[s] = { flex:0, x:0, y:0, z:25 };
+  SH_FLEX_MAN.syncToUI();
+  applyManualFlexAndXYZ();
+};
+shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); };
+
+// === Robust toggle + init ===
+(function(){
+  const actionSel = document.getElementById('actionSel');
+  if (!actionSel) return;
+  function toggle(){
+    const val = actionSel.value || "";
+    let key = null;
+    if (val.startsWith('sep:')){
+      const parts = val.split(':');
+      key = parts[1] || null;
+    }
+    if (key==='sh_fe_l' || key==='sh_fe_r'){
+      SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
+      SH_FLEX_MAN.show();
+    } else {
+      SH_FLEX_MAN.hide();
+    }
   }
-  function toggleTuner(show){ ensureAnatomicTuner(); tunerVisible = (show===undefined) ? !tunerVisible : !!show; tunerEl.style.display = tunerVisible ? 'block' : 'none'; }
-
-  /* ===== Collision Tuner (dev-only) ===== */
-  let colTunerEl = null, colTunerVisible = false;
-  function ensureCollisionTuner(){
-    if (colTunerEl) return colTunerEl;
-    colTunerEl = document.createElement('div');
-    Object.assign(colTunerEl.style,{position:'fixed', right:'16px', top:'220px', zIndex:41, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'340px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
-    colTunerEl.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <strong style="font-size:13px;">Collision Tuner (dev)</strong>
-        <span class="badge">Safe ROM Line</span>
-        <button id="colX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
-      </div>
-      <div class="rom-row"><div class="rom-head">Trunk Lat — Left max (°)</div><div style="flex:1"><input id="colTrunkLatL" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Trunk Lat — Right max (°)</div><div style="flex:1"><input id="colTrunkLatR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
-      <hr style="border-color:#1c2941;opacity:.3;">
-      <div class="rom-row"><div class="rom-head">Cervical Rot — Left max (°)</div><div style="flex:1"><input id="cervL" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
-            <div class="rom-row">
-        <div class="rom-head">Shoulder Flex — L/R max (°)</div>
-        <div style="flex:1;display:flex;gap:6px">
-          <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
-          <input id="shFlexR" type="number" step="1" min="0" max="180" style="width:100%">
-        </div>
-      </div>
-      <div class="rom-row">
-        <div class="rom-head">Shoulder Abd — L/R max (°)</div>
-        <div style="flex:1;display:flex;gap:6px">
-          <input id="shAbdL" type="number" step="1" min="0" max="180" style="width:100%">
-          <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
-        </div>
-      </div>
-      <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
-      <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
-      <div style="opacity:.7;margin-top:6px;">Tip: with the student checkbox <em>Anticollision</em> ON, these caps are enforced. Shift+Click the checkbox to reopen this tuner.</div>
-    `;
-    document.body.appendChild(colTunerEl);
-    const $ = (id)=>colTunerEl.querySelector(id);
-    const preload = ()=>{
-      $('#colTrunkLatL').value = String(COLLIM.trunkLatLMax);
-      $('#colTrunkLatR').value = String(COLLIM.trunkLatRMax);
-      $('#cervL').value = String(COLLIM.cervRotLMax);
-      $('#cervR').value = String(COLLIM.cervRotRMax);
-      $('#shExtL').value = String(COLLIM.shExtLMax);
-      $('#shExtR').value = String(COLLIM.shExtRMax);
-      $('#shAddL').value = String(COLLIM.shAddLMax);
-      $('#shAddR').value = String(COLLIM.shAddRMax);
-      $('#elExtL').value = String(COLLIM.elExtLMax);
-      $('#elExtR').value = String(COLLIM.elExtRMax);
-      $('#wrSupL').value = String(COLLIM.wrSupLMax);
-      $('#wrSupR').value = String(COLLIM.wrSupRMax);
-      $('#shFlexL').value = String(COLLIM.shFlexLMax);
-      $('#shFlexR').value = String(COLLIM.shFlexRMax);
-      $('#shAbdL').value  = String(COLLIM.shAbdLMax);
-      $('#shAbdR').value  = String(COLLIM.shAbdRMax);
-    }; preload();
-
-    colTunerEl.querySelector('#colApply').onclick = ()=>{
-      const vals = {
-        trunkLatLMax:+$('#colTrunkLatL').value||0,
-        trunkLatRMax:+$('#colTrunkLatR').value||0,
-        cervRotLMax:+$('#cervL').value||0,
-        cervRotRMax:+$('#cervR').value||0,
-        shExtLMax:+$('#shExtL').value||0,
-        shExtRMax:+$('#shExtR').value||0,
-        shAddLMax:+$('#shAddL').value||0,
-        shAddRMax:+$('#shAddR').value||0,
-        shFlexLMax:+$('#shFlexL').value||0,
-        shFlexRMax:+$('#shFlexR').value||0,
-        shAbdLMax:+$('#shAbdL').value||0,
-        shAbdRMax:+$('#shAbdR').value||0,
-        elExtLMax:+$('#elExtL').value||0,
-        elExtRMax:+$('#elExtR').value||0,
-        wrSupLMax:+$('#wrSupL').value||0,
-        wrSupRMax:+$('#wrSupR').value||0,
-      };
-      Object.assign(COLLIM, vals);
-      // live preview if current action is one of the capped ones
-      if (CURRENT_ACTION){
-        const cap = capFor(CURRENT_ACTION);
-        if (typeof cap==='number'){
-          const typed = cap; // just use cap as preview value
-          const val = Math.max(0, Math.min(CURRENT_ACTION.max, typed));
-          actionDeg.value = String(val);
-          const signed = CURRENT_ACTION.sign * val;
-          applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-          pairLabel.style.color = '#fca5a5'; setTimeout(()=> pairLabel.style.color = '', 300);
-          log(`Preview: ${CURRENT_ACTION.label} → ${val}° (cap)`);
-        }
-      }
-    };
-    colTunerEl.querySelector('#colSave').onclick = ()=>{ COLLIM.save(); log('Collision limits saved.'); };
-    colTunerEl.querySelector('#colReset').onclick = ()=>{
-      Object.assign(COLLIM, {
-        trunkLatLMax:30, trunkLatRMax:30,
-        cervRotLMax:80, cervRotRMax:80,
-        shExtLMax:60, shExtRMax:60,
-        shAddLMax:30, shAddRMax:30,
-        shFlexLMax:170, shFlexRMax:170,
-        shAbdLMax:170,  shAbdRMax:170,
-        elExtLMax:10, elExtRMax:10,
-        wrSupLMax:95, wrSupRMax:95,
-      });
-      COLLIM.save(); preload(); log('Collision limits reset to defaults.');
-    };
-    colTunerEl.querySelector('#colX').onclick = ()=>{ toggleCollisionTuner(false); };
-    return colTunerEl;
-  }
-  function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
-
-  /* ===== ROM modal wiring ===== */
-  romBtn.onclick = ()=>{ romModal.classList.add('on'); };
-  romClose.onclick = ()=>{ romModal.classList.remove('on'); };
-  window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
-
-  /* ===== Resize & render ===== */
-  addEventListener("resize", () => {
-    camera.aspect = innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-  });
-  (function animate(){
-    controls.update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  })();
-  </script>
+  actionSel.addEventListener('change', toggle);
+  document.addEventListener('DOMContentLoaded', toggle);
+  // also run once after a brief delay to catch late-populated menus
+  setTimeout(toggle, 300);
+})();
+</script>
 </body>
 </html>
