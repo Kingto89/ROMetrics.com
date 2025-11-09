@@ -1170,8 +1170,7 @@ function ensureFlexionTuner(){
     const cfg = cfgFromKey(key);
     if (!cfg) return;
     // 1) apply flexion angle to shoulder
-    freezeBindBaseFor(key, cfg);
-    applyPairAngle(key, cfg, +deg);
+    setPair(key, +deg);
 
     // 2) apply sequential upperarm offset (only the single step being previewed)
     const ua = getUpperarm(FLEX_SIDE);
