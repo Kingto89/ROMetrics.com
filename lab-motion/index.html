@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>3D Motion Lab — Motion Lab</title>
+<title>3D Motion Lab — Joint Trainer</title>
 
 <script type="importmap">
 {
@@ -12,65 +12,6 @@
     "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
-
-  function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
-    if (!model) return;
-    const humName = side==='L' ? 'upperarm_L' : 'upperarm_R';
-    const hum = model.getObjectByName(humName); if (!hum) return;
-    const ex = THREE.MathUtils.degToRad(xDeg||0);
-    const ey = THREE.MathUtils.degToRad(yDeg||0);
-    const ez = THREE.MathUtils.degToRad(zDeg||0);
-    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    hum.quaternion.multiply(q);
-  }
-
-  function applyManualFlexAndXYZ(){
-    if (!CURRENT_ACTION || !model) return;
-    SH_FLEX_MAN.readFromUI();
-    const side = SH_FLEX_MAN.side;
-    const vals = SH_FLEX_MAN.vals[side];
-    const key = side==='L' ? 'sh_fe_l' : 'sh_fe_r';
-    // drive main pair if your code exposes setPair; if not, mirror slider & rely on existing path
-    if (typeof setPair==='function'){ setPair(key, vals.flex); }
-    if (actionDeg){ actionDeg.disabled = false; actionDeg.value = String(vals.flex); }
-    applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
-  }
-
-  shFlexSideL && (shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); applyManualFlexAndXYZ(); });
-  shFlexSideR && (shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); applyManualFlexAndXYZ(); });
-  [shFlexVal, shUX, shUY, shUZ].forEach(el=> el && el.addEventListener('input', applyManualFlexAndXYZ));
-  shFlexReset && (shFlexReset.onclick = (e)=>{ e.preventDefault(); const s=SH_FLEX_MAN.side; SH_FLEX_MAN.vals[s]={flex:0,x:0,y:0,z:25}; SH_FLEX_MAN.syncToUI(); applyManualFlexAndXYZ(); });
-  shFlexHide && (shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); });
-
-  // Toggle tuner when Shoulder Flex selected
-  (function(){
-    const sel = document.getElementById('actionSel');
-    if (!sel) return;
-    function toggle(){
-      const v = sel.value || "";
-      let key = null;
-      if (v.startsWith('sep:')) key = v.split(':')[1];
-      if (key==='sh_fe_l' || key==='sh_fe_r'){
-        SH_FLEX_MAN.setSide(key.endsWith('_l')?'L':'R');
-        SH_FLEX_MAN.show();
-      } else {
-        SH_FLEX_MAN.hide();
-      }
-    }
-    sel.addEventListener('change', toggle);
-    document.addEventListener('DOMContentLoaded', toggle);
-    setTimeout(toggle, 250);
-  })();
-
-  // Hide tuner on zero
-  if (typeof zeroAll!=='undefined' && zeroAll){
-    const _oldZero = zeroAll.onclick;
-    zeroAll.onclick = (e)=>{
-      if (_oldZero) _oldZero.call(zeroAll, e);
-      SH_FLEX_MAN.hide();
-    };
-  }
-
 </script>
 
 <style>
@@ -134,39 +75,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
 
-      
-      <!-- Shoulder Flexion — Manual Tuner (auto shows on Shoulder Flex L/R) -->
-      <details id="shFlexManual" style="display:none;margin-top:6px;">
-        <summary>Shoulder Flexion — Manual Finish</summary>
-        <label>Side</label>
-        <div class="seg" id="shFlexSideSeg">
-          <button id="shFlexSideL" class="on">Left</button>
-          <button id="shFlexSideR">Right</button>
-        </div>
-
-        <label style="margin-top:6px">Flexion (°)</label>
-        <input type="range" id="shFlexVal" min="0" max="180" step="1" value="0">
-
-        <div class="row" style="margin-top:6px">
-          <div style="flex:1">
-            <label>UpperArm — Rotate X (°)</label>
-            <input type="range" id="shUX" min="-60" max="60" step="1" value="0">
-          </div>
-          <div style="flex:1">
-            <label>UpperArm — Rotate Y (°)</label>
-            <input type="range" id="shUY" min="-60" max="60" step="1" value="0">
-          </div>
-        </div>
-        <label>UpperArm — Rotate Z (°)</label>
-        <input type="range" id="shUZ" min="-60" max="60" step="1" value="25">
-
-        <div class="row" style="margin-top:6px">
-          <button id="shFlexReset" class="mini">Reset</button>
-          <button id="shFlexHide" class="mini">Hide</button>
-        </div>
-        <small>Tip: Pure GH flex to ~100°, then finish with UpperArm Z to avoid clavicle collision.</small>
-      </details>
-<details>
+      <details>
         <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
@@ -267,39 +176,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
   const zeroAll = document.getElementById("zeroAll");
-
-  // === Shoulder Flexion Manual Tuner (UI handles) ===
-  const shFlexManual = document.getElementById('shFlexManual');
-  const shFlexSideL = document.getElementById('shFlexSideL');
-  const shFlexSideR = document.getElementById('shFlexSideR');
-  const shFlexVal = document.getElementById('shFlexVal');
-  const shUX = document.getElementById('shUX');
-  const shUY = document.getElementById('shUY');
-  const shUZ = document.getElementById('shUZ');
-  const shFlexReset = document.getElementById('shFlexReset');
-  const shFlexHide = document.getElementById('shFlexHide');
-
-  const SH_FLEX_MAN = {
-    side: 'L',
-    vals: { L:{flex:0,x:0,y:0,z:25}, R:{flex:0,x:0,y:0,z:25} },
-    show(){ shFlexManual.style.display = 'block'; shFlexManual.open = true; },
-    hide(){ shFlexManual.style.display = 'none'; shFlexManual.open = false; },
-    setSide(s){ this.side = s; shFlexSideL.classList.toggle('on', s==='L'); shFlexSideR.classList.toggle('on', s==='R'); this.syncToUI(); },
-    syncToUI(){
-      const v = this.vals[this.side];
-      shFlexVal.value = String(v.flex);
-      shUX.value = String(v.x);
-      shUY.value = String(v.y);
-      shUZ.value = String(v.z);
-    },
-    readFromUI(){
-      const v = this.vals[this.side];
-      v.flex = parseInt(shFlexVal.value||'0',10);
-      v.x = parseInt(shUX.value||'0',10);
-      v.y = parseInt(shUY.value||'0',10);
-      v.z = parseInt(shUZ.value||'0',10);
-    }
-  };
 
   const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
@@ -468,7 +344,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "assets/Roma_ROMetrics.glb?v=1";
+    return "./Athletic_Grace_1006002620_texture.glb";
   }
   let MODEL_URL = pickModelUrl();
 
@@ -683,73 +559,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!b) return;
     b.qBind = b.bone.quaternion.clone();
   }
-/* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
-const SH_FLEX_RHYTHM = {
-  enabled: true,
-  scapRatio: 0.33,   // ~1/3 rule
-  clavRatio: 0.18,   // small clav posterior rot assist
-  apply(side,deg){
-    if (!model) return;
-    if (deg <= 0) return; // FLEX only (A choice)
-
-    const hum = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
-    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
-    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
-    if(!hum || !scap || !clav) return;
-
-    const d2r = THREE.MathUtils.degToRad;
-    /* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
-const SH_FLEX_RHYTHM = {
-  enabled: true,
-  scapRatio: 0.33,   // ~1/3 rule
-  clavRatio: 0.18,   // small clav posterior rot assist
-  // Fallbacks (used only if SH_FLEX_Z isn't present)
-  splitDeg: 100,
-  zFinishL: 25,
-  zFinishR: 25,
-
-  apply(side,deg){
-    if (!model) return;
-    if (deg <= 0) return; // FLEX only
-
-    const hum  = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
-    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
-    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
-    if(!hum || !scap || !clav) return;
-
-    const d2r = THREE.MathUtils.degToRad;
-
-    // --- your existing scap/clav rhythm math goes here ---
-    // (keep whatever you already do for scap/clav based on deg, scapRatio, clavRatio)
-    // e.g., scap.quaternion.multiply(...), clav.quaternion.multiply(...)
-
-    // === Add UpperArm Z "finish" beyond splitDeg (your discovery) ===
-    // Prefer values from SH_FLEX_Z if present; otherwise use fallbacks above.
-    const split   = (typeof SH_FLEX_Z?.splitDeg === 'number') ? SH_FLEX_Z.splitDeg : this.splitDeg;
-    const zAtFull = (typeof SH_FLEX_Z?.zL === 'number' && typeof SH_FLEX_Z?.zR === 'number')
-      ? (side === "L" ? SH_FLEX_Z.zL : SH_FLEX_Z.zR)
-      : (side === "L" ? this.zFinishL : this.zFinishR);
-
-    const over = Math.max(0, deg - split);
-    if (over > 0){
-      const fullFlex = 170;                 // adjust if your cap differs
-      const span = Math.max(1, fullFlex - split);
-      const zNowDeg = zAtFull * (over / span);     // 0→zAtFull as you go from split→full
-      const qZ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, d2r(zNowDeg), "XYZ"));
-      hum.quaternion.multiply(qZ);                 // rotate UpperArm around local Z
-    }
-  }
-};
-    // --- main GH flex is still controlled by applyPairAngle ---
-    // tuner only adds coupled contributions:
-
-    const scapDeg = deg * this.scapRatio;
-    const clavDeg = deg * this.clavRatio;
-
-    scap.rotation.z = d2r(scapDeg);
-    clav.rotation.y = d2r(clavDeg);
-  }
-};
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
@@ -763,9 +572,6 @@ const SH_FLEX_RHYTHM = {
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
-    // shoulder flex tuner coupling (flex only)
-if(key==="sh_fe_l") SH_FLEX_RHYTHM.apply("L",deg);
-if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
   }
 
   /* ===== Motions (paired configs; UI splits) ===== */
@@ -974,7 +780,14 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-      // Shoulder IR/ER → set elbow to 90° baseline immediately
+      
+      // Shoulder Flexion Path Tuner — auto-open when selecting forward flexion
+      if ((key==='sh_fe_l' || key==='sh_fe_r') && CURRENT_ACTION.sign>0){
+        const side = key.endsWith('_l') ? 'l' : 'r';
+        freezeShFlexBind(side);
+        toggleShFlex(true);
+      }
+// Shoulder IR/ER → set elbow to 90° baseline immediately
       if (key==='sh_irer_l' || key==='sh_irer_r'){
         const side = key.endsWith('_l') ? 'l' : 'r';
         setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
@@ -997,6 +810,13 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
       val = cap; actionDeg.value = String(val);
       log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
     }
+    // Shoulder Flexion Path Tuner intercept
+    if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r') && CURRENT_ACTION.sign>0){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      applyShoulderFlexPath(side, val);
+      return;
+    }
+
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
@@ -1267,7 +1087,258 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
   }
   function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
 
-  /* ===== ROM modal wiring ===== */
+  
+  /* ===== SHOULDER FLEX TUNER (auto-opens on Shoulder Flexion) ===== */
+  let shFlexTunerEl = null, shFlexVisible = false;
+
+  const SHFLEX = {
+    l: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
+         ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
+    r: { ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
+         ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' } },
+    enabled: true,
+    load(){
+      try{ const raw = localStorage.getItem('rometrics_shflex_tuner');
+        if(!raw) return; const o = JSON.parse(raw);
+        if (o?.l) Object.assign(this.l, o.l);
+        if (o?.r) Object.assign(this.r, o.r);
+      }catch(e){}
+    },
+    save(){ try{ localStorage.setItem('rometrics_shflex_tuner', JSON.stringify({l:this.l, r:this.r})); log('Shoulder Flex Path saved.'); }catch(e){} }
+  };
+  SHFLEX.load();
+
+  function qFromAxisDeg(axis, deg){
+    const r = THREE.MathUtils.degToRad(deg);
+    const e = (axis==='x') ? new THREE.Euler(r,0,0,'XYZ')
+            : (axis==='y') ? new THREE.Euler(0,r,0,'XYZ')
+            :                 new THREE.Euler(0,0,r,'XYZ');
+    return new THREE.Quaternion().setFromEuler(e);
+  }
+  function getBoneAnyName(nameRE){
+    if (!skeleton) return null;
+    const re = (nameRE instanceof RegExp) ? nameRE : new RegExp(`^${nameRE}$`,'i');
+    return skeleton.bones.find(b => re.test((b.name||''))) || null;
+  }
+  function getBoneSide(nameBase, side){
+    const candidates = [
+      new RegExp(`^${nameBase}_${side}$`, 'i'),
+      new RegExp(`${nameBase}.*${side}`,'i'),
+      new RegExp(`${nameBase}`,'i')
+    ];
+    for (const r of candidates){ const b = getBoneAnyName(r); if (b) return b; }
+    return null;
+  }
+  function copyBind(bone){ return (initialBoneRot.get(bone) || bone.quaternion.clone()).clone(); }
+
+  const SHF_BIND = { l:null, r:null };
+  function ensureShFlexBind(side){
+    if (SHF_BIND[side]) return SHF_BIND[side];
+    const hum   = getBoneSide('upperarm', side) || getBoneSide('humerus', side);
+    const clav  = getBoneSide('clavicle', side);
+    const scap  = getBoneSide('scapula', side) || getBoneSide('scap', side);
+    const obj = { hum, clav, scap, qHum: hum?copyBind(hum):null, qClav: clav?copyBind(clav):null, qScap: scap?copyBind(scap):null };
+    SHF_BIND[side] = obj;
+    return obj;
+  }
+  function freezeShFlexBind(side){
+    const b = ensureShFlexBind(side);
+    if (b.hum)  b.qHum  = copyBind(b.hum);
+    if (b.clav) b.qClav = copyBind(b.clav);
+    if (b.scap) b.qScap = copyBind(b.scap);
+  }
+  function applyShoulderFlexPath(side, flexDeg){
+    const cfg = SHFLEX[side]; if (!cfg) return;
+    const b = ensureShFlexBind(side);
+    const t = Math.max(0, Math.min(180, flexDeg)) / 180;
+    if (b.hum){
+      const ax = cfg.ax;
+      const ghFlex = t * cfg.ghFlexMax;
+      const ghER   = t * cfg.ghERatEnd;
+      const ghAbd  = t * (cfg.abdCorrectPer100 * 1.8);
+      const q = b.qHum.clone()
+        .multiply( qFromAxisDeg(ax.ghFlex, ghFlex) )
+        .multiply( qFromAxisDeg(ax.ghER,   ghER) )
+        .multiply( qFromAxisDeg(ax.ghAbd,  ghAbd) );
+      b.hum.quaternion.copy(q);
+    }
+    if (b.clav){
+      const elev = t * (SHFLEX[side].clavElevPer100 * 1.8);
+      const pro  = t * (SHFLEX[side].clavProPer100  * 1.8);
+      const ax = SHFLEX[side].ax;
+      const q = b.qClav.clone()
+        .multiply( qFromAxisDeg(ax.clavElev, elev) )
+        .multiply( qFromAxisDeg(ax.clavPro,  pro) );
+      b.clav.quaternion.copy(q);
+    }
+    if (b.scap){
+      const up   = t * (SHFLEX[side].scapUpRotPer100   * 1.8);
+      const tilt = t * (SHFLEX[side].scapPostTiltPer100* 1.8);
+      const ax = SHFLEX[side].ax;
+      const q = b.qScap.clone()
+        .multiply( qFromAxisDeg(ax.scapUp,   up) )
+        .multiply( qFromAxisDeg(ax.scapTilt, tilt) );
+      b.scap.quaternion.copy(q);
+    }
+  }
+
+  function ensureShoulderFlexTuner(){
+  function clampTunerInView(){
+    if(!shFlexTunerEl) return;
+    const r = shFlexTunerEl.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = r.left, y = r.top;
+    if (r.right > vw) x -= (r.right - vw + 8);
+    if (r.bottom > vh) y -= (r.bottom - vh + 8);
+    if (r.left < 0) x = 8;
+    if (r.top < 0) y = 8;
+    shFlexTunerEl.style.left = x + 'px';
+    shFlexTunerEl.style.top  = y + 'px';
+    shFlexTunerEl.style.right = 'auto';
+  }
+  function makeDraggable(el, handle){
+    let sx=0, sy=0, ox=0, oy=0, dragging=false;
+    handle.style.cursor = 'move';
+    handle.addEventListener('mousedown', (e)=>{
+      dragging=true; sx=e.clientX; sy=e.clientY;
+      const rect = el.getBoundingClientRect(); ox=rect.left; oy=rect.top;
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e)=>{
+      if(!dragging) return;
+      const nx = ox + (e.clientX - sx);
+      const ny = oy + (e.clientY - sy);
+      el.style.left = nx+'px'; el.style.top = ny+'px'; el.style.right='auto';
+    });
+    window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; clampTunerInView(); } });
+  }
+
+    if (shFlexTunerEl) return shFlexTunerEl;
+    shFlexTunerEl = document.createElement('div');
+    Object.assign(shFlexTunerEl.style,{position:'fixed', right:'16px', top:'120px', zIndex:42, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'380px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
+    shFlexTunerEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <strong style="font-size:13px;">Shoulder Flexion Path Tuner</strong>
+        <span class="badge">Flexion mixer</span>
+        <button id="shfX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button id="shfSideL" class="mini" style="flex:1">Left</button>
+        <button id="shfSideR" class="mini" style="flex:1">Right</button>
+      </div>
+      <div id="shfBody"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button id="shfApply" class="mini" style="flex:1">Apply</button>
+        <button id="shfSave"  class="mini">Save</button>
+        <button id="shfReset" class="mini">Reset</button>
+      </div>
+      <div style="opacity:.7;margin-top:6px;">Auto-opens when you select a Shoulder Flexion action. Settings save per side.</div>
+    `;
+    document.body.appendChild(shFlexTunerEl);
+  const header = shFlexTunerEl.querySelector('div');
+  makeDraggable(shFlexTunerEl, header);
+  window.addEventListener('resize', clampTunerInView);
+const $ = (q)=>shFlexTunerEl.querySelector(q);
+
+    let currentSide = 'l';
+    function axisOpts(sel){ return ['x','y','z'].map(a=>`<option value="${a}" ${a==sel?'selected':''}>${a.toUpperCase()}</option>`).join(''); }
+    function uiFor(side){
+      const C = SHFLEX[side];
+      return `
+        <div class="rom-item"><summary>GH (Humerus)</summary>
+          <div class="inner">
+            <div class="rom-row"><div class="rom-head">Flex Max @ 180 (°)</div><div style="flex:1"><input id="ghFlexMax" type="number" step="1" min="0" max="200" value="${C.ghFlexMax}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">ER at End (°)</div><div style="flex:1"><input id="ghER" type="number" step="1" min="0" max="90" value="${C.ghERatEnd}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Abd correction /100° (°)</div><div style="flex:1"><input id="ghAbdCorr" type="number" step="1" min="-60" max="60" value="${C.abdCorrectPer100}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Axes (Flex / ER / Abd)</div>
+              <div style="flex:1;display:flex;gap:6px">
+                <select id="axGhF">${axisOpts(C.ax.ghFlex)}</select>
+                <select id="axGhER">${axisOpts(C.ax.ghER)}</select>
+                <select id="axGhAbd">${axisOpts(C.ax.ghAbd)}</select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rom-item"><summary>Clavicle</summary>
+          <div class="inner">
+            <div class="rom-row"><div class="rom-head">Elevation /100° (°)</div><div style="flex:1"><input id="clavElev" type="number" step="1" min="-40" max="40" value="${C.clavElevPer100}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Protraction /100° (°)</div><div style="flex:1"><input id="clavPro" type="number" step="1" min="-40" max="40" value="${C.clavProPer100}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Axes (Elev / Pro)</div>
+              <div style="flex:1;display:flex;gap:6px">
+                <select id="axClavElev">${axisOpts(C.ax.clavElev)}</select>
+                <select id="axClavPro">${axisOpts(C.ax.clavPro)}</select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rom-item"><summary>Scapula</summary>
+          <div class="inner">
+            <div class="rom-row"><div class="rom-head">Up-Rot /100° (°)</div><div style="flex:1"><input id="scapUp" type="number" step="1" min="-60" max="60" value="${C.scapUpRotPer100}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Posterior Tilt /100° (°)</div><div style="flex:1"><input id="scapTilt" type="number" step="1" min="-60" max="60" value="${C.scapPostTiltPer100}" style="width:100%"></div></div>
+            <div class="rom-row"><div class="rom-head">Axes (Up / Tilt)</div>
+              <div style="flex:1;display:flex;gap:6px">
+                <select id="axScapUp">${axisOpts(C.ax.scapUp)}</select>
+                <select id="axScapTilt">${axisOpts(C.ax.scapTilt)}</select>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    function render(){ $('#shfBody').innerHTML = uiFor(currentSide); }
+    $('#shfSideL').onclick = ()=>{ currentSide='l'; render(); };
+    $('#shfSideR').onclick = ()=>{ currentSide='r'; render(); };
+
+    $('#shfApply').onclick = ()=>{
+      const R = (id)=>Number(shFlexTunerEl.querySelector('#'+id).value);
+      const S = (id)=>shFlexTunerEl.querySelector('#'+id).value;
+      const C = SHFLEX[currentSide];
+      C.ghFlexMax = R('ghFlexMax');
+      C.ghERatEnd = R('ghER');
+      C.abdCorrectPer100 = R('ghAbdCorr');
+      C.clavElevPer100 = R('clavElev');
+      C.clavProPer100 = R('clavPro');
+      C.scapUpRotPer100 = R('scapUp');
+      C.scapPostTiltPer100 = R('scapTilt');
+      C.ax.ghFlex = S('axGhF'); C.ax.ghER = S('axGhER'); C.ax.ghAbd = S('axGhAbd');
+      C.ax.clavElev = S('axClavElev'); C.ax.clavPro = S('axClavPro');
+      C.ax.scapUp = S('axScapUp'); C.ax.scapTilt = S('axScapTilt');
+      SHFLEX.save();
+      
+    if (CURRENT_ACTION && /^sh_fe_/.test(CURRENT_ACTION.key)){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      freezeShFlexBind(side);
+      const val = Math.abs(parseFloat(actionDeg.value)||0);
+      applyShoulderFlexPath(side, val);
+      pairLabel.style.color = '#a5f3fc'; setTimeout(()=> pairLabel.style.color='', 300);
+    }
+
+    };
+    $('#shfSave').onclick  = ()=> SHFLEX.save();
+    $('#shfReset').onclick = ()=>{
+      Object.assign(SHFLEX[currentSide], (currentSide==='l'?{
+        ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
+        ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
+      }:{
+        ghFlexMax:180, ghERatEnd:40, abdCorrectPer100:-20, clavElevPer100:12, clavProPer100:15, scapUpRotPer100:30, scapPostTiltPer100:12,
+        ax:{ ghFlex:'x', ghER:'y', ghAbd:'z', clavElev:'z', clavPro:'y', scapUp:'z', scapTilt:'x' }
+      }));
+      SHFLEX.save(); render(); log('Shoulder Flex Path reset.');
+    };
+    $('#shfX').onclick = ()=> toggleShFlex(false);
+
+    render();
+    return shFlexTunerEl;
+  }
+  function toggleShFlex(show){
+    ensureShoulderFlexTuner();
+    shFlexVisible = (show===undefined) ? !shFlexVisible : !!show;
+    shFlexTunerEl.style.display = shFlexVisible ? 'block' : 'none';
+  }
+  /* ===== /SHOULDER FLEX TUNER ===== */
+/* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
   window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
@@ -1286,3 +1357,4 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
   </script>
 </body>
 </html>
+
