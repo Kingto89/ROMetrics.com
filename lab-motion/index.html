@@ -12,40 +12,6 @@
     "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
-
-// === Shoulder Flex Manual Tuner: robust toggle on action change ===
-actionSel.addEventListener('change', ()=>{
-  const val = actionSel.value || "";
-  let key = null;
-  if (val.startsWith('sep:')){
-    // format: sep:key:sign:max (observed in file)
-    const parts = val.split(':');
-    key = parts[1] || null;
-  }
-  if (key==='sh_fe_l' || key==='sh_fe_r'){
-    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
-    SH_FLEX_MAN.show();
-  } else {
-    SH_FLEX_MAN.hide();
-  }
-});
-
-// Initialize visibility on load
-document.addEventListener('DOMContentLoaded', ()=>{
-  const val = actionSel?.value || "";
-  let key = null;
-  if (val.startsWith('sep:')){
-    const parts = val.split(':');
-    key = parts[1] || null;
-  }
-  if (key==='sh_fe_l' || key==='sh_fe_r'){
-    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
-    SH_FLEX_MAN.show();
-  } else {
-    SH_FLEX_MAN.hide();
-  }
-});
-
 </script>
 
 <style>
@@ -110,38 +76,26 @@ optgroup{color:#9fb0c9;font-style:normal}
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
 
       
-      <!-- Shoulder Flexion — Manual Tuner (auto shows on Shoulder Flex L/R) -->
-      <details id="shFlexManual" style="display:none;margin-top:6px;">
-        <summary>Shoulder Flexion — Manual Finish</summary>
-        <label>Side</label>
-        <div class="seg" id="shFlexSideSeg">
-          <button id="shFlexSideL" class="on">Left</button>
-          <button id="shFlexSideR">Right</button>
-        </div>
-
-        <label style="margin-top:6px">Flexion (°)</label>
-        <input type="range" id="shFlexVal" min="0" max="180" step="1" value="0">
-
-        <div class="row" style="margin-top:6px">
-          <div style="flex:1">
-            <label>UpperArm — Rotate X (°)</label>
-            <input type="range" id="shUX" min="-60" max="60" step="1" value="0">
+      <!-- Shoulder Flex Finish Tuner (auto-shows for Shoulder Flex L/R) -->
+      <div id="shFlexTuner" class="rom-item" style="display:none;margin-top:6px">
+        <summary>Shoulder Flexion Tuner</summary>
+        <div class="inner">
+          <div class="rom-row">
+            <div class="rom-head">Side</div>
+            <div style="flex:1;display:flex;gap:6px">
+              <button type="button" id="shFlexSideL" class="mini">L</button>
+              <button type="button" id="shFlexSideR" class="mini">R</button>
+            </div>
           </div>
-          <div style="flex:1">
-            <label>UpperArm — Rotate Y (°)</label>
-            <input type="range" id="shUY" min="-60" max="60" step="1" value="0">
+          <div class="rom-row">
+            <div class="rom-head">UpperArm Rotate Z (°)</div>
+            <div style="flex:1">
+              <input id="shFlexZ" type="range" min="-45" max="45" step="1" value="0">
+            </div>
           </div>
         </div>
-        <label>UpperArm — Rotate Z (°)</label>
-        <input type="range" id="shUZ" min="-60" max="60" step="1" value="25">
-
-        <div class="row" style="margin-top:6px">
-          <button id="shFlexReset" class="mini">Reset</button>
-          <button id="shFlexHide" class="mini">Hide</button>
-        </div>
-        <small style="opacity:.7">Tip: Run pure GH flexion up to ~100°, then use UpperArm Z to finish to full without clipping the clavicle.</small>
-      </details>
-<details>
+      </div>
+    <details>
         <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
@@ -242,41 +196,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
   const zeroAll = document.getElementById("zeroAll");
-
-  // === Shoulder Flexion Manual Tuner (UI handles) ===
-  const shFlexManual = document.getElementById('shFlexManual');
-  const shFlexSideSeg = document.getElementById('shFlexSideSeg');
-  const shFlexSideL = document.getElementById('shFlexSideL');
-  const shFlexSideR = document.getElementById('shFlexSideR');
-  const shFlexVal = document.getElementById('shFlexVal');
-  const shUX = document.getElementById('shUX');
-  const shUY = document.getElementById('shUY');
-  const shUZ = document.getElementById('shUZ');
-  const shFlexReset = document.getElementById('shFlexReset');
-  const shFlexHide = document.getElementById('shFlexHide');
-
-  const SH_FLEX_MAN = {
-    side: 'L',
-    vals: { L:{flex:0,x:0,y:0,z:25}, R:{flex:0,x:0,y:0,z:25} },
-    show(){ shFlexManual.style.display = 'block'; shFlexManual.open = true; },
-    hide(){ shFlexManual.style.display = 'none'; shFlexManual.open = false; },
-    setSide(s){ this.side = s; shFlexSideL.classList.toggle('on', s==='L'); shFlexSideR.classList.toggle('on', s==='R'); this.syncToUI(); },
-    syncToUI(){
-      const v = this.vals[this.side];
-      shFlexVal.value = String(v.flex);
-      shUX.value = String(v.x);
-      shUY.value = String(v.y);
-      shUZ.value = String(v.z);
-    },
-    readFromUI(){
-      const v = this.vals[this.side];
-      v.flex = parseInt(shFlexVal.value||'0',10);
-      v.x = parseInt(shUX.value||'0',10);
-      v.y = parseInt(shUY.value||'0',10);
-      v.z = parseInt(shUZ.value||'0',10);
-    }
-  };
-
 
   const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
@@ -445,8 +364,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "../assets/Roma_ROMetrics.glb?v=1";
-  }
+    return "assets/Roma_ROMetrics.glb?v=1";
+}
   let MODEL_URL = pickModelUrl();
 
   function groundSnap(){
@@ -660,73 +579,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!b) return;
     b.qBind = b.bone.quaternion.clone();
   }
-/* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
-const SH_FLEX_RHYTHM = {
-  enabled: true,
-  scapRatio: 0.33,   // ~1/3 rule
-  clavRatio: 0.18,   // small clav posterior rot assist
-  apply(side,deg){
-    if (!model) return;
-    if (deg <= 0) return; // FLEX only (A choice)
-
-    const hum = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
-    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
-    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
-    if(!hum || !scap || !clav) return;
-
-    const d2r = THREE.MathUtils.degToRad;
-    /* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
-const SH_FLEX_RHYTHM = {
-  enabled: true,
-  scapRatio: 0.33,   // ~1/3 rule
-  clavRatio: 0.18,   // small clav posterior rot assist
-  // Fallbacks (used only if SH_FLEX_Z isn't present)
-  splitDeg: 100,
-  zFinishL: 25,
-  zFinishR: 25,
-
-  apply(side,deg){
-    if (!model) return;
-    if (deg <= 0) return; // FLEX only
-
-    const hum  = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
-    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
-    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
-    if(!hum || !scap || !clav) return;
-
-    const d2r = THREE.MathUtils.degToRad;
-
-    // --- your existing scap/clav rhythm math goes here ---
-    // (keep whatever you already do for scap/clav based on deg, scapRatio, clavRatio)
-    // e.g., scap.quaternion.multiply(...), clav.quaternion.multiply(...)
-
-    // === Add UpperArm Z "finish" beyond splitDeg (your discovery) ===
-    // Prefer values from SH_FLEX_Z if present; otherwise use fallbacks above.
-    const split   = (typeof SH_FLEX_Z?.splitDeg === 'number') ? SH_FLEX_Z.splitDeg : this.splitDeg;
-    const zAtFull = (typeof SH_FLEX_Z?.zL === 'number' && typeof SH_FLEX_Z?.zR === 'number')
-      ? (side === "L" ? SH_FLEX_Z.zL : SH_FLEX_Z.zR)
-      : (side === "L" ? this.zFinishL : this.zFinishR);
-
-    const over = Math.max(0, deg - split);
-    if (over > 0){
-      const fullFlex = 170;                 // adjust if your cap differs
-      const span = Math.max(1, fullFlex - split);
-      const zNowDeg = zAtFull * (over / span);     // 0→zAtFull as you go from split→full
-      const qZ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, d2r(zNowDeg), "XYZ"));
-      hum.quaternion.multiply(qZ);                 // rotate UpperArm around local Z
-    }
-  }
-};
-    // --- main GH flex is still controlled by applyPairAngle ---
-    // tuner only adds coupled contributions:
-
-    const scapDeg = deg * this.scapRatio;
-    const clavDeg = deg * this.clavRatio;
-
-    scap.rotation.z = d2r(scapDeg);
-    clav.rotation.y = d2r(clavDeg);
-  }
-};
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
@@ -740,9 +592,6 @@ const SH_FLEX_RHYTHM = {
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
-    // shoulder flex tuner coupling (flex only)
-if(key==="sh_fe_l") SH_FLEX_RHYTHM.apply("L",deg);
-if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
   }
 
   /* ===== Motions (paired configs; UI splits) ===== */
@@ -978,17 +827,7 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    
-    // keep manual tuner flex in sync when editing shoulder flex directly
-    if (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r'){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'L' : 'R';
-      SH_FLEX_MAN.side = side;
-      SH_FLEX_MAN.vals[side].flex = Math.abs(signed);
-      _syncing = true; shFlexVal.value = String(SH_FLEX_MAN.vals[side].flex); _syncing = false;
-      // re-apply manual XYZ finish
-      applyUpperarmXYZ(side, SH_FLEX_MAN.vals[side].x, SH_FLEX_MAN.vals[side].y, SH_FLEX_MAN.vals[side].z);
-    }
-// Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
+    // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       // Keep elbow flexed (stability)
@@ -1007,9 +846,6 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     pairLabel.textContent = "Angle (°)";
     log("All motions zeroed → returned to anatomic baseline.");
   };
-  // Also hide manual shoulder tuner
-  SH_FLEX_MAN.hide();
-
 
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
@@ -1087,58 +923,6 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     if (!wrist){
       wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
     }
-
-  // === Apply UpperArm manual XYZ after flex (relative to bind OR current) ===
-  function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
-    if (!skeleton || !model) return;
-    const name = (side==='L') ? 'upperarm_L' : 'upperarm_R';
-    const bone = getExactBoneByName(name) || findBoneBy({ side: side.toLowerCase(), hints:[/upperarm|humerus|shoulder/i], key: side==='L'?'sh_fe_l':'sh_fe_r' });
-    if (!bone) { log(`No upperarm bone for ${side}`); return; }
-
-  // === Shoulder Flex Manual Tuner wiring ===
-  shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); };
-  shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); };
-
-  let _syncing = false;
-  function applyManualFlexAndXYZ(){
-    if (!CURRENT_ACTION) return;
-    const side = SH_FLEX_MAN.side;
-    const vals = SH_FLEX_MAN.vals[side];
-    // 1) Drive main flex pair for that side
-    const key = (side==='L') ? 'sh_fe_l' : 'sh_fe_r';
-    setPair(key, vals.flex);
-    // keep the UI slider in sync if shoulder flex is the active action
-    if (!_syncing && (CURRENT_ACTION.key===key)){
-      _syncing = true
-
-      actionDeg.value = String(vals.flex);
-      _syncing = false;
-    }
-    // 2) Apply manual upperarm XYZ on top
-    applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
-  }
-
-  [shFlexVal, shUX, shUY, shUZ].forEach(el=>{
-    el.addEventListener('input', ()=>{ SH_FLEX_MAN.readFromUI(); applyManualFlexAndXYZ(); });
-  });
-
-  shFlexReset.onclick = (e)=>{
-    e.preventDefault();
-    const s = SH_FLEX_MAN.side;
-    SH_FLEX_MAN.vals[s] = { flex:0, x:0, y:0, z:25 };
-    SH_FLEX_MAN.syncToUI();
-    applyManualFlexAndXYZ();
-  };
-  shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); };
-
-    // multiply a post-flex delta around local axes
-    const ex = THREE.MathUtils.degToRad(xDeg||0);
-    const ey = THREE.MathUtils.degToRad(yDeg||0);
-    const ez = THREE.MathUtils.degToRad(zDeg||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    bone.quaternion.multiply(qDelta);
-  }
-
     if (!wrist){ log(`No wrist bone for ${side}`); return; }
     const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
@@ -1325,8 +1109,104 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
-  </script>
+  
+// ===== Shoulder Flex Finish Tuner (non-invasive) =====
+(function(){
+  const actionSel = document.getElementById('actionSel');
+  const actionDeg = document.getElementById('actionDeg');
+  const zeroAll   = document.getElementById('zeroAll');
+  const box = document.getElementById('shFlexTuner');
+  const btnL = document.getElementById('shFlexSideL');
+  const btnR = document.getElementById('shFlexSideR');
+  const zInp = document.getElementById('shFlexZ');
+
+  if (!actionSel || !actionDeg || !box || !btnL || !btnR || !zInp) return;
+
+  const state = { side: 'l', zL: 0, zR: 0 };
+
+  function showTuner(){ box.style.display = 'block'; }
+  function hideTuner(){ box.style.display = 'none'; }
+  function isFlexKey(key){ return key==='sh_fe_l' || key==='sh_fe_r'; }
+  function sideFromKey(key){ return key.endsWith('_l') ? 'l' : 'r'; }
+
+  function getUpperarm(side){
+    const nameU = side==='l' ? 'upperarm_L' : 'upperarm_R';
+    const nameL = side==='l' ? 'upperarm_l' : 'upperarm_r';
+    if (typeof getExactBoneByName === 'function'){
+      const b1 = getExactBoneByName(nameL) || getExactBoneByName(nameU);
+      if (b1) return b1;
+    }
+    return (window.model && (model.getObjectByName(nameL) || model.getObjectByName(nameU))) || null;
+  }
+  function applyUpperarmZ(side, degZ){
+    const hum = getUpperarm(side);
+    if (!hum) return;
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,THREE.MathUtils.degToRad(degZ),'XYZ'));
+    hum.quaternion.multiply(q);
+  }
+
+  function selectSide(s){
+    state.side = s;
+    btnL.classList.toggle('on', s==='l');
+    btnR.classList.toggle('on', s==='r');
+    zInp.value = String(s==='l' ? state.zL : state.zR);
+  }
+
+  btnL.addEventListener('click', (e)=>{ e.preventDefault(); selectSide('l'); reapplyZ(); });
+  btnR.addEventListener('click', (e)=>{ e.preventDefault(); selectSide('r'); reapplyZ(); });
+  zInp.addEventListener('input', ()=>{
+    const v = parseFloat(zInp.value)||0;
+    if (state.side==='l') state.zL = v; else state.zR = v;
+    reapplyZ();
+  });
+
+  function parseKeyFromActionSel(){
+    const v = actionSel.value || "";
+    if (!v.startsWith('sep:')) return null;
+    const parts = v.split(':');
+    return parts[1] || null;
+  }
+
+  function reapplyZ(){
+    // run AFTER your core flex logic; we only layer Z on top
+    const key = (window.CURRENT_ACTION && window.CURRENT_ACTION.key) || parseKeyFromActionSel();
+    if (!key || !isFlexKey(key)) return;
+    applyUpperarmZ(state.side, state.side==='l' ? state.zL : state.zR);
+  }
+
+  // When action changes → toggle the tuner
+  actionSel.addEventListener('change', ()=>{
+    const key = parseKeyFromActionSel();
+    if (key && isFlexKey(key)){
+      selectSide(sideFromKey(key));
+      showTuner();
+    } else {
+      hideTuner();
+    }
+    // let your original handler run first; we only toggle visibility here
+    setTimeout(reapplyZ, 0);
+  });
+
+  // When angle slider moves → layer Z on top if flex is active
+  actionDeg.addEventListener('input', ()=>{
+    // allow your original handler to run first
+    setTimeout(reapplyZ, 0);
+  });
+
+  // Hide tuner on Zero All (without overriding your existing handler)
+  zeroAll && zeroAll.addEventListener('click', ()=> hideTuner());
+
+  // On load: if Shoulder Flex already selected, show tuner
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const key = parseKeyFromActionSel();
+    if (key && isFlexKey(key)){
+      selectSide(sideFromKey(key));
+      showTuner();
+      setTimeout(reapplyZ, 0);
+    }
+  });
+})();
+
+</script>
 </body>
 </html>
-
-
