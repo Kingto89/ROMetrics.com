@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>3D Motion Lab — Shoulder Flex Fix</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>3D Motion Lab — Joint Trainer</title>
 
 <script type="importmap">
 {
@@ -12,331 +12,1321 @@
     "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
+
+// === Shoulder Flex Manual Tuner: robust toggle on action change ===
+actionSel.addEventListener('change', ()=>{
+  const val = actionSel.value || "";
+  let key = null;
+  if (val.startsWith('sep:')){
+    // format: sep:key:sign:max (observed in file)
+    const parts = val.split(':');
+    key = parts[1] || null;
+  }
+  if (key==='sh_fe_l' || key==='sh_fe_r'){
+    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
+    SH_FLEX_MAN.show();
+  } else {
+    SH_FLEX_MAN.hide();
+  }
+});
+
+// Initialize visibility on load
+document.addEventListener('DOMContentLoaded', ()=>{
+  const val = actionSel?.value || "";
+  let key = null;
+  if (val.startsWith('sep:')){
+    const parts = val.split(':');
+    key = parts[1] || null;
+  }
+  if (key==='sh_fe_l' || key==='sh_fe_r'){
+    SH_FLEX_MAN.setSide(key.endsWith('_l') ? 'L' : 'R');
+    SH_FLEX_MAN.show();
+  } else {
+    SH_FLEX_MAN.hide();
+  }
+});
+
 </script>
 
 <style>
-:root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#0b1424;--text:#e2e8f0;--muted:#cbd5e1}
+:root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:12px;top:12px;width:380px;max-height:92vh;z-index:10;background:var(--panel);border:1px solid #1114;border-radius:14px;box-shadow:0 10px 30px #0008;display:flex;flex-direction:column}
-.hdr{padding:12px 14px;border-bottom:1px solid #0006;font-weight:600}
-.body{padding:12px 14px;gap:8px;display:flex;flex-direction:column;overflow:auto}
-label{font-size:12px;color:var(--muted);margin-top:6px}
-select,input[type=range],input[type=text]{width:100%;background:var(--ctrl);border:1px solid #1b2434;color:var(--text);padding:8px;border-radius:8px}
-input[type=range]{height:28px}
-.seg{display:flex;gap:6px}
-.seg button{flex:1;background:#0b1424;border:1px solid #283244;color:var(--text);padding:6px 8px;border-radius:8px;cursor:pointer}
-.seg button.on{outline:2px solid #6aa2ff55;background:#0e1a2e}
-.row{display:flex;gap:8px;align-items:center}
-.mini{padding:6px 10px;background:#16233a;border:1px solid #24324a;border-radius:8px;color:var(--text);cursor:pointer}
-small{opacity:.75}
-#log{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#080e1c;border-top:1px solid #0006;padding:8px;max-height:150px;overflow:auto;white-space:pre-wrap}
-.err{color:#ff8080}
-.ok{color:#8ff58f}
+.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
+.content{padding:12px;overflow:auto}
+label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
+select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
+.row{display:flex;gap:8px}.row>button{flex:1}
+.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
+.seg button.on{background:#1f2c43;color:#fff;border-color:#47618e}
+details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
+summary{cursor:pointer;font-weight:600;color:#dbe7ff}
+#log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
+#msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
+optgroup{color:#9fb0c9;font-style:normal}
+.modal{position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
+.modal.on{display:flex}
+.modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
+.modal .top h4{margin:0;font-size:14px}
+.modal .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
+.modal .body{padding:12px;overflow:auto}
+.rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
+.rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
+.rom-item summary::-webkit-details-marker{display:none}
+.rom-item .inner{padding:8px 12px;border-top:1px solid #1c2941}
+.rom-row{display:flex;gap:10px;font-size:13px;padding:4px 0}
+.rom-head{width:160px;color:#9fb0c9}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
+  <!-- Panel -->
+  <div class="panel" id="panel">
+    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
+    <div class="content">
 
-<div class="panel">
-  <div class="hdr">3D Motion Lab — Shoulder Flex</div>
-  <div class="body">
-    <label>Action</label>
-    <select id="actionSel">
-      <option value="">— Select —</option>
-      <option value="sep:sh_fe_l">Shoulder Flex — Left</option>
-      <option value="sep:sh_fe_r">Shoulder Flex — Right</option>
-    </select>
+      <div class="row" style="align-items:center">
+        <button id="romBtn" class="mini">📘 ROM Reference</button>
+        <label style="display:flex;gap:6px;align-items:center;margin:0;">
+          <input id="antiBox" type="checkbox"/>
+          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+        </label>
+      </div>
 
-    <div class="row">
-      <input id="modelUrl" placeholder="Model URL" value="assets/Roma_ROMetrics.glb" />
-      <button id="modelLoad" class="mini">Load</button>
-    </div>
-
-    <label id="pairLabel">Angle (°)</label>
-    <input type="range" id="actionDeg" min="-180" max="180" step="1" value="0" disabled/>
-
-    <!-- Shoulder Flexion — Manual Tuner -->
-    <details id="shFlexManual" style="display:none;margin-top:6px;">
-      <summary>Shoulder Flexion — Manual Finish</summary>
-      <label>Side</label>
+      <label>Body Region</label>
       <div class="seg">
-        <button id="shFlexSideL" class="on">Left</button>
-        <button id="shFlexSideR">Right</button>
+        <button id="segUpper" class="on">Upper Body</button>
+        <button id="segLower">Lower Body</button>
       </div>
 
-      <label style="margin-top:6px">Flexion (°)</label>
-      <input type="range" id="shFlexVal" min="0" max="180" step="1" value="0">
+      <label>Action</label>
+      <select id="actionSel"></select>
 
-      <div class="row" style="margin-top:6px">
-        <div style="flex:1">
-          <label>UpperArm — Rotate X (°)</label>
-          <input type="range" id="shUX" min="-60" max="60" step="1" value="0">
+      <label><span id="pairLabel">Angle (°)</span></label>
+      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
+
+      
+      <!-- Shoulder Flexion — Manual Tuner (auto shows on Shoulder Flex L/R) -->
+      <details id="shFlexManual" style="display:none;margin-top:6px;">
+        <summary>Shoulder Flexion — Manual Finish</summary>
+        <label>Side</label>
+        <div class="seg" id="shFlexSideSeg">
+          <button id="shFlexSideL" class="on">Left</button>
+          <button id="shFlexSideR">Right</button>
         </div>
-        <div style="flex:1">
-          <label>UpperArm — Rotate Y (°)</label>
-          <input type="range" id="shUY" min="-60" max="60" step="1" value="0">
+
+        <label style="margin-top:6px">Flexion (°)</label>
+        <input type="range" id="shFlexVal" min="0" max="180" step="1" value="0">
+
+        <div class="row" style="margin-top:6px">
+          <div style="flex:1">
+            <label>UpperArm — Rotate X (°)</label>
+            <input type="range" id="shUX" min="-60" max="60" step="1" value="0">
+          </div>
+          <div style="flex:1">
+            <label>UpperArm — Rotate Y (°)</label>
+            <input type="range" id="shUY" min="-60" max="60" step="1" value="0">
+          </div>
         </div>
-      </div>
-      <label>UpperArm — Rotate Z (°)</label>
-      <input type="range" id="shUZ" min="-60" max="60" step="1" value="25">
+        <label>UpperArm — Rotate Z (°)</label>
+        <input type="range" id="shUZ" min="-60" max="60" step="1" value="25">
 
-      <div class="row" style="margin-top:6px">
-        <button id="shFlexReset" class="mini">Reset</button>
-        <button id="shFlexHide" class="mini">Hide</button>
-      </div>
-      <small>Tip: Pure GH flex to ~100°, then finish with UpperArm Z to avoid clavicle collision.</small>
-    </details>
+        <div class="row" style="margin-top:6px">
+          <button id="shFlexReset" class="mini">Reset</button>
+          <button id="shFlexHide" class="mini">Hide</button>
+        </div>
+        <small style="opacity:.7">Tip: Run pure GH flexion up to ~100°, then use UpperArm Z to finish to full without clipping the clavicle.</small>
+      </details>
+<details>
+        <summary>Bone (Advanced)</summary>
+        <label>Bone (Blender order)</label>
+        <select id="boneSel"></select>
+        <div class="row">
+          <div style="flex:1">
+            <label>Rotate X (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
+          </div>
+          <div style="flex:1">
+            <label>Rotate Y (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
+          </div>
+        </div>
+        <label>Rotate Z (°)</label>
+        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
 
-    <div class="row">
-      <button id="zeroAll" class="mini">Zero All</button>
+        <div class="row" style="margin-top:6px">
+          <button id="zeroBone" class="mini">Zero Bone</button>
+          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+        </div>
+
+      </details>
+
+      <details>
+        <summary>Model</summary>
+        <div class="row">
+          <div style="flex:1">
+            <label>Model X (m)</label>
+            <input type="range" min="-2" max="2" step="0.01" value="0" id="mx">
+          </div>
+          <div style="flex:1">
+            <label>Model Z (m)</label>
+            <input type="range" min="-2" max="2" step="0.01" value="0.6" id="mz">
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Model Y (m)</label>
+            <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="my">
+          </div>
+          <div style="flex:1">
+            <label>Scale (%)</label>
+            <input type="range" min="40" max="200" step="1" value="125" id="ms">
+          </div>
+        </div>
+        <label>Yaw (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="myaw">
+        <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
+      </details>
+
+      <label>Event Log</label>
+      <pre id="log"></pre>
     </div>
   </div>
-  <div id="log"></div>
-</div>
 
-<script type="module">
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+  <div class="modal" id="romModal" aria-modal="true" role="dialog">
+    <div class="top">
+      <h4>ROM Reference</h4>
+      <button class="x" id="romClose" aria-label="Close">✕</button>
+    </div>
+    <div class="body" id="romBody">
+      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
+      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
+      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
+      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
+      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
+      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
+      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
+    </div>
+  </div>
 
-// ===== scene =====
-const canvas = document.getElementById('canvas');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
+  <div id="msg">Loading…</div>
+  <canvas id="c"></canvas>
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b1220);
+  <script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+  import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 200);
-camera.position.set(0.9, 1.5, 2.3);
+  /* ===== UI ===== */
+  const msg = document.getElementById("msg");
+  const logEl = document.getElementById("log");
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-const hemi = new THREE.HemisphereLight(0xffffff, 0x223355, 0.6);
-scene.add(hemi);
-const dir = new THREE.DirectionalLight(0xffffff, 1.0);
-dir.position.set(2,4,3);
-dir.castShadow = true;
-scene.add(dir);
+  const panel = document.getElementById("panel");
+  const dragbar = document.getElementById("dragbar");
+  const romBtn = document.getElementById("romBtn");
+  const romModal = document.getElementById("romModal");
+  const romClose = document.getElementById("romClose");
 
-const grid = new THREE.GridHelper(10, 10, 0x234, 0x123);
-grid.material.opacity = 0.25; grid.material.transparent = true;
-scene.add(grid);
+  const segUpper = document.getElementById("segUpper");
+  const segLower = document.getElementById("segLower");
 
-window.addEventListener('resize', ()=>{
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  const actionSel = document.getElementById("actionSel");
+  const actionDeg = document.getElementById("actionDeg");
+  const pairLabel = document.getElementById("pairLabel");
+  const zeroAll = document.getElementById("zeroAll");
+
+  // === Shoulder Flexion Manual Tuner (UI handles) ===
+  const shFlexManual = document.getElementById('shFlexManual');
+  const shFlexSideSeg = document.getElementById('shFlexSideSeg');
+  const shFlexSideL = document.getElementById('shFlexSideL');
+  const shFlexSideR = document.getElementById('shFlexSideR');
+  const shFlexVal = document.getElementById('shFlexVal');
+  const shUX = document.getElementById('shUX');
+  const shUY = document.getElementById('shUY');
+  const shUZ = document.getElementById('shUZ');
+  const shFlexReset = document.getElementById('shFlexReset');
+  const shFlexHide = document.getElementById('shFlexHide');
+
+  const SH_FLEX_MAN = {
+    side: 'L',
+    vals: { L:{flex:0,x:0,y:0,z:25}, R:{flex:0,x:0,y:0,z:25} },
+    show(){ shFlexManual.style.display = 'block'; shFlexManual.open = true; },
+    hide(){ shFlexManual.style.display = 'none'; shFlexManual.open = false; },
+    setSide(s){ this.side = s; shFlexSideL.classList.toggle('on', s==='L'); shFlexSideR.classList.toggle('on', s==='R'); this.syncToUI(); },
+    syncToUI(){
+      const v = this.vals[this.side];
+      shFlexVal.value = String(v.flex);
+      shUX.value = String(v.x);
+      shUY.value = String(v.y);
+      shUZ.value = String(v.z);
+    },
+    readFromUI(){
+      const v = this.vals[this.side];
+      v.flex = parseInt(shFlexVal.value||'0',10);
+      v.x = parseInt(shUX.value||'0',10);
+      v.y = parseInt(shUY.value||'0',10);
+      v.z = parseInt(shUZ.value||'0',10);
+    }
+  };
+
+
+  const boneSel = document.getElementById("boneSel");
+  const rx = document.getElementById("rx");
+  const ry = document.getElementById("ry");
+  const rz = document.getElementById("rz");
+  const zeroBone = document.getElementById("zeroBone");
+
+  const mx = document.getElementById("mx");
+  const my = document.getElementById("my");
+  const mz = document.getElementById("mz");
+  const ms = document.getElementById("ms");
+  const myaw = document.getElementById("myaw");
+  const resetModel = document.getElementById("resetModel");
+
+  /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
+  const COLLIM = {
+    enabled: false,
+    // existing
+    trunkLatLMax: 30,
+    trunkLatRMax: 30,
+    // NEW — per your request
+    cervRotLMax: 80,   // Cervical rotation L
+    cervRotRMax: 80,   // Cervical rotation R
+    shExtLMax: 60,     // Shoulder extension L
+    shExtRMax: 60,     // Shoulder extension R
+    shAddLMax: 30,     // Shoulder adduction L
+    shAddRMax: 30,     // Shoulder adduction R
+    elExtLMax: 10,     // Elbow extension L
+    elExtRMax: 10,     // Elbow extension R
+    wrSupLMax: 95,     // Wrist supination L
+    wrSupRMax: 95,     // Wrist supination R
+        // NEW caps — Shoulder Flexion & Abduction
+    shFlexLMax: 170,
+    shFlexRMax: 170,
+    shAbdLMax: 170,
+    shAbdRMax: 170,
+    load(){
+      try{
+        const raw = localStorage.getItem('rometrics_collim');
+        if(!raw) return;
+        const o = JSON.parse(raw);
+        Object.keys(this).forEach(k=>{ if(k!=='enabled'&&k!=='load'&&k!=='save') if(typeof o[k]==='number') this[k]=o[k]; });
+      }catch(e){}
+    },
+    save(){
+      try{
+        const o={}; Object.keys(this).forEach(k=>{ if(typeof this[k]==='number') o[k]=this[k]; });
+        localStorage.setItem('rometrics_collim', JSON.stringify(o));
+      }catch(e){}
+    }
+  };
+  COLLIM.load();
+
+  function capFor(action){
+    if(!COLLIM.enabled || !action) return null; // no cap
+    const { key, sign } = action; // sign: +1 or -1
+    // Cervical rotation L/R
+    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    if (/^sh_fe_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (sign > 0) { // Flexion
+        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      }
+    }
+
+    // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
+    if (/^sh_aa_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (isLeft) {
+        // Left: + = Abduction, − = Adduction (normal)
+        return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+      } else {
+        // Right (your UI labels flipped): + = Adduction, − = Abduction
+        return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+      }
+    }
+    // Elbow Flex/Ext → cap extension only (sign -1)
+    if(/^el_fe_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+    }
+    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
+    if(/^wr_ps_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
+    }
+    // Trunk lateral (existing)
+    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    return null;
+  }
+
+  const antiBox = document.getElementById('antiBox');
+  if (antiBox){
+    antiBox.checked = COLLIM.enabled;
+    antiBox.addEventListener('click', (e)=>{
+      if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
+      COLLIM.enabled = !!antiBox.checked;
+      log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
+    });
+  }
+
+  /* ===== Draggable panel ===== */
+  (function(){
+    let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
+    const onDown = (e)=>{ dragging=true; sx=e.clientX; sy=e.clientY;
+      const r = panel.getBoundingClientRect();
+      startLeft = r.left; startTop = r.top;
+      e.preventDefault();
+    };
+    const onMove = (e)=>{ if(!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      panel.style.left = Math.max(8, startLeft + dx) + "px";
+      panel.style.top = Math.max(8, startTop + dy) + "px";
+    };
+    const onUp = ()=>{ dragging = false; };
+    dragbar.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  })();
+
+  /* ===== Three setup ===== */
+  const canvas = document.getElementById("c");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(devicePixelRatio);
   renderer.setSize(innerWidth, innerHeight);
-});
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-// ===== ui =====
-const logEl = document.getElementById('log');
-function log(m, cls){ const span=document.createElement('div'); span.textContent=m; if(cls) span.className=cls; logEl.appendChild(span); logEl.scrollTop=logEl.scrollHeight; }
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1220);
 
-const actionSel = document.getElementById('actionSel');
-const actionDeg = document.getElementById('actionDeg');
-const pairLabel = document.getElementById('pairLabel');
-const zeroAll   = document.getElementById('zeroAll');
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+  camera.position.set(1.6, 1.6, 3.2);
 
-const modelUrl  = document.getElementById('modelUrl');
-const modelLoad = document.getElementById('modelLoad');
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 0.6; controls.maxDistance = 6;
+  controls.target.set(0,1.1,0);
 
-const shFlexManual = document.getElementById('shFlexManual');
-const shFlexSideL  = document.getElementById('shFlexSideL');
-const shFlexSideR  = document.getElementById('shFlexSideR');
-const shFlexVal    = document.getElementById('shFlexVal');
-const shUX         = document.getElementById('shUX');
-const shUY         = document.getElementById('shUY');
-const shUZ         = document.getElementById('shUZ');
-const shFlexReset  = document.getElementById('shFlexReset');
-const shFlexHide   = document.getElementById('shFlexHide');
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
+  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  key.position.set(2.5,4,2.5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048);
+  key.shadow.camera.near = 0.1; key.shadow.camera.far = 15;
+  key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+  scene.add(key);
 
-// ===== model loading =====
-function resolveModelUrl(){
-  try{
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity: 0.45 }));
+  ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+
+  /* ===== Loader (UNCHANGED loading flow) ===== */
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
+  const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
+
+  let model = null, skeleton = null;
+  const initialBoneRot = new Map();
+
+  function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-  }catch(e){}
-  return "assets/Roma_ROMetrics.glb";
-}
+    return "../assets/Roma_ROMetrics.glb?v=1";
+  }
+  let MODEL_URL = pickModelUrl();
 
-let model=null, skeleton=null;
-const bindQ = new Map();
+  function groundSnap(){
+    if (!model) return;
+    const box = new THREE.Box3().setFromObject(model);
+    const minY = box.min.y;
+    if (isFinite(minY)) model.position.y -= minY;
+  }
 
-function clearModel(){
-  if (model) scene.remove(model);
-  model=null; skeleton=null; bindQ.clear();
-}
+  /* ===== Blender order for Advanced menu ===== */
+  const BLENDER_ORDER = [
+    "pelvis",
+    "spine01","spine02","spine03",
+    "neck","head",
+    "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
+    "thumb01_L","thumb02_L","thumb03_L",
+    "index00_L","index01_L","index02_L","index03_L",
+    "middle00_L","middle01_L","middle02_L","middle03_L",
+    "ring00_L","ring01_L","ring02_L","ring03_L",
+    "pinky00_L","pinky01_L","pinky02_L","pinky03_L",
+    "clavicle_R","upperarm_R","upperarm_twist_R","lowerarm_R","lowerarm_twist_R","hand_R",
+    "thumb01_R","thumb02_R","thumb03_R",
+    "index00_R","index01_R","index02_R","index03_R",
+    "middle00_R","middle01_R","middle02_R","middle03_R",
+    "ring00_R","ring01_R","ring02_R","ring03_R",
+    "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
+    "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
+    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
+  ];
+  const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
 
-function rememberBindPose(root){
-  root.traverse(o=>{
-    if (o.isBone) bindQ.set(o.name, o.quaternion.clone());
-    if (o.isSkinnedMesh && !skeleton) skeleton=o.skeleton;
+  /* ===== Populate bones (sorted) ===== */
+  function populateBones(){
+    boneSel.innerHTML = "";
+    if (!skeleton) {
+      const o = document.createElement("option");
+      o.value = ""; o.textContent = "(No skeleton)";
+      boneSel.appendChild(o);
+      return;
+    }
+    const bones = [...skeleton.bones].sort((a,b)=>{
+      const ai = ORDER_INDEX[(a.name||"").toLowerCase()];
+      const bi = ORDER_INDEX[(b.name||"").toLowerCase()];
+      const av = (ai===undefined) ? 9999 : ai;
+      const bv = (bi===undefined) ? 9999 : bi;
+      if (av!==bv) return av-bv;
+      return (a.name||"").localeCompare(b.name||"");
+    });
+
+    bones.forEach((b,i)=>{
+      const o = document.createElement("option");
+      o.value = String(skeleton.bones.indexOf(b));
+      o.textContent = b.name || `Bone ${i}`;
+      boneSel.appendChild(o);
+      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+    });
+    if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    setBoneRotationFromUI();
+  }
+  function setBoneRotationFromUI(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
+    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
+    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
+    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
+    b.quaternion.copy(qBase).multiply(qDelta);
+  }
+  function zeroSelectedBone(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const qb = initialBoneRot.get(b);
+    if (qb) b.quaternion.copy(qb);
+    rx.value="0"; ry.value="0"; rz.value="0";
+  }
+  function resetAllBonesToInitial(){
+    if (!skeleton) return;
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+    JOINT_BIND.forEach(obj=>{
+      if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
+    });
+  }
+
+  /* ===== Rig profile & axis ===== */
+  let RIG_PROFILE = 'generic';
+  function detectRigProfile(){
+    const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
+    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
+    else RIG_PROFILE = 'generic';
+    log(`Rig profile: ${RIG_PROFILE}`);
+  }
+  function axisFor(profile, key, defAxis){
+    if (profile==='mixamo'){
+      const map = {
+        sh_fe_l:'x', sh_fe_r:'x',
+        sh_aa_l:'z', sh_aa_r:'z',
+        sh_irer_l:'y', sh_irer_r:'y',
+        el_fe_l:'x', el_fe_r:'x',
+        fa_ps_l:'y', fa_ps_r:'y',
+        wr_ps_l:'y', wr_ps_r:'y',
+        wr_fe_l:'x', wr_fe_r:'x',
+        wr_ru_l:'z', wr_ru_r:'z',
+        hip_fe_l:'x', hip_fe_r:'x',
+        hip_aa_l:'z', hip_aa_r:'z',
+        hip_irer_l:'y', hip_irer_r:'y',
+        knee_fe_l:'x', knee_fe_r:'x',
+        ankle_dfpf_l:'x', ankle_dfpf_r:'x',
+        foot_invev_l:'z', foot_invev_r:'z',
+        trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
+        cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
+      };
+      if (key in map) return map[key];
+    }
+    return defAxis;
+  }
+
+  /* ===== Bone finding ===== */
+  const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
+  function sideRegex(side){
+    if (!side) return [/.*/];
+    return side==='l'
+      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
+  }
+  function findBoneBy(cfg){
+    if (!skeleton) return null;
+    const names = skeleton.bones.map(b=>b.name.toLowerCase());
+    const sideREs = sideRegex(cfg.side);
+
+    const HINTS = cfg.hints || [];
+    const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
+                      (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
+    const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
+
+    for (const cand of tryList){
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (cfg.side && !sideREs.some(r=>r.test(names[i])) ) continue;
+        if (cand.test(names[i])) return skeleton.bones[i];
+      }
+    }
+    if (!cfg.side){
+      for (const cand of tryList){
+        for (let i=0;i<names.length;i++){
+          if (EXCLUDE.test(names[i])) continue;
+          if (cand.test(names[i])) return skeleton.bones[i];
+        }
+      }
+    }
+    return null;
+  }
+
+  /* ===== DRUJ proxy (kept) ===== */
+  const DRUJ = { l:null, r:null };
+  function ensureDRUJProxy(side){
+    if (!skeleton) return null;
+    if (DRUJ[side]) return DRUJ[side];
+    const handCfg = { side, hints:[/hand|wrist/i] };
+    let hand = findBoneBy(handCfg);
+    if (!hand) return null;
+    const pivot = new THREE.Object3D();
+    const parent = hand.parent; if (!parent) return null;
+    parent.add(pivot);
+    pivot.position.copy(hand.position);
+    pivot.quaternion.copy(hand.quaternion);
+    pivot.scale.copy(hand.scale);
+    pivot.add(hand);
+    hand.position.set(0,0,0); hand.quaternion.identity(); hand.scale.set(1,1,1);
+    initialBoneRot.set(pivot, pivot.quaternion.clone());
+    DRUJ[side] = { pivot };
+    log(`Created DRUJ proxy for ${side.toUpperCase()}`);
+    return DRUJ[side];
+  }
+
+  const JOINT_BIND = new Map();
+  function resolveBind(key,cfg){
+    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
+    if (/^trunk_/.test(key)) {
+      const b = getExactBoneByName('spine01');
+      if (b) {
+        const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
+        const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+        const obj = { bone: b, qBind, axis };
+        JOINT_BIND.set(key, obj);
+        log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
+        return obj;
+      }
+    }
+    let bone = findBoneBy({...cfg, key});
+    if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
+    if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
+    if (!bone) { log(`No bind for ${key}`); return null; }
+    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
+    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
+    const axis = axisFor(RIG_PROFILE, key, baseAxis);
+    const obj = {bone, qBind, axis};
+    JOINT_BIND.set(key,obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
+    return obj;
+  }
+
+  function freezeBindBaseFor(key,cfg){
+    const b = resolveBind(key,cfg);
+    if (!b) return;
+    b.qBind = b.bone.quaternion.clone();
+  }
+/* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
+const SH_FLEX_RHYTHM = {
+  enabled: true,
+  scapRatio: 0.33,   // ~1/3 rule
+  clavRatio: 0.18,   // small clav posterior rot assist
+  apply(side,deg){
+    if (!model) return;
+    if (deg <= 0) return; // FLEX only (A choice)
+
+    const hum = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
+    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
+    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
+    if(!hum || !scap || !clav) return;
+
+    const d2r = THREE.MathUtils.degToRad;
+    /* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
+const SH_FLEX_RHYTHM = {
+  enabled: true,
+  scapRatio: 0.33,   // ~1/3 rule
+  clavRatio: 0.18,   // small clav posterior rot assist
+  // Fallbacks (used only if SH_FLEX_Z isn't present)
+  splitDeg: 100,
+  zFinishL: 25,
+  zFinishR: 25,
+
+  apply(side,deg){
+    if (!model) return;
+    if (deg <= 0) return; // FLEX only
+
+    const hum  = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
+    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
+    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
+    if(!hum || !scap || !clav) return;
+
+    const d2r = THREE.MathUtils.degToRad;
+
+    // --- your existing scap/clav rhythm math goes here ---
+    // (keep whatever you already do for scap/clav based on deg, scapRatio, clavRatio)
+    // e.g., scap.quaternion.multiply(...), clav.quaternion.multiply(...)
+
+    // === Add UpperArm Z "finish" beyond splitDeg (your discovery) ===
+    // Prefer values from SH_FLEX_Z if present; otherwise use fallbacks above.
+    const split   = (typeof SH_FLEX_Z?.splitDeg === 'number') ? SH_FLEX_Z.splitDeg : this.splitDeg;
+    const zAtFull = (typeof SH_FLEX_Z?.zL === 'number' && typeof SH_FLEX_Z?.zR === 'number')
+      ? (side === "L" ? SH_FLEX_Z.zL : SH_FLEX_Z.zR)
+      : (side === "L" ? this.zFinishL : this.zFinishR);
+
+    const over = Math.max(0, deg - split);
+    if (over > 0){
+      const fullFlex = 170;                 // adjust if your cap differs
+      const span = Math.max(1, fullFlex - split);
+      const zNowDeg = zAtFull * (over / span);     // 0→zAtFull as you go from split→full
+      const qZ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, d2r(zNowDeg), "XYZ"));
+      hum.quaternion.multiply(qZ);                 // rotate UpperArm around local Z
+    }
+  }
+};
+    // --- main GH flex is still controlled by applyPairAngle ---
+    // tuner only adds coupled contributions:
+
+    const scapDeg = deg * this.scapRatio;
+    const clavDeg = deg * this.clavRatio;
+
+    scap.rotation.z = d2r(scapDeg);
+    clav.rotation.y = d2r(clavDeg);
+  }
+};
+
+  function applyPairAngle(key,cfg,deg){
+    const bind = resolveBind(key,cfg); if (!bind) return;
+    const {bone, qBind, axis} = bind;
+    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
+    const e = new THREE.Euler(
+      axis==='x'?rad:0,
+      axis==='y'?rad:0,
+      axis==='z'?rad:0,
+      "XYZ"
+    );
+    const qDelta = new THREE.Quaternion().setFromEuler(e);
+    bone.quaternion.copy(qBind).multiply(qDelta);
+    // shoulder flex tuner coupling (flex only)
+if(key==="sh_fe_l") SH_FLEX_RHYTHM.apply("L",deg);
+if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
+  }
+
+  /* ===== Motions (paired configs; UI splits) ===== */
+  const UPPER = [
+    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
+    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
+    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
+
+    {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
+
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+
+    // ELBOW — fix so Flexion moves (150), Extension small (10)
+    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+
+    // REMOVED forearm entries from menu per your instruction
+
+    // Keep wrist PS (proxy) but we will relabel signs below
+    {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+
+    {key:'wr_fe_l',   pair:'Wrist L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-70,  max:80,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_fe_r',   pair:'Wrist R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-70,  max:80,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
+    {key:'wr_ru_l',   pair:'Wrist L — Radial / Ulnar Dev',       side:'l', plane:'frontal',   neutral:0, min:-40,  max:20,  hints:[/wrist|hand(?!.*thumb|.*index|.*.*ring|.*pinky)/i]},
+    {key:'wr_ru_r',   pair:'Wrist R — Radial / Ulnar Dev',       side:'r', plane:'frontal',   neutral:0, min:-40,  max:20,  hints:[/wrist|hand(?!.*thumb|.*index|.*.*ring|.*pinky)/i]},
+  ];
+
+  const LOWER = [
+    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
+    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
+    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+
+    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
+
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
+    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
+  ];
+
+  let CURRENT = UPPER;
+
+  function dirEntriesFromPair(cfg){
+    const absMin = Math.abs(cfg.min);
+    const maxPos = cfg.max;
+    const out = [];
+    const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
+
+    // Cervical — keep exact labels
+    if (cfg.key === 'cerv_fe'){
+      push('Cervical Flexion',  +1, maxPos);
+      push('Cervical Extension', -1, absMin);
+      return out;
+    }
+    if (cfg.key === 'cerv_lat'){
+      push('Cervical Lateral Flexion — Left', -1, absMin);
+      push('Cervical Lateral Flexion — Right',  +1, maxPos);
+      return out;
+    }
+    if (cfg.key === 'cerv_rot'){
+      push('Cervical Rotation — Right',  -1, absMin);
+      push('Cervical Rotation — Left', +1, maxPos);
+      return out;
+    }
+
+    // Shoulder Abd/Add — special-case Right side label flip you reported
+    if (cfg.key==='sh_aa_r'){
+      // On R side your rig behaves inverted; map + to Adduction label, - to Abduction
+      push('Shoulder R — Adduction', +1, maxPos);
+      push('Shoulder R — Abduction', -1, absMin);
+      return out;
+    }
+
+    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/_aa_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
+    } else if (/_irer_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+    } else if (cfg.key==='trunk_lat'){
+      push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), -1, absMin);
+    } else if (cfg.key==='trunk_rot'){
+      push(cfg.pair.replace(/—.*$/, '— Left Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Right Rotation'), -1, absMin);
+    } else if (/wr_ps_/.test(cfg.key)){
+      // SWAP LABELS per your report: + == PRONATION, - == SUPINATION
+      push(cfg.pair.replace(/—.*$/, '— Pronation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Supination'), -1, absMin);
+    } else if (/wr_fe_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/wr_ru_/.test(cfg.key)){
+      // SWAP LABELS per your report: + == RADIAL, - == ULNAR
+      push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), -1, absMin);
+    } else if (/ankle_dfpf_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
+    } else if (/foot_invev_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+    }
+    return out;
+  }
+
+  function buildSeparatedCatalog(list){
+    const cat = {};
+    const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat[grp].push(...entries); };
+    list.forEach(cfg=>{
+      if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
+      else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
+      else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
+      else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
+      // Forearm group intentionally NOT added (removed from UI)
+      else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
+      else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
+      else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
+      else if (/^ankle_/.test(cfg.key)) add('Ankle', dirEntriesFromPair(cfg));
+      else if (/^foot_/.test(cfg.key)) add('Foot', dirEntriesFromPair(cfg));
+    });
+    return cat;
+  }
+
+  let CURRENT_ACTION = null;
+  function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
+
+  function fillActionMenu(){
+    actionSel.innerHTML = "";
+    const ph = document.createElement("option");
+    ph.value = ""; ph.textContent = "(Select a motion…)";
+    actionSel.appendChild(ph);
+
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    const catalog = buildSeparatedCatalog(list);
+    Object.keys(catalog).forEach(group=>{
+      const og = document.createElement("optgroup"); og.label = group;
+      catalog[group].forEach(entry=>{
+        const opt = document.createElement("option");
+        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
+        opt.textContent = entry.label;
+        og.appendChild(opt);
+      });
+      actionSel.appendChild(og);
+    });
+
+    actionSel.value = "";
+    pairLabel.textContent = "Angle (°)";
+    actionDeg.disabled = true;
+    CURRENT_ACTION = null;
+  }
+
+  function syncActionUI(forceZero=false){
+    if (!CURRENT_ACTION){
+      actionDeg.disabled = true;
+      pairLabel.textContent = "Angle (°)";
+      return;
+    }
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+    actionDeg.min = "0";
+    actionDeg.max = String(CURRENT_ACTION.max);
+    if (forceZero) actionDeg.value = "0";
+    actionDeg.disabled = false;
+  }
+
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
+  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
+
+  // === Anatomic preset (preloaded) ===
+  const ANAT = { addL:-32, psL:-2, wpsL:-73 };
+  function applyAnatomicBaseline(){
+    setPair('sh_aa_l', ANAT.addL);
+    setPair('sh_aa_r', -ANAT.addL);
+    // keep tiny forearm PS baseline internally (even though menu hidden)
+    setPair('fa_ps_l', ANAT.psL);
+    setPair('fa_ps_r', -ANAT.psL);
+    setPair('wr_ps_l', ANAT.wpsL);
+    setPair('wr_ps_r', -ANAT.wpsL);
+    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
+  }
+
+  // Always return to anatomic when changing actions; then freeze bind
+  actionSel.addEventListener("change", ()=>{
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    CURRENT_ACTION = null;
+    const v = actionSel.value || "";
+    if (v.startsWith("sep:")){
+      const [, key, signStr, maxStr] = v.split(":");
+      const cfg = cfgFromKey(key);
+      CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
+      freezeBindBaseFor(key,cfg);
+
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
+      if (key==='sh_irer_l' || key==='sh_irer_r'){
+        const side = key.endsWith('_l') ? 'l' : 'r';
+        setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+      }
+
+      syncActionUI(true);
+      return;
+    }
+    syncActionUI(true);
   });
-}
 
-function getBone(name){ return model?.getObjectByName(name) || null; }
+  actionDeg.addEventListener("input", ()=>{
+    if (!CURRENT_ACTION) return;
+    let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
 
-const loader = new GLTFLoader();
-function loadModel(url){
-  const finalUrl = url || resolveModelUrl();
-  log(`[Model] Loading ${finalUrl} …`);
-  loader.load(finalUrl, (gltf)=>{
-    clearModel();
-    model = gltf.scene;
-    model.traverse(o=>{ if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} });
-    scene.add(model);
-    rememberBindPose(model);
-    log("[Model] Loaded.", "ok");
-    enableUI();
-  }, (xhr)=>{
-    const pct = xhr.lengthComputable ? Math.round((xhr.loaded/xhr.total)*100) : null;
-    if (pct!=null) log(`[Model] ${pct}%`);
-  }, (err)=>{
-    console.error(err);
-    log(`[Model] Load error → ${finalUrl}`, "err");
-  });
-}
-modelLoad.onclick = (e)=>{ e.preventDefault(); loadModel(modelUrl.value.trim()); };
+    // Apply anticollision caps based on joint/direction
+    const cap = capFor(CURRENT_ACTION);
+    if (typeof cap === 'number' && val > cap){
+      val = cap; actionDeg.value = String(val);
+      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
+    }
 
-// ===== actions =====
-let CURRENT_ACTION=null;
+    const signed = CURRENT_ACTION.sign * val;
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-actionSel.addEventListener('change', ()=>{
-  CURRENT_ACTION = null;
-  const v = actionSel.value || "";
-  if (!v){ actionDeg.disabled=true; hideTuner(); return; }
-  const parts = v.split(":"); const key = parts[1];
-  CURRENT_ACTION = { key };
-  actionDeg.disabled = false;
-  actionDeg.value = "0";
-  pairLabel.textContent = "Angle (°)";
-  if (key==='sh_fe_l' || key==='sh_fe_r'){ setSide(key.endsWith('_l')?'L':'R'); showTuner(); } else hideTuner();
-  applyFromUI();
-});
-
-actionDeg.addEventListener('input', applyFromUI);
-
-function enableUI(){ actionSel.disabled=false; }
-
-function resetAll(){
-  if (!model) return;
-  model.traverse(o=>{
-    if (o.isBone){
-      const q = bindQ.get(o.name);
-      if (q) o.quaternion.copy(q);
+    
+    // keep manual tuner flex in sync when editing shoulder flex directly
+    if (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'L' : 'R';
+      SH_FLEX_MAN.side = side;
+      SH_FLEX_MAN.vals[side].flex = Math.abs(signed);
+      _syncing = true; shFlexVal.value = String(SH_FLEX_MAN.vals[side].flex); _syncing = false;
+      // re-apply manual XYZ finish
+      applyUpperarmXYZ(side, SH_FLEX_MAN.vals[side].x, SH_FLEX_MAN.vals[side].y, SH_FLEX_MAN.vals[side].z);
+    }
+// Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
+    if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      // Keep elbow flexed (stability)
+      setPair(`el_fe_${side}`, 90);
+      // Couple small Abd/Add with rotation: IR → toward midline (Add), ER → away (Abd)
+      const amt = Math.min(30, Math.abs(signed)*0.3); // up to 30° coupling
+      setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
     }
   });
-}
 
-function applyFromUI(){
-  if (!CURRENT_ACTION || !model) return;
-  resetAll();
-  const key = CURRENT_ACTION.key;
-  const deg = parseInt(actionDeg.value||"0",10);
-  if (key==='sh_fe_l' || key==='sh_fe_r'){
-    applyShoulderFlex(key, deg);
+  zeroAll.onclick = ()=>{
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    pairLabel.textContent = "Angle (°)";
+    log("All motions zeroed → returned to anatomic baseline.");
+  };
+  // Also hide manual shoulder tuner
+  SH_FLEX_MAN.hide();
+
+
+  /* ===== Model load (unchanged) ===== */
+  function clearModel(){
+    if (model) scene.remove(model);
+    model = null; skeleton = null;
+    initialBoneRot.clear(); JOINT_BIND.clear();
+    boneSel.innerHTML = "";
+    DRUJ.l = DRUJ.r = null;
   }
-  if (isTunerVisible()){
-    const {x,y,z} = SH_FLEX_MAN.vals[SH_FLEX_MAN.side];
-    applyUpperarmXYZ(SH_FLEX_MAN.side, x, y, z);
+  function loadModel(){
+    msg.textContent = "Loading…"; log("Loading model...");
+    clearModel();
+    loader.load(
+      MODEL_URL,
+      (gltf) => {
+        model = gltf.scene;
+        model.traverse(o => {
+          if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+          if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+        });
+        scene.add(model);
+        groundSnap();
+        msg.textContent = "✅ Model loaded";
+        populateBones();
+        detectRigProfile();
+        fillActionMenu();
+        // Start in anatomic every time
+        resetAllBonesToInitial();
+        applyAnatomicBaseline();
+        COLLIM.enabled = true;
+        if (antiBox) antiBox.checked = true;
+        log("Anticollision default ON.");
+        log("Anatomic baseline applied on load.");
+      },
+      (xhr) => { 
+        const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
+        msg.textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
+      },
+      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
+    );
   }
-}
+  loadModel();
 
-const FLEX_AXIS='x'; // change if your rig differs
-function applyShoulderFlex(key, deg){
-  const side = key.endsWith('_l') ? 'L' : 'R';
-  const humName = side==='L' ? 'upperarm_L' : 'upperarm_R';
-  const hum = getBone(humName); if (!hum){ log(`[Flex] Missing ${humName}`, "err"); return; }
-  const qBind = bindQ.get(humName) || hum.quaternion.clone();
-  const rad = THREE.MathUtils.degToRad(deg);
-  const e = new THREE.Euler(
-    FLEX_AXIS==='x'?rad:0,
-    FLEX_AXIS==='y'?rad:0,
-    FLEX_AXIS==='z'?rad:0,
-    "XYZ"
-  );
-  const q = new THREE.Quaternion().setFromEuler(e);
-  hum.quaternion.copy(qBind).multiply(q);
-}
+  /* ===== Advanced controls wiring ===== */
+  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
+  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
+    if (!model) return;
+    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+    model.scale.setScalar(parseInt(ms.value,10)/100);
+    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+  }));
+  zeroBone.onclick = zeroSelectedBone;
+  resetModel.onclick = ()=>{
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
+    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
+    groundSnap();
+  };
 
-function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
-  const humName = side==='L' ? 'upperarm_L' : 'upperarm_R';
-  const hum = getBone(humName); if (!hum) return;
-  const ex = THREE.MathUtils.degToRad(xDeg||0);
-  const ey = THREE.MathUtils.degToRad(yDeg||0);
-  const ez = THREE.MathUtils.degToRad(zDeg||0);
-  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-  hum.quaternion.multiply(q);
-}
+  /* ===== Paired-joint helpers ===== */
+  function setPair(key,deg){
+    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
+    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
+    const cfg = cfgFromKey(key);
+    if (cfg) applyPairAngle(key,cfg,deg);
+  }
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
+  function rotateSideWristPS(side, deg){
+    if (!skeleton) return;
+    let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
+    if (!wrist){
+      wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
+    }
 
-// ===== tuner =====
-const SH_FLEX_MAN = {
-  side: 'L',
-  vals: { L:{flex:0,x:0,y:0,z:25}, R:{flex:0,x:0,y:0,z:25} }
-};
+  // === Apply UpperArm manual XYZ after flex (relative to bind OR current) ===
+  function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
+    if (!skeleton || !model) return;
+    const name = (side==='L') ? 'upperarm_L' : 'upperarm_R';
+    const bone = getExactBoneByName(name) || findBoneBy({ side: side.toLowerCase(), hints:[/upperarm|humerus|shoulder/i], key: side==='L'?'sh_fe_l':'sh_fe_r' });
+    if (!bone) { log(`No upperarm bone for ${side}`); return; }
 
-function setSide(s){
-  SH_FLEX_MAN.side=s;
-  shFlexSideL.classList.toggle('on', s==='L');
-  shFlexSideR.classList.toggle('on', s==='R');
-  syncTuner();
-}
-function syncTuner(){
-  const v = SH_FLEX_MAN.vals[SH_FLEX_MAN.side];
-  shFlexVal.value=String(v.flex);
-  shUX.value=String(v.x);
-  shUY.value=String(v.y);
-  shUZ.value=String(v.z);
-}
-function readTuner(){
-  const v = SH_FLEX_MAN.vals[SH_FLEX_MAN.side];
-  v.flex = parseInt(shFlexVal.value||'0',10);
-  v.x    = parseInt(shUX.value||'0',10);
-  v.y    = parseInt(shUY.value||'0',10);
-  v.z    = parseInt(shUZ.value||'0',10);
-}
-function showTuner(){ shFlexManual.style.display='block'; shFlexManual.open=true; syncTuner(); }
-function hideTuner(){ shFlexManual.style.display='none'; shFlexManual.open=false; }
-function isTunerVisible(){ return shFlexManual.style.display!=='none'; }
+  // === Shoulder Flex Manual Tuner wiring ===
+  shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); };
+  shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); };
 
-shFlexSideL.onclick = (e)=>{ e.preventDefault(); setSide('L'); applyManual(); };
-shFlexSideR.onclick = (e)=>{ e.preventDefault(); setSide('R'); applyManual(); };
-[shFlexVal, shUX, shUY, shUZ].forEach(el=> el.addEventListener('input', applyManual));
-shFlexReset.onclick = (e)=>{ e.preventDefault(); const s=SH_FLEX_MAN.side; SH_FLEX_MAN.vals[s]={flex:0,x:0,y:0,z:25}; syncTuner(); applyManual(); };
-shFlexHide.onclick  = (e)=>{ e.preventDefault(); hideTuner(); };
+  let _syncing = false;
+  function applyManualFlexAndXYZ(){
+    if (!CURRENT_ACTION) return;
+    const side = SH_FLEX_MAN.side;
+    const vals = SH_FLEX_MAN.vals[side];
+    // 1) Drive main flex pair for that side
+    const key = (side==='L') ? 'sh_fe_l' : 'sh_fe_r';
+    setPair(key, vals.flex);
+    // keep the UI slider in sync if shoulder flex is the active action
+    if (!_syncing && (CURRENT_ACTION.key===key)){
+      _syncing = true
 
-function applyManual(){
-  if (!model) return;
-  readTuner();
-  // drive main pair
-  const side = SH_FLEX_MAN.side;
-  const key  = side==='L' ? 'sh_fe_l' : 'sh_fe_r';
-  actionSel.value = `sep:${key}`;
-  actionDeg.disabled=false;
-  actionDeg.value = String(SH_FLEX_MAN.vals[side].flex);
-  applyFromUI();
-}
+      actionDeg.value = String(vals.flex);
+      _syncing = false;
+    }
+    // 2) Apply manual upperarm XYZ on top
+    applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
+  }
 
-zeroAll.onclick = ()=>{
-  resetAll();
-  actionSel.value=""; actionDeg.value="0"; actionDeg.disabled=true;
-  hideTuner();
-  log("[Reset] Returned to bind pose.");
-};
+  [shFlexVal, shUX, shUY, shUZ].forEach(el=>{
+    el.addEventListener('input', ()=>{ SH_FLEX_MAN.readFromUI(); applyManualFlexAndXYZ(); });
+  });
 
-// ===== start =====
-loadModel(resolveModelUrl());
+  shFlexReset.onclick = (e)=>{
+    e.preventDefault();
+    const s = SH_FLEX_MAN.side;
+    SH_FLEX_MAN.vals[s] = { flex:0, x:0, y:0, z:25 };
+    SH_FLEX_MAN.syncToUI();
+    applyManualFlexAndXYZ();
+  };
+  shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); };
 
-// ===== loop =====
-const clock = new THREE.Clock();
-renderer.setAnimationLoop(()=>{
-  const t = clock.getElapsedTime();
-  dir.position.x = Math.cos(t*0.2)*3;
-  dir.position.z = Math.sin(t*0.2)*3;
-  renderer.render(scene, camera);
-});
-</script>
+    // multiply a post-flex delta around local axes
+    const ex = THREE.MathUtils.degToRad(xDeg||0);
+    const ey = THREE.MathUtils.degToRad(yDeg||0);
+    const ez = THREE.MathUtils.degToRad(zDeg||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
+    bone.quaternion.multiply(qDelta);
+  }
+
+    if (!wrist){ log(`No wrist bone for ${side}`); return; }
+    const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
+    const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
+    const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
+    const rad = THREE.MathUtils.degToRad(deg);
+    const e = new THREE.Euler(0,0,0,'XYZ');
+    if (axis==='x') e.set(rad,0,0,'XYZ');
+    if (axis==='y') e.set(0,rad,0,'XYZ');
+    if (axis==='z') e.set(0,0,rad,'XYZ');
+    wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
+    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
+  }
+
+  /* ===== Hidden Anatomic Tuner (dev-only) ===== */
+  let tunerEl = null, tunerVisible = false;
+  function ensureAnatomicTuner(){
+    if (tunerEl) return tunerEl;
+    tunerEl = document.createElement('div');
+    Object.assign(tunerEl.style,{position:'fixed', right:'16px', top:'16px', zIndex:40, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
+    tunerEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <strong style="font-size:13px;">Anatomic Position Tuner (dev)</strong>
+        <button id="anatX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
+      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+        <input id="addL" type="number" step="1">
+        <input id="addR" type="number" step="1" disabled>
+      </div>
+      <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
+      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+        <input id="psL" type="number" step="1">
+        <input id="psR" type="number" step="1" disabled>
+      </div>
+      <label style="display:block;opacity:.8; margin-top:8px;">Wrist PS (°)</label>
+      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+        <input id="wpsL" type="number" step="1">
+        <input id="wpsR" type="number" step="1" disabled>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button id="anatApply" class="mini" style="flex:1">Apply</button>
+        <button id="anatZero"  class="mini">Zero</button>
+      </div>
+    `;
+    document.body.appendChild(tunerEl);
+    const addL=tunerEl.querySelector('#addL'), addR=tunerEl.querySelector('#addR');
+    const psL =tunerEl.querySelector('#psL'),  psR =tunerEl.querySelector('#psR');
+    const wpsL=tunerEl.querySelector('#wpsL'), wpsR=tunerEl.querySelector('#wpsR');
+    function preload(){ addL.value=String(ANAT.addL); psL.value=String(ANAT.psL); wpsL.value=String(ANAT.wpsL); addR.value=String(-ANAT.addL); psR.value=String(-ANAT.psL); wpsR.value=String(-ANAT.wpsL); }
+    function syncRight(){ addR.value=String(-(+addL.value||0)); psR.value=String(-( +psL.value||0)); wpsR.value=String(-( +wpsL.value||0)); }
+    preload(); addL.addEventListener('input', syncRight); psL.addEventListener('input', syncRight); wpsL.addEventListener('input', syncRight);
+    tunerEl.querySelector('#anatApply').onclick = ()=>{ ANAT.addL=+addL.value||0; ANAT.psL=+psL.value||0; ANAT.wpsL=+wpsL.value||0; applyAnatomicBaseline(); };
+    tunerEl.querySelector('#anatZero').onclick  = ()=>{ addL.value = psL.value = wpsL.value = '0'; syncRight(); ANAT.addL = ANAT.psL = ANAT.wpsL = 0; applyAnatomicBaseline(); };
+    tunerEl.querySelector('#anatX').onclick = ()=>{ tunerEl.style.display='none'; tunerVisible=false; };
+    return tunerEl;
+  }
+  function toggleTuner(show){ ensureAnatomicTuner(); tunerVisible = (show===undefined) ? !tunerVisible : !!show; tunerEl.style.display = tunerVisible ? 'block' : 'none'; }
+
+  /* ===== Collision Tuner (dev-only) ===== */
+  let colTunerEl = null, colTunerVisible = false;
+  function ensureCollisionTuner(){
+    if (colTunerEl) return colTunerEl;
+    colTunerEl = document.createElement('div');
+    Object.assign(colTunerEl.style,{position:'fixed', right:'16px', top:'220px', zIndex:41, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'340px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
+    colTunerEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <strong style="font-size:13px;">Collision Tuner (dev)</strong>
+        <span class="badge">Safe ROM Line</span>
+        <button id="colX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <div class="rom-row"><div class="rom-head">Trunk Lat — Left max (°)</div><div style="flex:1"><input id="colTrunkLatL" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
+      <div class="rom-row"><div class="rom-head">Trunk Lat — Right max (°)</div><div style="flex:1"><input id="colTrunkLatR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
+      <hr style="border-color:#1c2941;opacity:.3;">
+      <div class="rom-row"><div class="rom-head">Cervical Rot — Left max (°)</div><div style="flex:1"><input id="cervL" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
+      <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
+      <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
+      <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
+            <div class="rom-row">
+        <div class="rom-head">Shoulder Flex — L/R max (°)</div>
+        <div style="flex:1;display:flex;gap:6px">
+          <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
+          <input id="shFlexR" type="number" step="1" min="0" max="180" style="width:100%">
+        </div>
+      </div>
+      <div class="rom-row">
+        <div class="rom-head">Shoulder Abd — L/R max (°)</div>
+        <div style="flex:1;display:flex;gap:6px">
+          <input id="shAbdL" type="number" step="1" min="0" max="180" style="width:100%">
+          <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
+        </div>
+      </div>
+      <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
+      <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
+      <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
+      <div style="opacity:.7;margin-top:6px;">Tip: with the student checkbox <em>Anticollision</em> ON, these caps are enforced. Shift+Click the checkbox to reopen this tuner.</div>
+    `;
+    document.body.appendChild(colTunerEl);
+    const $ = (id)=>colTunerEl.querySelector(id);
+    const preload = ()=>{
+      $('#colTrunkLatL').value = String(COLLIM.trunkLatLMax);
+      $('#colTrunkLatR').value = String(COLLIM.trunkLatRMax);
+      $('#cervL').value = String(COLLIM.cervRotLMax);
+      $('#cervR').value = String(COLLIM.cervRotRMax);
+      $('#shExtL').value = String(COLLIM.shExtLMax);
+      $('#shExtR').value = String(COLLIM.shExtRMax);
+      $('#shAddL').value = String(COLLIM.shAddLMax);
+      $('#shAddR').value = String(COLLIM.shAddRMax);
+      $('#elExtL').value = String(COLLIM.elExtLMax);
+      $('#elExtR').value = String(COLLIM.elExtRMax);
+      $('#wrSupL').value = String(COLLIM.wrSupLMax);
+      $('#wrSupR').value = String(COLLIM.wrSupRMax);
+      $('#shFlexL').value = String(COLLIM.shFlexLMax);
+      $('#shFlexR').value = String(COLLIM.shFlexRMax);
+      $('#shAbdL').value  = String(COLLIM.shAbdLMax);
+      $('#shAbdR').value  = String(COLLIM.shAbdRMax);
+    }; preload();
+
+    colTunerEl.querySelector('#colApply').onclick = ()=>{
+      const vals = {
+        trunkLatLMax:+$('#colTrunkLatL').value||0,
+        trunkLatRMax:+$('#colTrunkLatR').value||0,
+        cervRotLMax:+$('#cervL').value||0,
+        cervRotRMax:+$('#cervR').value||0,
+        shExtLMax:+$('#shExtL').value||0,
+        shExtRMax:+$('#shExtR').value||0,
+        shAddLMax:+$('#shAddL').value||0,
+        shAddRMax:+$('#shAddR').value||0,
+        shFlexLMax:+$('#shFlexL').value||0,
+        shFlexRMax:+$('#shFlexR').value||0,
+        shAbdLMax:+$('#shAbdL').value||0,
+        shAbdRMax:+$('#shAbdR').value||0,
+        elExtLMax:+$('#elExtL').value||0,
+        elExtRMax:+$('#elExtR').value||0,
+        wrSupLMax:+$('#wrSupL').value||0,
+        wrSupRMax:+$('#wrSupR').value||0,
+      };
+      Object.assign(COLLIM, vals);
+      // live preview if current action is one of the capped ones
+      if (CURRENT_ACTION){
+        const cap = capFor(CURRENT_ACTION);
+        if (typeof cap==='number'){
+          const typed = cap; // just use cap as preview value
+          const val = Math.max(0, Math.min(CURRENT_ACTION.max, typed));
+          actionDeg.value = String(val);
+          const signed = CURRENT_ACTION.sign * val;
+          applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+          pairLabel.style.color = '#fca5a5'; setTimeout(()=> pairLabel.style.color = '', 300);
+          log(`Preview: ${CURRENT_ACTION.label} → ${val}° (cap)`);
+        }
+      }
+    };
+    colTunerEl.querySelector('#colSave').onclick = ()=>{ COLLIM.save(); log('Collision limits saved.'); };
+    colTunerEl.querySelector('#colReset').onclick = ()=>{
+      Object.assign(COLLIM, {
+        trunkLatLMax:30, trunkLatRMax:30,
+        cervRotLMax:80, cervRotRMax:80,
+        shExtLMax:60, shExtRMax:60,
+        shAddLMax:30, shAddRMax:30,
+        shFlexLMax:170, shFlexRMax:170,
+        shAbdLMax:170,  shAbdRMax:170,
+        elExtLMax:10, elExtRMax:10,
+        wrSupLMax:95, wrSupRMax:95,
+      });
+      COLLIM.save(); preload(); log('Collision limits reset to defaults.');
+    };
+    colTunerEl.querySelector('#colX').onclick = ()=>{ toggleCollisionTuner(false); };
+    return colTunerEl;
+  }
+  function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
+
+  /* ===== ROM modal wiring ===== */
+  romBtn.onclick = ()=>{ romModal.classList.add('on'); };
+  romClose.onclick = ()=>{ romModal.classList.remove('on'); };
+  window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
+
+  /* ===== Resize & render ===== */
+  addEventListener("resize", () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+  (function animate(){
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  })();
+  </script>
 </body>
 </html>
+
+
