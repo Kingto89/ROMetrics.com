@@ -546,19 +546,16 @@ optgroup{color:#9fb0c9;font-style:normal}
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
     if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
-    const axis = axisFor(RIG_PROFILE, key, baseAxis);
-    const obj = {bone, qBind, axis};
-    JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
-    return obj;
-  }
+   // Pick the plane’s default axis first
+const baseAxis = ({ sagittal:'x', frontal:'z', transverse:'y' })[cfg.plane] || 'x';
+let axis = axisFor(RIG_PROFILE, key, baseAxis);
 
-  function freezeBindBaseFor(key,cfg){
-    const b = resolveBind(key,cfg);
-    if (!b) return;
-    b.qBind = b.bone.quaternion.clone();
-  }
+// 🔧 Force-correct shoulder axes
+if (/^sh_fe_/.test(key)) axis = 'x';  // Flex/Ext → sagittal (X)
+if (/^sh_aa_/.test(key)) axis = 'z';  // Abd/Add  → frontal  (Z)
+
+const obj = { bone, qBind, axis };
+JOINT_BIND.set(key, obj);
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
