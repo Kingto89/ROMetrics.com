@@ -559,6 +559,31 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!b) return;
     b.qBind = b.bone.quaternion.clone();
   }
+/* ==== MOTION LAB SHOULDER FLEX RHYTHM TUNER ==== */
+const SH_FLEX_RHYTHM = {
+  enabled: true,
+  scapRatio: 0.33,   // ~1/3 rule
+  clavRatio: 0.18,   // small clav posterior rot assist
+  apply(side,deg){
+    if (!model) return;
+    if (deg <= 0) return; // FLEX only (A choice)
+
+    const hum = model.getObjectByName(side==="L"?"upperarm_L":"upperarm_R");
+    const scap = model.getObjectByName(side==="L"?"scapula_L":"scapula_R");
+    const clav = model.getObjectByName(side==="L"?"clavicle_L":"clavicle_R");
+    if(!hum || !scap || !clav) return;
+
+    const d2r = THREE.MathUtils.degToRad;
+    // --- main GH flex is still controlled by applyPairAngle ---
+    // tuner only adds coupled contributions:
+
+    const scapDeg = deg * this.scapRatio;
+    const clavDeg = deg * this.clavRatio;
+
+    scap.rotation.z = d2r(scapDeg);
+    clav.rotation.y = d2r(clavDeg);
+  }
+};
 
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
@@ -572,6 +597,9 @@ optgroup{color:#9fb0c9;font-style:normal}
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
+    // shoulder flex tuner coupling (flex only)
+if(key==="sh_fe_l") SH_FLEX_RHYTHM.apply("L",deg);
+if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
   }
 
   /* ===== Motions (paired configs; UI splits) ===== */
