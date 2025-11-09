@@ -566,7 +566,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
 
   
-  function applyPairAngle(key,cfg,deg){
+function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
 
@@ -597,10 +597,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     );
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
-  }
 }
-
-  /* ===== Motions (paired configs; UI splits) ===== */
+/* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
     {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
