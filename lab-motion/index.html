@@ -75,7 +75,39 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
 
-      <details>
+      
+      <!-- Shoulder Flexion — Manual Tuner (auto shows on Shoulder Flex L/R) -->
+      <details id="shFlexManual" style="display:none;margin-top:6px;">
+        <summary>Shoulder Flexion — Manual Finish</summary>
+        <label>Side</label>
+        <div class="seg" id="shFlexSideSeg">
+          <button id="shFlexSideL" class="on">Left</button>
+          <button id="shFlexSideR">Right</button>
+        </div>
+
+        <label style="margin-top:6px">Flexion (°)</label>
+        <input type="range" id="shFlexVal" min="0" max="180" step="1" value="0">
+
+        <div class="row" style="margin-top:6px">
+          <div style="flex:1">
+            <label>UpperArm — Rotate X (°)</label>
+            <input type="range" id="shUX" min="-60" max="60" step="1" value="0">
+          </div>
+          <div style="flex:1">
+            <label>UpperArm — Rotate Y (°)</label>
+            <input type="range" id="shUY" min="-60" max="60" step="1" value="0">
+          </div>
+        </div>
+        <label>UpperArm — Rotate Z (°)</label>
+        <input type="range" id="shUZ" min="-60" max="60" step="1" value="25">
+
+        <div class="row" style="margin-top:6px">
+          <button id="shFlexReset" class="mini">Reset</button>
+          <button id="shFlexHide" class="mini">Hide</button>
+        </div>
+        <small style="opacity:.7">Tip: Run pure GH flexion up to ~100°, then use UpperArm Z to finish to full without clipping the clavicle.</small>
+      </details>
+<details>
         <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
@@ -176,6 +208,41 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
   const zeroAll = document.getElementById("zeroAll");
+
+  // === Shoulder Flexion Manual Tuner (UI handles) ===
+  const shFlexManual = document.getElementById('shFlexManual');
+  const shFlexSideSeg = document.getElementById('shFlexSideSeg');
+  const shFlexSideL = document.getElementById('shFlexSideL');
+  const shFlexSideR = document.getElementById('shFlexSideR');
+  const shFlexVal = document.getElementById('shFlexVal');
+  const shUX = document.getElementById('shUX');
+  const shUY = document.getElementById('shUY');
+  const shUZ = document.getElementById('shUZ');
+  const shFlexReset = document.getElementById('shFlexReset');
+  const shFlexHide = document.getElementById('shFlexHide');
+
+  const SH_FLEX_MAN = {
+    side: 'L',
+    vals: { L:{flex:0,x:0,y:0,z:25}, R:{flex:0,x:0,y:0,z:25} },
+    show(){ shFlexManual.style.display = 'block'; shFlexManual.open = true; },
+    hide(){ shFlexManual.style.display = 'none'; shFlexManual.open = false; },
+    setSide(s){ this.side = s; shFlexSideL.classList.toggle('on', s==='L'); shFlexSideR.classList.toggle('on', s==='R'); this.syncToUI(); },
+    syncToUI(){
+      const v = this.vals[this.side];
+      shFlexVal.value = String(v.flex);
+      shUX.value = String(v.x);
+      shUY.value = String(v.y);
+      shUZ.value = String(v.z);
+    },
+    readFromUI(){
+      const v = this.vals[this.side];
+      v.flex = parseInt(shFlexVal.value||'0',10);
+      v.x = parseInt(shUX.value||'0',10);
+      v.y = parseInt(shUY.value||'0',10);
+      v.z = parseInt(shUZ.value||'0',10);
+    }
+  };
+
 
   const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
@@ -877,7 +944,17 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
+    
+    // keep manual tuner flex in sync when editing shoulder flex directly
+    if (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'L' : 'R';
+      SH_FLEX_MAN.side = side;
+      SH_FLEX_MAN.vals[side].flex = Math.abs(signed);
+      _syncing = true; shFlexVal.value = String(SH_FLEX_MAN.vals[side].flex); _syncing = false;
+      // re-apply manual XYZ finish
+      applyUpperarmXYZ(side, SH_FLEX_MAN.vals[side].x, SH_FLEX_MAN.vals[side].y, SH_FLEX_MAN.vals[side].z);
+    }
+// Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
       // Keep elbow flexed (stability)
@@ -896,6 +973,9 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     pairLabel.textContent = "Angle (°)";
     log("All motions zeroed → returned to anatomic baseline.");
   };
+  // Also hide manual shoulder tuner
+  SH_FLEX_MAN.hide();
+
 
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
@@ -973,6 +1053,58 @@ if(key==="sh_fe_r") SH_FLEX_RHYTHM.apply("R",deg);
     if (!wrist){
       wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
     }
+
+  // === Apply UpperArm manual XYZ after flex (relative to bind OR current) ===
+  function applyUpperarmXYZ(side, xDeg, yDeg, zDeg){
+    if (!skeleton || !model) return;
+    const name = (side==='L') ? 'upperarm_L' : 'upperarm_R';
+    const bone = getExactBoneByName(name) || findBoneBy({ side: side.toLowerCase(), hints:[/upperarm|humerus|shoulder/i], key: side==='L'?'sh_fe_l':'sh_fe_r' });
+    if (!bone) { log(`No upperarm bone for ${side}`); return; }
+
+  // === Shoulder Flex Manual Tuner wiring ===
+  shFlexSideL.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('L'); };
+  shFlexSideR.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.setSide('R'); };
+
+  let _syncing = false;
+  function applyManualFlexAndXYZ(){
+    if (!CURRENT_ACTION) return;
+    const side = SH_FLEX_MAN.side;
+    const vals = SH_FLEX_MAN.vals[side];
+    // 1) Drive main flex pair for that side
+    const key = (side==='L') ? 'sh_fe_l' : 'sh_fe_r';
+    setPair(key, vals.flex);
+    // keep the UI slider in sync if shoulder flex is the active action
+    if (!_syncing && (CURRENT_ACTION.key===key)){
+      _syncing = true
+
+      actionDeg.value = String(vals.flex);
+      _syncing = false;
+    }
+    // 2) Apply manual upperarm XYZ on top
+    applyUpperarmXYZ(side, vals.x, vals.y, vals.z);
+  }
+
+  [shFlexVal, shUX, shUY, shUZ].forEach(el=>{
+    el.addEventListener('input', ()=>{ SH_FLEX_MAN.readFromUI(); applyManualFlexAndXYZ(); });
+  });
+
+  shFlexReset.onclick = (e)=>{
+    e.preventDefault();
+    const s = SH_FLEX_MAN.side;
+    SH_FLEX_MAN.vals[s] = { flex:0, x:0, y:0, z:25 };
+    SH_FLEX_MAN.syncToUI();
+    applyManualFlexAndXYZ();
+  };
+  shFlexHide.onclick = (e)=>{ e.preventDefault(); SH_FLEX_MAN.hide(); };
+
+    // multiply a post-flex delta around local axes
+    const ex = THREE.MathUtils.degToRad(xDeg||0);
+    const ey = THREE.MathUtils.degToRad(yDeg||0);
+    const ez = THREE.MathUtils.degToRad(zDeg||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
+    bone.quaternion.multiply(qDelta);
+  }
+
     if (!wrist){ log(`No wrist bone for ${side}`); return; }
     const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
