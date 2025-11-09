@@ -810,8 +810,6 @@ if (key==='sh_fe_l' || key==='sh_fe_r'){
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-const signed = CURRENT_ACTION.sign * val;
-applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
 // === NEW: replay saved shoulder-flexion path on slider scrub
 if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r')) {
@@ -1085,7 +1083,6 @@ if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='s
   }
   function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
 
-<script type="module">
 // ===== Shoulder Flexion Path Tuner =====
 let flexTunerEl = null, flexTunerVisible = false, FLEX_SIDE = 'l';
 
