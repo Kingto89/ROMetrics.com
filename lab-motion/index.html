@@ -207,6 +207,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
+    shIRLMax: 70,   // Shoulder Internal Rotation — Left
+    shIRRMax: 70,   // Shoulder Internal Rotation — Right
+    shERLMax: 90,   // Shoulder External Rotation — Left
+    shERRMax: 90,   // Shoulder External Rotation — Right
         // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
@@ -255,6 +259,15 @@ optgroup{color:#9fb0c9;font-style:normal}
         return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
       }
     }
+    // Shoulder IR/ER caps
+if (/^sh_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { // Internal Rotation
+    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+  } else { // External Rotation
+    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+  }
+}
     // Elbow Flex/Ext → cap extension only (sign -1)
     if(/^el_fe_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
@@ -1042,6 +1055,20 @@ actionDeg.addEventListener("input", ()=> {
           <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
         </div>
       </div>
+      <div class="rom-row">
+  <div class="rom-head">Shoulder IR — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="shIRL" type="number" step="1" min="0" max="120" style="width:100%">
+    <input id="shIRR" type="number" step="1" min="0" max="120" style="width:100%">
+  </div>
+</div>
+<div class="rom-row">
+  <div class="rom-head">Shoulder ER — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="shERL" type="number" step="1" min="0" max="120" style="width:100%">
+    <input id="shERR" type="number" step="1" min="0" max="120" style="width:100%">
+  </div>
+</div>
       <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
       <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
@@ -1066,6 +1093,10 @@ actionDeg.addEventListener("input", ()=> {
       $('#shFlexR').value = String(COLLIM.shFlexRMax);
       $('#shAbdL').value  = String(COLLIM.shAbdLMax);
       $('#shAbdR').value  = String(COLLIM.shAbdRMax);
+      $('#shIRL').value = String(COLLIM.shIRLMax);
+      $('#shIRR').value = String(COLLIM.shIRRMax);
+      $('#shERL').value = String(COLLIM.shERLMax);
+      $('#shERR').value = String(COLLIM.shERRMax);
     }; preload();
 
     colTunerEl.querySelector('#colApply').onclick = ()=>{
@@ -1086,6 +1117,10 @@ actionDeg.addEventListener("input", ()=> {
         elExtRMax:+$('#elExtR').value||0,
         wrSupLMax:+$('#wrSupL').value||0,
         wrSupRMax:+$('#wrSupR').value||0,
+        shIRLMax:+$('#shIRL').value||0,
+        shIRRMax:+$('#shIRR').value||0,
+        shERLMax:+$('#shERL').value||0,
+        shERRMax:+$('#shERR').value||0,
       };
       Object.assign(COLLIM, vals);
       // live preview if current action is one of the capped ones
@@ -1113,6 +1148,11 @@ actionDeg.addEventListener("input", ()=> {
         shAbdLMax:170,  shAbdRMax:170,
         elExtLMax:10, elExtRMax:10,
         wrSupLMax:95, wrSupRMax:95,
+          // NEW
+      shIRLMax:70, shIRRMax:70,
+      shERLMax:90, shERRMax:90,
+      elExtLMax:10,    elExtRMax:10,
+      wrSupLMax:95,    wrSupRMax:95,
       });
       COLLIM.save(); preload(); log('Collision limits reset to defaults.');
     };
