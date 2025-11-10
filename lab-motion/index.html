@@ -206,20 +206,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtLMax: 10,     // Elbow extension L
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
-    wrSupRMax: 115,     // Wrist supination R
+    wrSupRMax: 95,     // Wrist supination R
         // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
     shAbdLMax: 170,
     shAbdRMax: 170,
-    
-    elFlexLMax: 150,
-    elFlexRMax: 150,
-    hipFlexLMax: 120,
-    hipFlexRMax: 120,
-    kneeExtLMax: 5,
-    kneeExtRMax: 5,
-load(){
+    load(){
       try{
         const raw = localStorage.getItem('rometrics_collim');
         if(!raw) return;
@@ -237,21 +230,7 @@ load(){
   COLLIM.load();
 
   function capFor(action){
-    if(!COLLIM.enabled || !action) 
-    // Elbow Flexion cap (+)
-    if(/^el_fe_/.test(key) && sign>0){
-      return key.endsWith('_l') ? COLLIM.elFlexLMax : COLLIM.elFlexRMax;
-    }
-    // Hip Flexion cap (+)
-    if(/^hip_fe_/.test(key) && sign>0){
-      return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
-    }
-    // Knee Extension cap (−)
-    if(/^knee_fe_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
-    }
-    
-    return null; // no cap
+    if(!COLLIM.enabled || !action) return null; // no cap
     const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
@@ -640,8 +619,8 @@ load(){
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
 
-    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min: -25, max: 60,  hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min: -25, max: 60,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
   ];
@@ -1092,7 +1071,7 @@ if (cfg.key === 'sh_irer_r'){
         shFlexLMax:170, shFlexRMax:170,
         shAbdLMax:170,  shAbdRMax:170,
         elExtLMax:10, elExtRMax:10,
-        wrSupLMax:95, wrSupRMax: 115,
+        wrSupLMax:95, wrSupRMax:95,
       });
       COLLIM.save(); preload(); log('Collision limits reset to defaults.');
     };
