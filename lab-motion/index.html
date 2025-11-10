@@ -161,7 +161,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
@@ -207,7 +207,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
-    // NEW caps — Shoulder Flexion & Abduction
+        // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
     shAbdLMax: 170,
@@ -234,8 +234,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-
-    // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
     if (/^sh_fe_/.test(key)) {
       const isLeft = key.endsWith('_l');
       if (sign > 0) { // Flexion
@@ -275,7 +274,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     antiBox.addEventListener('click', (e)=>{
       if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
       COLLIM.enabled = !!antiBox.checked;
-      log(\`Anticollision \${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.\`);
+      log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
     });
   }
 
@@ -343,7 +342,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   function pickModelUrl(){
     const u = new URL(location.href);
     const q = u.searchParams.get("model");
-    if (q && /^https?:\\/\\//i.test(q)) return q;
+    if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
     return "../assets/Roma_ROMetrics.glb";
   }
@@ -399,7 +398,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     bones.forEach((b,i)=>{
       const o = document.createElement("option");
       o.value = String(skeleton.bones.indexOf(b));
-      o.textContent = b.name || \`Bone \${i}\`;
+      o.textContent = b.name || `Bone ${i}`;
       boneSel.appendChild(o);
       if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
     });
@@ -441,9 +440,9 @@ optgroup{color:#9fb0c9;font-style:normal}
   let RIG_PROFILE = 'generic';
   function detectRigProfile(){
     const names = skeleton?.bones.map(b=>b.name.toLowerCase()).join(' ') || '';
-    if (/\\bmixamorig\\b/.test(names)) RIG_PROFILE = 'mixamo';
+    if (/\bmixamorig\b/.test(names)) RIG_PROFILE = 'mixamo';
     else RIG_PROFILE = 'generic';
-    log(\`Rig profile: \${RIG_PROFILE}\`);
+    log(`Rig profile: ${RIG_PROFILE}`);
   }
   function axisFor(profile, key, defAxis){
     if (profile==='mixamo'){
@@ -475,8 +474,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
-      ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
-      : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
+      ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
+      : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
   }
   function findBoneBy(cfg){
     if (!skeleton) return null;
@@ -524,58 +523,41 @@ optgroup{color:#9fb0c9;font-style:normal}
     hand.position.set(0,0,0); hand.quaternion.identity(); hand.scale.set(1,1,1);
     initialBoneRot.set(pivot, pivot.quaternion.clone());
     DRUJ[side] = { pivot };
-    log(\`Created DRUJ proxy for \${side.toUpperCase()}\`);
+    log(`Created DRUJ proxy for ${side.toUpperCase()}`);
     return DRUJ[side];
   }
 
   const JOINT_BIND = new Map();
-  function getExactBoneByName(name){
-    if (!skeleton) return null;
-    const lname = String(name).toLowerCase();
-    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
-  }
-
   function resolveBind(key,cfg){
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-
-    // Hard-bind trunk motions to spine01 if available
     if (/^trunk_/.test(key)) {
       const b = getExactBoneByName('spine01');
       if (b) {
         const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
-        const axis0 = ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x';
-        const axis = axisFor(RIG_PROFILE, key, axis0);
+        const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
         const obj = { bone: b, qBind, axis };
         JOINT_BIND.set(key, obj);
-        log(\`Bound \${key} → spine01 (axis \${axis}) [hard-bind]\`);
+        log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
         return obj;
       }
     }
-
     let bone = findBoneBy({...cfg, key});
     if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
     if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
-    if (!bone) { log(\`No bind for \${key}\`); return null; }
-
+    if (!bone) { log(`No bind for ${key}`); return null; }
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-
-    // Pick the plane’s default axis first
-    const baseAxis = ({ sagittal:'x', frontal:'z', transverse:'y' })[cfg.plane] || 'x';
-    let axis = axisFor(RIG_PROFILE, key, baseAxis);
-
-    // 🔧 Force-correct shoulder axes
-    if (/^sh_fe_/.test(key)) axis = 'x';  // Flex/Ext → sagittal (X)
-    if (/^sh_aa_/.test(key)) axis = 'z';  // Abd/Add  → frontal  (Z)
-
-    const obj = { bone, qBind, axis };
-    JOINT_BIND.set(key, obj);
+    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
+    const axis = axisFor(RIG_PROFILE, key, baseAxis);
+    const obj = {bone, qBind, axis};
+    JOINT_BIND.set(key,obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
     return obj;
   }
 
-  // Helper the previous code referenced
   function freezeBindBaseFor(key,cfg){
     const b = resolveBind(key,cfg);
-    if (b && b.bone) b.qBind = b.bone.quaternion.clone();
+    if (!b) return;
+    b.qBind = b.bone.quaternion.clone();
   }
 
   function applyPairAngle(key,cfg,deg){
@@ -609,11 +591,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
-    // ELBOW
+    // ELBOW — fix so Flexion moves (150), Extension small (10)
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
 
-    // Wrist PS proxy kept
+    // REMOVED forearm entries from menu per your instruction
+
+    // Keep wrist PS (proxy) but we will relabel signs below
     {key:'wr_ps_l',   pair:'Wrist L — Pronation / Supination',   side:'l', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
     {key:'wr_ps_r',   pair:'Wrist R — Pronation / Supination',   side:'r', plane:'transverse',neutral:0, min:-95,  max:85,  hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i]},
 
@@ -667,6 +651,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 
     // Shoulder Abd/Add — special-case Right side label flip you reported
     if (cfg.key==='sh_aa_r'){
+      // On R side your rig behaves inverted; map + to Adduction label, - to Abduction
       push('Shoulder R — Adduction', +1, maxPos);
       push('Shoulder R — Abduction', -1, absMin);
       return out;
@@ -695,6 +680,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
     } else if (/wr_ru_/.test(cfg.key)){
+      // SWAP LABELS per your report: + == RADIAL, - == ULNAR
       push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), -1, absMin);
     } else if (/ankle_dfpf_/.test(cfg.key)){
@@ -715,6 +701,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
       else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
       else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
+      // Forearm group intentionally NOT added (removed from UI)
       else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
       else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
       else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
@@ -739,7 +726,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       const og = document.createElement("optgroup"); og.label = group;
       catalog[group].forEach(entry=>{
         const opt = document.createElement("option");
-        opt.value = \`sep:\${entry.key}:\${entry.sign}:\${entry.max}\`;
+        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
         opt.textContent = entry.label;
         og.appendChild(opt);
       });
@@ -758,7 +745,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       pairLabel.textContent = "Angle (°)";
       return;
     }
-    pairLabel.textContent = \`\${CURRENT_ACTION.label} — Angle (°)\`;
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
     actionDeg.min = "0";
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
@@ -770,20 +757,15 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
-  function setPair(key,deg){
-    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
-    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
-    const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key,cfg,deg);
-  }
   function applyAnatomicBaseline(){
     setPair('sh_aa_l', ANAT.addL);
     setPair('sh_aa_r', -ANAT.addL);
+    // keep tiny forearm PS baseline internally (even though menu hidden)
     setPair('fa_ps_l', ANAT.psL);
     setPair('fa_ps_r', -ANAT.psL);
     setPair('wr_ps_l', ANAT.wpsL);
     setPair('wr_ps_r', -ANAT.wpsL);
-    log(\`Anatomic baseline applied (L/R) → ADD \${ANAT.addL}/\${-ANAT.addL}, Forearm PS \${ANAT.psL}/\${-ANAT.psL}, Wrist PS \${ANAT.wpsL}/\${-ANAT.wpsL}\`);
+    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
   }
 
   // Always return to anatomic when changing actions; then freeze bind
@@ -798,17 +780,17 @@ optgroup{color:#9fb0c9;font-style:normal}
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-      // Shoulder IR/ER elbow preset
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
       if (key==='sh_irer_l' || key==='sh_irer_r'){
         const side = key.endsWith('_l') ? 'l' : 'r';
-        setPair(\`el_fe_\${side}\`, 90);
-        log(\`Elbow \${side.toUpperCase()} set to 90° for shoulder rotation setup.\`);
+        setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
       }
-      // Auto open Shoulder Flexion Path Tuner
-      if (key==='sh_fe_l' || key==='sh_fe_r'){
-        FLEX_SIDE = key.endsWith('_l') ? 'l' : 'r';
-        toggleFlexionTuner(true);
-      }
+// === NEW: auto open Shoulder Flexion Path Tuner ===
+if (key==='sh_fe_l' || key==='sh_fe_r'){
+  FLEX_SIDE = key.endsWith('_l') ? 'l' : 'r';
+  toggleFlexionTuner(true);
+}
       syncActionUI(true);
       return;
     }
@@ -819,29 +801,30 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (!CURRENT_ACTION) return;
     let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
 
-    // Apply anticollision caps
+    // Apply anticollision caps based on joint/direction
     const cap = capFor(CURRENT_ACTION);
     if (typeof cap === 'number' && val > cap){
       val = cap; actionDeg.value = String(val);
-      log(\`Anticollision limit hit (\${CURRENT_ACTION.label}): max \${cap}°\`);
+      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
     }
 
     const signed = CURRENT_ACTION.sign * val;
     applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 
-    // Apply shoulder-flexion sequential offsets (if any)
-    if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r')) {
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      const flexOnly = Math.max(0, CURRENT_ACTION.sign > 0 ? parseFloat(actionDeg.value)||0 : 0);
-      applyFlexionPathDuringAction(side, flexOnly);
-    }
-
-    // Shoulder IR/ER coupling
+// === NEW: replay saved shoulder-flexion path on slider scrub
+if (CURRENT_ACTION && (CURRENT_ACTION.key==='sh_fe_l' || CURRENT_ACTION.key==='sh_fe_r')) {
+  const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+  const flexOnly = Math.max(0, CURRENT_ACTION.sign > 0 ? parseFloat(actionDeg.value)||0 : 0);
+  applyFlexionPathDuringAction(side, flexOnly);
+}
+    // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      setPair(\`el_fe_\${side}\`, 90);
-      const amt = Math.min(30, Math.abs(signed)*0.3);
-      setPair(\`sh_aa_\${side}\`, (signed>0) ? -amt : +amt);
+      // Keep elbow flexed (stability)
+      setPair(`el_fe_${side}`, 90);
+      // Couple small Abd/Add with rotation: IR → toward midline (Add), ER → away (Abd)
+      const amt = Math.min(30, Math.abs(signed)*0.3); // up to 30° coupling
+      setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
     }
   });
 
@@ -889,9 +872,9 @@ optgroup{color:#9fb0c9;font-style:normal}
       },
       (xhr) => { 
         const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
-        msg.textContent = pct !== null ? \`Loading \${pct}%\` : "Loading…";
+        msg.textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
       },
-      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(\`Error: \${err?.message || err}\`); }
+      (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
     );
   }
   loadModel();
@@ -912,14 +895,25 @@ optgroup{color:#9fb0c9;font-style:normal}
     groundSnap();
   };
 
-  /* ===== Wrist PS helpers ===== */
+  /* ===== Paired-joint helpers ===== */
+  function setPair(key,deg){
+    if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
+    if (key === 'wr_ps_r') return rotateSideWristPS('r', deg);
+    const cfg = cfgFromKey(key);
+    if (cfg) applyPairAngle(key,cfg,deg);
+  }
+  function getExactBoneByName(name){
+    if (!skeleton) return null;
+    const lname = String(name).toLowerCase();
+    return skeleton.bones.find(b => (b.name||'').toLowerCase() === lname) || null;
+  }
   function rotateSideWristPS(side, deg){
     if (!skeleton) return;
     let wrist = side === 'l' ? getExactBoneByName('hand_l') : getExactBoneByName('hand_r');
     if (!wrist){
       wrist = findBoneBy({ side, hints:[/wrist|hand(?!.*thumb|.*index|.*middle|.*ring|.*pinky)/i], key: side==='l'?'wr_ps_l':'wr_ps_r' });
     }
-    if (!wrist){ log(\`No wrist bone for \${side}\`); return; }
+    if (!wrist){ log(`No wrist bone for ${side}`); return; }
     const keyForAxis = side === 'l' ? 'fa_ps_l' : 'fa_ps_r';
     const axis = axisFor(RIG_PROFILE, keyForAxis, 'y');
     const qBind = (initialBoneRot.get(wrist) || wrist.quaternion.clone()).clone();
@@ -929,7 +923,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     if (axis==='y') e.set(0,rad,0,'XYZ');
     if (axis==='z') e.set(0,0,rad,'XYZ');
     wrist.quaternion.copy(qBind).multiply(new THREE.Quaternion().setFromEuler(e));
-    log(\`Wrist \${side.toUpperCase()} (hand_\${side}) PS = \${deg}°\`);
+    log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
   /* ===== Hidden Anatomic Tuner (dev-only) ===== */
@@ -996,7 +990,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div><div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number" step="1" min="0" max="90" style="width:100%"><input id="shExtR" type="number" step="1" min="0" max="90" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number" step="1" min="0" max="60" style="width:100%"><input id="shAddR" type="number" step="1" min="0" max="60" style="width:100%"></div></div>
-      <div class="rom-row">
+            <div class="rom-row">
         <div class="rom-head">Shoulder Flex — L/R max (°)</div>
         <div style="flex:1;display:flex;gap:6px">
           <input id="shFlexL" type="number" step="1" min="0" max="180" style="width:100%">
@@ -1056,15 +1050,17 @@ optgroup{color:#9fb0c9;font-style:normal}
         wrSupRMax:+$('#wrSupR').value||0,
       };
       Object.assign(COLLIM, vals);
+      // live preview if current action is one of the capped ones
       if (CURRENT_ACTION){
         const cap = capFor(CURRENT_ACTION);
         if (typeof cap==='number'){
-          const val = Math.max(0, Math.min(CURRENT_ACTION.max, cap));
+          const typed = cap; // just use cap as preview value
+          const val = Math.max(0, Math.min(CURRENT_ACTION.max, typed));
           actionDeg.value = String(val);
           const signed = CURRENT_ACTION.sign * val;
           applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
           pairLabel.style.color = '#fca5a5'; setTimeout(()=> pairLabel.style.color = '', 300);
-          log(\`Preview: \${CURRENT_ACTION.label} → \${val}° (cap)\`);
+          log(`Preview: ${CURRENT_ACTION.label} → ${val}° (cap)`);
         }
       }
     };
@@ -1087,168 +1083,175 @@ optgroup{color:#9fb0c9;font-style:normal}
   }
   function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
 
-  // ===== Shoulder Flexion Path Tuner =====
-  let flexTunerEl = null, flexTunerVisible = false, FLEX_SIDE = 'l';
+// ===== Shoulder Flexion Path Tuner =====
+let flexTunerEl = null, flexTunerVisible = false, FLEX_SIDE = 'l';
 
-  const FLEXPATH = {
-    l: [], r: [],
-    load(){
-      try{
-        const o = JSON.parse(localStorage.getItem('rometrics_flexpath')||'{}');
-        this.l = Array.isArray(o.l)? o.l : [];
-        this.r = Array.isArray(o.r)? o.r : [];
-      }catch(e){}
-    },
-    save(){
-      try{
-        localStorage.setItem('rometrics_flexpath', JSON.stringify({l:this.l, r:this.r}));
-      }catch(e){}
-    },
-    clear(side){ this[side] = []; this.save(); }
-  };
-  FLEXPATH.load();
+// Per-side keyframed path of sequential steps (not simultaneous):
+// Each step: { flexDeg: number, ex: number, ey: number, ez: number }
+const FLEXPATH = {
+  l: [], r: [],
+  load(){
+    try{
+      const o = JSON.parse(localStorage.getItem('rometrics_flexpath')||'{}');
+      this.l = Array.isArray(o.l)? o.l : [];
+      this.r = Array.isArray(o.r)? o.r : [];
+    }catch(e){}
+  },
+  save(){
+    try{
+      localStorage.setItem('rometrics_flexpath', JSON.stringify({l:this.l, r:this.r}));
+    }catch(e){}
+  },
+  clear(side){ this[side] = []; this.save(); }
+};
+FLEXPATH.load();
 
-  function getUpperarm(side){
-    return getExactBoneByName(side==='l' ? 'upperarm_L' : 'upperarm_R');
+function getUpperarm(side){
+  return getExactBoneByName(side==='l' ? 'upperarm_L' : 'upperarm_R');
+}
+
+function ensureFlexionTuner(){
+  if (flexTunerEl) return flexTunerEl;
+  flexTunerEl = document.createElement('div');
+  Object.assign(flexTunerEl.style, {
+    position:'fixed', right:'16px', top:'220px', zIndex:42,
+    background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px',
+    padding:'10px', width:'360px', color:'#e2e8f0',
+    font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
+    display:'none'
+  });
+  flexTunerEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <strong style="font-size:13px;">Shoulder Flexion Path Tuner</strong>
+      <span class="badge">Sequential steps</span>
+      <button id="fxX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+
+    <div class="rom-row">
+      <div class="rom-head">Side</div>
+      <div style="flex:1;display:flex;gap:6px">
+        <button id="fxL" class="mini">Left</button>
+        <button id="fxR" class="mini">Right</button>
+      </div>
+    </div>
+
+    <div class="rom-row"><div class="rom-head">Flexion (°)</div><div style="flex:1"><input id="fxFlex" type="number" min="0" max="180" step="1" style="width:100%"></div></div>
+    <div class="rom-row"><div class="rom-head">Upperarm X (°)</div><div style="flex:1"><input id="fxXdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
+    <div class="rom-row"><div class="rom-head">Upperarm Y (°)</div><div style="flex:1"><input id="fxYdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
+    <div class="rom-row"><div class="rom-head">Upperarm Z (°)</div><div style="flex:1"><input id="fxZdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="fxAdd" class="mini" style="flex:1">Add Step</button>
+      <button id="fxClear" class="mini">Clear</button>
+      <button id="fxSave" class="mini">Save</button>
+    </div>
+
+    <div id="fxList" style="margin-top:8px;max-height:160px;overflow:auto;border:1px solid #1c2941;border-radius:8px;padding:6px;background:#0d1628;"></div>
+    <div style="opacity:.75;margin-top:6px">Tip: Steps are applied in order during flexion. While tuning, changes preview live.</div>
+  `;
+  document.body.appendChild(flexTunerEl);
+
+  const $ = (id)=> flexTunerEl.querySelector(id);
+  const fxFlex = $('#fxFlex'), fxXdeg = $('#fxXdeg'), fxYdeg = $('#fxYdeg'), fxZdeg = $('#fxZdeg');
+  const fxList = $('#fxList');
+
+  function renderList(){
+    const arr = FLEXPATH[FLEX_SIDE]||[];
+    fxList.innerHTML = arr.map((s,i)=>`<div style="padding:4px 6px;border-bottom:1px solid #1c2941">
+      <strong>Step ${i+1}</strong>: Flex ${s.flexDeg}°, X ${s.ex}°, Y ${s.ey}°, Z ${s.ez}°
+    </div>`).join('') || '<div style="opacity:.7">No steps yet.</div>';
   }
 
-  function ensureFlexionTuner(){
-    if (flexTunerEl) return flexTunerEl;
-    flexTunerEl = document.createElement('div');
-    Object.assign(flexTunerEl.style, {
-      position:'fixed', right:'16px', top:'220px', zIndex:42,
-      background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px',
-      padding:'10px', width:'360px', color:'#e2e8f0',
-      font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)',
-      display:'none'
-    });
-    flexTunerEl.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <strong style="font-size:13px;">Shoulder Flexion Path Tuner</strong>
-        <span class="badge">Sequential steps</span>
-        <button id="fxX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
-      </div>
+  function preview(){
+    // Preview: apply shoulder flex + upperarm offsets immediately from fields
+    const deg = Math.max(0, Math.min(180, parseFloat(fxFlex.value||'0')));
+    const ex = parseFloat(fxXdeg.value||'0'), ey = parseFloat(fxYdeg.value||'0'), ez = parseFloat(fxZdeg.value||'0');
+    const key = (FLEX_SIDE==='l') ? 'sh_fe_l' : 'sh_fe_r';
+    const cfg = cfgFromKey(key);
+    if (!cfg) return;
+    // 1) apply flexion angle to shoulder (realtime, force correct axis)
+const bind = resolveBind(key, cfg);
+if (bind){
+  bind.axis = 'x';              // if it still abducts, change to 'z'
+  bind.qBind = bind.bone.quaternion.clone(); // refresh baseline each tick
+}
+setPair(key, +deg);
 
-      <div class="rom-row">
-        <div class="rom-head">Side</div>
-        <div style="flex:1;display:flex;gap:6px">
-          <button id="fxL" class="mini">Left</button>
-          <button id="fxR" class="mini">Right</button>
-        </div>
-      </div>
-
-      <div class="rom-row"><div class="rom-head">Flexion (°)</div><div style="flex:1"><input id="fxFlex" type="number" min="0" max="180" step="1" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Upperarm X (°)</div><div style="flex:1"><input id="fxXdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Upperarm Y (°)</div><div style="flex:1"><input id="fxYdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
-      <div class="rom-row"><div class="rom-head">Upperarm Z (°)</div><div style="flex:1"><input id="fxZdeg" type="number" min="-180" max="180" step="1" style="width:100%"></div></div>
-
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="fxAdd" class="mini" style="flex:1">Add Step</button>
-        <button id="fxClear" class="mini">Clear</button>
-        <button id="fxSave" class="mini">Save</button>
-      </div>
-
-      <div id="fxList" style="margin-top:8px;max-height:160px;overflow:auto;border:1px solid #1c2941;border-radius:8px;padding:6px;background:#0d1628;"></div>
-      <div style="opacity:.75;margin-top:6px">Tip: Steps are applied in order during flexion. While tuning, changes preview live.</div>
-    `;
-    document.body.appendChild(flexTunerEl);
-
-    const $ = (id)=> flexTunerEl.querySelector(id);
-    const fxFlex = $('#fxFlex'), fxXdeg = $('#fxXdeg'), fxYdeg = $('#fxYdeg'), fxZdeg = $('#fxZdeg');
-    const fxList = $('#fxList');
-
-    function renderList(){
-      const arr = FLEXPATH[FLEX_SIDE]||[];
-      fxList.innerHTML = arr.map((s,i)=>`<div style="padding:4px 6px;border-bottom:1px solid #1c2941">
-        <strong>Step ${i+1}</strong>: Flex ${s.flexDeg}°, X ${s.ex}°, Y ${s.ey}°, Z ${s.ez}°
-      </div>`).join('') || '<div style="opacity:.7">No steps yet.</div>';
+    // 2) apply sequential upperarm offset (only the single step being previewed)
+    const ua = getUpperarm(FLEX_SIDE);
+    if (ua){
+      const q0 = initialBoneRot.get(ua) || ua.quaternion.clone();
+      const qStep = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        THREE.MathUtils.degToRad(ex),
+        THREE.MathUtils.degToRad(ey),
+        THREE.MathUtils.degToRad(ez),
+        'XYZ'
+      ));
+      ua.quaternion.copy(q0).multiply(qStep);
     }
+  }
 
-    function preview(){
-      const deg = Math.max(0, Math.min(180, parseFloat(fxFlex.value||'0')));
-      const ex = parseFloat(fxXdeg.value||'0'), ey = parseFloat(fxYdeg.value||'0'), ez = parseFloat(fxZdeg.value||'0');
-      const key = (FLEX_SIDE==='l') ? 'sh_fe_l' : 'sh_fe_r';
-      const cfg = cfgFromKey(key);
-      if (!cfg) return;
+  [fxFlex, fxXdeg, fxYdeg, fxZdeg].forEach(el => el.addEventListener('input', preview));
 
-      const bind = resolveBind(key, cfg);
-      if (bind){
-        bind.axis = 'x';                         // lock flexion axis
-        bind.qBind = bind.bone.quaternion.clone(); // refresh baseline
-      }
-      setPair(key, +deg);
-
-      const ua = getUpperarm(FLEX_SIDE);
-      if (ua){
-        const q0 = initialBoneRot.get(ua) || ua.quaternion.clone();
-        const qStep = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-          THREE.MathUtils.degToRad(ex),
-          THREE.MathUtils.degToRad(ey),
-          THREE.MathUtils.degToRad(ez),
-          'XYZ'
-        ));
-        ua.quaternion.copy(q0).multiply(qStep);
-      }
-    }
-
-    [fxFlex, fxXdeg, fxYdeg, fxZdeg].forEach(el => el.addEventListener('input', preview));
-
-    $('#fxAdd').onclick = ()=>{
-      const step = {
-        flexDeg: Math.max(0, Math.min(180, parseFloat(fxFlex.value||'0'))),
-        ex: parseFloat(fxXdeg.value||'0'),
-        ey: parseFloat(fxYdeg.value||'0'),
-        ez: parseFloat(fxZdeg.value||'0')
-      };
-      FLEXPATH[FLEX_SIDE].push(step);
-      renderList(); preview();
-      log(\`Flexion path: added step on \${FLEX_SIDE.toUpperCase()} → Flex \${step.flexDeg}°, X \${step.ex}°, Y \${step.ey}°, Z \${step.ez}°\`);
+  $('#fxAdd').onclick = ()=>{
+    const step = {
+      flexDeg: Math.max(0, Math.min(180, parseFloat(fxFlex.value||'0'))),
+      ex: parseFloat(fxXdeg.value||'0'),
+      ey: parseFloat(fxYdeg.value||'0'),
+      ez: parseFloat(fxZdeg.value||'0')
     };
-    $('#fxClear').onclick = ()=>{ FLEXPATH.clear(FLEX_SIDE); renderList(); log('Flexion path cleared.'); };
-    $('#fxSave').onclick  = ()=>{ FLEXPATH.save(); renderList(); log('Flexion path saved.'); };
+    FLEXPATH[FLEX_SIDE].push(step);
+    renderList(); preview();
+    log(`Flexion path: added step on ${FLEX_SIDE.toUpperCase()} → Flex ${step.flexDeg}°, X ${step.ex}°, Y ${step.ey}°, Z ${step.ez}°`);
+  };
+  $('#fxClear').onclick = ()=>{ FLEXPATH.clear(FLEX_SIDE); renderList(); log('Flexion path cleared.'); };
+  $('#fxSave').onclick  = ()=>{ FLEXPATH.save(); renderList(); log('Flexion path saved.'); };
 
-    $('#fxL').onclick = ()=>{ FLEX_SIDE='l'; renderList(); preview(); };
-    $('#fxR').onclick = ()=>{ FLEX_SIDE='r'; renderList(); preview(); };
-    $('#fxX').onclick = ()=>{ toggleFlexionTuner(false); };
+  $('#fxL').onclick = ()=>{ FLEX_SIDE='l'; renderList(); preview(); };
+  $('#fxR').onclick = ()=>{ FLEX_SIDE='r'; renderList(); preview(); };
+  $('#fxX').onclick = ()=>{ toggleFlexionTuner(false); };
 
-    renderList();
-    return flexTunerEl;
-  }
+  renderList();
+  return flexTunerEl;
+}
 
-  function toggleFlexionTuner(show){
-    ensureFlexionTuner();
-    flexTunerVisible = (show===undefined) ? !flexTunerVisible : !!show;
-    flexTunerEl.style.display = flexTunerVisible ? 'block' : 'none';
-  }
+function toggleFlexionTuner(show){
+  ensureFlexionTuner();
+  flexTunerVisible = (show===undefined) ? !flexTunerVisible : !!show;
+  flexTunerEl.style.display = flexTunerVisible ? 'block' : 'none';
+}
 
-  function applyFlexionPathDuringAction(side, flexDeg){
-    const ua = getUpperarm(side); if (!ua) return;
-    const path = FLEXPATH[side]||[]; if (path.length < 2) return;
+// Given current flex angle (0..max), apply the path sequentially
+function applyFlexionPathDuringAction(side, flexDeg){
+  const ua = getUpperarm(side); if (!ua) return;
+  const path = FLEXPATH[side]||[]; if (path.length < 2) return; // need at least 2 steps to interpolate
 
-    const steps = [...path].sort((a,b)=>a.flexDeg-b.flexDeg);
+  // Sort by flexDeg just in case
+  const steps = [...path].sort((a,b)=>a.flexDeg-b.flexDeg);
 
-    let i = steps.findIndex(s => s.flexDeg >= flexDeg);
-    if (i <= 0) i = 1;
-    if (i >= steps.length) i = steps.length-1;
+  // Find segment [i,i+1] containing flexDeg
+  let i = steps.findIndex(s => s.flexDeg >= flexDeg);
+  if (i <= 0) i = 1;
+  if (i >= steps.length) i = steps.length-1;
 
-    const A = steps[i-1], B = steps[i];
-    const span = Math.max(1, (B.flexDeg - A.flexDeg));
-    const t = Math.max(0, Math.min(1, (flexDeg - A.flexDeg) / span));
+  const A = steps[i-1], B = steps[i];
+  const span = Math.max(1, (B.flexDeg - A.flexDeg));
+  const t = Math.max(0, Math.min(1, (flexDeg - A.flexDeg) / span));
 
-    const ex = A.ex + (B.ex - A.ex)*t;
-    const ey = A.ey + (B.ey - A.ey)*t;
-    const ez = A.ez + (B.ez - A.ez)*t;
+  const ex = A.ex + (B.ex - A.ex)*t;
+  const ey = A.ey + (B.ey - A.ey)*t;
+  const ez = A.ez + (B.ez - A.ez)*t;
 
-    const q0 = initialBoneRot.get(ua) || ua.quaternion.clone();
-    const qStep = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-      THREE.MathUtils.degToRad(ex),
-      THREE.MathUtils.degToRad(ey),
-      THREE.MathUtils.degToRad(ez),
-      'XYZ'
-    ));
-    ua.quaternion.copy(q0).multiply(qStep);
-  }
-
+  const q0 = initialBoneRot.get(ua) || ua.quaternion.clone();
+  const qStep = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+    THREE.MathUtils.degToRad(ex),
+    THREE.MathUtils.degToRad(ey),
+    THREE.MathUtils.degToRad(ez),
+    'XYZ'
+  ));
+  ua.quaternion.copy(q0).multiply(qStep);
+}
+    
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
@@ -1268,4 +1271,3 @@ optgroup{color:#9fb0c9;font-style:normal}
   </script>
 </body>
 </html>
-
