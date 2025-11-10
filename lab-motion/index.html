@@ -657,6 +657,12 @@ optgroup{color:#9fb0c9;font-style:normal}
       push('Shoulder R — Abduction', -1, absMin);
       return out;
     }
+    // Shoulder R IR/ER — explicit labels
+if (cfg.key === 'sh_irer_r'){
+  push('Shoulder R — Internal Rotation', +1, maxPos);
+  push('Shoulder R — External Rotation', -1, absMin);
+  return out;
+}
 
     if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
       push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
