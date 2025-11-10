@@ -344,7 +344,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "../assets/Roma_ROMetrics.glb";
+    return "./Athletic_Grace_1006002620_texture.glb";
   }
   let MODEL_URL = pickModelUrl();
 
@@ -786,6 +786,27 @@ optgroup{color:#9fb0c9;font-style:normal}
         setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
         log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
       }
+
+      syncActionUI(true);
+      return;
+    }
+    syncActionUI(true);
+  });
+
+  actionDeg.addEventListener("input", ()=>{
+    if (!CURRENT_ACTION) return;
+    let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+
+    // Apply anticollision caps based on joint/direction
+    const cap = capFor(CURRENT_ACTION);
+    if (typeof cap === 'number' && val > cap){
+      val = cap; actionDeg.value = String(val);
+      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
+    }
+
+    const signed = CURRENT_ACTION.sign * val;
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+
     // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
     if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
       const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
@@ -1051,7 +1072,7 @@ optgroup{color:#9fb0c9;font-style:normal}
     return colTunerEl;
   }
   function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
-    
+
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
   romClose.onclick = ()=>{ romModal.classList.remove('on'); };
@@ -1071,4 +1092,3 @@ optgroup{color:#9fb0c9;font-style:normal}
   </script>
 </body>
 </html>
-
