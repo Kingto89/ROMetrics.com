@@ -233,69 +233,78 @@ optgroup{color:#9fb0c9;font-style:normal}
   };
   COLLIM.load();
 
-  function capFor(action){
-    if(!COLLIM.enabled || !action) return null; // no cap
-    const { key, sign } = action; // sign: +1 or -1
-    // Cervical rotation L/R
-    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
-    if (/^sh_fe_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (sign > 0) { // Flexion
-        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
-      } else {        // Extension
-        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
-      }
-    }
+function capFor(action){
+  if(!COLLIM.enabled || !action) return null; // no cap
+  const { key, sign } = action; // sign: +1 or -1
 
-    // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
-    if (/^sh_aa_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (isLeft) {
-        // Left: + = Abduction, − = Adduction (normal)
-        return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
-      } else {
-        // Right (your UI labels flipped): + = Adduction, − = Abduction
-        return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
-      }
+  // Cervical rotation L/R
+  if (key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
+
+  // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+  if (/^sh_fe_/.test(key)) {
+    const isLeft = key.endsWith('_l');
+    if (sign > 0) { // Flexion
+      return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+    } else {        // Extension
+      return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
     }
-    // Shoulder IR/ER caps
-if (/^sh_irer_/.test(key)) {
-  const isLeft = key.endsWith('_l');
-  if (sign > 0) { // Internal Rotation
-    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
-  } else { // External Rotation
-    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
   }
-}
-    // Elbow Flex/Ext → cap extension only (sign -1)
-    if(/^el_fe_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+
+  // Shoulder Abd/Add — Right side labels are flipped on your rig
+  if (/^sh_aa_/.test(key)) {
+    const isLeft = key.endsWith('_l');
+    if (isLeft) {
+      // Left: + = Abd, − = Add
+      return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+    } else {
+      // Right: + = Add, − = Abd
+      return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
     }
-    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
-    if(/^wr_ps_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
-    }
-    // Hip Flex/Ext → cap Flexion only (per your request)
-if (/^hip_fe_/.test(key)) {
-  if (sign > 0) { // Flexion
-    return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
   }
+
+  // Shoulder IR/ER
+  if (/^sh_irer_/.test(key)) {
+    const isLeft = key.endsWith('_l');
+    if (sign > 0) { // Internal
+      return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+    } else {        // External
+      return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+    }
+  }
+
+  // Elbow Flex/Ext → cap extension only (sign -1)
+  if (/^el_fe_/.test(key) && sign < 0) {
+    return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+  }
+
+  // Wrist PS → cap supination only (menu uses sign - for supination)
+  if (/^wr_ps_/.test(key) && sign < 0) {
+    return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
+  }
+
+  // Hip Flex/Ext → cap Flexion only
+  if (/^hip_fe_/.test(key)) {
+    if (sign > 0) { // Flexion
+      return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
+    }
+  }
+
+  // Hip L Adduction → cap negative sign only (Add is −)
+  if (key === 'hip_aa_l' && sign < 0) {
+    return COLLIM.hipAddLMaxLower;
+  }
+
+  // Knee Flex/Ext → cap Extension only (−)
+  if (/^knee_fe_/.test(key) && sign < 0) {
+    return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
+  }
+
+  // Trunk lateral (existing)
+  if (key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+
+  return null;
 }
 
-// Hip L Adduction → cap on negative sign only (Add is −)
-if (key === 'hip_aa_l' && sign < 0) {
-  return COLLIM.hipAddLMaxLower;
-}
-
-// Knee Flex/Ext → cap Extension only (-), since limited
-if (/^knee_fe_/.test(key) && sign < 0){
-  return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
-}
-    // Trunk lateral (existing)
-    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
-    return null;
-  }
 
   const antiBox = document.getElementById('antiBox');
   if (antiBox){
