@@ -206,17 +206,20 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtLMax: 10,     // Elbow extension L
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
-    wrSupRMax: 95,     // Wrist supination R
-    shIRLMax: 70,   // Shoulder Internal Rotation — Left
-    shIRRMax: 70,   // Shoulder Internal Rotation — Right
-    shERLMax: 90,   // Shoulder External Rotation — Left
-    shERRMax: 90,   // Shoulder External Rotation — Right
+    wrSupRMax: 115,     // Wrist supination R
         // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
     shAbdLMax: 170,
     shAbdRMax: 170,
-    load(){
+    
+    elFlexLMax: 150,
+    elFlexRMax: 150,
+    hipFlexLMax: 120,
+    hipFlexRMax: 120,
+    kneeExtLMax: 5,
+    kneeExtRMax: 5,
+load(){
       try{
         const raw = localStorage.getItem('rometrics_collim');
         if(!raw) return;
@@ -233,78 +236,58 @@ optgroup{color:#9fb0c9;font-style:normal}
   };
   COLLIM.load();
 
-function capFor(action){
-  if(!COLLIM.enabled || !action) return null; // no cap
-  const { key, sign } = action; // sign: +1 or -1
-
-  // Cervical rotation L/R
-  if (key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-
-  // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
-  if (/^sh_fe_/.test(key)) {
-    const isLeft = key.endsWith('_l');
-    if (sign > 0) { // Flexion
-      return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
-    } else {        // Extension
-      return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+  function capFor(action){
+    if(!COLLIM.enabled || !action) 
+    // Elbow Flexion cap (+)
+    if(/^el_fe_/.test(key) && sign>0){
+      return key.endsWith('_l') ? COLLIM.elFlexLMax : COLLIM.elFlexRMax;
     }
-  }
-
-  // Shoulder Abd/Add — Right side labels are flipped on your rig
-  if (/^sh_aa_/.test(key)) {
-    const isLeft = key.endsWith('_l');
-    if (isLeft) {
-      // Left: + = Abd, − = Add
-      return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
-    } else {
-      // Right: + = Add, − = Abd
-      return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
-    }
-  }
-
-  // Shoulder IR/ER
-  if (/^sh_irer_/.test(key)) {
-    const isLeft = key.endsWith('_l');
-    if (sign > 0) { // Internal
-      return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
-    } else {        // External
-      return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
-    }
-  }
-
-  // Elbow Flex/Ext → cap extension only (sign -1)
-  if (/^el_fe_/.test(key) && sign < 0) {
-    return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
-  }
-
-  // Wrist PS → cap supination only (menu uses sign - for supination)
-  if (/^wr_ps_/.test(key) && sign < 0) {
-    return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
-  }
-
-  // Hip Flex/Ext → cap Flexion only
-  if (/^hip_fe_/.test(key)) {
-    if (sign > 0) { // Flexion
+    // Hip Flexion cap (+)
+    if(/^hip_fe_/.test(key) && sign>0){
       return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
     }
+    // Knee Extension cap (−)
+    if(/^knee_fe_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
+    }
+    
+    return null; // no cap
+    const { key, sign } = action; // sign: +1 or -1
+    // Cervical rotation L/R
+    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    if (/^sh_fe_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (sign > 0) { // Flexion
+        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      }
+    }
+
+    // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
+    if (/^sh_aa_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (isLeft) {
+        // Left: + = Abduction, − = Adduction (normal)
+        return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+      } else {
+        // Right (your UI labels flipped): + = Adduction, − = Abduction
+        return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+      }
+    }
+    // Elbow Flex/Ext → cap extension only (sign -1)
+    if(/^el_fe_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+    }
+    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
+    if(/^wr_ps_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
+    }
+    // Trunk lateral (existing)
+    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    return null;
   }
-
-  // Hip L Adduction → cap negative sign only (Add is −)
-  if (key === 'hip_aa_l' && sign < 0) {
-    return COLLIM.hipAddLMaxLower;
-  }
-
-  // Knee Flex/Ext → cap Extension only (−)
-  if (/^knee_fe_/.test(key) && sign < 0) {
-    return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
-  }
-
-  // Trunk lateral (existing)
-  if (key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
-
-  return null;
-}
-
 
   const antiBox = document.getElementById('antiBox');
   if (antiBox){
@@ -657,8 +640,8 @@ function capFor(action){
     {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
 
-    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
-    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min: -25, max: 60,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min: -25, max: 60,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
   ];
@@ -697,59 +680,8 @@ function capFor(action){
     }
     // Shoulder R IR/ER — explicit labels
 if (cfg.key === 'sh_irer_r'){
-  push('Shoulder R — Internal Rotation', +1, maxPos);
-  push('Shoulder R — External Rotation', -1, absMin);
-  return out;
-}
-// --- RIGHT wrist explicit labels (swap) ---
-if (cfg.key === 'wr_ps_r'){
-  push('Wrist R — Pronation',  +1, maxPos);
-  push('Wrist R — Supination', -1, absMin);
-  return out;
-}
-if (cfg.key === 'wr_ru_r'){
-  push('Wrist R — Radial Deviation', +1, maxPos);
-  push('Wrist R — Ulnar Deviation',  -1, absMin);
-  return out;
-}
-else if (/knee_fe_/.test(cfg.key)){
-  // KNEE: + = Flexion (posterior), - = Extension (anterior small)
-  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
-  return out;
-}
-
-// --- RIGHT hip Abd/Add rename (swap) ---
-if (cfg.key === 'hip_aa_r'){
-  // + should read Abduction; − should read Adduction
-  push('Hip R — Abduction', +1, maxPos);
-  push('Hip R — Adduction', -1, absMin);
-  return out;
-}
-
-// --- LEFT hip IR/ER explicit labels (clarify) ---
-if (cfg.key === 'hip_irer_l'){
-  push('Hip L — Internal Rotation', +1, maxPos);
-  push('Hip L — External Rotation', -1, absMin);
-  return out;
-}
-
-// --- Ankle DF/PF: both sides need text swap for your rig ---
-if (cfg.key === 'ankle_dfpf_l'){
-  push('Ankle L — Dorsiflexion',   +1, maxPos);   // was “Plantarflexion”
-  push('Ankle L — Plantarflexion', -1, absMin);   // was “Dorsiflexion”
-  return out;
-}
-if (cfg.key === 'ankle_dfpf_r'){
-  push('Ankle R — Dorsiflexion',   +1, maxPos);
-  push('Ankle R — Plantarflexion', -1, absMin);
-  return out;
-}
-
-// --- Foot R Inversion/Eversion rename (swap) ---
-if (cfg.key === 'foot_invev_r'){
-  push('Foot R — Eversion',  +1, maxPos);   // swap
-  push('Foot R — Inversion', -1, absMin);
+  push('Shoulder R — External Rotation', +1, maxPos);
+  push('Shoulder R — Internal Rotation', -1, absMin);
   return out;
 }
 
@@ -889,71 +821,30 @@ if (cfg.key === 'foot_invev_r'){
     syncActionUI(true);
   });
 
-actionDeg.addEventListener("input", ()=> {
-  if (!CURRENT_ACTION) return;
+  actionDeg.addEventListener("input", ()=>{
+    if (!CURRENT_ACTION) return;
+    let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
 
-  let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
-
-  // Anticollision cap (keep this early)
-  const cap = capFor(CURRENT_ACTION);
-  if (typeof cap === 'number' && val > cap){
-    val = cap; actionDeg.value = String(val);
-    log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
-  }
-
-  // Signed degrees for the chosen direction
-  let signed = CURRENT_ACTION.sign * val;
-
-  // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
-  if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
-    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-
-    // keep elbow flexed for stability
-    setPair(`el_fe_${side}`, 90);
-
-    // RIGHT shoulder needs sign flip on your rig
-    let rotDeg = signed;
-    if (side === 'r') rotDeg = -rotDeg;
-
-    // compute coupled Abd/Add amount (IR → Add, ER → Abd)
-    const amt = Math.min(30, Math.abs(rotDeg)*0.3) * (rotDeg>0 ? -1 : +1); // − = Add, + = Abd
-
-    // compose both rotations from the SAME base on the SAME bone
-    const keyRot = `sh_irer_${side}`;
-    const keyAA  = `sh_aa_${side}`;
-    const cfgRot = cfgFromKey(keyRot), cfgAA = cfgFromKey(keyAA);
-    const bR = resolveBind(keyRot, cfgRot);
-    const bA = resolveBind(keyAA,  cfgAA);
-
-    if (bR && bA && bR.bone === bA.bone){
-      const base = bR.qBind.clone();
-
-      const toQ = (axis, deg) => {
-        const r = THREE.MathUtils.degToRad(deg);
-        const e = new THREE.Euler(
-          axis==='x'?r:0,
-          axis==='y'?r:0,
-          axis==='z'?r:0,
-          "XYZ"
-        );
-        return new THREE.Quaternion().setFromEuler(e);
-      };
-
-      const qRot = toQ(bR.axis, rotDeg);
-      const qAA  = toQ(bA.axis, amt);
-      const q = base.clone().multiply(qRot).multiply(qAA);
-
-      bR.bone.quaternion.copy(q);
-    } else {
-      // fallback if binds differ: still apply rotation (with R-side fix)
-      applyPairAngle(keyRot, cfgRot, rotDeg);
+    // Apply anticollision caps based on joint/direction
+    const cap = capFor(CURRENT_ACTION);
+    if (typeof cap === 'number' && val > cap){
+      val = cap; actionDeg.value = String(val);
+      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
     }
-    return; // IMPORTANT: stop here so we don't also run the generic path
-  }
 
-  // === Generic path (everything else) ===
-  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-});
+    const signed = CURRENT_ACTION.sign * val;
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+
+    // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
+    if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
+      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+      // Keep elbow flexed (stability)
+      setPair(`el_fe_${side}`, 90);
+      // Couple small Abd/Add with rotation: IR → toward midline (Add), ER → away (Abd)
+      const amt = Math.min(30, Math.abs(signed)*0.3); // up to 30° coupling
+      setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
+    }
+  });
 
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
@@ -1131,20 +1022,6 @@ actionDeg.addEventListener("input", ()=> {
           <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
         </div>
       </div>
-      <div class="rom-row">
-  <div class="rom-head">Shoulder IR — L/R max (°)</div>
-  <div style="flex:1;display:flex;gap:6px">
-    <input id="shIRL" type="number" step="1" min="0" max="120" style="width:100%">
-    <input id="shIRR" type="number" step="1" min="0" max="120" style="width:100%">
-  </div>
-</div>
-<div class="rom-row">
-  <div class="rom-head">Shoulder ER — L/R max (°)</div>
-  <div style="flex:1;display:flex;gap:6px">
-    <input id="shERL" type="number" step="1" min="0" max="120" style="width:100%">
-    <input id="shERR" type="number" step="1" min="0" max="120" style="width:100%">
-  </div>
-</div>
       <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
       <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
@@ -1169,10 +1046,6 @@ actionDeg.addEventListener("input", ()=> {
       $('#shFlexR').value = String(COLLIM.shFlexRMax);
       $('#shAbdL').value  = String(COLLIM.shAbdLMax);
       $('#shAbdR').value  = String(COLLIM.shAbdRMax);
-      $('#shIRL').value = String(COLLIM.shIRLMax);
-      $('#shIRR').value = String(COLLIM.shIRRMax);
-      $('#shERL').value = String(COLLIM.shERLMax);
-      $('#shERR').value = String(COLLIM.shERRMax);
     }; preload();
 
     colTunerEl.querySelector('#colApply').onclick = ()=>{
@@ -1193,10 +1066,6 @@ actionDeg.addEventListener("input", ()=> {
         elExtRMax:+$('#elExtR').value||0,
         wrSupLMax:+$('#wrSupL').value||0,
         wrSupRMax:+$('#wrSupR').value||0,
-        shIRLMax:+$('#shIRL').value||0,
-        shIRRMax:+$('#shIRR').value||0,
-        shERLMax:+$('#shERL').value||0,
-        shERRMax:+$('#shERR').value||0,
       };
       Object.assign(COLLIM, vals);
       // live preview if current action is one of the capped ones
@@ -1223,26 +1092,7 @@ actionDeg.addEventListener("input", ()=> {
         shFlexLMax:170, shFlexRMax:170,
         shAbdLMax:170,  shAbdRMax:170,
         elExtLMax:10, elExtRMax:10,
-        wrSupLMax:95, wrSupRMax:95,
-          // NEW
-      shIRLMax:70, shIRRMax:70,
-      shERLMax:90, shERRMax:90,
-      elExtLMax:10,    elExtRMax:10,
-      wrSupLMax:95,    wrSupRMax:95,
-      // Elbow Flexion caps
-elFlexLMax: 150,
-elFlexRMax: 150,
-
-// Hip Flexion caps (both)
-hipFlexLMax: 120,
-hipFlexRMax: 120,
-
-// Hip L Adduction cap
-hipAddLMaxLower: 30,   // adduction limit for LEFT hip (name different to avoid clash)
-
-// Knee Extension caps (small hyperext)
-kneeExtLMax: 5,
-kneeExtRMax: 5,
+        wrSupLMax:95, wrSupRMax: 115,
       });
       COLLIM.save(); preload(); log('Collision limits reset to defaults.');
     };
