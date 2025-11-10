@@ -789,7 +789,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 // === NEW: auto open Shoulder Flexion Path Tuner ===
 if (key==='sh_fe_l' || key==='sh_fe_r'){
   FLEX_SIDE = key.endsWith('_l') ? 'l' : 'r';
-  toggleFlexionTuner(true);
+  toggleFlexionTuner(false);
 }
       syncActionUI(true);
       return;
