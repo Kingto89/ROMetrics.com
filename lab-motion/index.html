@@ -800,17 +800,6 @@ if (cfg.key === 'sh_irer_r'){
     syncActionUI(true);
   });
 
-  actionDeg.addEventListener("input", ()=>{
-    if (!CURRENT_ACTION) return;
-    let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
-
-    // Apply anticollision caps based on joint/direction
-    const cap = capFor(CURRENT_ACTION);
-    if (typeof cap === 'number' && val > cap){
-      val = cap; actionDeg.value = String(val);
-      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
-    }
-
 actionDeg.addEventListener("input", ()=> {
   if (!CURRENT_ACTION) return;
 
