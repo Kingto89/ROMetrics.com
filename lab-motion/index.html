@@ -276,21 +276,7 @@ if (/^sh_irer_/.test(key)) {
     if(/^wr_ps_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
     }
-    // Trunk lateral (existing)
-    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
-    return null;
-  }
-    // Elbow Flex/Ext → cap Flexion (+) AND Extension (− already exists in your code)
-if (/^el_fe_/.test(key)) {
-  const isLeft = key.endsWith('_l');
-  if (sign > 0) { // Flexion
-    return isLeft ? COLLIM.elFlexLMax : COLLIM.elFlexRMax;
-  } else {        // Extension (you may already cap; if not, keep this)
-    return isLeft ? COLLIM.elExtLMax  : COLLIM.elExtRMax;
-  }
-}
-
-// Hip Flex/Ext → cap Flexion only (per your request)
+    // Hip Flex/Ext → cap Flexion only (per your request)
 if (/^hip_fe_/.test(key)) {
   if (sign > 0) { // Flexion
     return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
@@ -306,6 +292,10 @@ if (key === 'hip_aa_l' && sign < 0) {
 if (/^knee_fe_/.test(key) && sign < 0){
   return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;
 }
+    // Trunk lateral (existing)
+    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    return null;
+  }
 
   const antiBox = document.getElementById('antiBox');
   if (antiBox){
@@ -713,7 +703,7 @@ if (cfg.key === 'wr_ru_r'){
   push('Wrist R — Ulnar Deviation',  -1, absMin);
   return out;
 }
-  } else if (/knee_fe_/.test(cfg.key)){
+else if (/knee_fe_/.test(cfg.key)){
   // KNEE: + = Flexion (posterior), - = Extension (anterior small)
   push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
   push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
