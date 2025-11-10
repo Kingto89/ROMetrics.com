@@ -272,12 +272,40 @@ if (/^sh_irer_/.test(key)) {
     if(/^el_fe_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
     }
+    // Elbow Flexion anticollision
+if(/^el_fe_/.test(key) && sign>0){
+  return key.endsWith('_l') ? 150 : 150; // prevent overbending
+}
     // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
     if(/^wr_ps_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
     }
     // Trunk lateral (existing)
     if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    // Hip Flexion (both)
+if(/^hip_fe_/.test(key)){
+  if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
+}
+// Left Hip Adduction
+if(key==='hip_aa_l' && sign<0) return COLLIM.hipAddLMax;
+
+// Knee Flexion / Extension
+if(/^knee_fe_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.kneeExtLMax  : COLLIM.kneeExtRMax;
+}
+
+// Ankle PF / DF
+if(/^ankle_dfpf_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax;
+}
+
+// Foot Inversion / Eversion
+if(/^foot_invev_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.footEvLMax : COLLIM.footEvRMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.footInvLMax : COLLIM.footInvRMax;
+}
     return null;
   }
 
@@ -625,12 +653,12 @@ if (/^sh_irer_/.test(key)) {
     {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
     {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
-    {key:'hip_aa_r',   pair:'Hip R — Abd / Add',                 side:'r', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_aa_r', pair:'Hip R — Add / Abd', side:'r', plane:'frontal', neutral:0, min:-30, max:45, hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
 
-    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
-    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-5,   max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_l',  pair:'Knee L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-150,   max:5, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_r',  pair:'Knee R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-150,   max:5, hints:[/calf|tibia|fibula|shin/i]},
 
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
@@ -704,11 +732,11 @@ if (cfg.key === 'sh_irer_r'){
       push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), -1, absMin);
     } else if (/ankle_dfpf_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), -1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), +1, absMin);
     } else if (/foot_invev_/.test(cfg.key)){
-      push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Eversion'), -1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Inversion'), +1, absMin);
     }
     return out;
   }
@@ -1153,6 +1181,22 @@ actionDeg.addEventListener("input", ()=> {
       shERLMax:90, shERRMax:90,
       elExtLMax:10,    elExtRMax:10,
       wrSupLMax:95,    wrSupRMax:95,
+        // Lower Body caps
+hipFlexLMax: 120,
+hipFlexRMax: 120,
+hipAddLMax: 30,
+kneeFlexLMax: 150,
+kneeFlexRMax: 150,
+kneeExtLMax: 5,
+kneeExtRMax: 5,
+anklePF_LMax: 50,
+anklePF_RMax: 50,
+ankleDF_LMax: 20,
+ankleDF_RMax: 20,
+footInvLMax: 35,
+footInvRMax: 35,
+footEvLMax: 20,
+footEvRMax: 20,
       });
       COLLIM.save(); preload(); log('Collision limits reset to defaults.');
     };
