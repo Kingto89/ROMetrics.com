@@ -563,6 +563,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   function applyPairAngle(key,cfg,deg){
     const bind = resolveBind(key,cfg); if (!bind) return;
     const {bone, qBind, axis} = bind;
+    if (key === 'sh_irer_r') deg = -deg;
     const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral||0));
     const e = new THREE.Euler(
       axis==='x'?rad:0,
