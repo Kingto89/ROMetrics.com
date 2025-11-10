@@ -788,11 +788,11 @@ if (cfg.key === 'sh_irer_r'){
       freezeBindBaseFor(key,cfg);
 
       // Shoulder IR/ER → set elbow to 90° baseline immediately
-   //   if (key==='sh_irer_l' || key==='sh_irer_r'){
-   //     const side = key.endsWith('_l') ? 'l' : 'r';
-    //    setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
-  //      log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
- //     }
+      if (key==='sh_irer_l' || key==='sh_irer_r'){
+       const side = key.endsWith('_l') ? 'l' : 'r';
+       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+      }
 
       syncActionUI(true);
       return;
