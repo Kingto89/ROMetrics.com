@@ -207,6 +207,10 @@ optgroup{color:#9fb0c9;font-style:normal}
     elExtRMax: 10,     // Elbow extension R
     wrSupLMax: 95,     // Wrist supination L
     wrSupRMax: 95,     // Wrist supination R
+    shIRLMax: 70,   // Shoulder Internal Rotation — Left
+    shIRRMax: 70,   // Shoulder Internal Rotation — Right
+    shERLMax: 90,   // Shoulder External Rotation — Left
+    shERRMax: 90,   // Shoulder External Rotation — Right
         // NEW caps — Shoulder Flexion & Abduction
     shFlexLMax: 170,
     shFlexRMax: 170,
@@ -255,6 +259,15 @@ optgroup{color:#9fb0c9;font-style:normal}
         return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
       }
     }
+    // Shoulder IR/ER caps
+if (/^sh_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { // Internal Rotation
+    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+  } else { // External Rotation
+    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+  }
+}
     // Elbow Flex/Ext → cap extension only (sign -1)
     if(/^el_fe_/.test(key) && sign<0){
       return key.endsWith('_l') ? COLLIM.elExtLMax : COLLIM.elExtRMax;
@@ -659,8 +672,8 @@ optgroup{color:#9fb0c9;font-style:normal}
     }
     // Shoulder R IR/ER — explicit labels
 if (cfg.key === 'sh_irer_r'){
-  push('Shoulder R — External Rotation', +1, maxPos);
-  push('Shoulder R — Internal Rotation', -1, absMin);
+  push('Shoulder R — Internal Rotation', +1, maxPos);
+  push('Shoulder R — External Rotation', -1, absMin);
   return out;
 }
 
@@ -800,30 +813,71 @@ if (cfg.key === 'sh_irer_r'){
     syncActionUI(true);
   });
 
-  actionDeg.addEventListener("input", ()=>{
-    if (!CURRENT_ACTION) return;
-    let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+actionDeg.addEventListener("input", ()=> {
+  if (!CURRENT_ACTION) return;
 
-    // Apply anticollision caps based on joint/direction
-    const cap = capFor(CURRENT_ACTION);
-    if (typeof cap === 'number' && val > cap){
-      val = cap; actionDeg.value = String(val);
-      log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
+  let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+
+  // Anticollision cap (keep this early)
+  const cap = capFor(CURRENT_ACTION);
+  if (typeof cap === 'number' && val > cap){
+    val = cap; actionDeg.value = String(val);
+    log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
+  }
+
+  // Signed degrees for the chosen direction
+  let signed = CURRENT_ACTION.sign * val;
+
+  // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
+  if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+
+    // keep elbow flexed for stability
+    setPair(`el_fe_${side}`, 90);
+
+    // RIGHT shoulder needs sign flip on your rig
+    let rotDeg = signed;
+    if (side === 'r') rotDeg = -rotDeg;
+
+    // compute coupled Abd/Add amount (IR → Add, ER → Abd)
+    const amt = Math.min(30, Math.abs(rotDeg)*0.3) * (rotDeg>0 ? -1 : +1); // − = Add, + = Abd
+
+    // compose both rotations from the SAME base on the SAME bone
+    const keyRot = `sh_irer_${side}`;
+    const keyAA  = `sh_aa_${side}`;
+    const cfgRot = cfgFromKey(keyRot), cfgAA = cfgFromKey(keyAA);
+    const bR = resolveBind(keyRot, cfgRot);
+    const bA = resolveBind(keyAA,  cfgAA);
+
+    if (bR && bA && bR.bone === bA.bone){
+      const base = bR.qBind.clone();
+
+      const toQ = (axis, deg) => {
+        const r = THREE.MathUtils.degToRad(deg);
+        const e = new THREE.Euler(
+          axis==='x'?r:0,
+          axis==='y'?r:0,
+          axis==='z'?r:0,
+          "XYZ"
+        );
+        return new THREE.Quaternion().setFromEuler(e);
+      };
+
+      const qRot = toQ(bR.axis, rotDeg);
+      const qAA  = toQ(bA.axis, amt);
+      const q = base.clone().multiply(qRot).multiply(qAA);
+
+      bR.bone.quaternion.copy(q);
+    } else {
+      // fallback if binds differ: still apply rotation (with R-side fix)
+      applyPairAngle(keyRot, cfgRot, rotDeg);
     }
+    return; // IMPORTANT: stop here so we don't also run the generic path
+  }
 
-    const signed = CURRENT_ACTION.sign * val;
-    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
-
-    // Shoulder IR/ER coupling: move arm toward/away midline & keep elbow at ~90° while scrubbing
-    if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
-      const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
-      // Keep elbow flexed (stability)
-      setPair(`el_fe_${side}`, 90);
-      // Couple small Abd/Add with rotation: IR → toward midline (Add), ER → away (Abd)
-      const amt = Math.min(30, Math.abs(signed)*0.3); // up to 30° coupling
-      setPair(`sh_aa_${side}`, (signed>0) ? -amt : +amt);
-    }
-  });
+  // === Generic path (everything else) ===
+  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+});
 
   zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
@@ -1001,6 +1055,20 @@ if (cfg.key === 'sh_irer_r'){
           <input id="shAbdR" type="number" step="1" min="0" max="180" style="width:100%">
         </div>
       </div>
+      <div class="rom-row">
+  <div class="rom-head">Shoulder IR — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="shIRL" type="number" step="1" min="0" max="120" style="width:100%">
+    <input id="shIRR" type="number" step="1" min="0" max="120" style="width:100%">
+  </div>
+</div>
+<div class="rom-row">
+  <div class="rom-head">Shoulder ER — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="shERL" type="number" step="1" min="0" max="120" style="width:100%">
+    <input id="shERR" type="number" step="1" min="0" max="120" style="width:100%">
+  </div>
+</div>
       <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number" step="1" min="0" max="30" style="width:100%"><input id="elExtR" type="number" step="1" min="0" max="30" style="width:100%"></div></div>
       <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div><div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number" step="1" min="0" max="120" style="width:100%"><input id="wrSupR" type="number" step="1" min="0" max="120" style="width:100%"></div></div>
       <div style="display:flex;gap:8px;margin-top:10px;"><button id="colApply" class="mini" style="flex:1">Apply</button><button id="colSave" class="mini">Save</button><button id="colReset" class="mini">Reset</button></div>
@@ -1025,6 +1093,10 @@ if (cfg.key === 'sh_irer_r'){
       $('#shFlexR').value = String(COLLIM.shFlexRMax);
       $('#shAbdL').value  = String(COLLIM.shAbdLMax);
       $('#shAbdR').value  = String(COLLIM.shAbdRMax);
+      $('#shIRL').value = String(COLLIM.shIRLMax);
+      $('#shIRR').value = String(COLLIM.shIRRMax);
+      $('#shERL').value = String(COLLIM.shERLMax);
+      $('#shERR').value = String(COLLIM.shERRMax);
     }; preload();
 
     colTunerEl.querySelector('#colApply').onclick = ()=>{
@@ -1045,6 +1117,10 @@ if (cfg.key === 'sh_irer_r'){
         elExtRMax:+$('#elExtR').value||0,
         wrSupLMax:+$('#wrSupL').value||0,
         wrSupRMax:+$('#wrSupR').value||0,
+        shIRLMax:+$('#shIRL').value||0,
+        shIRRMax:+$('#shIRR').value||0,
+        shERLMax:+$('#shERL').value||0,
+        shERRMax:+$('#shERR').value||0,
       };
       Object.assign(COLLIM, vals);
       // live preview if current action is one of the capped ones
@@ -1072,6 +1148,11 @@ if (cfg.key === 'sh_irer_r'){
         shAbdLMax:170,  shAbdRMax:170,
         elExtLMax:10, elExtRMax:10,
         wrSupLMax:95, wrSupRMax:95,
+          // NEW
+      shIRLMax:70, shIRRMax:70,
+      shERLMax:90, shERRMax:90,
+      elExtLMax:10,    elExtRMax:10,
+      wrSupLMax:95,    wrSupRMax:95,
       });
       COLLIM.save(); preload(); log('Collision limits reset to defaults.');
     };
