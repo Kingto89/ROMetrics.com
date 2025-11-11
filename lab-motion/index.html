@@ -239,9 +239,10 @@ optgroup{color:#9fb0c9;font-style:normal}
   };
   COLLIM.load();
 
-  function capFor(action){
-    if(!COLLIM.enabled || !action) return null; // no cap
-    const { key, sign } = action; // sign: +1 or -1
+function capFor(action){
+  COLLIM.load();  // ✅ refresh saved limits before applying
+  if(!COLLIM.enabled || !action) return null; // no cap
+  const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
        // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
