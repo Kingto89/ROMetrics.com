@@ -1153,8 +1153,11 @@ function enforceLimit(key, sign, cap) {
 </div>
   <div class="rom-row"><div class="rom-head">Knee Flex — L/R max (°)</div>
     <div style="flex:1;display:flex;gap:6px"><input id="kneeFlexL" type="number"><input id="kneeFlexR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Knee Ext — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="kneeExtL" type="number"><input id="kneeExtR" type="number"></div></div>
+ <div class="rom-row"><div class="rom-head">Knee Flexion — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="kneeFlexL" type="number"><input id="kneeFlexR" type="number">
+  </div>
+</div>
   <div class="rom-row"><div class="rom-head">Ankle PF — L/R max (°)</div>
     <div style="flex:1;display:flex;gap:6px"><input id="anklePFL" type="number"><input id="anklePFR" type="number"></div></div>
   <div class="rom-row"><div class="rom-head">Ankle DF — L/R max (°)</div>
@@ -1208,8 +1211,8 @@ colTunerEl.querySelector('#colApply').onclick = ()=>{
   COLLIM.hipAddRMax   = +$('#hipAddR').value  || COLLIM.hipAddRMax;
   COLLIM.kneeFlexLMax = +$('#kneeFlexL').value|| COLLIM.kneeFlexLMax;
   COLLIM.kneeFlexRMax = +$('#kneeFlexR').value|| COLLIM.kneeFlexRMax;
-  COLLIM.kneeExtLMax  = +$('#kneeExtL').value || COLLIM.kneeExtLMax;
-  COLLIM.kneeExtRMax  = +$('#kneeExtR').value || COLLIM.kneeExtRMax;
+  COLLIM.kneeFlexLMax = +$('#kneeFlexL').value || COLLIM.kneeFlexLMax;
+  COLLIM.kneeFlexRMax = +$('#kneeFlexR').value || COLLIM.kneeFlexRMax;
   COLLIM.anklePF_LMax = +$('#anklePFL').value || COLLIM.anklePF_LMax;
   COLLIM.anklePF_RMax = +$('#anklePFR').value || COLLIM.anklePF_RMax;
   COLLIM.ankleDF_LMax = +$('#ankleDFL').value || COLLIM.ankleDF_LMax;
