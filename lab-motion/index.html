@@ -1146,51 +1146,7 @@ actionDeg.addEventListener("input", ()=> {
 
   document.body.appendChild(colTunerEl);
   const $ = (id)=>colTunerEl.querySelector(id);
-
-  // === preload current values ===
-  const preload = ()=>{
-    $('#colTrunkLatL').value = COLLIM.trunkLatLMax;
-    $('#colTrunkLatR').value = COLLIM.trunkLatRMax;
-    $('#cervL').value = COLLIM.cervRotLMax;
-    $('#cervR').value = COLLIM.cervRotRMax;
-    $('#shExtL').value = COLLIM.shExtLMax;
-    $('#shExtR').value = COLLIM.shExtRMax;
-    $('#shAddL').value = COLLIM.shAddLMax;
-    $('#shAddR').value = COLLIM.shAddRMax;
-    $('#shFlexL').value = COLLIM.shFlexLMax;
-    $('#shFlexR').value = COLLIM.shFlexRMax;
-    $('#shAbdL').value = COLLIM.shAbdLMax;
-    $('#shAbdR').value = COLLIM.shAbdRMax;
-    $('#shIRL').value = COLLIM.shIRLMax;
-    $('#shIRR').value = COLLIM.shIRRMax;
-    $('#shERL').value = COLLIM.shERLMax;
-    $('#shERR').value = COLLIM.shERRMax;
-    $('#elExtL').value = COLLIM.elExtLMax;
-    $('#elExtR').value = COLLIM.elExtRMax;
-    $('#wrSupL').value = COLLIM.wrSupLMax;
-    $('#wrSupR').value = COLLIM.wrSupRMax;
-
-    // Lower body
-    $('#hipFlexL').value = COLLIM.hipFlexLMax;
-    $('#hipFlexR').value = COLLIM.hipFlexRMax;
-    $('#hipAddL').value = String(COLLIM.hipAddLMax);
-    $('#hipAddR').value = String(COLLIM.hipAddRMax);
-    $('#kneeFlexL').value = COLLIM.kneeFlexLMax;
-    $('#kneeFlexR').value = COLLIM.kneeFlexRMax;
-    $('#kneeExtL').value = COLLIM.kneeExtLMax;
-    $('#kneeExtR').value = COLLIM.kneeExtRMax;
-    $('#anklePFL').value = COLLIM.anklePF_LMax;
-    $('#anklePFR').value = COLLIM.anklePF_RMax;
-    $('#ankleDFL').value = COLLIM.ankleDF_LMax;
-    $('#ankleDFR').value = COLLIM.ankleDF_RMax;
-    $('#footInvL').value = COLLIM.footInvLMax;
-    $('#footInvR').value = COLLIM.footInvRMax;
-    $('#footEvL').value = COLLIM.footEvLMax;
-    $('#footEvR').value = COLLIM.footEvRMax;
-  };
-  preload();
-
-  // === Apply / Save / Reset ===
+    // === Apply / Save / Reset ===
   colTunerEl.querySelector('#colApply').onclick = ()=>{
     Object.assign(COLLIM,{
       trunkLatLMax:+$('#colTrunkLatL').value||0,
@@ -1251,6 +1207,49 @@ actionDeg.addEventListener("input", ()=> {
     });
     COLLIM.save(); preload(); log('Collision limits reset to defaults.');
   };
+
+  // === preload current values ===
+  const preload = ()=>{
+    $('#colTrunkLatL').value = COLLIM.trunkLatLMax;
+    $('#colTrunkLatR').value = COLLIM.trunkLatRMax;
+    $('#cervL').value = COLLIM.cervRotLMax;
+    $('#cervR').value = COLLIM.cervRotRMax;
+    $('#shExtL').value = COLLIM.shExtLMax;
+    $('#shExtR').value = COLLIM.shExtRMax;
+    $('#shAddL').value = COLLIM.shAddLMax;
+    $('#shAddR').value = COLLIM.shAddRMax;
+    $('#shFlexL').value = COLLIM.shFlexLMax;
+    $('#shFlexR').value = COLLIM.shFlexRMax;
+    $('#shAbdL').value = COLLIM.shAbdLMax;
+    $('#shAbdR').value = COLLIM.shAbdRMax;
+    $('#shIRL').value = COLLIM.shIRLMax;
+    $('#shIRR').value = COLLIM.shIRRMax;
+    $('#shERL').value = COLLIM.shERLMax;
+    $('#shERR').value = COLLIM.shERRMax;
+    $('#elExtL').value = COLLIM.elExtLMax;
+    $('#elExtR').value = COLLIM.elExtRMax;
+    $('#wrSupL').value = COLLIM.wrSupLMax;
+    $('#wrSupR').value = COLLIM.wrSupRMax;
+
+    // Lower body
+    $('#hipFlexL').value = COLLIM.hipFlexLMax;
+    $('#hipFlexR').value = COLLIM.hipFlexRMax;
+    $('#hipAddL').value = String(COLLIM.hipAddLMax);
+    $('#hipAddR').value = String(COLLIM.hipAddRMax);
+    $('#kneeFlexL').value = COLLIM.kneeFlexLMax;
+    $('#kneeFlexR').value = COLLIM.kneeFlexRMax;
+    $('#kneeExtL').value = COLLIM.kneeExtLMax;
+    $('#kneeExtR').value = COLLIM.kneeExtRMax;
+    $('#anklePFL').value = COLLIM.anklePF_LMax;
+    $('#anklePFR').value = COLLIM.anklePF_RMax;
+    $('#ankleDFL').value = COLLIM.ankleDF_LMax;
+    $('#ankleDFR').value = COLLIM.ankleDF_RMax;
+    $('#footInvL').value = COLLIM.footInvLMax;
+    $('#footInvR').value = COLLIM.footInvRMax;
+    $('#footEvL').value = COLLIM.footEvLMax;
+    $('#footEvR').value = COLLIM.footEvRMax;
+  };
+  preload();
 
   colTunerEl.querySelector('#colX').onclick = ()=>toggleCollisionTuner(false);
   return colTunerEl;
