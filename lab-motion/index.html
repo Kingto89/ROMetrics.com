@@ -710,6 +710,17 @@ if (cfg.key === 'sh_irer_r'){
   push('Shoulder R — External Rotation', -1, absMin);
   return out;
 }
+ // === Hip Abduction / Adduction explicit labels ===
+if (cfg.key === 'hip_aa_l'){
+  push('Hip L — Abduction', +1, maxPos);
+  push('Hip L — Adduction', -1, absMin);
+  return out;
+}
+if (cfg.key === 'hip_aa_r'){
+  push('Hip R — Abduction', +1, absMin);
+  push('Hip R — Adduction', -1, maxPos);
+  return out;
+}
 
     if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
       push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
