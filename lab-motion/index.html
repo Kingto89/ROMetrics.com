@@ -1164,57 +1164,60 @@ actionDeg.addEventListener("input", ()=> {
 document.body.appendChild(colTunerEl);
 const $ = (id)=>colTunerEl.querySelector(id);
 
-// === Apply / Save / Reset ===
+// === Apply button (instant update) ===
 colTunerEl.querySelector('#colApply').onclick = ()=>{
-  COLLIM.load(); // refresh current stored limits before applying new ones
-  
-  Object.assign(COLLIM,{
-    trunkLatLMax:+$('#colTrunkLatL').value||0,
-    trunkLatRMax:+$('#colTrunkLatR').value||0,
-    cervRotLMax:+$('#cervL').value||0,
-    cervRotRMax:+$('#cervR').value||0,
-    shExtLMax:+$('#shExtL').value||0,
-    shExtRMax:+$('#shExtR').value||0,
-    shAddLMax:+$('#shAddL').value||0,
-    shAddRMax:+$('#shAddR').value||0,
-    shFlexLMax:+$('#shFlexL').value||0,
-    shFlexRMax:+$('#shFlexR').value||0,
-    shAbdLMax:+$('#shAbdL').value||0,
-    shAbdRMax:+$('#shAbdR').value||0,
-    shIRLMax:+$('#shIRL').value||0,
-    shIRRMax:+$('#shIRR').value||0,
-    shERLMax:+$('#shERL').value||0,
-    shERRMax:+$('#shERR').value||0,
-    elExtLMax:+$('#elExtL').value||0,
-    elExtRMax:+$('#elExtR').value||0,
-    wrSupLMax:+$('#wrSupL').value||0,
-    wrSupRMax:+$('#wrSupR').value||0,
+  // Directly assign to live COLLIM object
+  COLLIM.trunkLatLMax = +$('#colTrunkLatL').value || COLLIM.trunkLatLMax;
+  COLLIM.trunkLatRMax = +$('#colTrunkLatR').value || COLLIM.trunkLatRMax;
+  COLLIM.cervRotLMax  = +$('#cervL').value       || COLLIM.cervRotLMax;
+  COLLIM.cervRotRMax  = +$('#cervR').value       || COLLIM.cervRotRMax;
+  COLLIM.shExtLMax    = +$('#shExtL').value      || COLLIM.shExtLMax;
+  COLLIM.shExtRMax    = +$('#shExtR').value      || COLLIM.shExtRMax;
+  COLLIM.shAddLMax    = +$('#shAddL').value      || COLLIM.shAddLMax;
+  COLLIM.shAddRMax    = +$('#shAddR').value      || COLLIM.shAddRMax;
+  COLLIM.shFlexLMax   = +$('#shFlexL').value     || COLLIM.shFlexLMax;
+  COLLIM.shFlexRMax   = +$('#shFlexR').value     || COLLIM.shFlexRMax;
+  COLLIM.shAbdLMax    = +$('#shAbdL').value      || COLLIM.shAbdLMax;
+  COLLIM.shAbdRMax    = +$('#shAbdR').value      || COLLIM.shAbdRMax;
+  COLLIM.shIRLMax     = +$('#shIRL').value       || COLLIM.shIRLMax;
+  COLLIM.shIRRMax     = +$('#shIRR').value       || COLLIM.shIRRMax;
+  COLLIM.shERLMax     = +$('#shERL').value       || COLLIM.shERLMax;
+  COLLIM.shERRMax     = +$('#shERR').value       || COLLIM.shERRMax;
+  COLLIM.elExtLMax    = +$('#elExtL').value      || COLLIM.elExtLMax;
+  COLLIM.elExtRMax    = +$('#elExtR').value      || COLLIM.elExtRMax;
+  COLLIM.wrSupLMax    = +$('#wrSupL').value      || COLLIM.wrSupLMax;
+  COLLIM.wrSupRMax    = +$('#wrSupR').value      || COLLIM.wrSupRMax;
 
-    // Lower body
-    hipFlexLMax:+$('#hipFlexL').value||120,
-    hipFlexRMax:+$('#hipFlexR').value||120,
-    hipAddLMax:+$('#hipAddL').value||30,
-    hipAddRMax:+$('#hipAddR').value||30,
-    kneeFlexLMax:+$('#kneeFlexL').value||150,
-    kneeFlexRMax:+$('#kneeFlexR').value||150,
-    kneeExtLMax:+$('#kneeExtL').value||5,
-    kneeExtRMax:+$('#kneeExtR').value||5,
-    anklePF_LMax:+$('#anklePFL').value||50,
-    anklePF_RMax:+$('#anklePFR').value||50,
-    ankleDF_LMax:+$('#ankleDFL').value||20,
-    ankleDF_RMax:+$('#ankleDFR').value||20,
-    footInvLMax:+$('#footInvL').value||35,
-    footInvRMax:+$('#footInvR').value||35,
-    footEvLMax:+$('#footEvL').value||20,
-    footEvRMax:+$('#footEvR').value||20
-  });
+  // === LOWER BODY ===
+  COLLIM.hipFlexLMax  = +$('#hipFlexL').value || COLLIM.hipFlexLMax;
+  COLLIM.hipFlexRMax  = +$('#hipFlexR').value || COLLIM.hipFlexRMax;
+  COLLIM.hipAddLMax   = +$('#hipAddL').value  || COLLIM.hipAddLMax;
+  COLLIM.hipAddRMax   = +$('#hipAddR').value  || COLLIM.hipAddRMax;
+  COLLIM.kneeFlexLMax = +$('#kneeFlexL').value|| COLLIM.kneeFlexLMax;
+  COLLIM.kneeFlexRMax = +$('#kneeFlexR').value|| COLLIM.kneeFlexRMax;
+  COLLIM.kneeExtLMax  = +$('#kneeExtL').value || COLLIM.kneeExtLMax;
+  COLLIM.kneeExtRMax  = +$('#kneeExtR').value || COLLIM.kneeExtRMax;
+  COLLIM.anklePF_LMax = +$('#anklePFL').value || COLLIM.anklePF_LMax;
+  COLLIM.anklePF_RMax = +$('#anklePFR').value || COLLIM.anklePF_RMax;
+  COLLIM.ankleDF_LMax = +$('#ankleDFL').value || COLLIM.ankleDF_LMax;
+  COLLIM.ankleDF_RMax = +$('#ankleDFR').value || COLLIM.ankleDF_RMax;
+  COLLIM.footInvLMax  = +$('#footInvL').value || COLLIM.footInvLMax;
+  COLLIM.footInvRMax  = +$('#footInvR').value || COLLIM.footInvRMax;
+  COLLIM.footEvLMax   = +$('#footEvL').value  || COLLIM.footEvLMax;
+  COLLIM.footEvRMax   = +$('#footEvR').value  || COLLIM.footEvRMax;
 
-  // ✅ Enforce and persist changes immediately
-  COLLIM.save();      // persist to localStorage
+  // Save to localStorage and keep runtime synced
+  COLLIM.save();
   COLLIM.enabled = true;
-  COLLIM.load();      // reload so capFor() picks up new values
-  log('✅ Collision limits applied & saved.');
-  preload(); // refresh inputs to confirm
+
+  // Refresh current slider cap instantly
+  if (CURRENT_ACTION) {
+    const cap = capFor(CURRENT_ACTION);
+    if (typeof cap === 'number') actionDeg.max = cap;
+  }
+
+  log('✅ Collision limits applied & enforced immediately.');
+  preload();  // refresh tuner fields
 };
 
 // === Manual Save button ===
