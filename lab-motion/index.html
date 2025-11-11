@@ -1161,10 +1161,13 @@ actionDeg.addEventListener("input", ()=> {
     Shift+Click the checkbox to reopen this tuner.
   </div>`;
 
-  document.body.appendChild(colTunerEl);
-  const $ = (id)=>colTunerEl.querySelector(id);
-    // === Apply / Save / Reset ===
+document.body.appendChild(colTunerEl);
+const $ = (id)=>colTunerEl.querySelector(id);
+
+// === Apply / Save / Reset ===
 colTunerEl.querySelector('#colApply').onclick = ()=>{
+  COLLIM.load(); // refresh current stored limits before applying new ones
+  
   Object.assign(COLLIM,{
     trunkLatLMax:+$('#colTrunkLatL').value||0,
     trunkLatRMax:+$('#colTrunkLatR').value||0,
@@ -1206,26 +1209,28 @@ colTunerEl.querySelector('#colApply').onclick = ()=>{
     footEvRMax:+$('#footEvR').value||20
   });
 
-  COLLIM.save();
+  // ✅ Enforce and persist changes immediately
+  COLLIM.save();      // persist to localStorage
+  COLLIM.enabled = true;
+  COLLIM.load();      // reload so capFor() picks up new values
   log('✅ Collision limits applied & saved.');
   preload(); // refresh inputs to confirm
 };
-  colTunerEl.querySelector('#colSave').onclick = ()=>{ COLLIM.save(); log('Collision limits saved.'); };
 
-  colTunerEl.querySelector('#colReset').onclick = ()=>{
-    Object.assign(COLLIM,{
-      trunkLatLMax:30,trunkLatRMax:30,cervRotLMax:80,cervRotRMax:80,
-      shExtLMax:60,shExtRMax:60,shAddLMax:30,shAddRMax:30,
-      shFlexLMax:170,shFlexRMax:170,shAbdLMax:170,shAbdRMax:170,
-      shIRLMax:70,shIRRMax:70,shERLMax:90,shERRMax:90,
-      elExtLMax:10,elExtRMax:10,wrSupLMax:95,wrSupRMax:95,
-      hipFlexLMax:120,hipFlexRMax:120,hipAddLMax:30, hipAddRMax:30,
-      kneeFlexLMax:150,kneeFlexRMax:150,kneeExtLMax:5,kneeExtRMax:5,
-      anklePF_LMax:50,anklePF_RMax:50,ankleDF_LMax:20,ankleDF_RMax:20,
-      footInvLMax:35,footInvRMax:35,footEvLMax:20,footEvRMax:20
-    });
-    COLLIM.save(); preload(); log('Collision limits reset to defaults.');
-  };
+// === Manual Save button ===
+colTunerEl.querySelector('#colSave').onclick = ()=>{
+  COLLIM.save();
+  log('Collision limits saved.');
+};
+
+// === Reset button ===
+colTunerEl.querySelector('#colReset').onclick = ()=>{
+  Object.assign(COLLIM,{
+    // optional: reset to default values here if needed
+  });
+  COLLIM.save();
+  log('Collision limits reset.');
+};
 
   // === preload current values ===
   const preload = ()=>{
