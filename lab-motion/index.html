@@ -1106,21 +1106,17 @@ actionDeg.addEventListener("input", ()=> {
     <div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number"><input id="elExtR" type="number"></div></div>
   <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div>
     <div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number"><input id="wrSupR" type="number"></div></div>
-    <div class="rom-row">
-  <div class="rom-head">Hip Add — L/R max (°)</div>
-  <div style="flex:1;display:flex;gap:6px">
-    <input id="L" type="number" step="1" min="0" max="60" style="width:100%">
-    <input id="R" type="number" step="1" min="0" max="60" style="width:100%">
-  </div>
-</div>
-
 
   <!-- ===== NEW LOWER BODY SECTION ===== -->
   <hr style="border-color:#1c2941;opacity:.3;margin:8px 0;">
   <div class="rom-row"><div class="rom-head">Hip Flex — L/R max (°)</div>
     <div style="flex:1;display:flex;gap:6px"><input id="hipFlexL" type="number"><input id="hipFlexR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Hip Add — Left max (°)</div>
-    <div style="flex:1"><input id="hipAddL" type="number"></div></div>
+<div class="rom-row"><div class="rom-head">Hip Add — L/R max (°)</div>
+  <div style="flex:1;display:flex;gap:6px">
+    <input id="hipAddL" type="number">
+    <input id="hipAddR" type="number">
+  </div>
+</div>
   <div class="rom-row"><div class="rom-head">Knee Flex — L/R max (°)</div>
     <div style="flex:1;display:flex;gap:6px"><input id="kneeFlexL" type="number"><input id="kneeFlexR" type="number"></div></div>
   <div class="rom-row"><div class="rom-head">Knee Ext — L/R max (°)</div>
@@ -1254,7 +1250,13 @@ actionDeg.addEventListener("input", ()=> {
   colTunerEl.querySelector('#colX').onclick = ()=>toggleCollisionTuner(false);
   return colTunerEl;
 }
-  function toggleCollisionTuner(show){ ensureCollisionTuner(); colTunerVisible = (show===undefined) ? !colTunerVisible : !!show; colTunerEl.style.display = colTunerVisible ? 'block' : 'none'; }
+ function toggleCollisionTuner(show){
+  ensureCollisionTuner();
+  COLLIM.load();          // ✅ reload saved limits from localStorage
+  colTunerVisible = (show===undefined) ? !colTunerVisible : !!show;
+  colTunerEl.style.display = colTunerVisible ? 'block' : 'none';
+  if (colTunerVisible) preload(); // ✅ refresh tuner fields
+}
 
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
