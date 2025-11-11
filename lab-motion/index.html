@@ -1154,50 +1154,52 @@ actionDeg.addEventListener("input", ()=> {
   document.body.appendChild(colTunerEl);
   const $ = (id)=>colTunerEl.querySelector(id);
     // === Apply / Save / Reset ===
-  colTunerEl.querySelector('#colApply').onclick = ()=>{
-    Object.assign(COLLIM,{
-      trunkLatLMax:+$('#colTrunkLatL').value||0,
-      trunkLatRMax:+$('#colTrunkLatR').value||0,
-      cervRotLMax:+$('#cervL').value||0,
-      cervRotRMax:+$('#cervR').value||0,
-      shExtLMax:+$('#shExtL').value||0,
-      shExtRMax:+$('#shExtR').value||0,
-      shAddLMax:+$('#shAddL').value||0,
-      shAddRMax:+$('#shAddR').value||0,
-      shFlexLMax:+$('#shFlexL').value||0,
-      shFlexRMax:+$('#shFlexR').value||0,
-      shAbdLMax:+$('#shAbdL').value||0,
-      shAbdRMax:+$('#shAbdR').value||0,
-      shIRLMax:+$('#shIRL').value||0,
-      shIRRMax:+$('#shIRR').value||0,
-      shERLMax:+$('#shERL').value||0,
-      shERRMax:+$('#shERR').value||0,
-      elExtLMax:+$('#elExtL').value||0,
-      elExtRMax:+$('#elExtR').value||0,
-      wrSupLMax:+$('#wrSupL').value||0,
-      wrSupRMax:+$('#wrSupR').value||0,
+colTunerEl.querySelector('#colApply').onclick = ()=>{
+  Object.assign(COLLIM,{
+    trunkLatLMax:+$('#colTrunkLatL').value||0,
+    trunkLatRMax:+$('#colTrunkLatR').value||0,
+    cervRotLMax:+$('#cervL').value||0,
+    cervRotRMax:+$('#cervR').value||0,
+    shExtLMax:+$('#shExtL').value||0,
+    shExtRMax:+$('#shExtR').value||0,
+    shAddLMax:+$('#shAddL').value||0,
+    shAddRMax:+$('#shAddR').value||0,
+    shFlexLMax:+$('#shFlexL').value||0,
+    shFlexRMax:+$('#shFlexR').value||0,
+    shAbdLMax:+$('#shAbdL').value||0,
+    shAbdRMax:+$('#shAbdR').value||0,
+    shIRLMax:+$('#shIRL').value||0,
+    shIRRMax:+$('#shIRR').value||0,
+    shERLMax:+$('#shERL').value||0,
+    shERRMax:+$('#shERR').value||0,
+    elExtLMax:+$('#elExtL').value||0,
+    elExtRMax:+$('#elExtR').value||0,
+    wrSupLMax:+$('#wrSupL').value||0,
+    wrSupRMax:+$('#wrSupR').value||0,
 
-      hipFlexLMax:+$('#hipFlexL').value||120,
-      hipFlexRMax:+$('#hipFlexR').value||120,
-      hipAddLMax:+$('#hipAddL').value||0,
-      hipAddRMax:+$('#hipAddR').value||0,
-      kneeFlexLMax:+$('#kneeFlexL').value||150,
-      kneeFlexRMax:+$('#kneeFlexR').value||150,
-      kneeExtLMax:+$('#kneeExtL').value||5,
-      kneeExtRMax:+$('#kneeExtR').value||5,
-      anklePF_LMax:+$('#anklePFL').value||50,
-      anklePF_RMax:+$('#anklePFR').value||50,
-      ankleDF_LMax:+$('#ankleDFL').value||20,
-      ankleDF_RMax:+$('#ankleDFR').value||20,
-      footInvLMax:+$('#footInvL').value||35,
-      footInvRMax:+$('#footInvR').value||35,
-      footEvLMax:+$('#footEvL').value||20,
-      footEvRMax:+$('#footEvR').value||20
-    });
-    COLLIM.save();
-    log('Collision limits applied.');
-  };
+    // Lower body
+    hipFlexLMax:+$('#hipFlexL').value||120,
+    hipFlexRMax:+$('#hipFlexR').value||120,
+    hipAddLMax:+$('#hipAddL').value||30,
+    hipAddRMax:+$('#hipAddR').value||30,
+    kneeFlexLMax:+$('#kneeFlexL').value||150,
+    kneeFlexRMax:+$('#kneeFlexR').value||150,
+    kneeExtLMax:+$('#kneeExtL').value||5,
+    kneeExtRMax:+$('#kneeExtR').value||5,
+    anklePF_LMax:+$('#anklePFL').value||50,
+    anklePF_RMax:+$('#anklePFR').value||50,
+    ankleDF_LMax:+$('#ankleDFL').value||20,
+    ankleDF_RMax:+$('#ankleDFR').value||20,
+    footInvLMax:+$('#footInvL').value||35,
+    footInvRMax:+$('#footInvR').value||35,
+    footEvLMax:+$('#footEvL').value||20,
+    footEvRMax:+$('#footEvR').value||20
+  });
 
+  COLLIM.save();
+  log('✅ Collision limits applied & saved.');
+  preload(); // refresh inputs to confirm
+};
   colTunerEl.querySelector('#colSave').onclick = ()=>{ COLLIM.save(); log('Collision limits saved.'); };
 
   colTunerEl.querySelector('#colReset').onclick = ()=>{
