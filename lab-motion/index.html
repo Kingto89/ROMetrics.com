@@ -293,7 +293,7 @@ if(/^hip_fe_/.test(key)){
   if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
 }
 // Left Hip Adduction
-if(key==='hip_aa_l' && sign<0) return COLLIM.hipAddLMax;
+if(key==='hip_aa_l' && sign<0) return COLLIM.LMax;
 
 // Knee Flexion / Extension
 if(/^knee_fe_/.test(key)){
@@ -1109,8 +1109,8 @@ actionDeg.addEventListener("input", ()=> {
     <div class="rom-row">
   <div class="rom-head">Hip Add — L/R max (°)</div>
   <div style="flex:1;display:flex;gap:6px">
-    <input id="hipAddL" type="number" step="1" min="0" max="60" style="width:100%">
-    <input id="hipAddR" type="number" step="1" min="0" max="60" style="width:100%">
+    <input id="L" type="number" step="1" min="0" max="60" style="width:100%">
+    <input id="R" type="number" step="1" min="0" max="60" style="width:100%">
   </div>
 </div>
 
@@ -1244,7 +1244,7 @@ actionDeg.addEventListener("input", ()=> {
       shFlexLMax:170,shFlexRMax:170,shAbdLMax:170,shAbdRMax:170,
       shIRLMax:70,shIRRMax:70,shERLMax:90,shERRMax:90,
       elExtLMax:10,elExtRMax:10,wrSupLMax:95,wrSupRMax:95,
-      hipFlexLMax:120,hipFlexRMax:120,hipAddLMax:30, hipAddRMax:30
+      hipFlexLMax:120,hipFlexRMax:120,hipAddLMax:30, hipAddRMax:30,
       kneeFlexLMax:150,kneeFlexRMax:150,kneeExtLMax:5,kneeExtRMax:5,
       anklePF_LMax:50,anklePF_RMax:50,ankleDF_LMax:20,ankleDF_RMax:20,
       footInvLMax:35,footInvRMax:35,footEvLMax:20,footEvRMax:20
