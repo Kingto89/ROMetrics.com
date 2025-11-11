@@ -1077,6 +1077,19 @@ actionDeg.addEventListener("input", ()=> {
   }
   function toggleTuner(show){ ensureAnatomicTuner(); tunerVisible = (show===undefined) ? !tunerVisible : !!show; tunerEl.style.display = tunerVisible ? 'block' : 'none'; }
 
+    // === Helper: immediately enforce a limit on Apply ===
+function enforceLimit(key, sign, cap) {
+  if (!CURRENT_ACTION || !actionDeg) return;
+  // determine which way to clamp
+  let currentVal = parseFloat(actionDeg.value) || 0;
+  const max = Math.abs(cap);
+  if (sign > 0 && currentVal > max) currentVal = max;
+  if (sign < 0 && currentVal > max) currentVal = max;
+  actionDeg.value = String(max);
+
+  // fire the same event used by sliders to re-apply bone motion
+  actionDeg.dispatchEvent(new Event("input"));
+}
   /* ===== Collision Tuner (dev-only) ===== */
   let colTunerEl = null, colTunerVisible = false;
   function ensureCollisionTuner(){
@@ -1215,6 +1228,16 @@ colTunerEl.querySelector('#colApply').onclick = ()=>{
     const cap = capFor(CURRENT_ACTION);
     if (typeof cap === 'number') actionDeg.max = cap;
   }
+// 🔥 Force enforcement immediately on Apply
+if (CURRENT_ACTION) {
+  const cap = capFor(CURRENT_ACTION);
+  if (typeof cap === "number") {
+    const { key, sign } = CURRENT_ACTION;
+    // Immediately clamp to limit
+    enforceLimit(key, sign, cap);
+    log(`Applied cap for ${key}: ${cap}°`);
+  }
+}
 
   log('✅ Collision limits applied & enforced immediately.');
   preload();  // refresh tuner fields
