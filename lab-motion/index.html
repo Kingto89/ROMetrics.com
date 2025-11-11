@@ -293,8 +293,17 @@ if(/^el_fe_/.test(key) && sign>0){
 if(/^hip_fe_/.test(key)){
   if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
 }
-// Left Hip Adduction
-if(key==='hip_aa_l' && sign<0) return COLLIM.LMax;
+// Hip Abduction / Adduction
+if (/^hip_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
+  } else {
+    // Right: + = Adduction, − = Abduction
+    return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
+  }
+}
 
 // Knee Flexion / Extension
 if(/^knee_fe_/.test(key)){
