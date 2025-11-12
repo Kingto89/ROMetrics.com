@@ -641,6 +641,16 @@ if(/^foot_invev_/.test(key)){
 if (CURRENT_ACTION?.key === "sh_aa_r") {
   console.log("▶ Right-shoulder target bone:", bone.name, "axis:", axis);
 }
+    if (CURRENT_ACTION?.key === "sh_aa_r") {
+  console.log(
+    "▶ sh_aa_r capFor result:",
+    capFor(CURRENT_ACTION),
+    "COLLIM.shAbdRMax=",
+    COLLIM.shAbdRMax,
+    "COLLIM.shAddRMax=",
+    COLLIM.shAddRMax
+  );
+}
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
