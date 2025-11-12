@@ -1363,9 +1363,8 @@ function ensureCollisionTuner() {
     log("✅ Shoulder Add/Abd limits corrected and applied.");
   };
 
-
-// === Preload Existing Values ===
-const preload = () => {
+  // === Preload Existing Values ===
+  const preload = () => {
   // --- Upper Body ---
   $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
   $("#colTrunkLatR").value = COLLIM.trunkLatRMax;
@@ -1412,12 +1411,7 @@ const preload = () => {
   $("#footEvL").value = COLLIM.footEvLMax;
   $("#footEvR").value = COLLIM.footEvRMax;
 };
-
-  colTunerEl.querySelectorAll("input[type='number']").forEach(input => {
-    const key = map[input.id];
-    input.value = (key && COLLIM[key] !== undefined) ? COLLIM[key] : "";
-  });
-};
+  preload();
 
   colTunerEl.querySelector("#colX").onclick = () => toggleCollisionTuner(false);
   return colTunerEl;
