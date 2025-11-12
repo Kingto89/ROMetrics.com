@@ -1291,6 +1291,11 @@ function ensureCollisionTuner() {
   <div class="rom-row"><div class="rom-head">Elbow Ext — Right max (°)</div>
     <div style="flex:1"><input id="elExtR" type="number"></div></div>
 
+    <div class="rom-row"><div class="rom-head">Elbow Flex — Left max (°)</div>
+  <div style="flex:1"><input id="elFlexL" type="number"></div></div>
+<div class="rom-row"><div class="rom-head">Elbow Flex — Right max (°)</div>
+  <div style="flex:1"><input id="elFlexR" type="number"></div></div>
+
   <div class="rom-row"><div class="rom-head">Wrist Sup — Left max (°)</div>
     <div style="flex:1"><input id="wrSupL" type="number"></div></div>
   <div class="rom-row"><div class="rom-head">Wrist Sup — Right max (°)</div>
@@ -1331,6 +1336,8 @@ function ensureCollisionTuner() {
     assign("shFlexRMax", "#shFlexR");
     assign("shExtLMax", "#shExtL");
     assign("shExtRMax", "#shExtR");
+    assign("elFlexLMax", "#elFlexL");
+    assign("elFlexRMax", "#elFlexR");
     COLLIM.save(); COLLIM.enabled = true;
     log("✅ Shoulder Add/Abd limits corrected and applied.");
   };
@@ -1341,6 +1348,8 @@ function ensureCollisionTuner() {
     $("#shAddR").value = COLLIM.shAddRMax;
     $("#shAbdL").value = COLLIM.shAbdLMax;
     $("#shAbdR").value = COLLIM.shAbdRMax;
+    $("#elFlexL").value = COLLIM.elFlexLMax;
+    $("#elFlexR").value = COLLIM.elFlexRMax;
   };
   preload();
 
