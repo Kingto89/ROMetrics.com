@@ -714,12 +714,12 @@ if(/^foot_invev_/.test(key)){
       return out;
     }
 
-    // Shoulder Abd/Add — special-case Right side label flip you reported
-    if (cfg.key==='sh_aa_r'){
-      // On R side your rig behaves inverted; map + to Adduction label, - to Abduction
-      push('Shoulder R — Adduction', +1, maxPos);
-      push('Shoulder R — Abduction', -1, absMin);
-      return out;
+    // Shoulder Abd/Add — Right side normal orientation
+   if (cfg.key==='sh_aa_r'){
+  push('Shoulder R — Abduction', +1, maxPos);
+  push('Shoulder R — Adduction', -1, absMin);
+  return out;
+}
     }
     // Shoulder R IR/ER — explicit labels
 if (cfg.key === 'sh_irer_r'){
