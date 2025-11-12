@@ -514,7 +514,7 @@ if(/^foot_invev_/.test(key)){
     if (profile==='mixamo'){
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
-        sh_aa_l:'z', sh_aa_r:'z',
+        sh_aa_l:'z', sh_aa_r:'-z',
         sh_irer_l:'y', sh_irer_r:'x',
         el_fe_l:'x', el_fe_r:'x',
         fa_ps_l:'y', fa_ps_r:'y',
@@ -991,7 +991,10 @@ actionDeg.addEventListener("input", ()=> {
     );
   }
   loadModel();
-
+  // add after log("Anatomic baseline applied on load.");
+  resetAllBonesToInitial();
+  applyAnatomicBaseline();
+    
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
   [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
