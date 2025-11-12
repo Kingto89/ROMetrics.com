@@ -864,16 +864,19 @@ if (cfg.key === 'hip_aa_r'){
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
-  function applyAnatomicBaseline(){
-    setPair('sh_aa_l', ANAT.addL);
-    setPair('sh_aa_r', -ANAT.addL);
-    // keep tiny forearm PS baseline internally (even though menu hidden)
-    setPair('fa_ps_l', ANAT.psL);
-    setPair('fa_ps_r', -ANAT.psL);
-    setPair('wr_ps_l', ANAT.wpsL);
-    setPair('wr_ps_r', -ANAT.wpsL);
-    log(`Anatomic baseline applied (L/R) → ADD ${ANAT.addL}/${-ANAT.addL}, Forearm PS ${ANAT.psL}/${-ANAT.psL}, Wrist PS ${ANAT.wpsL}/${-ANAT.wpsL}`);
-  }
+function applyAnatomicBaseline(){
+  // 🦴 Apply identical baselines to both arms (no mirroring)
+  setPair('sh_aa_l', ANAT.addL);
+  setPair('sh_aa_r', ANAT.addL);
+
+  // Forearm & wrist PS — apply same orientation to both
+  setPair('fa_ps_l', ANAT.psL);
+  setPair('fa_ps_r', ANAT.psL);
+  setPair('wr_ps_l', ANAT.wpsL);
+  setPair('wr_ps_r', ANAT.wpsL);
+
+  log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
+}
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
