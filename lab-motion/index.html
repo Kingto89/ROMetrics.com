@@ -1364,42 +1364,54 @@ function ensureCollisionTuner() {
   };
 
 
-  // === Fixed preload for tuner (maps correctly to COLLIM keys) ===
+// === Preload Existing Values ===
 const preload = () => {
-  const map = {
-    colTrunkLatL: "trunkLatLMax",
-    colTrunkLatR: "trunkLatRMax",
-    cervL: "cervRotLMax",
-    cervR: "cervRotRMax",
-    shAddL: "shAddLMax",
-    shAddR: "shAddRMax",
-    shAbdL: "shAbdLMax",
-    shAbdR: "shAbdRMax",
-    shFlexL: "shFlexLMax",
-    shFlexR: "shFlexRMax",
-    shExtL: "shExtLMax",
-    shExtR: "shExtRMax",
-    elFlexL: "elFlexLMax",
-    elFlexR: "elFlexRMax",
-    wrSupL: "wrSupLMax",
-    wrSupR: "wrSupRMax",
-    wrProL: "wrProLMax",
-    wrProR: "wrProRMax",
-    hipFlexL: "hipFlexLMax",
-    hipFlexR: "hipFlexRMax",
-    hipAddL: "hipAddLMax",
-    hipAddR: "hipAddRMax",
-    kneeFlexL: "kneeFlexLMax",
-    kneeFlexR: "kneeFlexRMax",
-    anklePFL: "anklePF_LMax",
-    anklePFR: "anklePF_RMax",
-    ankleDFL: "ankleDF_LMax",
-    ankleDFR: "ankleDF_RMax",
-    footInvL: "footInvLMax",
-    footInvR: "footInvRMax",
-    footEvL: "footEvLMax",
-    footEvR: "footEvRMax",
-  };
+  // --- Upper Body ---
+  $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
+  $("#colTrunkLatR").value = COLLIM.trunkLatRMax;
+  $("#cervL").value = COLLIM.cervRotLMax;
+  $("#cervR").value = COLLIM.cervRotRMax;
+
+  $("#shAddL").value = COLLIM.shAddLMax;
+  $("#shAddR").value = COLLIM.shAddRMax;
+  $("#shAbdL").value = COLLIM.shAbdLMax;
+  $("#shAbdR").value = COLLIM.shAbdRMax;
+  $("#shFlexL").value = COLLIM.shFlexLMax;
+  $("#shFlexR").value = COLLIM.shFlexRMax;
+  $("#shExtL").value = COLLIM.shExtLMax;
+  $("#shExtR").value = COLLIM.shExtRMax;
+
+  $("#elFlexL").value = COLLIM.elFlexLMax;
+  $("#elFlexR").value = COLLIM.elFlexRMax;
+  $("#elExtL").value = COLLIM.elExtLMax;
+  $("#elExtR").value = COLLIM.elExtRMax;
+
+  $("#wrSupL").value = COLLIM.wrSupLMax;
+  $("#wrSupR").value = COLLIM.wrSupRMax;
+  $("#wrProL").value = COLLIM.wrProLMax;
+  $("#wrProR").value = COLLIM.wrProRMax;
+
+  // --- Lower Body ---
+  $("#hipFlexL").value = COLLIM.hipFlexLMax;
+  $("#hipFlexR").value = COLLIM.hipFlexRMax;
+  $("#hipAddL").value = COLLIM.hipAddLMax;
+  $("#hipAddR").value = COLLIM.hipAddRMax;
+
+  $("#kneeFlexL").value = COLLIM.kneeFlexLMax;
+  $("#kneeFlexR").value = COLLIM.kneeFlexRMax;
+  $("#kneeExtL").value = COLLIM.kneeExtLMax;
+  $("#kneeExtR").value = COLLIM.kneeExtRMax;
+
+  $("#anklePFL").value = COLLIM.anklePF_LMax;
+  $("#anklePFR").value = COLLIM.anklePF_RMax;
+  $("#ankleDFL").value = COLLIM.ankleDF_LMax;
+  $("#ankleDFR").value = COLLIM.ankleDF_RMax;
+
+  $("#footInvL").value = COLLIM.footInvLMax;
+  $("#footInvR").value = COLLIM.footInvRMax;
+  $("#footEvL").value = COLLIM.footEvLMax;
+  $("#footEvR").value = COLLIM.footEvRMax;
+};
 
   colTunerEl.querySelectorAll("input[type='number']").forEach(input => {
     const key = map[input.id];
