@@ -1363,16 +1363,25 @@ function ensureCollisionTuner() {
     log("✅ Shoulder Add/Abd limits corrected and applied.");
   };
 
-  // === Preload Existing Values ===
-  const preload = () => {
-    $("#shAddL").value = COLLIM.shAddLMax;
-    $("#shAddR").value = COLLIM.shAddRMax;
-    $("#shAbdL").value = COLLIM.shAbdLMax;
-    $("#shAbdR").value = COLLIM.shAbdRMax;
-    $("#elFlexL").value = COLLIM.elFlexLMax;
-    $("#elFlexR").value = COLLIM.elFlexRMax;
-  };
-  preload();
+// === Universal preload for tuner ===
+const preload = () => {
+  // Loop through every input inside the tuner
+  colTunerEl.querySelectorAll("input[type='number']").forEach(input => {
+    const id = input.id;
+    if (!id) return;
+
+    // Try to find a matching property in COLLIM
+    for (const key in COLLIM) {
+      if (key.toLowerCase().includes(id.toLowerCase())) {
+        input.value = COLLIM[key];
+        return;
+      }
+    }
+
+    // Default: clear if no match
+    input.value = "";
+  });
+};
 
   colTunerEl.querySelector("#colX").onclick = () => toggleCollisionTuner(false);
   return colTunerEl;
