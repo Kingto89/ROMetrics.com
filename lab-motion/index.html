@@ -637,6 +637,10 @@ if(/^foot_invev_/.test(key)){
       axis==='z'?rad:0,
       "XYZ"
     );
+    // 🧩 Debug: see which bone and axis are being used
+if (CURRENT_ACTION?.key === "sh_aa_r") {
+  console.log("▶ Right-shoulder target bone:", bone.name, "axis:", axis);
+}
     const qDelta = new THREE.Quaternion().setFromEuler(e);
     bone.quaternion.copy(qBind).multiply(qDelta);
   }
