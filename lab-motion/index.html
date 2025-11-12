@@ -860,8 +860,8 @@ if (cfg.key === 'hip_aa_r'){
       const [, key, signStr, maxStr] = v.split(":");
       const cfg = cfgFromKey(key);
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
-      freezeBindBaseFor(key,cfg);
-
+    if (!key.startsWith('sh_')) freezeBindBaseFor(key,cfg);
+      
       // Shoulder IR/ER → set elbow to 90° baseline immediately
       if (key==='sh_irer_l' || key==='sh_irer_r'){
        const side = key.endsWith('_l') ? 'l' : 'r';
