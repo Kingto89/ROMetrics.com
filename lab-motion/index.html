@@ -1000,17 +1000,8 @@ actionDeg.addEventListener("input", ()=> {
         populateBones();
         detectRigProfile();
         fillActionMenu();
-
-// 🧩 Fix the right shoulder alignment BEFORE binding baselines
-const shoulderR = findBoneBy({ key: 'upperarm_R' });
-if (shoulderR) {
-  // small plane tweak—30° around X; adjust if arm still drifts forward
-  const qFix = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(THREE.MathUtils.degToRad(30), 0, 0, 'XYZ')
-  );
-  shoulderR.applyQuaternion(qFix);
-  log("Right shoulder alignment fix applied (pre-bind).");
-}
+// 🧩 Use standard anatomic baseline only (no manual realignment)
+log("Anatomic baseline loader active — no shoulder correction block applied.");
 
 // === Rebuild baselines with corrected orientations ===
 // 1️⃣ Clear and rebuild bind data AFTER shoulder correction
