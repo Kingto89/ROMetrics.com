@@ -873,7 +873,7 @@ function applyAnatomicBaseline(){
   setPair('fa_ps_l', ANAT.psL);
   setPair('fa_ps_r', ANAT.psL);
   setPair('wr_ps_l', ANAT.wpsL);
-  setPair('wr_ps_r', ANAT.wpsL);
+  setPair('wr_ps_r', -ANAT.wpsL);
 
   log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
 }
