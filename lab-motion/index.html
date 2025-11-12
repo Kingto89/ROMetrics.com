@@ -211,6 +211,7 @@ const COLLIM = {
   shIRLMax: 70, shIRRMax: 70,
   shERLMax: 90, shERRMax: 90,
   elExtLMax: 10, elExtRMax: 10,
+  elFlexLMax: 150, elFlexRMax: 150,
   wrSupLMax: 95, wrSupRMax: 95,
 
   // ===== NEW lower body defaults =====
@@ -331,6 +332,12 @@ if(/^ankle_dfpf_/.test(key)){
 if(/^foot_invev_/.test(key)){
   if(sign > 0) return key.endsWith('_l') ? COLLIM.footEvLMax : COLLIM.footEvRMax;
   if(sign < 0) return key.endsWith('_l') ? COLLIM.footInvLMax : COLLIM.footInvRMax;
+}
+  // === Elbow Flexion (new) ===
+if (/^el_fe_/.test(key)) {
+  return key.endsWith('_l')
+    ? COLLIM.elFlexLMax
+    : COLLIM.elFlexRMax;
 }
     return null;
   }
