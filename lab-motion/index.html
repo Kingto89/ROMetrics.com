@@ -319,10 +319,10 @@ if (/^hip_aa_/.test(key)) {
   }
 }
 
-// Knee Flexion / Extension
+// Knee Flexion / Extension (only flexion capped)
 if(/^knee_fe_/.test(key)){
   if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
-  if(sign < 0) return key.endsWith('_l') ? COLLIM.kneeExtLMax  : COLLIM.kneeExtRMax;
+  if(sign < 0) return null; // no cap on extension
 }
 
 // Ankle PF / DF
@@ -715,8 +715,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'hip_aa_r', pair:'Hip R — Add / Abd', side:'r', plane:'frontal', neutral:0, min:-30, max:45, hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-    {key:'knee_fe_l', pair:'Knee L — Flexion', side:'l', plane:'sagittal', neutral:0, min:-150, max:5, hints:[/calf|tibia|fibula|shin/i]},
-    {key:'knee_fe_r', pair:'Knee R — Flexion', side:'r', plane:'sagittal', neutral:0, min:-150, max:5, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-5, max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-5, max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
@@ -772,9 +772,14 @@ if (cfg.key === 'hip_aa_r'){
   return out;
 }
 
-    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
-      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    if (/^knee_fe_/.test(cfg.key)) {
+  // 🔁 Knee bending = Flexion (+), straightening = Extension (−)
+  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+  }
+  else if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
     } else if (/_aa_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
