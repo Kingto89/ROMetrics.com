@@ -1363,23 +1363,47 @@ function ensureCollisionTuner() {
     log("✅ Shoulder Add/Abd limits corrected and applied.");
   };
 
-// === Universal preload for tuner ===
+
+  // === Fixed preload for tuner (maps correctly to COLLIM keys) ===
 const preload = () => {
-  // Loop through every input inside the tuner
+  const map = {
+    colTrunkLatL: "trunkLatLMax",
+    colTrunkLatR: "trunkLatRMax",
+    cervL: "cervRotLMax",
+    cervR: "cervRotRMax",
+    shAddL: "shAddLMax",
+    shAddR: "shAddRMax",
+    shAbdL: "shAbdLMax",
+    shAbdR: "shAbdRMax",
+    shFlexL: "shFlexLMax",
+    shFlexR: "shFlexRMax",
+    shExtL: "shExtLMax",
+    shExtR: "shExtRMax",
+    elFlexL: "elFlexLMax",
+    elFlexR: "elFlexRMax",
+    wrSupL: "wrSupLMax",
+    wrSupR: "wrSupRMax",
+    wrProL: "wrProLMax",
+    wrProR: "wrProRMax",
+    hipFlexL: "hipFlexLMax",
+    hipFlexR: "hipFlexRMax",
+    hipAddL: "hipAddLMax",
+    hipAddR: "hipAddRMax",
+    kneeFlexL: "kneeFlexLMax",
+    kneeFlexR: "kneeFlexRMax",
+    anklePFL: "anklePF_LMax",
+    anklePFR: "anklePF_RMax",
+    ankleDFL: "ankleDF_LMax",
+    ankleDFR: "ankleDF_RMax",
+    footInvL: "footInvLMax",
+    footInvR: "footInvRMax",
+    footEvL: "footEvLMax",
+    footEvR: "footEvRMax",
+  };
+
   colTunerEl.querySelectorAll("input[type='number']").forEach(input => {
-    const id = input.id;
-    if (!id) return;
-
-    // Try to find a matching property in COLLIM
-    for (const key in COLLIM) {
-      if (key.toLowerCase().includes(id.toLowerCase())) {
-        input.value = COLLIM[key];
-        return;
-      }
-    }
-
-    // Default: clear if no match
-    input.value = "";
+    const key = map[input.id];
+    input.value = (key && COLLIM[key] !== undefined) ? COLLIM[key] : "";
   });
 };
 
