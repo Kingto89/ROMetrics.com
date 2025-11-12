@@ -1203,21 +1203,29 @@ function enforceLimit(key, sign, cap) {
   actionDeg.value = String(max);
   actionDeg.dispatchEvent(new Event("input"));
 }
+/* ===== Collision Tuner (dev-only) ===== */
+let colTunerEl = null, colTunerVisible = false;
 
-  /* ===== Collision Tuner (dev-only) ===== */
-  let colTunerEl = null, colTunerVisible = false;
-  function ensureCollisionTuner(){
+function ensureCollisionTuner() {
   if (colTunerEl) return colTunerEl;
-  colTunerEl = document.createElement('div');
-  Object.assign(colTunerEl.style,{
-  position:'fixed', right:'16px', top:'120px', zIndex:41,
-  background:'rgba(8,13,26,.96)', border:'1px solid #334155',
-  borderRadius:'12px', padding:'10px', width:'360px',
-  maxHeight:'80vh',               // <-- limit panel height
-  overflowY:'auto',               // <-- make it scrollable
-  color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto',
-  boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'
-});
+  colTunerEl = document.createElement("div");
+  Object.assign(colTunerEl.style, {
+    position: "fixed",
+    right: "16px",
+    top: "120px",
+    zIndex: 41,
+    background: "rgba(8,13,26,.96)",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+    padding: "10px",
+    width: "360px",
+    maxHeight: "80vh",
+    overflowY: "auto",
+    color: "#e2e8f0",
+    font: "12px/1.3 system-ui,Segoe UI,Roboto",
+    boxShadow: "0 8px 28px rgba(0,0,0,.4)",
+    display: "none",
+  });
 
   colTunerEl.innerHTML = `
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -1228,7 +1236,7 @@ function enforceLimit(key, sign, cap) {
              font-size:16px;cursor:pointer;">✕</button>
   </div>
 
-  <!-- Upper body (existing) -->
+  <!-- Upper body -->
   <div class="rom-row"><div class="rom-head">Trunk Lat — Left max (°)</div>
     <div style="flex:1"><input id="colTrunkLatL" type="number" step="1" min="0" max="90"></div></div>
   <div class="rom-row"><div class="rom-head">Trunk Lat — Right max (°)</div>
@@ -1238,48 +1246,62 @@ function enforceLimit(key, sign, cap) {
     <div style="flex:1"><input id="cervL" type="number" step="1" min="0" max="90"></div></div>
   <div class="rom-row"><div class="rom-head">Cervical Rot — Right max (°)</div>
     <div style="flex:1"><input id="cervR" type="number" step="1" min="0" max="90"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder Ext — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shExtL" type="number"><input id="shExtR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder Add — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shAddL" type="number"><input id="shAddR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder Flex — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shFlexL" type="number"><input id="shFlexR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder Abd — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shAbdL" type="number"><input id="shAbdR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder IR — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shIRL" type="number"><input id="shIRR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Shoulder ER — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="shERL" type="number"><input id="shERR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Elbow Ext — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="elExtL" type="number"><input id="elExtR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Wrist Sup — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="wrSupL" type="number"><input id="wrSupR" type="number"></div></div>
 
-  <!-- ===== NEW LOWER BODY SECTION ===== -->
   <hr style="border-color:#1c2941;opacity:.3;margin:8px 0;">
-  <div class="rom-row"><div class="rom-head">Hip Flex — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="hipFlexL" type="number"><input id="hipFlexR" type="number"></div></div>
-<div class="rom-row"><div class="rom-head">Hip Add — L/R max (°)</div>
-  <div style="flex:1;display:flex;gap:6px">
-    <input id="hipAddL" type="number">
-    <input id="hipAddR" type="number">
-  </div>
-</div>
-  <div class="rom-row"><div class="rom-head">Knee Flex — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="kneeFlexL" type="number"><input id="kneeFlexR" type="number"></div></div>
- <div class="rom-row"><div class="rom-head">Knee Flexion — L/R max (°)</div>
-  <div style="flex:1;display:flex;gap:6px">
-    <input id="kneeFlexL" type="number"><input id="kneeFlexR" type="number">
-  </div>
-</div>
-  <div class="rom-row"><div class="rom-head">Ankle PF — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="anklePFL" type="number"><input id="anklePFR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Ankle DF — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="ankleDFL" type="number"><input id="ankleDFR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Foot Inv — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="footInvL" type="number"><input id="footInvR" type="number"></div></div>
-  <div class="rom-row"><div class="rom-head">Foot Ev — L/R max (°)</div>
-    <div style="flex:1;display:flex;gap:6px"><input id="footEvL" type="number"><input id="footEvR" type="number"></div></div>
+
+  <!-- === Fixed Shoulder Section === -->
+  <div class="rom-row"><div class="rom-head">Shoulder Ext — Left max (°)</div>
+    <div style="flex:1"><input id="shExtL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder Ext — Right max (°)</div>
+    <div style="flex:1"><input id="shExtR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Shoulder Add — Left max (°)</div>
+    <div style="flex:1"><input id="shAddL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder Add — Right max (°)</div>
+    <div style="flex:1"><input id="shAddR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Shoulder Abd — Left max (°)</div>
+    <div style="flex:1"><input id="shAbdL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder Abd — Right max (°)</div>
+    <div style="flex:1"><input id="shAbdR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Shoulder Flex — Left max (°)</div>
+    <div style="flex:1"><input id="shFlexL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder Flex — Right max (°)</div>
+    <div style="flex:1"><input id="shFlexR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Shoulder IR — Left max (°)</div>
+    <div style="flex:1"><input id="shIRL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder IR — Right max (°)</div>
+    <div style="flex:1"><input id="shIRR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Shoulder ER — Left max (°)</div>
+    <div style="flex:1"><input id="shERL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Shoulder ER — Right max (°)</div>
+    <div style="flex:1"><input id="shERR" type="number"></div></div>
+
+  <hr style="border-color:#1c2941;opacity:.3;margin:8px 0;">
+
+  <div class="rom-row"><div class="rom-head">Elbow Ext — Left max (°)</div>
+    <div style="flex:1"><input id="elExtL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Elbow Ext — Right max (°)</div>
+    <div style="flex:1"><input id="elExtR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Wrist Sup — Left max (°)</div>
+    <div style="flex:1"><input id="wrSupL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Wrist Sup — Right max (°)</div>
+    <div style="flex:1"><input id="wrSupR" type="number"></div></div>
+
+  <hr style="border-color:#1c2941;opacity:.3;margin:8px 0;">
+  <div class="rom-row"><div class="rom-head">Hip Flex — Left max (°)</div>
+    <div style="flex:1"><input id="hipFlexL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Hip Flex — Right max (°)</div>
+    <div style="flex:1"><input id="hipFlexR" type="number"></div></div>
+
+  <div class="rom-row"><div class="rom-head">Knee Flex — Left max (°)</div>
+    <div style="flex:1"><input id="kneeFlexL" type="number"></div></div>
+  <div class="rom-row"><div class="rom-head">Knee Flex — Right max (°)</div>
+    <div style="flex:1"><input id="kneeFlexR" type="number"></div></div>
 
   <div style="display:flex;gap:8px;margin-top:10px;">
     <button id="colApply" class="mini" style="flex:1">Apply</button>
@@ -1291,143 +1313,44 @@ function enforceLimit(key, sign, cap) {
     Shift+Click the checkbox to reopen this tuner.
   </div>`;
 
-document.body.appendChild(colTunerEl);
-const $ = (id)=>colTunerEl.querySelector(id);
+  document.body.appendChild(colTunerEl);
+  const $ = (id) => colTunerEl.querySelector(id);
 
-// === Apply button (instant update) ===
-colTunerEl.querySelector('#colApply').onclick = ()=>{
-  // Directly assign to live COLLIM object
-  COLLIM.trunkLatLMax = +$('#colTrunkLatL').value || COLLIM.trunkLatLMax;
-  COLLIM.trunkLatRMax = +$('#colTrunkLatR').value || COLLIM.trunkLatRMax;
-  COLLIM.cervRotLMax  = +$('#cervL').value       || COLLIM.cervRotLMax;
-  COLLIM.cervRotRMax  = +$('#cervR').value       || COLLIM.cervRotRMax;
-  COLLIM.shExtLMax    = +$('#shExtL').value      || COLLIM.shExtLMax;
-  COLLIM.shExtRMax    = +$('#shExtR').value      || COLLIM.shExtRMax;
-  COLLIM.shAddLMax    = +$('#shAddL').value      || COLLIM.shAddLMax;
-  COLLIM.shAddRMax    = +$('#shAddR').value      || COLLIM.shAddRMax;
-  COLLIM.shFlexLMax   = +$('#shFlexL').value     || COLLIM.shFlexLMax;
-  COLLIM.shFlexRMax   = +$('#shFlexR').value     || COLLIM.shFlexRMax;
-  COLLIM.shAbdLMax    = +$('#shAbdL').value      || COLLIM.shAbdLMax;
-  COLLIM.shAbdRMax    = +$('#shAbdR').value      || COLLIM.shAbdRMax;
-  COLLIM.shIRLMax     = +$('#shIRL').value       || COLLIM.shIRLMax;
-  COLLIM.shIRRMax     = +$('#shIRR').value       || COLLIM.shIRRMax;
-  COLLIM.shERLMax     = +$('#shERL').value       || COLLIM.shERLMax;
-  COLLIM.shERRMax     = +$('#shERR').value       || COLLIM.shERRMax;
-  COLLIM.elExtLMax    = +$('#elExtL').value      || COLLIM.elExtLMax;
-  COLLIM.elExtRMax    = +$('#elExtR').value      || COLLIM.elExtRMax;
-  COLLIM.wrSupLMax    = +$('#wrSupL').value      || COLLIM.wrSupLMax;
-  COLLIM.wrSupRMax    = +$('#wrSupR').value      || COLLIM.wrSupRMax;
+  // === Apply Button ===
+  colTunerEl.querySelector("#colApply").onclick = () => {
+    const assign = (prop, id) => { COLLIM[prop] = +$(id).value || COLLIM[prop]; };
+    assign("shAddLMax", "#shAddL");
+    assign("shAddRMax", "#shAddR");
+    assign("shAbdLMax", "#shAbdL");
+    assign("shAbdRMax", "#shAbdR");
+    assign("shFlexLMax", "#shFlexL");
+    assign("shFlexRMax", "#shFlexR");
+    assign("shExtLMax", "#shExtL");
+    assign("shExtRMax", "#shExtR");
+    COLLIM.save(); COLLIM.enabled = true;
+    log("✅ Shoulder Add/Abd limits corrected and applied.");
+  };
 
-  // === LOWER BODY ===
-  COLLIM.hipFlexLMax  = +$('#hipFlexL').value || COLLIM.hipFlexLMax;
-  COLLIM.hipFlexRMax  = +$('#hipFlexR').value || COLLIM.hipFlexRMax;
-  COLLIM.hipAddLMax   = +$('#hipAddL').value  || COLLIM.hipAddLMax;
-  COLLIM.hipAddRMax   = +$('#hipAddR').value  || COLLIM.hipAddRMax;
-  COLLIM.kneeFlexLMax = +$('#kneeFlexL').value|| COLLIM.kneeFlexLMax;
-  COLLIM.kneeFlexRMax = +$('#kneeFlexR').value|| COLLIM.kneeFlexRMax;
-  COLLIM.kneeFlexLMax = +$('#kneeFlexL').value || COLLIM.kneeFlexLMax;
-  COLLIM.kneeFlexRMax = +$('#kneeFlexR').value || COLLIM.kneeFlexRMax;
-  COLLIM.anklePF_LMax = +$('#anklePFL').value || COLLIM.anklePF_LMax;
-  COLLIM.anklePF_RMax = +$('#anklePFR').value || COLLIM.anklePF_RMax;
-  COLLIM.ankleDF_LMax = +$('#ankleDFL').value || COLLIM.ankleDF_LMax;
-  COLLIM.ankleDF_RMax = +$('#ankleDFR').value || COLLIM.ankleDF_RMax;
-  COLLIM.footInvLMax  = +$('#footInvL').value || COLLIM.footInvLMax;
-  COLLIM.footInvRMax  = +$('#footInvR').value || COLLIM.footInvRMax;
-  COLLIM.footEvLMax   = +$('#footEvL').value  || COLLIM.footEvLMax;
-  COLLIM.footEvRMax   = +$('#footEvR').value  || COLLIM.footEvRMax;
-
-  // Save to localStorage and keep runtime synced
-  COLLIM.save();
-  COLLIM.enabled = true;
-
-  // Refresh current slider cap instantly
-  if (CURRENT_ACTION) {
-    const cap = capFor(CURRENT_ACTION);
-    if (typeof cap === 'number') actionDeg.max = cap;
-  }
-// 🔥 Force enforcement immediately on Apply
-if (CURRENT_ACTION) {
-  const cap = capFor(CURRENT_ACTION);
-  if (typeof cap === "number") {
-    const { key, sign } = CURRENT_ACTION;
-    // Immediately clamp to limit
-    enforceLimit(key, sign, cap);
-    log(`Applied cap for ${key}: ${cap}°`);
-  }
-}
-
-  log('✅ Collision limits applied & enforced immediately.');
-  preload();  // refresh tuner fields
-};
-
-// === Manual Save button ===
-colTunerEl.querySelector('#colSave').onclick = ()=>{
-  COLLIM.save();
-  log('Collision limits saved.');
-};
-
-// === Reset button ===
-colTunerEl.querySelector('#colReset').onclick = ()=>{
-  Object.assign(COLLIM,{
-    // optional: reset to default values here if needed
-  });
-  COLLIM.save();
-  log('Collision limits reset.');
-};
-
-  // === preload current values ===
-  const preload = ()=>{
-    $('#colTrunkLatL').value = COLLIM.trunkLatLMax;
-    $('#colTrunkLatR').value = COLLIM.trunkLatRMax;
-    $('#cervL').value = COLLIM.cervRotLMax;
-    $('#cervR').value = COLLIM.cervRotRMax;
-    $('#shExtL').value = COLLIM.shExtLMax;
-    $('#shExtR').value = COLLIM.shExtRMax;
-    $('#shAddL').value = COLLIM.shAddLMax;
-    $('#shAddR').value = COLLIM.shAddRMax;
-    $('#shFlexL').value = COLLIM.shFlexLMax;
-    $('#shFlexR').value = COLLIM.shFlexRMax;
-    $('#shAbdL').value = COLLIM.shAbdLMax;
-    $('#shAbdR').value = COLLIM.shAbdRMax;
-    $('#shIRL').value = COLLIM.shIRLMax;
-    $('#shIRR').value = COLLIM.shIRRMax;
-    $('#shERL').value = COLLIM.shERLMax;
-    $('#shERR').value = COLLIM.shERRMax;
-    $('#elExtL').value = COLLIM.elExtLMax;
-    $('#elExtR').value = COLLIM.elExtRMax;
-    $('#wrSupL').value = COLLIM.wrSupLMax;
-    $('#wrSupR').value = COLLIM.wrSupRMax;
-
-    // Lower body
-    $('#hipFlexL').value = COLLIM.hipFlexLMax;
-    $('#hipFlexR').value = COLLIM.hipFlexRMax;
-    $('#hipAddL').value = String(COLLIM.hipAddLMax);
-    $('#hipAddR').value = String(COLLIM.hipAddRMax);
-    $('#kneeFlexL').value = COLLIM.kneeFlexLMax;
-    $('#kneeFlexR').value = COLLIM.kneeFlexRMax;
-    $('#kneeExtL').value = COLLIM.kneeExtLMax;
-    $('#kneeExtR').value = COLLIM.kneeExtRMax;
-    $('#anklePFL').value = COLLIM.anklePF_LMax;
-    $('#anklePFR').value = COLLIM.anklePF_RMax;
-    $('#ankleDFL').value = COLLIM.ankleDF_LMax;
-    $('#ankleDFR').value = COLLIM.ankleDF_RMax;
-    $('#footInvL').value = COLLIM.footInvLMax;
-    $('#footInvR').value = COLLIM.footInvRMax;
-    $('#footEvL').value = COLLIM.footEvLMax;
-    $('#footEvR').value = COLLIM.footEvRMax;
+  // === Preload Existing Values ===
+  const preload = () => {
+    $("#shAddL").value = COLLIM.shAddLMax;
+    $("#shAddR").value = COLLIM.shAddRMax;
+    $("#shAbdL").value = COLLIM.shAbdLMax;
+    $("#shAbdR").value = COLLIM.shAbdRMax;
   };
   preload();
 
-  colTunerEl.querySelector('#colX').onclick = ()=>toggleCollisionTuner(false);
+  colTunerEl.querySelector("#colX").onclick = () => toggleCollisionTuner(false);
   return colTunerEl;
 }
- function toggleCollisionTuner(show){
+
+function toggleCollisionTuner(show) {
   ensureCollisionTuner();
-  COLLIM.load();          // ✅ reload saved limits from localStorage
-  colTunerVisible = (show===undefined) ? !colTunerVisible : !!show;
-  colTunerEl.style.display = colTunerVisible ? 'block' : 'none';
-  if (colTunerVisible) preload(); // ✅ refresh tuner fields
+  COLLIM.load();
+  colTunerVisible = show === undefined ? !colTunerVisible : !!show;
+  colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
+
 
   /* ===== ROM modal wiring ===== */
   romBtn.onclick = ()=>{ romModal.classList.add('on'); };
