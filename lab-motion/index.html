@@ -778,10 +778,10 @@ if (cfg.key === 'hip_irer_l') {
   return out;
 }
 
-// --- Left Foot fix: rename only ---
+// --- Left Foot fix: 
 if (cfg.key === 'foot_invev_l') {
-  push(cfg.pair.replace(/—.*$/, '— Inversion'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Eversion'), -1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, absMin);
   return out;
 }
     if (/^knee_fe_/.test(cfg.key)) {
