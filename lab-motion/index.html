@@ -1089,64 +1089,118 @@ log("Anatomic baseline applied on load.");
     log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
-  /* ===== Hidden Anatomic Tuner (dev-only) ===== */
-  let tunerEl = null, tunerVisible = false;
-  function ensureAnatomicTuner(){
-    if (tunerEl) return tunerEl;
-    tunerEl = document.createElement('div');
-    Object.assign(tunerEl.style,{position:'fixed', right:'16px', top:'16px', zIndex:40, background:'rgba(8,13,26,.96)', border:'1px solid #334155', borderRadius:'12px', padding:'10px', width:'280px', color:'#e2e8f0', font:'12px/1.3 system-ui,Segoe UI,Roboto', boxShadow:'0 8px 28px rgba(0,0,0,.4)', display:'none'});
-    tunerEl.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <strong style="font-size:13px;">Anatomic Position Tuner (dev)</strong>
-        <button id="anatX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
-      </div>
-      <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="addL" type="number" step="1">
-        <input id="addR" type="number" step="1" disabled>
-      </div>
-      <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="psL" type="number" step="1">
-        <input id="psR" type="number" step="1" disabled>
-      </div>
-      <label style="display:block;opacity:.8; margin-top:8px;">Wrist PS (°)</label>
-      <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
-        <input id="wpsL" type="number" step="1">
-        <input id="wpsR" type="number" step="1" disabled>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="anatApply" class="mini" style="flex:1">Apply</button>
-        <button id="anatZero"  class="mini">Zero</button>
-      </div>
-    `;
-    document.body.appendChild(tunerEl);
-    const addL=tunerEl.querySelector('#addL'), addR=tunerEl.querySelector('#addR');
-    const psL =tunerEl.querySelector('#psL'),  psR =tunerEl.querySelector('#psR');
-    const wpsL=tunerEl.querySelector('#wpsL'), wpsR=tunerEl.querySelector('#wpsR');
-    function preload(){ addL.value=String(ANAT.addL); psL.value=String(ANAT.psL); wpsL.value=String(ANAT.wpsL); addR.value=String(-ANAT.addL); psR.value=String(-ANAT.psL); wpsR.value=String(-ANAT.wpsL); }
-    function syncRight(){ addR.value=String(-(+addL.value||0)); psR.value=String(-( +psL.value||0)); wpsR.value=String(-( +wpsL.value||0)); }
-    preload(); addL.addEventListener('input', syncRight); psL.addEventListener('input', syncRight); wpsL.addEventListener('input', syncRight);
-    tunerEl.querySelector('#anatApply').onclick = ()=>{ ANAT.addL=+addL.value||0; ANAT.psL=+psL.value||0; ANAT.wpsL=+wpsL.value||0; applyAnatomicBaseline(); };
-    tunerEl.querySelector('#anatZero').onclick  = ()=>{ addL.value = psL.value = wpsL.value = '0'; syncRight(); ANAT.addL = ANAT.psL = ANAT.wpsL = 0; applyAnatomicBaseline(); };
-    tunerEl.querySelector('#anatX').onclick = ()=>{ tunerEl.style.display='none'; tunerVisible=false; };
-    return tunerEl;
-  }
-  function toggleTuner(show){ ensureAnatomicTuner(); tunerVisible = (show===undefined) ? !tunerVisible : !!show; tunerEl.style.display = tunerVisible ? 'block' : 'none'; }
+/* ===== Hidden Anatomic Tuner (dev-only, non-mirrored) ===== */
+let tunerEl = null, tunerVisible = false;
+function ensureAnatomicTuner() {
+  if (tunerEl) return tunerEl;
+  tunerEl = document.createElement('div');
+  Object.assign(tunerEl.style, {
+    position: 'fixed',
+    right: '16px',
+    top: '16px',
+    zIndex: 40,
+    background: 'rgba(8,13,26,.96)',
+    border: '1px solid #334155',
+    borderRadius: '12px',
+    padding: '10px',
+    width: '280px',
+    color: '#e2e8f0',
+    font: '12px/1.3 system-ui,Segoe UI,Roboto',
+    boxShadow: '0 8px 28px rgba(0,0,0,.4)',
+    display: 'none'
+  });
+  tunerEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <strong style="font-size:13px;">Anatomic Position Tuner (dev)</strong>
+      <button id="anatX" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <label style="display:block;margin-top:6px;opacity:.8">Shoulder ADD (°)</label>
+    <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+      <input id="addL" type="number" step="1">
+      <input id="addR" type="number" step="1" disabled>
+    </div>
+    <label style="display:block;opacity:.8">Forearm PS (°) — sup(+), pro(−)</label>
+    <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+      <input id="psL" type="number" step="1">
+      <input id="psR" type="number" step="1" disabled>
+    </div>
+    <label style="display:block;opacity:.8; margin-top:8px;">Wrist PS (°)</label>
+    <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;">
+      <input id="wpsL" type="number" step="1">
+      <input id="wpsR" type="number" step="1" disabled>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="anatApply" class="mini" style="flex:1">Apply</button>
+      <button id="anatZero" class="mini">Zero</button>
+    </div>
+  `;
+  document.body.appendChild(tunerEl);
 
-    // === Helper: immediately enforce a limit on Apply ===
+  // Element references
+  const addL = tunerEl.querySelector('#addL'), addR = tunerEl.querySelector('#addR');
+  const psL  = tunerEl.querySelector('#psL'),  psR  = tunerEl.querySelector('#psR');
+  const wpsL = tunerEl.querySelector('#wpsL'), wpsR = tunerEl.querySelector('#wpsR');
+
+  // Preload current baseline (no mirroring)
+  function preload() {
+    addL.value = String(ANAT.addL);
+    psL.value  = String(ANAT.psL);
+    wpsL.value = String(ANAT.wpsL);
+    addR.value = String(ANAT.addL);
+    psR.value  = String(ANAT.psL);
+    wpsR.value = String(ANAT.wpsL);
+  }
+
+  // Keep right side identical to left (no inversion)
+  function syncRight() {
+    addR.value = String(+addL.value || 0);
+    psR.value  = String(+psL.value  || 0);
+    wpsR.value = String(+wpsL.value || 0);
+  }
+
+  preload();
+  addL.addEventListener('input', syncRight);
+  psL.addEventListener('input', syncRight);
+  wpsL.addEventListener('input', syncRight);
+
+  // Apply & Zero
+  tunerEl.querySelector('#anatApply').onclick = () => {
+    ANAT.addL = +addL.value || 0;
+    ANAT.psL  = +psL.value  || 0;
+    ANAT.wpsL = +wpsL.value || 0;
+    applyAnatomicBaseline();
+  };
+  tunerEl.querySelector('#anatZero').onclick = () => {
+    addL.value = psL.value = wpsL.value = '0';
+    syncRight();
+    ANAT.addL = ANAT.psL = ANAT.wpsL = 0;
+    applyAnatomicBaseline();
+  };
+  tunerEl.querySelector('#anatX').onclick = () => {
+    tunerEl.style.display = 'none';
+    tunerVisible = false;
+  };
+
+  return tunerEl;
+}
+
+function toggleTuner(show) {
+  ensureAnatomicTuner();
+  tunerVisible = (show === undefined) ? !tunerVisible : !!show;
+  tunerEl.style.display = tunerVisible ? 'block' : 'none';
+}
+
+// === Helper: immediately enforce a limit on Apply ===
 function enforceLimit(key, sign, cap) {
   if (!CURRENT_ACTION || !actionDeg) return;
-  // determine which way to clamp
   let currentVal = parseFloat(actionDeg.value) || 0;
   const max = Math.abs(cap);
   if (sign > 0 && currentVal > max) currentVal = max;
   if (sign < 0 && currentVal > max) currentVal = max;
   actionDeg.value = String(max);
-
-  // fire the same event used by sliders to re-apply bone motion
   actionDeg.dispatchEvent(new Event("input"));
 }
+
   /* ===== Collision Tuner (dev-only) ===== */
   let colTunerEl = null, colTunerVisible = false;
   function ensureCollisionTuner(){
