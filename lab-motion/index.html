@@ -770,7 +770,11 @@ if (cfg.key === 'hip_aa_r'){
   push('Hip R — Abduction', -1, absMin);
   push('Hip R — Adduction', +1, maxPos);
   return out;
+}
 
+    if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
     } else if (/_aa_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
@@ -800,14 +804,6 @@ if (cfg.key === 'hip_aa_r'){
     } else if (/foot_invev_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Eversion'), -1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Inversion'), +1, absMin);
-    }
-      // === Knee Flexion / Extension (flipped labels for your rig) ===
-  else if (/^knee_fe_/.test(cfg.key)) {
-  // 🔄 Swapped: bending = "Extension", straightening = "Flexion"
-  push(cfg.pair.replace(/—.*$/, '— Extension'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Flexion'), -1, absMin);
-  return out;
-}
     }
     return out;
   }
