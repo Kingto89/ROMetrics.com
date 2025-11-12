@@ -688,15 +688,16 @@ function freezeBindBaseFor(key, cfg) {
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
 
-    // ===== Wrist — compact, bind-compatible block =====
-{key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
-{key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
+     // ===== Wrist — corrected direction for right side =====
+    {key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
+    {key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]}, // 🔁 flipped
 
-{key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
-{key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+    {key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+    {key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
 
-{key:'wr_ru_l', pair:'Wrist L — Radial / Ulnar Dev', side:'l', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
-{key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
+    {key:'wr_ru_l', pair:'Wrist L — Radial / Ulnar Dev', side:'l', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
+    {key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, invert:true, hints:[/wrist|hand/i]}, // 🔁 flipped
+
 ];   
   const LOWER = [
     {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
