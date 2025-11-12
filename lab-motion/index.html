@@ -264,17 +264,18 @@ function capFor(action){
       }
     }
 
-    // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
-    if (/^sh_aa_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (isLeft) {
-        // Left: + = Abduction, − = Adduction (normal)
-        return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
-      } else {
-        // Right (your UI labels flipped): + = Adduction, − = Abduction
-       return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
-      }
-    }
+ // Shoulder Abd/Add — handle L normally; R is label-flipped in the menu
+if (/^sh_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction (normal)
+    return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+  } else {
+    // Right (your UI labels flipped): + = Adduction, − = Abduction
+    return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
+  }
+}
+
     // Shoulder IR/ER caps
 if (/^sh_irer_/.test(key)) {
   const isLeft = key.endsWith('_l');
