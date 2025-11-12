@@ -974,23 +974,31 @@ actionDeg.addEventListener("input", ()=> {
         populateBones();
         detectRigProfile();
         fillActionMenu();
-        // Start in anatomic every time
-        resetAllBonesToInitial();
-        applyAnatomicBaseline();
-                // 🧩 Right Shoulder Axis Correction — aligns abduction plane with left
-        const shoulderR = findBoneBy({ key: 'upperarm_R' });
-        if (shoulderR) {
-          const qFix = new THREE.Quaternion().setFromEuler(
-            new THREE.Euler(THREE.MathUtils.degToRad(30), 0, 0, 'XYZ')
-          );
-          shoulderR.applyQuaternion(qFix);
-          log("Right shoulder alignment fix applied.");
-        }
-        COLLIM.enabled = true;
-        if (antiBox) antiBox.checked = true;
-        log("Anticollision default ON.");
-        log("Anatomic baseline applied on load.");
-      },
+
+// 🧩 Fix the right shoulder alignment BEFORE binding baselines
+const shoulderR = findBoneBy({ key: 'upperarm_R' });
+if (shoulderR) {
+  // small plane tweak—30° around X; adjust if arm still drifts forward
+  const qFix = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(THREE.MathUtils.degToRad(30), 0, 0, 'XYZ')
+  );
+  shoulderR.applyQuaternion(qFix);
+  log("Right shoulder alignment fix applied (pre-bind).");
+}
+
+// === Rebuild baselines with corrected orientations ===
+JOINT_BIND.clear();                        // 1️⃣ forget old binds
+skeleton.bones.forEach(b =>
+  initialBoneRot.set(b, b.quaternion.clone())
+);                                          // 2️⃣ record corrected rotations
+resetAllBonesToInitial();                   // 3️⃣ use them
+applyAnatomicBaseline();                    // 4️⃣ impose anatomic pose
+
+COLLIM.enabled = true;
+if (antiBox) antiBox.checked = true;
+log("Anticollision default ON.");
+log("Anatomic baseline applied on load.");
+},    
       (xhr) => { 
         const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded/xhr.total)*100)) : null;
         msg.textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
