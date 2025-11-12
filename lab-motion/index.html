@@ -771,7 +771,19 @@ if (cfg.key === 'hip_aa_r'){
   push('Hip R — Adduction', +1, maxPos);
   return out;
 }
+    // --- Left Hip fix: rename only ---
+if (cfg.key === 'hip_irer_l') {
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
+  return out;
+}
 
+// --- Left Foot fix: rename only ---
+if (cfg.key === 'foot_invev_l') {
+  push(cfg.pair.replace(/—.*$/, '— Inversion'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Eversion'), -1, absMin);
+  return out;
+}
     if (/^knee_fe_/.test(cfg.key)) {
   // 🔁 Knee bending = Flexion (+), straightening = Extension (−)
   push(cfg.pair.replace(/—.*$/, '— Flexion'), -1, maxPos);
