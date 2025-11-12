@@ -979,7 +979,7 @@ actionDeg.addEventListener("input", ()=> {
         resetAllBonesToInitial();
         applyAnatomicBaseline();
                 // 🧩 Right Shoulder Axis Correction — aligns abduction plane with left
-        const shoulderR = findBone({ key: 'upperarm_R' });
+        const shoulderR = findBoneBy({ key: 'upperarm_R' });
         if (shoulderR) {
           const qFix = new THREE.Quaternion().setFromEuler(
             new THREE.Euler(THREE.MathUtils.degToRad(30), 0, 0, 'XYZ')
