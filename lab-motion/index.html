@@ -978,6 +978,15 @@ actionDeg.addEventListener("input", ()=> {
         // Start in anatomic every time
         resetAllBonesToInitial();
         applyAnatomicBaseline();
+                // 🧩 Right Shoulder Axis Correction — aligns abduction plane with left
+        const shoulderR = findBoneByName('upperarm_R');
+        if (shoulderR) {
+          const qFix = new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(THREE.MathUtils.degToRad(30), 0, 0, 'XYZ')
+          );
+          shoulderR.applyQuaternion(qFix);
+          log("Right shoulder alignment fix applied.");
+        }
         COLLIM.enabled = true;
         if (antiBox) antiBox.checked = true;
         log("Anticollision default ON.");
