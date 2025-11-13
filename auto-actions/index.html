@@ -61,14 +61,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
     <div class="content">
 
-      <div class="row" style="align-items:center">
-        <button id="romBtn" class="mini">📘 ROM Reference</button>
-        <label style="display:flex;gap:6px;align-items:center;margin:0;">
-          <input id="antiBox" type="checkbox"/>
-          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-        </label>
-      </div>
-
       <label>Body Region</label>
       <div class="seg">
         <button id="segUpper" class="on">Upper Body</button>
@@ -81,75 +73,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
 
-      <details>
-        <summary>Bone (Advanced)</summary>
-        <label>Bone (Blender order)</label>
-        <select id="boneSel"></select>
-        <div class="row">
-          <div style="flex:1">
-            <label>Rotate X (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
-          </div>
-          <div style="flex:1">
-            <label>Rotate Y (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
-          </div>
-        </div>
-        <label>Rotate Z (°)</label>
-        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
-
-        <div class="row" style="margin-top:6px">
-          <button id="zeroBone" class="mini">Zero Bone</button>
-          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-        </div>
-
-      </details>
-
-      <details>
-        <summary>Model</summary>
-        <div class="row">
-          <div style="flex:1">
-            <label>Model X (m)</label>
-            <input type="range" min="-2" max="2" step="0.01" value="0" id="mx">
-          </div>
-          <div style="flex:1">
-            <label>Model Z (m)</label>
-            <input type="range" min="-2" max="2" step="0.01" value="0.6" id="mz">
-          </div>
-        </div>
-        <div class="row">
-          <div style="flex:1">
-            <label>Model Y (m)</label>
-            <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="my">
-          </div>
-          <div style="flex:1">
-            <label>Scale (%)</label>
-            <input type="range" min="40" max="200" step="1" value="125" id="ms">
-          </div>
-        </div>
-        <label>Yaw (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="myaw">
-        <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
-      </details>
-
       <label>Event Log</label>
       <pre id="log"></pre>
-    </div>
-  </div>
-
-  <div class="modal" id="romModal" aria-modal="true" role="dialog">
-    <div class="top">
-      <h4>ROM Reference</h4>
-      <button class="x" id="romClose" aria-label="Close">✕</button>
-    </div>
-    <div class="body" id="romBody">
-      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
-      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
-      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
-      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
-      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
-      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
-      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
     </div>
   </div>
 
@@ -171,9 +96,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
-  const romBtn = document.getElementById("romBtn");
-  const romModal = document.getElementById("romModal");
-  const romClose = document.getElementById("romClose");
 
   const segUpper = document.getElementById("segUpper");
   const segLower = document.getElementById("segLower");
@@ -181,21 +103,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
-  const zeroAll = document.getElementById("zeroAll");
-
-  const boneSel = document.getElementById("boneSel");
-  const rx = document.getElementById("rx");
-  const ry = document.getElementById("ry");
-  const rz = document.getElementById("rz");
-  const zeroBone = document.getElementById("zeroBone");
-
-  const mx = document.getElementById("mx");
-  const my = document.getElementById("my");
-  const mz = document.getElementById("mz");
-  const ms = document.getElementById("ms");
-  const myaw = document.getElementById("myaw");
-  const resetModel = document.getElementById("resetModel");
-
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
   enabled: false,
@@ -424,87 +331,6 @@ if(/^foot_invev_/.test(key)){
     const box = new THREE.Box3().setFromObject(model);
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
-  }
-
-  /* ===== Blender order for Advanced menu ===== */
-  const BLENDER_ORDER = [
-    "pelvis",
-    "spine01","spine02","spine03",
-    "neck","head",
-    "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
-    "thumb01_L","thumb02_L","thumb03_L",
-    "index00_L","index01_L","index02_L","index03_L",
-    "middle00_L","middle01_L","middle02_L","middle03_L",
-    "ring00_L","ring01_L","ring02_L","ring03_L",
-    "pinky00_L","pinky01_L","pinky02_L","pinky03_L",
-    "clavicle_R","upperarm_R","upperarm_twist_R","lowerarm_R","lowerarm_twist_R","hand_R",
-    "thumb01_R","thumb02_R","thumb03_R",
-    "index00_R","index01_R","index02_R","index03_R",
-    "middle00_R","middle01_R","middle02_R","middle03_R",
-    "ring00_R","ring01_R","ring02_R","ring03_R",
-    "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
-    "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
-    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
-  ];
-  const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
-
-  /* ===== Populate bones (sorted) ===== */
-  function populateBones(){
-    boneSel.innerHTML = "";
-    if (!skeleton) {
-      const o = document.createElement("option");
-      o.value = ""; o.textContent = "(No skeleton)";
-      boneSel.appendChild(o);
-      return;
-    }
-    const bones = [...skeleton.bones].sort((a,b)=>{
-      const ai = ORDER_INDEX[(a.name||"").toLowerCase()];
-      const bi = ORDER_INDEX[(b.name||"").toLowerCase()];
-      const av = (ai===undefined) ? 9999 : ai;
-      const bv = (bi===undefined) ? 9999 : bi;
-      if (av!==bv) return av-bv;
-      return (a.name||"").localeCompare(b.name||"");
-    });
-
-    bones.forEach((b,i)=>{
-      const o = document.createElement("option");
-      o.value = String(skeleton.bones.indexOf(b));
-      o.textContent = b.name || `Bone ${i}`;
-      boneSel.appendChild(o);
-      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
-    });
-    if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
-    rx.value = "0"; ry.value = "0"; rz.value = "0";
-    setBoneRotationFromUI();
-  }
-  function setBoneRotationFromUI(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
-    b.quaternion.copy(qBase).multiply(qDelta);
-  }
-  function zeroSelectedBone(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const qb = initialBoneRot.get(b);
-    if (qb) b.quaternion.copy(qb);
-    rx.value="0"; ry.value="0"; rz.value="0";
-  }
-  function resetAllBonesToInitial(){
-    if (!skeleton) return;
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-    JOINT_BIND.forEach(obj=>{
-      if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
-    });
   }
 
   /* ===== Rig profile & axis ===== */
@@ -994,14 +820,6 @@ actionDeg.addEventListener("input", ()=> {
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
 
-  zeroAll.onclick = ()=>{
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
-    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
-    rx.value = "0"; ry.value = "0"; rz.value = "0";
-    pairLabel.textContent = "Angle (°)";
-    log("All motions zeroed → returned to anatomic baseline.");
-  };
 
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
@@ -1070,21 +888,6 @@ log("Anatomic baseline applied on load.");
   }
   loadModel();
     
-  /* ===== Advanced controls wiring ===== */
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
-  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
-  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
-    if (!model) return;
-    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-    model.scale.setScalar(parseInt(ms.value,10)/100);
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-  }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
-    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
-    groundSnap();
-  };
 
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
@@ -1403,11 +1206,6 @@ function toggleCollisionTuner(show) {
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
 
-
-  /* ===== ROM modal wiring ===== */
-  romBtn.onclick = ()=>{ romModal.classList.add('on'); };
-  romClose.onclick = ()=>{ romModal.classList.remove('on'); };
-  window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
 
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
