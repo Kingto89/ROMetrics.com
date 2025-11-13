@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ROMetrics — Auto Actions Tester</title>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  html,body{
+    margin:0;height:100%;overflow:hidden;
+    background:#0b1220;color:#e2e8f0;
+    font-family:system-ui,Segoe UI,Roboto;
+  }
+  canvas{
+    position:fixed;inset:0;width:100%;height:100%;
+    z-index:0;display:block;
+  }
+  /* Minimal test panel */
+  #panel{
+    position:fixed;left:0;top:0;width:300px;
+    padding:14px;z-index:20;
+    background:#0f172a;border-right:1px solid #1f2937;
+  }
+  button,select{
+    width:100%;padding:8px 10px;margin:8px 0;
+    border-radius:10px;background:#1e293b;border:1px solid #334155;
+    color:#e2e8f0;
+  }
+  #log{
+    background:#0b1220;border:1px solid #1f2937;
+    height:140px;overflow:auto;border-radius:8px;padding:8px;
+    font-size:12px;
+  }
+</style>
+</head>
+
+<body>
+<div id="panel">
+  <h3>Auto Action Test</h3>
+
+  <!-- These dropdowns will be auto-populated by autoActions.js
+       using data imported from lab-motion/index.html -->
+  <label>Motions</label>
+  <select id="motionSel"><option value="">(loading…)</option></select>
+
+  <button id="runBtn">▶️ Run Action</button>
+
+  <h4>Log</h4>
+  <pre id="log"></pre>
+</div>
+
+<canvas id="c"></canvas>
+
+<!-- IMPORT the real lab-motion code from original location -->
+<script type="module" src="../lab-motion/index.html"></script>
+
+<!-- IMPORT the autoActions engine (you will place this in this folder) -->
+<script type="module" src="./autoActions.js"></script>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const logEl = document.getElementById("log");
+const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(1.6,1.6,3);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0,1.1,0);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x333344,0.7));
+const key = new THREE.DirectionalLight(0xffffff,1.2);
+key.position.set(2.5,4,2.5);
+scene.add(key);
+
+const loader = new GLTFLoader();
+let model = null, skeleton = null;
+
+loader.load("../assets/Roma_ROMetrics.glb", (gltf)=>{
+  model = gltf.scene;
+  model.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+  scene.add(model);
+
+  model.traverse(o=>{ if(o.isSkinnedMesh) skeleton = o.skeleton; });
+  const box = new THREE.Box3().setFromObject(model);
+  model.position.y -= box.min.y;
+
+  // Attach model to AutoActions engine
+  AutoAction.attachModel(model, skeleton);
+
+  // Build dropdown from motions parsed out of lab-motion
+  AutoAction.populateMotionDropdown(document.getElementById("motionSel"));
+
+  log("Model loaded and AutoActions attached.");
+});
+
+document.getElementById("runBtn").onclick = ()=>{
+  const key = document.getElementById("motionSel").value;
+  if(!key){
+    log("❌ Select a motion first.");
+    return;
+  }
+  log("▶️ Running motion: " + key);
+  AutoAction.run(key);
+};
+
+renderer.setAnimationLoop(()=>{
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+
+</body>
+</html>
 
