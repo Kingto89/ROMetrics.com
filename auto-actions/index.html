@@ -800,30 +800,7 @@ actionDeg.addEventListener("input", ()=> {
 
     go();
   };
-  // target = anticollision cap OR configured max
-  const cap = capFor(CURRENT_ACTION);
-  const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
 
-  let val = 0;
-  const step = 2; // degrees per frame
-
-  function animateStep() {
-    val += step;
-
-    if (val >= target) val = target;
-
-    actionDeg.value = val;
-    actionDeg.dispatchEvent(new Event("input"));
-
-    if (val < target) {
-      requestAnimationFrame(animateStep);
-    } else {
-      log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
-    }
-  }
-
-  animateStep();
-};
 
   // Signed degrees for the chosen direction
   let signed = CURRENT_ACTION.sign * val;
