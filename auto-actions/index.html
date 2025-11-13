@@ -246,16 +246,6 @@ if(/^foot_invev_/.test(key)){
     return null;
   }
 
-  const antiBox = document.getElementById('antiBox');
-  if (antiBox){
-    antiBox.checked = COLLIM.enabled;
-    antiBox.addEventListener('click', (e)=>{
-      if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
-      COLLIM.enabled = !!antiBox.checked;
-      log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
-    });
-  }
-
   /* ===== Draggable panel ===== */
   (function(){
     let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
@@ -826,7 +816,6 @@ actionDeg.addEventListener("input", ()=> {
     if (model) scene.remove(model);
     model = null; skeleton = null;
     initialBoneRot.clear(); JOINT_BIND.clear();
-    boneSel.innerHTML = "";
     DRUJ.l = DRUJ.r = null;
   }
   function loadModel(){
@@ -843,7 +832,6 @@ actionDeg.addEventListener("input", ()=> {
         scene.add(model);
         groundSnap();
         msg.textContent = "✅ Model loaded";
-        populateBones();
         detectRigProfile();
         fillActionMenu();
 // 🧩 Fix the right shoulder alignment BEFORE binding baselines
@@ -870,10 +858,6 @@ resetAllBonesToInitial();
 
 // 4️⃣ Apply anatomic offsets on top of corrected baseline
 applyAnatomicBaseline();
-
-// ✅ Enable anticollision by default
-COLLIM.enabled = true;
-if (antiBox) antiBox.checked = true;
 
 log("Right-shoulder baseline rebaked.");
 log("Anticollision default ON.");
