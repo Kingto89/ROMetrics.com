@@ -1420,6 +1420,26 @@ function toggleCollisionTuner(show) {
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
-  </script>
+/* ============================================================
+   AUTO-ACTION EXPORTS — allow autoActions.js to import your rig
+   ============================================================ */
+window.ROMETRICS_LAB = {
+  UPPER,
+  LOWER,
+  COLLIM,
+  cfgFromKey,
+  applyPairAngle,
+  setPair,
+  axisFor,
+  resolveBind,
+  findBoneBy,
+  JOINT_BIND,
+  initialBoneRot,
+  DRUJ,
+  resetAllBonesToInitial,
+  applyAnatomicBaseline
+};
+</script>
 </body>
 </html>
+
