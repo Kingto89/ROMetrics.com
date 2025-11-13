@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>3D Motion Lab — Joint Trainer</title>
+<title>3D Motion Lab — Automated Actions</title>
 
 <script type="importmap">
 {
@@ -71,7 +71,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
-      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
+      <input type="range" id="actionDeg" style="display:none" min="-90" max="150" step="1" value="0">
+      <button id="actionGo">▶️ Perform Action</button>
 
       <label>Event Log</label>
       <pre id="log"></pre>
@@ -763,6 +764,44 @@ actionDeg.addEventListener("input", ()=> {
     val = cap; actionDeg.value = String(val);
     log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
   }
+
+  // === Auto-Action Button: move slider to max ROM ===
+const actionBtn = document.getElementById("actionGo");
+
+actionBtn.onclick = () => {
+  if (!CURRENT_ACTION) {
+    log("❌ Select a motion first.");
+    return;
+  }
+
+  // start at zero
+  actionDeg.value = 0;
+  actionDeg.dispatchEvent(new Event("input"));
+
+  // target = anticollision cap OR configured max
+  const cap = capFor(CURRENT_ACTION);
+  const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
+
+  let val = 0;
+  const step = 2; // degrees per frame
+
+  function animateStep() {
+    val += step;
+
+    if (val >= target) val = target;
+
+    actionDeg.value = val;
+    actionDeg.dispatchEvent(new Event("input"));
+
+    if (val < target) {
+      requestAnimationFrame(animateStep);
+    } else {
+      log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+    }
+  }
+
+  animateStep();
+};
 
   // Signed degrees for the chosen direction
   let signed = CURRENT_ACTION.sign * val;
