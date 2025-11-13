@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ROMetrics — Auto Actions Tester</title>
 
-<!-- IMPORTMAP -->
+<!-- IMPORTMAP MUST BE FIRST -->
 <script type="importmap">
 {
   "imports": {
@@ -16,26 +16,26 @@
 </script>
 
 <style>
-  html,body{
+  html,body {
     margin:0;height:100%;overflow:hidden;
     background:#0b1220;color:#e2e8f0;
     font-family:system-ui,Segoe UI,Roboto;
   }
-  canvas{
+  canvas {
     position:fixed;inset:0;width:100%;height:100%;
     z-index:0;display:block;
   }
-  #panel{
+  #panel {
     position:fixed;left:0;top:0;width:300px;
     padding:14px;z-index:20;
     background:#0f172a;border-right:1px solid #1f2937;
   }
-  button,select{
+  button,select {
     width:100%;padding:8px 10px;margin:8px 0;
     border-radius:10px;background:#1e293b;border:1px solid #334155;
     color:#e2e8f0;
   }
-  #log{
+  #log {
     background:#0b1220;border:1px solid #1f2937;
     height:140px;overflow:auto;border-radius:8px;padding:8px;
     font-size:12px;
@@ -58,11 +58,11 @@
 
 <canvas id="c"></canvas>
 
-<!-- CORRECT MODULE IMPORTS -->
+<!-- SINGLE CLEAN IMPORT BLOCK -->
 <script type="module">
-  import "../lab-motion/labMotion.js";
-  import "./actionDefinitions.js";   // << REQUIRED
-  import "./autoActions.js";
+  import "../lab-motion/labMotion.js";     // exposes UPPER, LOWER, COLLIM, etc.
+  import "./actionDefinitions.js";         // exposes ACTION_CONFIG (your export)
+  import "./autoActions.js";               // uses ACTION_CONFIG
 </script>
 
 <script type="module">
@@ -71,7 +71,10 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const logEl = document.getElementById("log");
-const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+const log = t => {
+  logEl.textContent += t + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
+};
 
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
@@ -96,24 +99,30 @@ scene.add(key);
 const loader = new GLTFLoader();
 let model = null, skeleton = null;
 
-loader.load("../assets/Roma_ROMetrics.glb", (gltf)=>{
+loader.load("../assets/Roma_ROMetrics.glb", gltf => {
   model = gltf.scene;
-  model.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+  model.traverse(o => { if (o.isMesh) o.castShadow = true; });
   scene.add(model);
 
-  model.traverse(o=>{ if(o.isSkinnedMesh) skeleton = o.skeleton; });
+  // capture skeleton
+  model.traverse(o => { if (o.isSkinnedMesh) skeleton = o.skeleton; });
+
+  // ground model
   const box = new THREE.Box3().setFromObject(model);
   model.position.y -= box.min.y;
 
+  // attach to AutoActions
   AutoAction.attachModel(model, skeleton);
+
+  // build dropdown
   AutoAction.populateMotionDropdown(document.getElementById("motionSel"));
 
   log("Model loaded and AutoActions attached.");
 });
 
-document.getElementById("runBtn").onclick = ()=>{
+document.getElementById("runBtn").onclick = () => {
   const key = document.getElementById("motionSel").value;
-  if(!key){
+  if (!key) {
     log("❌ Select a motion first.");
     return;
   }
@@ -121,7 +130,7 @@ document.getElementById("runBtn").onclick = ()=>{
   AutoAction.run(key);
 };
 
-renderer.setAnimationLoop(()=>{
+renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
