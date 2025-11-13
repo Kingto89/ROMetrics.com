@@ -1366,6 +1366,9 @@ function ensureCollisionTuner() {
   };
 
   // === Preload Existing Values ===
+  // ✅ Ensure hip flexion keys exist so they preload correctly
+if (COLLIM.hipFlexLMax === undefined) COLLIM.hipFlexLMax = 120;
+if (COLLIM.hipFlexRMax === undefined) COLLIM.hipFlexRMax = 120;
   const preload = () => {
   // --- Upper Body ---
   $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
