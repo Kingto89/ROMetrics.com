@@ -764,7 +764,42 @@ actionDeg.addEventListener("input", ()=> {
     val = cap; actionDeg.value = String(val);
     log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
   }
+  /* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
+  const actionBtn = document.getElementById("actionGo");
 
+  actionBtn.onclick = () => {
+    if (!CURRENT_ACTION) {
+      log("❌ Select a motion first.");
+      return;
+    }
+
+    // Start at zero
+    actionDeg.value = "0";
+    actionDeg.dispatchEvent(new Event("input"));
+
+    // Target = anticollision cap OR user max
+    const cap = capFor(CURRENT_ACTION);
+    const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
+
+    let cur = 0;
+    const step = 2;   // degrees per animation frame
+
+    function go() {
+      cur += step;
+      if (cur >= target) cur = target;
+
+      actionDeg.value = String(cur);
+      actionDeg.dispatchEvent(new Event("input"));
+
+      if (cur < target) {
+        requestAnimationFrame(go);
+      } else {
+        log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+      }
+    }
+
+    go();
+  };
   // target = anticollision cap OR configured max
   const cap = capFor(CURRENT_ACTION);
   const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
