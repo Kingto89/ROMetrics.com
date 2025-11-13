@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ROMetrics — Auto Actions Tester</title>
 
-<!-- FIXED IMPORTMAP — must be FIRST, must be inside a script tag -->
+<!-- IMPORTMAP -->
 <script type="importmap">
 {
   "imports": {
@@ -14,12 +14,6 @@
   }
 }
 </script>
-
-<!-- Load Lab Motion (must be AFTER importmap) -->
-<script type="module" src="../lab-motion/labMotion.js"></script>
-
-<!-- Load AutoActions -->
-<script type="module" src="./autoActions.js"></script>
 
 <style>
   html,body{
@@ -49,13 +43,10 @@
 </style>
 </head>
 
-
 <body>
 <div id="panel">
   <h3>Auto Action Test</h3>
 
-  <!-- These dropdowns will be auto-populated by autoActions.js
-       using data imported from lab-motion/index.html -->
   <label>Motions</label>
   <select id="motionSel"><option value="">(loading…)</option></select>
 
@@ -67,11 +58,12 @@
 
 <canvas id="c"></canvas>
 
-<!-- IMPORT the real lab-motion code from original location -->
-<script type="module" src="../lab-motion/labMotion.js"></script>
-
-<!-- IMPORT the autoActions engine (you will place this in this folder) -->
-<script type="module" src="./autoActions.js"></script>
+<!-- CORRECT MODULE IMPORTS -->
+<script type="module">
+  import "../lab-motion/labMotion.js";
+  import "./actionDefinitions.js";   // << REQUIRED
+  import "./autoActions.js";
+</script>
 
 <script type="module">
 import * as THREE from "three";
@@ -113,10 +105,7 @@ loader.load("../assets/Roma_ROMetrics.glb", (gltf)=>{
   const box = new THREE.Box3().setFromObject(model);
   model.position.y -= box.min.y;
 
-  // Attach model to AutoActions engine
   AutoAction.attachModel(model, skeleton);
-
-  // Build dropdown from motions parsed out of lab-motion
   AutoAction.populateMotionDropdown(document.getElementById("motionSel"));
 
   log("Model loaded and AutoActions attached.");
@@ -140,4 +129,3 @@ renderer.setAnimationLoop(()=>{
 
 </body>
 </html>
-
