@@ -730,7 +730,6 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-    resetAnatomic();
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
@@ -820,7 +819,7 @@ actionDeg.addEventListener("input", ()=> {
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
 
-/* === AUTO-ACTION BUTTON === */
+/* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
 const actionBtn = document.getElementById("actionGo");
 
 actionBtn.onclick = () => {
@@ -829,10 +828,11 @@ actionBtn.onclick = () => {
     return;
   }
 
-  // Reset slider
+  // Reset slider to zero
   actionDeg.value = "0";
   actionDeg.dispatchEvent(new Event("input"));
 
+  // Target = anticollision limit OR configured max
   const cap = capFor(CURRENT_ACTION);
   const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
 
@@ -846,18 +846,8 @@ actionBtn.onclick = () => {
     actionDeg.value = String(cur);
     actionDeg.dispatchEvent(new Event("input"));
 
-    if (cur < target) {
-      requestAnimationFrame(animate);
-    } else {
-      log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
-
-      // ✅ Now safely reset AFTER action is finished — OUTSIDE animation frame
-      setTimeout(() => {
-        resetAnatomic();
-        resetAllBonesToInitial();
-        applyAnatomicBaseline();
-      }, 50);
-    }
+    if (cur < target) requestAnimationFrame(animate);
+    else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
   }
 
   animate();
