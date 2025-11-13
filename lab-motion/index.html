@@ -226,42 +226,28 @@ const COLLIM = {
   footInvLMax: 35,  footInvRMax: 35,
   footEvLMax: 20,   footEvRMax: 20,
 
- load() {
-  try {
-    const raw = localStorage.getItem('rometrics_collim');
-    if (!raw) return;
-    const o = JSON.parse(raw);
-    for (const [k,v] of Object.entries(o)) {
-      if (typeof v === 'number') this[k] = v; // merge in everything numeric
-    }
-  } catch(e) {
-    console.warn("COLLIM.load() failed", e);
+  load() {
+    try {
+      const raw = localStorage.getItem('rometrics_collim');
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      Object.keys(this).forEach(k=>{
+        if(k!=='enabled'&&k!=='load'&&k!=='save')
+          if(typeof o[k]==='number') this[k]=o[k];
+      });
+    } catch(e){}
+  },
+  save() {
+    try {
+      const o={};
+      Object.keys(this).forEach(k=>{
+        if(typeof this[k]==='number') o[k]=this[k];
+      });
+      localStorage.setItem('rometrics_collim', JSON.stringify(o));
+    } catch(e){}
   }
-},
-save() {
-  try {
-    localStorage.setItem("rometrics_collim", JSON.stringify(this));
-    console.log("COLLIM saved ✅");
-  } catch (e) {
-    console.warn("COLLIM.save() failed", e);
-  }
-},
-
-load() {
-  try {
-    const raw = localStorage.getItem("rometrics_collim");
-    if (!raw) return;
-    const o = JSON.parse(raw);
-    for (const [k, v] of Object.entries(o)) {
-      if (typeof v === "number") this[k] = v; // Merge all numeric keys
-    }
-    console.log("COLLIM loaded ✅");
-  } catch (e) {
-    console.warn("COLLIM.load() failed", e);
-  }
-}
-COLLIM.load(); // ✅ call after object is defined
-
+};
+COLLIM.load();
 
 function capFor(action){
   COLLIM.load();  // ✅ refresh saved limits before applying
@@ -1361,101 +1347,44 @@ function ensureCollisionTuner() {
   const $ = (id) => colTunerEl.querySelector(id);
 
   // === Apply Button ===
-colTunerEl.querySelector("#colApply").onclick = () => {
-  const assign = (prop, id) => {
-    const el = $(id);
-    if (el && el.value !== "") COLLIM[prop] = +el.value;
+  colTunerEl.querySelector("#colApply").onclick = () => {
+    const assign = (prop, id) => { COLLIM[prop] = +$(id).value || COLLIM[prop]; };
+    assign("shAddLMax", "#shAddL");
+    assign("shAddRMax", "#shAddR");
+    assign("shAbdLMax", "#shAbdL");
+    assign("shAbdRMax", "#shAbdR");
+    assign("shFlexLMax", "#shFlexL");
+    assign("shFlexRMax", "#shFlexR");
+    assign("shExtLMax", "#shExtL");
+    assign("shExtRMax", "#shExtR");
+    assign("elFlexLMax", "#elFlexL");
+    assign("elFlexRMax", "#elFlexR");
+    assign("hipFlexLMax", "#hipFlexL");
+    assign("hipFlexRMax", "#hipFlexR");
+    COLLIM.save(); COLLIM.enabled = true;
+    log("✅ limits  applied.");
   };
-
-  // --- Shoulder ---
-  assign("shAddLMax", "#shAddL");
-  assign("shAddRMax", "#shAddR");
-  assign("shAbdLMax", "#shAbdL");
-  assign("shAbdRMax", "#shAbdR");
-  assign("shFlexLMax", "#shFlexL");
-  assign("shFlexRMax", "#shFlexR");
-  assign("shExtLMax", "#shExtL");
-  assign("shExtRMax", "#shExtR");
-
-  // --- Elbow ---
-  assign("elFlexLMax", "#elFlexL");
-  assign("elFlexRMax", "#elFlexR");
-
-  // --- Hip (new) ---
-  assign("hipFlexLMax", "#hipFlexL");
-  assign("hipFlexRMax", "#hipFlexR");
-  assign("hipAddLMax", "#hipAddL");
-  assign("hipAddRMax", "#hipAddR");
-
-  // --- Save ---
-COLLIM.load(); // refresh from storage
-COLLIM.hipFlexLMax = +$("#hipFlexL").value || COLLIM.hipFlexLMax;
-COLLIM.hipFlexRMax = +$("#hipFlexR").value || COLLIM.hipFlexRMax;
-COLLIM.save();
-log("✅ Hip Flex values saved:", COLLIM.hipFlexLMax, COLLIM.hipFlexRMax);
-  console.log("Saved hipFlexLMax:", COLLIM.hipFlexLMax, "hipFlexRMax:", COLLIM.hipFlexRMax);
-  COLLIM.enabled = true;
-
-  log("✅ Collision limits saved.");
-};
 
   // === Preload Existing Values ===
   const preload = () => {
-  // --- Upper Body ---
-  $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
-  $("#colTrunkLatR").value = COLLIM.trunkLatRMax;
-  $("#cervL").value = COLLIM.cervRotLMax;
-  $("#cervR").value = COLLIM.cervRotRMax;
-
-  $("#shAddL").value = COLLIM.shAddLMax;
-  $("#shAddR").value = COLLIM.shAddRMax;
-  $("#shAbdL").value = COLLIM.shAbdLMax;
-  $("#shAbdR").value = COLLIM.shAbdRMax;
-  $("#shFlexL").value = COLLIM.shFlexLMax;
-  $("#shFlexR").value = COLLIM.shFlexRMax;
-  $("#shExtL").value = COLLIM.shExtLMax;
-  $("#shExtR").value = COLLIM.shExtRMax;
-
-  $("#elFlexL").value = COLLIM.elFlexLMax;
-  $("#elFlexR").value = COLLIM.elFlexRMax;
-  $("#elExtL").value = COLLIM.elExtLMax;
-  $("#elExtR").value = COLLIM.elExtRMax;
-
-  $("#wrSupL").value = COLLIM.wrSupLMax;
-  $("#wrSupR").value = COLLIM.wrSupRMax;
-  $("#wrProL").value = COLLIM.wrProLMax;
-  $("#wrProR").value = COLLIM.wrProRMax;
-
-  // --- Lower Body ---
-   $("#hipFlexL").value = COLLIM.hipFlexLMax;
-  $("#hipFlexR").value = COLLIM.hipFlexRMax;
-  $("#hipAddL").value = COLLIM.hipAddLMax;
-  $("#hipAddR").value = COLLIM.hipAddRMax;
-
-  $("#kneeFlexL").value = COLLIM.kneeFlexLMax;
-  $("#kneeFlexR").value = COLLIM.kneeFlexRMax;
-  $("#kneeExtL").value = COLLIM.kneeExtLMax;
-  $("#kneeExtR").value = COLLIM.kneeExtRMax;
-
-  $("#anklePFL").value = COLLIM.anklePF_LMax;
-  $("#anklePFR").value = COLLIM.anklePF_RMax;
-  $("#ankleDFL").value = COLLIM.ankleDF_LMax;
-  $("#ankleDFR").value = COLLIM.ankleDF_RMax;
-
-  $("#footInvL").value = COLLIM.footInvLMax;
-  $("#footInvR").value = COLLIM.footInvRMax;
-  $("#footEvL").value = COLLIM.footEvLMax;
-  $("#footEvR").value = COLLIM.footEvRMax;
-};
+    $("#shAddL").value = COLLIM.shAddLMax;
+    $("#shAddR").value = COLLIM.shAddRMax;
+    $("#shAbdL").value = COLLIM.shAbdLMax;
+    $("#shAbdR").value = COLLIM.shAbdRMax;
+    $("#elFlexL").value = COLLIM.elFlexLMax;
+    $("#elFlexR").value = COLLIM.elFlexRMax;
+    $("#hipFlexL").value = COLLIM.hipFlexLMax;
+    $("#hipFlexR").value = COLLIM.hipFlexRMax;
+  };
   preload();
 
   colTunerEl.querySelector("#colX").onclick = () => toggleCollisionTuner(false);
   return colTunerEl;
-    COLLIM.load();
 }
 
 function toggleCollisionTuner(show) {
   ensureCollisionTuner();
+  COLLIM.load();
   colTunerVisible = show === undefined ? !colTunerVisible : !!show;
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
