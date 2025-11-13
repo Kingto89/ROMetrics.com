@@ -253,14 +253,15 @@ load() {
     if (!raw) return;
     const o = JSON.parse(raw);
     for (const [k, v] of Object.entries(o)) {
-      if (typeof v === "number") this[k] = v; // Merge all numeric keys, including new ones
+      if (typeof v === "number") this[k] = v; // Merge all numeric keys
     }
     console.log("COLLIM loaded ✅");
   } catch (e) {
     console.warn("COLLIM.load() failed", e);
   }
-},
-COLLIM.load();
+}
+COLLIM.load(); // ✅ call after object is defined
+
 
 function capFor(action){
   COLLIM.load();  // ✅ refresh saved limits before applying
