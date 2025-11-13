@@ -306,6 +306,14 @@ if(/^foot_invev_/.test(key)){
 
   let model = null, skeleton = null;
   const initialBoneRot = new Map();
+    /* ===== Minimal bone reset (required for load + baseline) ===== */
+function resetAllBonesToInitial() {
+  if (!skeleton) return;
+  skeleton.bones.forEach(b => {
+    const q = initialBoneRot.get(b);
+    if (q) b.quaternion.copy(q);
+  });
+}
 
   function pickModelUrl(){
     const u = new URL(location.href);
