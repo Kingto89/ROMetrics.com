@@ -238,16 +238,28 @@ const COLLIM = {
     console.warn("COLLIM.load() failed", e);
   }
 },
-  save() {
-    try {
-      const o={};
-      Object.keys(this).forEach(k=>{
-        if(typeof this[k]==='number') o[k]=this[k];
-      });
-      localStorage.setItem('rometrics_collim', JSON.stringify(o));
-    } catch(e){}
+save() {
+  try {
+    localStorage.setItem("rometrics_collim", JSON.stringify(this));
+    console.log("COLLIM saved ✅");
+  } catch (e) {
+    console.warn("COLLIM.save() failed", e);
   }
-};
+},
+
+load() {
+  try {
+    const raw = localStorage.getItem("rometrics_collim");
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    for (const [k, v] of Object.entries(o)) {
+      if (typeof v === "number") this[k] = v; // Merge all numeric keys, including new ones
+    }
+    console.log("COLLIM loaded ✅");
+  } catch (e) {
+    console.warn("COLLIM.load() failed", e);
+  }
+},
 COLLIM.load();
 
 function capFor(action){
@@ -1376,9 +1388,10 @@ colTunerEl.querySelector("#colApply").onclick = () => {
 
   // --- Save ---
   COLLIM.save();
+  console.log("Saved hipFlexLMax:", COLLIM.hipFlexLMax, "hipFlexRMax:", COLLIM.hipFlexRMax);
   COLLIM.enabled = true;
 
-  log("✅ Collision limits saved for shoulders, elbows, and hips.");
+  log("✅ Collision limits saved.");
 };
 
   // === Preload Existing Values ===
