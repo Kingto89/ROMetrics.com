@@ -1,144 +1,144 @@
-/* ============================================================
-   ROMetrics — AutoActions Engine
-   Reads motion definitions from lab-motion/index.html
-   and performs collision-limited, anatomically-correct actions.
-   ============================================================ */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROMetrics — Auto Actions Tester</title>
 
-/* GLOBAL API made available to Trainer and Tester */
-window.AutoAction = {
-    attached: false,
-    model: null,
-    skeleton: null,
-    bones: {},
-    actions: {},
-    populateMotionDropdown,
-    attachModel,
-    run
+<!-- Importmap FIRST -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  html,body{
+    margin:0;height:100%;overflow:hidden;
+    background:#0b1220;color:#e2e8f0;
+    font-family:system-ui,Segoe UI,Roboto;
+  }
+  canvas{
+    position:fixed;inset:0;width:100%;height:100%;
+    z-index:0;display:block;
+  }
+  #panel{
+    position:fixed;left:0;top:0;width:300px;
+    padding:14px;z-index:20;
+    background:#0f172a;border-right:1px solid #1f2937;
+  }
+  button,select{
+    width:100%;padding:8px 10px;margin:8px 0;
+    border-radius:10px;background:#1e293b;border:1px solid #334155;
+    color:#e2e8f0;
+  }
+  #log{
+    background:#0b1220;border:1px solid #1f2937;
+    height:140px;overflow:auto;border-radius:8px;padding:8px;
+    font-size:12px;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="panel">
+  <h3>Auto Action Test</h3>
+
+  <label>Motions</label>
+  <select id="motionSel"><option value="">(loading…)</option></select>
+
+  <button id="runBtn">▶️ Run Action</button>
+
+  <h4>Log</h4>
+  <pre id="log"></pre>
+</div>
+
+<canvas id="c"></canvas>
+
+<!-- Import duplicated action definitions -->
+<script type="module" src="./actionDefinitions.js"></script>
+
+<!-- Import AutoActions engine -->
+<script type="module" src="./autoActions.js"></script>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { ACTION_CONFIG } from "./actionDefinitions.js";
+
+const logEl = document.getElementById("log");
+const log = t=>{
+  logEl.textContent += t + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
 };
 
-/* ============================================================
-   1.  Attach the loaded model & skeleton
-   ============================================================ */
-function attachModel(model, skeleton) {
-    AutoAction.model = model;
-    AutoAction.skeleton = skeleton;
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
 
-    // Build bone map (matching Lab Motion)
-    model.traverse(obj => {
-        if (obj.isBone) {
-            AutoAction.bones[obj.name] = obj;
-        }
-    });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
 
-    AutoAction.attached = true;
-    console.log("AutoActions: Model attached.");
-}
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(1.6,1.6,3);
 
-/* ============================================================
-   2.  Build dropdown using ACTION_CONFIG from lab-motion
-   ============================================================ */
-function populateMotionDropdown(sel) {
-    if (!window.ACTION_CONFIG) {
-        console.warn("AutoActions: Lab Motion ACTION_CONFIG not found.");
-        sel.innerHTML = "<option value=''>ERROR: No actions found</option>";
-        return;
-    }
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0,1.1,0);
 
-    sel.innerHTML = "";
+scene.add(new THREE.HemisphereLight(0xffffff,0x333344,0.7));
+const key = new THREE.DirectionalLight(0xffffff,1.2);
+key.position.set(2.5,4,2.5);
+scene.add(key);
 
-    for (const key in window.ACTION_CONFIG) {
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = `${key} — ${window.ACTION_CONFIG[key].label || ""}`;
-        sel.appendChild(opt);
-    }
+const loader = new GLTFLoader();
+let model = null, skeleton = null;
 
-    console.log("AutoActions: Dropdown populated from lab-motion ACTION_CONFIG.");
-}
+loader.load(
+  "../assets/Roma_ROMetrics.glb",
+  (gltf)=>{
+    model = gltf.scene;
+    model.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+    scene.add(model);
 
-/* ============================================================
-   3.  Run a motion (read from ACTION_CONFIG exactly as in lab-motion)
-   ============================================================ */
-async function run(key) {
+    model.traverse(o=>{ if(o.isSkinnedMesh) skeleton = o.skeleton; });
 
-    if (!AutoAction.attached) {
-        console.warn("AutoActions: Model not attached.");
-        return;
-    }
-    if (!window.ACTION_CONFIG) {
-        console.error("AutoActions: ACTION_CONFIG missing.");
-        return;
-    }
+    const box = new THREE.Box3().setFromObject(model);
+    model.position.y -= box.min.y;
 
-    const cfg = window.ACTION_CONFIG[key];
-    if (!cfg) {
-        console.error("AutoActions: Invalid action: " + key);
-        return;
-    }
+    AutoAction.attachModel(model, skeleton);
 
-    console.log("AutoActions: Running", key, cfg);
+    AutoAction.populateMotionDropdown(
+      document.getElementById("motionSel")
+    );
 
-    // Extract bones and axes from Lab Motion
-    const bones = AutoAction.bones;
-    if (!bones[cfg.bone]) {
-        console.error("AutoActions: Bone not found:", cfg.bone);
-        return;
-    }
+    log("Model loaded and AutoActions attached.");
+  },
+  undefined,
+  err=>{ log("❌ Failed to load model"); }
+);
 
-    // Determine ROM target using Lab Collision Limits
-    const maxAngle = determineMaxAngle(key, cfg);
+document.getElementById("runBtn").onclick = ()=>{
+  const key = document.getElementById("motionSel").value;
+  if(!key){
+    log("❌ Select a motion first.");
+    return;
+  }
+  log("▶️ Running: " + key);
+  AutoAction.run(key);
+};
 
-    // Perform animation tweens
-    await animateTo(bones[cfg.bone], cfg.axis, maxAngle);
+renderer.setAnimationLoop(()=>{
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
 
-    console.log("AutoActions: Motion complete:", key);
-}
-
-/* ============================================================
-   4.  Determine ROM limits using COLLIM from lab-motion
-   ============================================================ */
-function determineMaxAngle(key, cfg) {
-
-    const sign = cfg.sign || 1;
-    const fullROM = cfg.maxAngle || cfg.max || 90; // fallback if not defined
-
-    if (window.COLLIM && window.COLLIM.enabled) {
-
-        // Example simple pattern:
-        if (window.COLLIM[key + "Max"] !== undefined) {
-            const cap = window.COLLIM[key + "Max"];
-            return cap * sign;
-        }
-    }
-
-    // Default if no collision limit is found
-    return fullROM * sign;
-}
-
-/* ============================================================
-   5.  Simple tween animation (matching Lab Motion style)
-   ============================================================ */
-function animateTo(bone, axis, target, duration = 550) {
-    return new Promise(resolve => {
-
-        const start = bone.rotation[axis];
-        const end = target * (Math.PI / 180);
-
-        const t0 = performance.now();
-
-        function step(t) {
-            const k = Math.min(1, (t - t0) / duration);
-            bone.rotation[axis] = start + (end - start) * easeInOut(k);
-            if (k < 1) { requestAnimationFrame(step); }
-            else { resolve(); }
-        }
-
-        requestAnimationFrame(step);
-    });
-}
-
-function easeInOut(t) {
-    return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
+</body>
+</html>
