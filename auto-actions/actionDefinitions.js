@@ -77,4 +77,5 @@ export const ACTION_CONFIG = (() => {
 
   return map;
 })();
+window.ACTION_CONFIG = ACTION_CONFIG;
 
