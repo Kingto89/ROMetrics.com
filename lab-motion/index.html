@@ -1349,6 +1349,10 @@ function ensureCollisionTuner() {
   // === Apply Button ===
   colTunerEl.querySelector("#colApply").onclick = () => {
     const assign = (prop, id) => { COLLIM[prop] = +$(id).value || COLLIM[prop]; };
+    assign("trunkLatLMax", "#colTrunkLatL");
+    assign("trunkLatRMax", "#colTrunkLatR");
+    assign("cervRotLMax", "#cervL");
+    assign("cervRotRMax", "#cervR");
     assign("shAddLMax", "#shAddL");
     assign("shAddRMax", "#shAddR");
     assign("shAbdLMax", "#shAbdL");
@@ -1359,6 +1363,8 @@ function ensureCollisionTuner() {
     assign("shExtRMax", "#shExtR");
     assign("elFlexLMax", "#elFlexL");
     assign("elFlexRMax", "#elFlexR");
+    assign("wrSupLMax", "#wrSupL");
+    assign("wrSupRMax", "#wrSupR");
     assign("hipFlexLMax", "#hipFlexL");
     assign("hipFlexRMax", "#hipFlexR");
     COLLIM.save(); COLLIM.enabled = true;
@@ -1367,12 +1373,20 @@ function ensureCollisionTuner() {
 
   // === Preload Existing Values ===
   const preload = () => {
+    $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
+    $("#colTrunkLatR").value = COLLIM.trunkLatRMax;
+    $("#cervL").value = COLLIM.cervRotLMax;
+    $("#cervR").value = COLLIM.cervRotRMax;
     $("#shAddL").value = COLLIM.shAddLMax;
     $("#shAddR").value = COLLIM.shAddRMax;
     $("#shAbdL").value = COLLIM.shAbdLMax;
     $("#shAbdR").value = COLLIM.shAbdRMax;
+    $("#shFlexL").value = COLLIM.shFlexLMax;
+    $("#shFlexR").value = COLLIM.shFlexRMax;
     $("#elFlexL").value = COLLIM.elFlexLMax;
     $("#elFlexR").value = COLLIM.elFlexRMax;
+    $("#wrSupL").value = COLLIM.wrSupLMax;
+    $("#wrSupR").value = COLLIM.wrSupRMax;
     $("#hipFlexL").value = COLLIM.hipFlexLMax;
     $("#hipFlexR").value = COLLIM.hipFlexRMax;
   };
