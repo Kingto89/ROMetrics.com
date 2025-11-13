@@ -765,19 +765,6 @@ actionDeg.addEventListener("input", ()=> {
     log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
   }
 
-  // === Auto-Action Button: move slider to max ROM ===
-const actionBtn = document.getElementById("actionGo");
-
-actionBtn.onclick = () => {
-  if (!CURRENT_ACTION) {
-    log("❌ Select a motion first.");
-    return;
-  }
-
-  // start at zero
-  actionDeg.value = 0;
-  actionDeg.dispatchEvent(new Event("input"));
-
   // target = anticollision cap OR configured max
   const cap = capFor(CURRENT_ACTION);
   const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
