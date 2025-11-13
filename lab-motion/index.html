@@ -1348,23 +1348,38 @@ function ensureCollisionTuner() {
   const $ = (id) => colTunerEl.querySelector(id);
 
   // === Apply Button ===
-  colTunerEl.querySelector("#colApply").onclick = () => {
-    const assign = (prop, id) => { COLLIM[prop] = +$(id).value || COLLIM[prop]; };
-    assign("shAddLMax", "#shAddL");
-    assign("shAddRMax", "#shAddR");
-    assign("shAbdLMax", "#shAbdL");
-    assign("shAbdRMax", "#shAbdR");
-    assign("shFlexLMax", "#shFlexL");
-    assign("shFlexRMax", "#shFlexR");
-    assign("shExtLMax", "#shExtL");
-    assign("shExtRMax", "#shExtR");
-    assign("elFlexLMax", "#elFlexL");
-    assign("elFlexRMax", "#elFlexR");
-    assign("hipFlexLMax", "#hipFlexL");
-    assign("hipFlexRMax", "#hipFlexR");
-    COLLIM.save(); COLLIM.enabled = true;
-    log("✅ Shoulder Add/Abd limits corrected and applied.");
+colTunerEl.querySelector("#colApply").onclick = () => {
+  const assign = (prop, id) => {
+    const el = $(id);
+    if (el && el.value !== "") COLLIM[prop] = +el.value;
   };
+
+  // --- Shoulder ---
+  assign("shAddLMax", "#shAddL");
+  assign("shAddRMax", "#shAddR");
+  assign("shAbdLMax", "#shAbdL");
+  assign("shAbdRMax", "#shAbdR");
+  assign("shFlexLMax", "#shFlexL");
+  assign("shFlexRMax", "#shFlexR");
+  assign("shExtLMax", "#shExtL");
+  assign("shExtRMax", "#shExtR");
+
+  // --- Elbow ---
+  assign("elFlexLMax", "#elFlexL");
+  assign("elFlexRMax", "#elFlexR");
+
+  // --- Hip (new) ---
+  assign("hipFlexLMax", "#hipFlexL");
+  assign("hipFlexRMax", "#hipFlexR");
+  assign("hipAddLMax", "#hipAddL");
+  assign("hipAddRMax", "#hipAddR");
+
+  // --- Save ---
+  COLLIM.save();
+  COLLIM.enabled = true;
+
+  log("✅ Collision limits saved for shoulders, elbows, and hips.");
+};
 
   // === Preload Existing Values ===
   const preload = () => {
