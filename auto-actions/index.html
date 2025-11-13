@@ -730,6 +730,7 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
+    resetAnatomic();
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
@@ -848,6 +849,7 @@ actionBtn.onclick = () => {
 
     if (cur < target) requestAnimationFrame(animate);
     else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+    resetAnatomic();
   }
 
   animate();
