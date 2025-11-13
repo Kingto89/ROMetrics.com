@@ -226,17 +226,18 @@ const COLLIM = {
   footInvLMax: 35,  footInvRMax: 35,
   footEvLMax: 20,   footEvRMax: 20,
 
-  load() {
-    try {
-      const raw = localStorage.getItem('rometrics_collim');
-      if (!raw) return;
-      const o = JSON.parse(raw);
-      Object.keys(this).forEach(k=>{
-        if(k!=='enabled'&&k!=='load'&&k!=='save')
-          if(typeof o[k]==='number') this[k]=o[k];
-      });
-    } catch(e){}
-  },
+ load() {
+  try {
+    const raw = localStorage.getItem('rometrics_collim');
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    for (const [k,v] of Object.entries(o)) {
+      if (typeof v === 'number') this[k] = v; // merge in everything numeric
+    }
+  } catch(e) {
+    console.warn("COLLIM.load() failed", e);
+  }
+},
   save() {
     try {
       const o={};
@@ -1366,9 +1367,6 @@ function ensureCollisionTuner() {
   };
 
   // === Preload Existing Values ===
-  // ✅ Ensure hip flexion keys exist so they preload correctly
-if (COLLIM.hipFlexLMax === undefined) COLLIM.hipFlexLMax = 110;
-if (COLLIM.hipFlexRMax === undefined) COLLIM.hipFlexRMax = 110;
   const preload = () => {
   // --- Upper Body ---
   $("#colTrunkLatL").value = COLLIM.trunkLatLMax;
