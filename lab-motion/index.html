@@ -1387,7 +1387,11 @@ colTunerEl.querySelector("#colApply").onclick = () => {
   assign("hipAddRMax", "#hipAddR");
 
   // --- Save ---
-  COLLIM.save();
+COLLIM.load(); // refresh from storage
+COLLIM.hipFlexLMax = +$("#hipFlexL").value || COLLIM.hipFlexLMax;
+COLLIM.hipFlexRMax = +$("#hipFlexR").value || COLLIM.hipFlexRMax;
+COLLIM.save();
+log("✅ Hip Flex values saved:", COLLIM.hipFlexLMax, COLLIM.hipFlexRMax);
   console.log("Saved hipFlexLMax:", COLLIM.hipFlexLMax, "hipFlexRMax:", COLLIM.hipFlexRMax);
   COLLIM.enabled = true;
 
@@ -1422,7 +1426,7 @@ colTunerEl.querySelector("#colApply").onclick = () => {
   $("#wrProR").value = COLLIM.wrProRMax;
 
   // --- Lower Body ---
-  $("#hipFlexL").value = COLLIM.hipFlexLMax;
+   $("#hipFlexL").value = COLLIM.hipFlexLMax;
   $("#hipFlexR").value = COLLIM.hipFlexRMax;
   $("#hipAddL").value = COLLIM.hipAddLMax;
   $("#hipAddR").value = COLLIM.hipAddRMax;
@@ -1446,11 +1450,11 @@ colTunerEl.querySelector("#colApply").onclick = () => {
 
   colTunerEl.querySelector("#colX").onclick = () => toggleCollisionTuner(false);
   return colTunerEl;
+    COLLIM.load();
 }
 
 function toggleCollisionTuner(show) {
   ensureCollisionTuner();
-  COLLIM.load();
   colTunerVisible = show === undefined ? !colTunerVisible : !!show;
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
