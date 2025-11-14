@@ -730,35 +730,34 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-    // --- UNIVERSAL NEUTRAL LOCK FOR SHOULDER ABD/ADD ---
-    if (CURRENT_ACTION &&
-       (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
+// --- CLEAN NEUTRAL RESET ONLY FOR SHOULDER ABD/ADD ---
+if (CURRENT_ACTION &&
+    (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
 
-        // 1. Reset rig pose
-        resetAllBonesToInitial();
+    // 1. full reset
+    resetAllBonesToInitial();
 
-        // 2. Apply your exact neutral
-        // Left side
-        setPair("sh_aa_l", -32);
-        setPair("sh_irer_l", -2);
-        setPair("w_fe_l", -73);
+    // 2. apply TRUE anatomic offsets
+    // Shoulder ADD baseline
+    setPair("sh_aa_l", -32);
+    setPair("sh_aa_r", -32);
 
-        // Right side
-        setPair("sh_aa_r", 32);
-        setPair("sh_irer_r", 2);
-        setPair("w_fe_r", 73);
+    // Forearm pronation/supination baseline
+    setPair("fa_ps_l", -2);
+    setPair("fa_ps_r", -2);
 
-        // 3. LOCK the pose BEFORE any binding happens
-        JOINT_BIND.clear();
-        skeleton.bones.forEach(b=>{
-            initialBoneRot.set(b, b.quaternion.clone());
-        });
+    // Wrist pronation/supination baseline
+    setPair("wr_ps_l", -73);
+    setPair("wr_ps_r", +73);
 
-        // Critical: stop old CURRENT_ACTION from contaminating binding
-        CURRENT_ACTION = null;
+    // 3. lock the pose BEFORE any new binding is built
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => {
+        initialBoneRot.set(b, b.quaternion.clone());
+    });
 
-        log("💠 Universal neutral lock applied before action switch.");
-    }
+    log("💠 ABD/ADD → anatomic neutral applied & baseline rebaked.");
+}
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
