@@ -476,43 +476,6 @@ const axisWorld = bone.localToWorld(new THREE.Vector3(0,1,0)).sub(
   bone.quaternion.copy(qBind).multiply(qRot);
 }
 
-  // --- Right-shoulder rotation sign corrections ---
-  if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
-
-    // --- Right-wrist direction fixes ---
-  if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
-  if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
-
-
-  const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
-
-  // Handle flipped axis (e.g. "-z" for mirrored rig)
-  let x = 0, y = 0, z = 0;
-  let flip = 1;
-  let axis = rawAxis;
-  if (axis.startsWith('-')) {
-    flip = -1;
-    axis = axis.slice(1);
-  }
-
-  const r = flip * rad;
-  if (axis === 'x') x = r;
-  if (axis === 'y') y = r;
-  if (axis === 'z') z = r;
-
-  const e = new THREE.Euler(x, y, z, "XYZ");
-  const qDelta = new THREE.Quaternion().setFromEuler(e);
-  bone.quaternion.copy(qBind).multiply(qDelta);
-}
-  // --- Debug: confirm right-shoulder direction ---
-  if (CURRENT_ACTION?.key === "sh_aa_r") {
-    console.log(
-      `Right-shoulder: ${bone.name}, axis: ${axis}, flipped: ${flip === -1}, deg=${deg}, r=${r.toFixed(3)}`
-    );
-  }
-}
-
-
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
