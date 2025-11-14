@@ -345,7 +345,7 @@ function resetAllBonesToInitial() {
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
         sh_aa_l:'z', sh_aa_r:'-z',
-        sh_irer_l:'x', sh_irer_r:'x',
+        :'x', sh_irer_r:'x',
         el_fe_l:'x', el_fe_r:'x',
         fa_ps_l:'y', fa_ps_r:'y',
         wr_ps_l:'y', wr_ps_r:'y',
@@ -431,61 +431,7 @@ function resetAllBonesToInitial() {
       if (b) {
         const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
         const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
-        // --- ADVANCED BONE AXIS OVERRIDE ---
-const n = bone.name.toLowerCase();
-
-if (n.includes("upperarm_l") || n.includes("upperarm_r")) {
-    if (key.includes("_fe_"))   axis = 'x';
-    if (key.includes("_aa_"))   axis = 'z';
-    if (key.includes("_irer_")) axis = 'y';
-}
-
-if (n.includes("lowerarm_l") || n.includes("lowerarm_r")) {
-    if (key.includes("_fe_")) axis = 'z';
-    if (key.includes("_ps_")) axis = 'y';
-}
-
-if (n.includes("thigh_l") || n.includes("thigh_r")) {
-    if (key.includes("_fe_"))   axis = 'x';
-    if (key.includes("_aa_"))   axis = 'z';
-    if (key.includes("_irer_")) axis = 'y';
-}
-
-if (n.includes("calf_l") || n.includes("calf_r")) {
-    if (key.includes("_fe_")) axis = 'x';
-}
-        const obj = { bone: b, qBind, axis };
-        JOINT_BIND.set(key, obj);
-        log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
-        return obj;
-      }
-    }
-    let bone = findBoneBy({...cfg, key});
-    if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
-    if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
-    if (!bone) { log(`No bind for ${key}`); return null; }
-    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
-    const axis = axisFor(RIG_PROFILE, key, baseAxis);
-    const obj = {bone, qBind, axis};
-    JOINT_BIND.set(key,obj);
-    log(`Bound ${key} → ${bone.name} (axis ${axis})`);
-    return obj;
-  }
-
-function freezeBindBaseFor(key, cfg) {
-  const b = resolveBind(key, cfg);
-  if (!b) return;
-  b.qBind = b.bone.quaternion.clone();
-}
-
-
-    function applyPairAngle(key, cfg, deg) {
-  const bind = resolveBind(key, cfg);
-  if (!bind) return;
-
-  const { bone, qBind, axis: rawAxis } = bind;
-
+     
   // --- Right-shoulder rotation sign corrections ---
   if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
   if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
@@ -494,17 +440,9 @@ function freezeBindBaseFor(key, cfg) {
   if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
   if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
 
-
+  bone.rotation.set(bone.rotation.x, 0, bone.rotation.z);  // reset Y
   const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
 // --- ADVANCED SHOULDER IR/ER ON UPPERARM Y ---
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-
-    const side = key.endsWith('_l') ? 'l' : 'r';
-    const bone = getExactBoneByName(side === 'l' ? 'upperarm_L' : 'upperarm_R');
-
-    if (bone) {
-        bone.rotation.y = THREE.MathUtils.degToRad(deg);
-    }
 
     return; // stop the old IR/ER logic from running
 }
@@ -514,22 +452,6 @@ let x = 0, y = 0, z = 0;
 let flip = 1;
 let axis = rawAxis;
 
-// 🔧 FORCE SHOULDER IR/ER TO ROTATE UP–DOWN (X AXIS)
-if (key === 'sh_irer_l' || key === 'sh_irer_r') axis = 'x';
-
-if (axis.startsWith('-')) {
-  flip = -1;
-  axis = axis.slice(1);
-}
-
-const r = flip * rad;
-if (axis === 'x') x = r;
-if (axis === 'y') y = r;
-if (axis === 'z') z = r;
-
-  const e = new THREE.Euler(x, y, z, "XYZ");
-  const qDelta = new THREE.Quaternion().setFromEuler(e);
-  bone.quaternion.copy(qBind).multiply(qDelta);
 
   // --- Debug: confirm right-shoulder direction ---
   if (CURRENT_ACTION?.key === "sh_aa_r") {
@@ -810,10 +732,6 @@ actionDeg.addEventListener("input", ()=> {
 
   // Signed degrees for the chosen direction
   let signed = CURRENT_ACTION.sign * val;
-
-  // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
-  if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
-    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
 
     // keep elbow flexed for stability
     setPair(`el_fe_${side}`, 90);
