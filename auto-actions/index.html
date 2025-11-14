@@ -764,12 +764,18 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-      // Shoulder IR/ER → set elbow to 90° baseline immediately
-      if (key==='sh_irer_l' || key==='sh_irer_r'){
-       const side = key.endsWith('_l') ? 'l' : 'r';
-       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
-        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
-      }
+ // Shoulder IR/ER → prep position: elbow 90° + shoulder 35° abduction
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+  const side = key.endsWith('_l') ? 'l' : 'r';
+
+  // 1️⃣ Set elbow flexion to 90°
+  setPair(`el_fe_${side}`, 90);
+
+  // 2️⃣ Set shoulder abduction to 35°
+  setPair(`sh_aa_${side}`, 35);
+
+  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 35°`);
+}
 
       syncActionUI(true);
       return;
@@ -836,7 +842,7 @@ actionDeg.addEventListener("input", ()=> {
       // fallback if binds differ: still apply rotation (with R-side fix)
       applyPairAngle(keyRot, cfgRot, rotDeg);
     }
-    return; // IMPORTANT: stop here so we don't also run the generic path
+    return; // 
   }
 
   // === Generic path (everything else) ===
