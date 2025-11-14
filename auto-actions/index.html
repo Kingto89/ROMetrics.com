@@ -89,6 +89,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+  let NEED_RELOAD_AFTER_ABD = false;
 
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
@@ -730,6 +731,15 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
+    
+      // 🔴 If last action was ABD → reload model immediately
+  if (NEED_RELOAD_AFTER_ABD) {
+    log("Reloading model after ABD…");
+    NEED_RELOAD_AFTER_ABD = false;
+    loadModel();
+    return;
+  }
+    
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
@@ -738,6 +748,11 @@ function applyAnatomicBaseline(){
       const [, key, signStr, maxStr] = v.split(":");
       const cfg = cfgFromKey(key);
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
+      // 🔵 Mark that ABD was performed so the NEXT action forces a reload
+if (key === 'sh_aa_l' || key === 'sh_aa_r') {
+  NEED_RELOAD_AFTER_ABD = true;
+  log("ABD selected → NEXT action will reload model.");
+}
       freezeBindBaseFor(key,cfg);
 
       // Shoulder IR/ER → set elbow to 90° baseline immediately
@@ -826,6 +841,10 @@ actionBtn.onclick = () => {
   if (!CURRENT_ACTION) {
     log("❌ Select a motion first.");
     return;
+  }
+    // 🔴 If user is performing shoulder abduction → mark for reload
+  if (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") {
+    NEED_RELOAD_AFTER_ABD = true;
   }
 
   // Reset slider to zero
