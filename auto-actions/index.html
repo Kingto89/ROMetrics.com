@@ -736,7 +736,12 @@ function applyAnatomicBaseline(){
 if (NEED_RELOAD_AFTER_ABD && actionSel.value.startsWith("sep:")) {
   log("Reloading model after ABD…");
   NEED_RELOAD_AFTER_ABD = false;
-  loadModel();
+  
+  // 🔁 Soft reload: rebuild baseline WITHOUT model reload
+resetAllBonesToInitial();
+applyAnatomicBaseline();
+log("Soft model reset after ABD — UI preserved.");
+  
   return;
 }
     
