@@ -740,15 +740,15 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-  // Shoulder IR/ER → set elbow 90° and abduct arm before rotation
+  // Shoulder IR/ER → set elbow 80° and abduct arm before rotation
 if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`el_fe_${side}`, 80);      // elbow flexion baseline
 
-  // NEW: abduct arm outward 45° (adjust number for more/less)
-  setPair(`sh_aa_${side}`, 45);
+  // NEW: abduct arm outward 35° (adjust number for more/less)
+  setPair(`sh_aa_${side}`, 35);
 
-  log(`Elbow ${side.toUpperCase()} set to 80° & shoulder abducted 45° for rotation setup.`);
+  log(`Elbow ${side.toUpperCase()} set to 80° & shoulder abducted 35° for rotation setup.`);
 }
 
       syncActionUI(true);
