@@ -730,6 +730,31 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
+  // --- FORCE PRECISE NEUTRAL AFTER SHOULDER ABD/ADD (LEFT & RIGHT) -----------
+if (CURRENT_ACTION && 
+   (CURRENT_ACTION.key === 'sh_aa_l' || CURRENT_ACTION.key === 'sh_aa_r')) {
+
+    // Reset to raw baseline pose
+    resetAllBonesToInitial();
+
+    // LEFT side neutral (ADD=-32, PS=-2, WPS=-73)
+    setPair("sh_aa_l", -32);
+    setPair("sh_irer_l", -2);
+    setPair("w_fe_l", -73);
+
+    // RIGHT side neutral (ADD=+32, PS=+2, WPS=+73)
+    setPair("sh_aa_r", 32);
+    setPair("sh_irer_r", 2);
+    setPair("w_fe_r", 73);
+
+    // Rebuild bind baseline so next action starts perfectly neutral
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => {
+        initialBoneRot.set(b, b.quaternion.clone());
+    });
+
+    log("Neutral applied after Shoulder ABD/ADD: L(-32,-2,-73)  R(+32,+2,+73)");
+}
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
