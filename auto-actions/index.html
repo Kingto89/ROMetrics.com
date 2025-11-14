@@ -184,21 +184,16 @@ if (/^sh_aa_/.test(key)) {
     return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
   }
 }
-// Shoulder IR/ER caps — updated to match your new IR (down) / ER (up) logic
+
+    // Shoulder IR/ER caps
 if (/^sh_irer_/.test(key)) {
   const isLeft = key.endsWith('_l');
-
-  // 🔁 Positive = EXTERNAL rotation
-  // 🔁 Negative = INTERNAL rotation
-  if (sign > 0) {
-    // External Rotation
-    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
-  } else {
-    // Internal Rotation
+  if (sign > 0) { // Internal Rotation
     return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+  } else { // External Rotation
+    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
   }
 }
-
   // === Elbow Flexion / Extension ===
 if (/^el_fe_/.test(key)) {
   const isLeft = key.endsWith('_l');
@@ -468,6 +463,10 @@ function freezeBindBaseFor(key, cfg) {
 
   const { bone, qBind, axis: rawAxis } = bind;
 
+  // --- Right-shoulder rotation sign corrections ---
+  if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
+  if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
+
     // --- Right-wrist direction fixes ---
   if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
   if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
@@ -516,8 +515,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'sagittal',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'sagittal',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — Internal / External',   side:'l', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — Internal / External',   side:'r', plane:'transverse',neutral:0, min:-90,  max:90,  hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
     // ELBOW — fix so Flexion moves (150), Extension small (10)
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
@@ -599,19 +598,8 @@ if (cfg.key === 'hip_aa_r'){
 }
     // --- Left Hip fix: rename only ---
 if (cfg.key === 'hip_irer_l') {
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
-  return out;
-}
-
-// --- Right Hip fix:  Internal ↔ External labels ---
-if (cfg.key === 'hip_irer_r') {
-  // External Rotation (positive)
   push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
-
-  // Internal Rotation (negative)
   push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
-
   return out;
 }
 
@@ -752,29 +740,12 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-// === IR/ER start posture ===
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-    const side = key.endsWith('_l') ? 'l' : 'r';
-
-    // FIRST STEP FIX — force ER to use the same abduction baseline as IR
-    const forcedAbd = getPair(`sh_aa_${side}`);
-    setPair(`sh_aa_${side}`, forcedAbd);
-
-    // SECOND FIX — HARD LOCK IR/ER START POSE
-    setPair(`sh_fe_${side}`, 0);    // eliminate forward flex drift
-    setPair(`sh_ru_${side}`, 0);    // eliminate horizontal drift
-    setPair(`sh_aa_${side}`, 70);   // your preferred IR/ER ABD baseline
-    setPair(`el_fe_${side}`, 90);   // elbow fixed at 90
-    setPair(`fa_ps_${side}`, 0);    // forearm neutral
-    if (side === 'l') setPair('wr_ps_l', ANAT.wpsL);
-    else               setPair('wr_ps_r', -ANAT.wpsL);
-
-    // 6️⃣ Freeze this posture as new IR/ER bind baseline
-    JOINT_BIND.clear();
-    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-
-    log(`🔧 IR/ER baseline (new): Abd 90°, Elbow 90°, Forearm 0°, Wrist pronated (${side.toUpperCase()})`);
-}
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
+      if (key==='sh_irer_l' || key==='sh_irer_r'){
+       const side = key.endsWith('_l') ? 'l' : 'r';
+       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+      }
 
       syncActionUI(true);
       return;
