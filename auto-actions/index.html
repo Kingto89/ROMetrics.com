@@ -471,9 +471,9 @@ if (key === 'sh_irer_l' || key === 'sh_irer_r' ||
   const isRight = key.endsWith('_r');
   if (isRight) rot = -rot; // your rig flips on R side
 
-  // ---- 2. Compute rotation around the bone’s own LOCAL Y axis ----
-  const localAxis = new THREE.Vector3(0,1,0);   // bone's local Y
-  const axisWorld = bone.localToWorld(localAxis.clone()).sub(bone.getWorldPosition(new THREE.Vector3())).normalize();
+const axisWorld = bone.localToWorld(new THREE.Vector3(0,1,0)).sub(
+    bone.localToWorld(new THREE.Vector3(0,0,0))
+).normalize();
 
   const qRot = new THREE.Quaternion().setFromAxisAngle(axisWorld, THREE.MathUtils.degToRad(rot));
 
