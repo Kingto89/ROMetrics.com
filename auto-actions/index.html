@@ -89,7 +89,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
-  let NEED_RELOAD_AFTER_ABD = false;
 
   /* ===== UI ===== */
   const msg = document.getElementById("msg");
@@ -731,20 +730,6 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-    
- // 🔴 Reload ONLY if choosing a real motion (not placeholder, not empty)
-if (NEED_RELOAD_AFTER_ABD && actionSel.value.startsWith("sep:")) {
-  log("Reloading model after ABD…");
-  NEED_RELOAD_AFTER_ABD = false;
-  
-  // 🔁 Soft reload: rebuild baseline WITHOUT model reload
-resetAllBonesToInitial();
-applyAnatomicBaseline();
-log("Soft model reset after ABD — UI preserved.");
-  
-  return;
-}
-    
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
@@ -753,11 +738,6 @@ log("Soft model reset after ABD — UI preserved.");
       const [, key, signStr, maxStr] = v.split(":");
       const cfg = cfgFromKey(key);
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
-      // 🔵 Mark that ABD was performed so the NEXT action forces a reload
-if (key === 'sh_aa_l' || key === 'sh_aa_r') {
-  NEED_RELOAD_AFTER_ABD = true;
-  log("ABD selected → NEXT action will reload model.");
-}
       freezeBindBaseFor(key,cfg);
 
       // Shoulder IR/ER → set elbow to 90° baseline immediately
@@ -847,11 +827,6 @@ actionBtn.onclick = () => {
     log("❌ Select a motion first.");
     return;
   }
-// Only reload after ABD (positive direction)
-if ((CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") 
-    && CURRENT_ACTION.sign === 1) {
-    NEED_RELOAD_AFTER_ABD = true;
-}
 
   // Reset slider to zero
   actionDeg.value = "0";
