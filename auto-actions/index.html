@@ -756,12 +756,33 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-      // Shoulder IR/ER → set elbow to 90° baseline immediately
-      if (key==='sh_irer_l' || key==='sh_irer_r'){
-       const side = key.endsWith('_l') ? 'l' : 'r';
-       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
-        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
-      }
+// === Correct IR/ER Start Posture: 90° Abd + 90° Elbow + Neutral PS + Pronated wrist ===
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+    const side = key.endsWith('_l') ? 'l' : 'r';
+
+    // 1️⃣ Reset to true baseline + your anatomic offsets
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+
+    // 2️⃣ Shoulder → 90° Abduction (humerus out to side)
+    setPair(`sh_aa_${side}`, 90);
+
+    // 3️⃣ Elbow → 90° Flexion
+    setPair(`el_fe_${side}`, 90);
+
+    // 4️⃣ Forearm → Neutral (vertical)
+    setPair(`fa_ps_${side}`, 0);
+
+    // 5️⃣ Wrist → Pronated (your ANAT baseline)
+    if (side === 'l') setPair('wr_ps_l', ANAT.wpsL);
+    else               setPair('wr_ps_r', -ANAT.wpsL);
+
+    // 6️⃣ Freeze this posture as new IR/ER bind baseline
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+
+    log(`🔧 IR/ER baseline (new): Abd 90°, Elbow 90°, Forearm 0°, Wrist pronated (${side.toUpperCase()})`);
+}
 
       syncActionUI(true);
       return;
