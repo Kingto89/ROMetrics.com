@@ -598,8 +598,8 @@ if (cfg.key === 'hip_aa_r'){
 }
     // --- Left Hip fix: rename only ---
 if (cfg.key === 'hip_irer_l') {
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
   return out;
 }
 
