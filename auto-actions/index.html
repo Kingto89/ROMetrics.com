@@ -847,12 +847,7 @@ actionBtn.onclick = () => {
     actionDeg.dispatchEvent(new Event("input"));
 
     if (cur < target) requestAnimationFrame(animate);
-    else {
-  log(`✓ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
-  resetAllBonesToInitial();
-  applyAnatomicBaseline();
-  freezeBindBaseFor(CURRENT_ACTION.key, CURRENT_ACTION.cfg);
-}
+    else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
   }
 
   animate();
