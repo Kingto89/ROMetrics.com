@@ -474,7 +474,6 @@ const axisWorld = bone.localToWorld(new THREE.Vector3(0,1,0)).sub(
 
   // ---- 3. Reset to bind then apply the local-axis rotation ----
   bone.quaternion.copy(qBind).multiply(qRot);
-
 }
 
   // --- Right-shoulder rotation sign corrections ---
