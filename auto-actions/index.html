@@ -732,13 +732,13 @@ function applyAnatomicBaseline(){
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
     
-      // 🔴 If last action was ABD → reload model immediately
-  if (NEED_RELOAD_AFTER_ABD) {
-    log("Reloading model after ABD…");
-    NEED_RELOAD_AFTER_ABD = false;
-    loadModel();
-    return;
-  }
+ // 🔴 Reload ONLY if choosing a real motion (not placeholder, not empty)
+if (NEED_RELOAD_AFTER_ABD && actionSel.value.startsWith("sep:")) {
+  log("Reloading model after ABD…");
+  NEED_RELOAD_AFTER_ABD = false;
+  loadModel();
+  return;
+}
     
     resetAllBonesToInitial();
     applyAnatomicBaseline();
@@ -842,10 +842,11 @@ actionBtn.onclick = () => {
     log("❌ Select a motion first.");
     return;
   }
-    // 🔴 If user is performing shoulder abduction → mark for reload
-  if (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") {
+// Only reload after ABD (positive direction)
+if ((CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") 
+    && CURRENT_ACTION.sign === 1) {
     NEED_RELOAD_AFTER_ABD = true;
-  }
+}
 
   // Reset slider to zero
   actionDeg.value = "0";
