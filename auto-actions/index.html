@@ -730,6 +730,22 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
+    // --- FORCE SHOULDER ABD/ADD TO RETURN TO ANATOMIC ON ACTION CHANGE ---
+if (CURRENT_ACTION && 
+   (CURRENT_ACTION.key === 'sh_aa_l' || CURRENT_ACTION.key === 'sh_aa_r')) {
+
+    // Reset skeleton pose
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+
+    // Rebind baseline so next action starts fresh
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => {
+        initialBoneRot.set(b, b.quaternion.clone());
+    });
+
+    log("Forced reset: Shoulder Abd/Add returned to anatomic before new action.");
+}
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
