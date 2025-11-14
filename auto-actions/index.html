@@ -717,20 +717,20 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-// Shoulder IR/ER → prep position: elbow 90° + shoulder 35° abduction + 5° wrist pronation
+// Shoulder IR/ER → prep position: elbow 90° + shoulder 55° abduction + 5° wrist pronation
 if (key === 'sh_irer_l' || key === 'sh_irer_r') {
   const side = key.endsWith('_l') ? 'l' : 'r';
 
   // 1️⃣ Set elbow flexion to 90°
   setPair(`el_fe_${side}`, 90);
 
-  // 2️⃣ Set shoulder abduction to 35°
-  setPair(`sh_aa_${side}`, 35);
+  // 2️⃣ Set shoulder abduction to 55°
+  setPair(`sh_aa_${side}`, 55);
 
   // 3️⃣ Apply 5° pronation at the *wrist*, since forearm bind is not detected
   setPair(`wr_ps_${side}`, 5);
 
-  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 35°, Wrist Pro 5°`);
+  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 55°, Wrist Pro 5°`);
 }
       syncActionUI(true);
       return;
