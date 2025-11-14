@@ -431,6 +431,29 @@ function resetAllBonesToInitial() {
       if (b) {
         const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
         const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+        // --- ADVANCED BONE AXIS OVERRIDE ---
+const n = bone.name.toLowerCase();
+
+if (n.includes("upperarm_l") || n.includes("upperarm_r")) {
+    if (key.includes("_fe_"))   axis = 'x';
+    if (key.includes("_aa_"))   axis = 'z';
+    if (key.includes("_irer_")) axis = 'y';
+}
+
+if (n.includes("lowerarm_l") || n.includes("lowerarm_r")) {
+    if (key.includes("_fe_")) axis = 'z';
+    if (key.includes("_ps_")) axis = 'y';
+}
+
+if (n.includes("thigh_l") || n.includes("thigh_r")) {
+    if (key.includes("_fe_"))   axis = 'x';
+    if (key.includes("_aa_"))   axis = 'z';
+    if (key.includes("_irer_")) axis = 'y';
+}
+
+if (n.includes("calf_l") || n.includes("calf_r")) {
+    if (key.includes("_fe_")) axis = 'x';
+}
         const obj = { bone: b, qBind, axis };
         JOINT_BIND.set(key, obj);
         log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
