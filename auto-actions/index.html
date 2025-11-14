@@ -462,29 +462,25 @@ function freezeBindBaseFor(key, cfg) {
   if (!bind) return;
 
   const { bone, qBind, axis: rawAxis } = bind;
-/* === OVERRIDE: Force IR/ER to use true Y-axis (advanced bone logic) === */
+/* --- TRUE SHOULDER/HIP IR/ER USING LOCAL Y AXIS (advanced bone logic) --- */
 if (key === 'sh_irer_l' || key === 'sh_irer_r' ||
     key === 'hip_irer_l' || key === 'hip_irer_r') {
 
-  // 1️⃣ Shoulder & hip IR/ER always rotate around Y (up–down)
-  const isRight = key.endsWith('_r');
+  // ---- 1. Internal/external rotation degrees ----
   let rot = deg;
+  const isRight = key.endsWith('_r');
+  if (isRight) rot = -rot; // your rig flips on R side
 
-  // 2️⃣ Your right side axis is reversed on this rig
-  if (isRight) rot = -rot;
+  // ---- 2. Compute rotation around the bone’s own LOCAL Y axis ----
+  const localAxis = new THREE.Vector3(0,1,0);   // bone's local Y
+  const axisWorld = bone.localToWorld(localAxis.clone()).sub(bone.getWorldPosition(new THREE.Vector3())).normalize();
 
-  // 3️⃣ Reset bone’s Y before applying new Y rotate
-  bone.rotation.set(bone.rotation.x, 0, bone.rotation.z);
+  const qRot = new THREE.Quaternion().setFromAxisAngle(axisWorld, THREE.MathUtils.degToRad(rot));
 
-  // 4️⃣ Apply Y-axis rotation
-  const rad = THREE.MathUtils.degToRad(rot);
-  const qDelta = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(0, rad, 0, "XYZ")
-  );
+  // ---- 3. Reset to bind then apply the local-axis rotation ----
+  bone.quaternion.copy(qBind).multiply(qRot);
 
-  bone.quaternion.copy(qBind).multiply(qDelta);
-
-  return;   // 🔥 Prevent any competing logic from running
+  return;   // stop other logic from interfering
 }
 
   // --- Right-shoulder rotation sign corrections ---
