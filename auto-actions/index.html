@@ -730,33 +730,36 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-// --- CLEAN NEUTRAL RESET ONLY FOR SHOULDER ABD/ADD ---
+// --- CLEAN, SAFE NEUTRAL FOR SHOULDER ABD/ADD ---
 if (CURRENT_ACTION &&
-    (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
+   (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
 
-    // 1. full reset
+    // 1. Full reset
     resetAllBonesToInitial();
 
-    // 2. apply TRUE anatomic offsets
-    // Shoulder ADD baseline
+    // 2. Apply true ANAT preset (using correct joint keys)
+    // Shoulder ADD (both arms baseline is -32 ADD)
     setPair("sh_aa_l", -32);
     setPair("sh_aa_r", -32);
+  
+    setPair("el_fe_l", 90);
+    setPair("el_fe_r", 90);
 
-    // Forearm pronation/supination baseline
+    // Forearm PS
     setPair("fa_ps_l", -2);
     setPair("fa_ps_r", -2);
 
-    // Wrist pronation/supination baseline
+    // Wrist PS
     setPair("wr_ps_l", -73);
     setPair("wr_ps_r", +73);
 
-    // 3. lock the pose BEFORE any new binding is built
+    // 3. Rebind all joints from THIS clean state
     JOINT_BIND.clear();
     skeleton.bones.forEach(b => {
         initialBoneRot.set(b, b.quaternion.clone());
     });
 
-    log("💠 ABD/ADD → anatomic neutral applied & baseline rebaked.");
+    log("💠 ABD/ADD → NEUTRAL APPLIED (bind rebaked)");
 }
     resetAllBonesToInitial();
     applyAnatomicBaseline();
