@@ -774,11 +774,11 @@ if (key === 'sh_irer_l' || key === 'sh_irer_r') {
   // 2️⃣ Set shoulder abduction to 35°
   setPair(`sh_aa_${side}`, 35);
 
-  // 3️⃣ Set **forearm pronation** (NOT wrist) → +15°
+  // 3️⃣ Set **forearm pronation** (NOT wrist) → +25°
   // fa_ps_ = forearm pronation/supination
-  setPair(`fa_ps_${side}`, 15);
+  setPair(`fa_ps_${side}`, 25);
 
-  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 35°, Forearm Pro 5°`);
+  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 35°, Forearm Pro 25°`);
 }
 
       syncActionUI(true);
