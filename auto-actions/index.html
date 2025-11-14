@@ -345,7 +345,6 @@ function resetAllBonesToInitial() {
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
         sh_aa_l:'z', sh_aa_r:'-z',
-        sh_irer_l:'x', sh_irer_r:'x',
         el_fe_l:'x', el_fe_r:'x',
         fa_ps_l:'y', fa_ps_r:'y',
         wr_ps_l:'y', wr_ps_r:'y',
@@ -353,7 +352,6 @@ function resetAllBonesToInitial() {
         wr_ru_l:'z', wr_ru_r:'z',
         hip_fe_l:'x', hip_fe_r:'x',
         hip_aa_l:'z', hip_aa_r:'z',
-        hip_irer_l:'y', hip_irer_r:'y',
         knee_fe_l:'x', knee_fe_r:'x',
         ankle_dfpf_l:'x', ankle_dfpf_r:'x',
         foot_invev_l:'z', foot_invev_r:'z',
@@ -463,8 +461,22 @@ function freezeBindBaseFor(key, cfg) {
 
   const { bone, qBind, axis: rawAxis } = bind;
 /* --- TRUE SHOULDER/HIP IR/ER USING LOCAL Y AXIS (advanced bone logic) --- */
-if (key === 'sh_irer_l' || key === 'sh_irer_r' ||
-    key === 'hip_irer_l' || key === 'hip_irer_r') {
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+
+  let rot = deg;
+  if (key.endsWith('_r')) rot = -rot;
+
+  // TRUE LOCAL TWIST AXIS OF THE HUMERUS
+  const p0 = bone.localToWorld(new THREE.Vector3(0,0,0));
+  const p1 = bone.localToWorld(new THREE.Vector3(0,1,0));  // local Y
+  const twistAxis = p1.sub(p0).normalize();
+
+  const qRot = new THREE.Quaternion()
+      .setFromAxisAngle(twistAxis, THREE.MathUtils.degToRad(rot));
+
+  bone.quaternion.copy(qBind).multiply(qRot);
+  return;
+}
 
   // ---- 1. Internal/external rotation degrees ----
   let rot = deg;
