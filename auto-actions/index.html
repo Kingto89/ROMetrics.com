@@ -715,6 +715,11 @@ if (cfg.key === 'foot_invev_l') {
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
 function applyAnatomicBaseline(){
+    if (window.SKIP_ANATOMIC > 0) {
+    window.SKIP_ANATOMIC--;
+    log("⛔ Anatomic baseline skipped (ABD/ADD transition)");
+    return;
+}
   // 🦴 Apply identical baselines to both arms (no mirroring)
   setPair('sh_aa_l', ANAT.addL);
   setPair('sh_aa_r', ANAT.addL);
@@ -730,35 +735,14 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-    // --- UNIVERSAL NEUTRAL LOCK FOR SHOULDER ABD/ADD ---
+    // ----- HARD BLOCK ANATOMIC BASELINE AFTER SHOULDER ABD/ADD -----
     if (CURRENT_ACTION &&
-       (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
+        (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
 
-        // 1. Reset rig pose
-        resetAllBonesToInitial();
+     window.SKIP_ANATOMIC = 2;  
+    // Skip NEXT TWO baseline calls (your system makes two)
+}
 
-        // 2. Apply your exact neutral
-        // Left side
-        setPair("sh_aa_l", -32);
-        setPair("sh_irer_l", -2);
-        setPair("w_fe_l", -73);
-
-        // Right side
-        setPair("sh_aa_r", 32);
-        setPair("sh_irer_r", 2);
-        setPair("w_fe_r", 73);
-
-        // 3. LOCK the pose BEFORE any binding happens
-        JOINT_BIND.clear();
-        skeleton.bones.forEach(b=>{
-            initialBoneRot.set(b, b.quaternion.clone());
-        });
-
-        // Critical: stop old CURRENT_ACTION from contaminating binding
-        CURRENT_ACTION = null;
-
-        log("💠 Universal neutral lock applied before action switch.");
-    }
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
