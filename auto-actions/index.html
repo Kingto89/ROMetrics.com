@@ -717,7 +717,7 @@ if (cfg.key === 'foot_invev_l') {
 function applyAnatomicBaseline(){
   // 🦴 Apply identical baselines to both arms (no mirroring)
   setPair('sh_aa_l', ANAT.addL);
-  setPair('sh_aa_r', ANAT.addL);
+  setPair('sh_aa_r', ANAT.addL);  
 
   // Forearm & wrist PS — apply same orientation to both
   setPair('fa_ps_l', ANAT.psL);
@@ -728,72 +728,48 @@ function applyAnatomicBaseline(){
   log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
 }
 
-  // Always return to anatomic when changing actions; then freeze bind
-  actionSel.addEventListener("change", ()=>{
-    // --- UNIVERSAL NEUTRAL LOCK FOR SHOULDER ABD/ADD ---
-    if (CURRENT_ACTION &&
-       (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r")) {
+// Always return to anatomic when changing actions; then freeze bind
+actionSel.addEventListener("change", ()=>{
 
-        // 1. Reset rig pose
-        resetAllBonesToInitial();
+  // 💠 ORIGINAL LAB MOTION — UNIVERSAL NEUTRAL RESTORE FOR SHOULDER
+  if (CURRENT_ACTION &&
+     (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r"))
+  {
+      // Reset all bones to true baseline
+      resetAllBonesToInitial();
 
-        // 2. Apply your exact neutral
-        // Left side
-        setPair("sh_aa_l", -32);
-        setPair("sh_irer_l", -2);
-        setPair("w_fe_l", -73);
+      // Reapply your anatomic neutral (ADD/PS/WPS)
+      applyAnatomicBaseline();
 
-        // Right side
-        setPair("sh_aa_r", 32);
-        setPair("sh_irer_r", 2);
-        setPair("w_fe_r", 73);
+      // Rebuild bind baseline from the restored neutral
+      JOINT_BIND.clear();
+      skeleton.bones.forEach(b=>{
+          initialBoneRot.set(b, b.quaternion.clone());
+      });
 
-        // 3. LOCK the pose BEFORE any binding happens
-        JOINT_BIND.clear();
-        skeleton.bones.forEach(b=>{
-            initialBoneRot.set(b, b.quaternion.clone());
-        });
+      // prevent contamination from previous action
+      CURRENT_ACTION = null;
 
-        // Critical: stop old CURRENT_ACTION from contaminating binding
-        CURRENT_ACTION = null;
+      log("💠 ORIGINAL LAB NEUTRAL RESTORE fired (Abd→Any).");
+  }
 
-        log("💠 Universal neutral lock applied before action switch.");
-    }
-    // --- HARD NEUTRAL RESET if switching from Abd/Add → IR/ER ---
-if (
-  CURRENT_ACTION &&
-  (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") &&
-  (v.includes("sh_irer_l") || v.includes("sh_irer_r"))
-) {
-    // Reset entire rig
-    resetAllBonesToInitial();
+  // ❗ DO NOT reset bones again here — this was the bug
+  // (removed the second resetAllBonesToInitial/applyAnatomicBaseline)
 
-    // Apply your exact anatomic offsets
-    setPair("sh_aa_l", -32);
-    setPair("sh_irer_l", -2);
-    setPair("wr_ps_l", -73);
+  const v = actionSel.value || "";
+  if (v.startsWith("sep:")){
+    const [, key, signStr, maxStr] = v.split(":");
+    const cfg = cfgFromKey(key);
+    CURRENT_ACTION = {
+      mode:'sep',
+      key,
+      cfg,
+      sign: parseInt(signStr,10),
+      max: parseFloat(maxStr),
+      label: actionSel.options[actionSel.selectedIndex].textContent
+    };
+    freezeBindBaseFor(key,cfg);
 
-    setPair("sh_aa_r", 32);
-    setPair("sh_irer_r", 2);
-    setPair("wr_ps_r", 73);
-
-    // Freeze this as new bind baseline for rotation
-    JOINT_BIND.clear();
-    skeleton.bones.forEach(b => {
-        initialBoneRot.set(b, b.quaternion.clone());
-    });
-
-    log("🔄 Hard-reset anatomic baseline for IR/ER after Abduction.");
-}
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
-    CURRENT_ACTION = null;
-    const v = actionSel.value || "";
-    if (v.startsWith("sep:")){
-      const [, key, signStr, maxStr] = v.split(":");
-      const cfg = cfgFromKey(key);
-      CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
-      freezeBindBaseFor(key,cfg);
 
       // Shoulder IR/ER → set elbow to 90° baseline immediately
       if (key==='sh_irer_l' || key==='sh_irer_r'){
