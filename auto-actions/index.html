@@ -184,16 +184,21 @@ if (/^sh_aa_/.test(key)) {
     return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
   }
 }
-
-    // Shoulder IR/ER caps
+// Shoulder IR/ER caps — updated to match your new IR (down) / ER (up) logic
 if (/^sh_irer_/.test(key)) {
   const isLeft = key.endsWith('_l');
-  if (sign > 0) { // Internal Rotation
-    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
-  } else { // External Rotation
+
+  // 🔁 Positive = EXTERNAL rotation
+  // 🔁 Negative = INTERNAL rotation
+  if (sign > 0) {
+    // External Rotation
     return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+  } else {
+    // Internal Rotation
+    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
   }
 }
+
   // === Elbow Flexion / Extension ===
 if (/^el_fe_/.test(key)) {
   const isLeft = key.endsWith('_l');
