@@ -465,10 +465,7 @@ function freezeBindBaseFor(key, cfg) {
   let rot = deg;
   const isRight = key.endsWith('_r');
   if (isRight) rot = -rot; // your rig flips on R side
-
-const axisWorld = bone.localToWorld(new THREE.Vector3(0,1,0)).sub(
-    bone.localToWorld(new THREE.Vector3(0,0,0))
-).normalize();
+  const axisWorld = new THREE.Vector3(1,0,0); // use humeral X-axis for true IR/ER swing
 
   const qRot = new THREE.Quaternion().setFromAxisAngle(axisWorld, THREE.MathUtils.degToRad(rot));
 
