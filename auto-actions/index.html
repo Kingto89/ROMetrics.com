@@ -831,6 +831,21 @@ actionBtn.onclick = () => {
   // Reset slider to zero
   actionDeg.value = "0";
   actionDeg.dispatchEvent(new Event("input"));
+// ===== Re-bake shoulder baseline helper =====
+function rebakeBaseline() {
+    if (!skeleton) return;
+
+    // 1️⃣ Save the NEW bone orientation after abduction
+    skeleton.bones.forEach(b => {
+        initialBoneRot.set(b, b.quaternion.clone());
+    });
+
+    // 2️⃣ Reset and reapply clean anatomic baseline
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+
+    log("🔁 Baseline rebaked after abduction.");
+}
 
   // Target = anticollision limit OR configured max
   const cap = capFor(CURRENT_ACTION);
@@ -846,9 +861,16 @@ actionBtn.onclick = () => {
     actionDeg.value = String(cur);
     actionDeg.dispatchEvent(new Event("input"));
 
-    if (cur < target) requestAnimationFrame(animate);
-    else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
-  }
+ if (cur < target) {
+    requestAnimationFrame(animate);
+} else {
+    // 🔁 Re-bake shoulder baseline AFTER abduction completes
+    if (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") {
+        rebakeBaseline();
+    }
+
+    log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+}
 
   animate();
 };
