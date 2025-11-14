@@ -496,6 +496,18 @@ function freezeBindBaseFor(key, cfg) {
 
 
   const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
+// --- ADVANCED SHOULDER IR/ER ON UPPERARM Y ---
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+
+    const side = key.endsWith('_l') ? 'l' : 'r';
+    const bone = getExactBoneByName(side === 'l' ? 'upperarm_L' : 'upperarm_R');
+
+    if (bone) {
+        bone.rotation.y = THREE.MathUtils.degToRad(deg);
+    }
+
+    return; // stop the old IR/ER logic from running
+}
 
   // Handle flipped axis (e.g. "-z" for mirrored rig)
 let x = 0, y = 0, z = 0;
