@@ -759,6 +759,32 @@ function applyAnatomicBaseline(){
 
         log("💠 Universal neutral lock applied before action switch.");
     }
+    // --- HARD NEUTRAL RESET if switching from Abd/Add → IR/ER ---
+if (
+  CURRENT_ACTION &&
+  (CURRENT_ACTION.key === "sh_aa_l" || CURRENT_ACTION.key === "sh_aa_r") &&
+  (v.includes("sh_irer_l") || v.includes("sh_irer_r"))
+) {
+    // Reset entire rig
+    resetAllBonesToInitial();
+
+    // Apply your exact anatomic offsets
+    setPair("sh_aa_l", -32);
+    setPair("sh_irer_l", -2);
+    setPair("wr_ps_l", -73);
+
+    setPair("sh_aa_r", 32);
+    setPair("sh_irer_r", 2);
+    setPair("wr_ps_r", 73);
+
+    // Freeze this as new bind baseline for rotation
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => {
+        initialBoneRot.set(b, b.quaternion.clone());
+    });
+
+    log("🔄 Hard-reset anatomic baseline for IR/ER after Abduction.");
+}
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     CURRENT_ACTION = null;
