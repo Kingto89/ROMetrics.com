@@ -462,6 +462,30 @@ function freezeBindBaseFor(key, cfg) {
   if (!bind) return;
 
   const { bone, qBind, axis: rawAxis } = bind;
+/* === OVERRIDE: Force IR/ER to use true Y-axis (advanced bone logic) === */
+if (key === 'sh_irer_l' || key === 'sh_irer_r' ||
+    key === 'hip_irer_l' || key === 'hip_irer_r') {
+
+  // 1️⃣ Shoulder & hip IR/ER always rotate around Y (up–down)
+  const isRight = key.endsWith('_r');
+  let rot = deg;
+
+  // 2️⃣ Your right side axis is reversed on this rig
+  if (isRight) rot = -rot;
+
+  // 3️⃣ Reset bone’s Y before applying new Y rotate
+  bone.rotation.set(bone.rotation.x, 0, bone.rotation.z);
+
+  // 4️⃣ Apply Y-axis rotation
+  const rad = THREE.MathUtils.degToRad(rot);
+  const qDelta = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(0, rad, 0, "XYZ")
+  );
+
+  bone.quaternion.copy(qBind).multiply(qDelta);
+
+  return;   // 🔥 Prevent any competing logic from running
+}
 
   // --- Right-shoulder rotation sign corrections ---
   if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
