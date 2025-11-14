@@ -460,23 +460,6 @@ function freezeBindBaseFor(key, cfg) {
   if (!bind) return;
 
   const { bone, qBind, axis: rawAxis } = bind;
-/* --- TRUE SHOULDER/HIP IR/ER USING LOCAL Y AXIS (advanced bone logic) --- */
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-
-  let rot = deg;
-  if (key.endsWith('_r')) rot = -rot;
-
-  // TRUE LOCAL TWIST AXIS OF THE HUMERUS
-  const p0 = bone.localToWorld(new THREE.Vector3(0,0,0));
-  const p1 = bone.localToWorld(new THREE.Vector3(0,1,0));  // local Y
-  const twistAxis = p1.sub(p0).normalize();
-
-  const qRot = new THREE.Quaternion()
-      .setFromAxisAngle(twistAxis, THREE.MathUtils.degToRad(rot));
-
-  bone.quaternion.copy(qBind).multiply(qRot);
-  return;
-}
 
   // ---- 1. Internal/external rotation degrees ----
   let rot = deg;
