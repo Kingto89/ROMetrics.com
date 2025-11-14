@@ -818,19 +818,6 @@ actionDeg.addEventListener("input", ()=> {
   // === Generic path (everything else) ===
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
-function resetShouldersToAnatomic() {
-  // Use your existing ANAT baseline values
-  setPair('sh_aa_l', ANAT.addL);
-  setPair('sh_aa_r', ANAT.addL);
-
-  // restore flex/ER baselines too
-  setPair('sh_fe_l', 0);
-  setPair('sh_fe_r', 0);
-  setPair('sh_irer_l', 0);
-  setPair('sh_irer_r', 0);
-
-  log("Shoulders reset to anatomic for next action.");
-}
 
 /* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
 const actionBtn = document.getElementById("actionGo");
@@ -852,24 +839,19 @@ actionBtn.onclick = () => {
   let cur = 0;
   const step = 2;
 
-function animate() {
-  cur += step;
-  if (cur >= target) cur = target;
+  function animate() {
+    cur += step;
+    if (cur >= target) cur = target;
 
-  actionDeg.value = String(cur);
-  actionDeg.dispatchEvent(new Event("input"));
+    actionDeg.value = String(cur);
+    actionDeg.dispatchEvent(new Event("input"));
 
-  if (cur < target) {
-    requestAnimationFrame(animate);
-  } else {
-    log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+    if (cur < target) requestAnimationFrame(animate);
+    else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
+  }
 
-    // === Reset shoulders after ABD/ADD auto-motion ===
-    if (CURRENT_ACTION.key === 'sh_aa_l' || CURRENT_ACTION.key === 'sh_aa_r') {
-      requestAnimationFrame(() => resetShouldersToAnatomic());
-     }
-}
-animate();
+  animate();
+};
 
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
