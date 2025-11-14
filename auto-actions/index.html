@@ -886,22 +886,6 @@ if (shoulderR) {
   log("Right shoulder alignment fix applied (pre-bind).");
 }
 
-// === Rebuild baselines with corrected orientations ===
-// 1️⃣ Clear and rebuild bind data AFTER shoulder correction
-JOINT_BIND.clear();
-
-// 2️⃣ Re-record each bone’s corrected quaternion as its new baseline
-skeleton.bones.forEach(b => {
-  initialBoneRot.set(b, b.quaternion.clone());
-});
-
-// 3️⃣ Now capture the new baseline for reference motions
-resetAllBonesToInitial();
-
-// 4️⃣ Apply anatomic offsets on top of corrected baseline
-applyAnatomicBaseline();
-
-log("Right-shoulder baseline rebaked.");
 log("Anticollision default ON.");
 log("Anatomic baseline applied on load.");
  },      
