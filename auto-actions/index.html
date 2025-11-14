@@ -818,19 +818,6 @@ actionDeg.addEventListener("input", ()=> {
   // === Generic path (everything else) ===
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
-
-/* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
-const actionBtn = document.getElementById("actionGo");
-
-actionBtn.onclick = () => {
-  if (!CURRENT_ACTION) {
-    log("❌ Select a motion first.");
-    return;
-  }
-
-  // Reset slider to zero
-  actionDeg.value = "0";
-  actionDeg.dispatchEvent(new Event("input"));
 // ===== Re-bake shoulder baseline helper =====
 function rebakeBaseline() {
     if (!skeleton) return;
@@ -846,6 +833,18 @@ function rebakeBaseline() {
 
     log("🔁 Baseline rebaked after abduction.");
 }
+/* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
+const actionBtn = document.getElementById("actionGo");
+
+actionBtn.onclick = () => {
+  if (!CURRENT_ACTION) {
+    log("❌ Select a motion first.");
+    return;
+  }
+
+  // Reset slider to zero
+  actionDeg.value = "0";
+  actionDeg.dispatchEvent(new Event("input"));
 
   // Target = anticollision limit OR configured max
   const cap = capFor(CURRENT_ACTION);
