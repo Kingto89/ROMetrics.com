@@ -775,10 +775,10 @@ if (cfg.key === 'hip_aa_r'){
 // --- Left Hip fix:  Internal ↔ External labels ---
 if (cfg.key === 'hip_irer_l') {
   // External Rotation (positive)
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
 
   // Internal Rotation (negative)
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
 
   return out;
 }
@@ -786,10 +786,10 @@ if (cfg.key === 'hip_irer_l') {
 // --- Right Hip fix:  Internal ↔ External labels ---
 if (cfg.key === 'hip_irer_r') {
   // External Rotation (positive)
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
 
   // Internal Rotation (negative)
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
 
   return out;
 }
