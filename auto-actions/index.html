@@ -504,7 +504,7 @@ const axisWorld = bone.localToWorld(new THREE.Vector3(0,1,0)).sub(
   const e = new THREE.Euler(x, y, z, "XYZ");
   const qDelta = new THREE.Quaternion().setFromEuler(e);
   bone.quaternion.copy(qBind).multiply(qDelta);
-
+}
   // --- Debug: confirm right-shoulder direction ---
   if (CURRENT_ACTION?.key === "sh_aa_r") {
     console.log(
