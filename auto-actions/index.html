@@ -345,7 +345,7 @@ function resetAllBonesToInitial() {
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
         sh_aa_l:'z', sh_aa_r:'-z',
-        sh_irer_l:'y', sh_irer_r:'x',
+        sh_irer_l:'y', sh_irer_r:'y',
         el_fe_l:'x', el_fe_r:'x',
         fa_ps_l:'y', fa_ps_r:'y',
         wr_ps_l:'y', wr_ps_r:'y',
@@ -622,7 +622,12 @@ if (cfg.key === 'hip_irer_l') {
   push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
   return out;
 }
-
+    // --- Left Hip fix: rename only ---
+if (cfg.key === 'hip_irer_r') {
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
+  return out;
+}
 // --- Left Foot fix: 
 if (cfg.key === 'foot_invev_l') {
   push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, maxPos);
