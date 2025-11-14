@@ -603,6 +603,17 @@ if (cfg.key === 'hip_irer_l') {
   return out;
 }
 
+// --- Right Hip fix:  Internal ↔ External labels ---
+if (cfg.key === 'hip_irer_r') {
+  // External Rotation (positive)
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
+
+  // Internal Rotation (negative)
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
+
+  return out;
+}
+
 // --- Left Foot fix: 
 if (cfg.key === 'foot_invev_l') {
   push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, maxPos);
