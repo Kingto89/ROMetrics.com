@@ -732,6 +732,11 @@ function applyAnatomicBaseline(){
   actionSel.addEventListener("change", ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
+    // --- FULL RESET + REBIND to TRUE anatomic baseline ---
+JOINT_BIND.clear();
+skeleton.bones.forEach(b => {
+  initialBoneRot.set(b, b.quaternion.clone());
+});
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
