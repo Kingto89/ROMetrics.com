@@ -752,18 +752,6 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-// === Correct IR/ER Start Posture: 90° Abd + 90° Elbow + Neutral PS + Pronated wrist ===
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-    const side = key.endsWith('_l') ? 'l' : 'r';
-
-    // 1️⃣ Reset to true baseline + your anatomic offsets
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
-
-// === IR/ER start posture ===
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-    const side = key.endsWith('_l') ? 'l' : 'r';
-
 // === IR/ER start posture ===
 if (key === 'sh_irer_l' || key === 'sh_irer_r') {
     const side = key.endsWith('_l') ? 'l' : 'r';
@@ -787,7 +775,6 @@ if (key === 'sh_irer_l' || key === 'sh_irer_r') {
 
     log(`🔧 IR/ER baseline locked (${side.toUpperCase()}): Abd 70°, Elbow 90°, Forearm 0°, Wrist pronated`);
 }
-
     // 6️⃣ Freeze this posture as new IR/ER bind baseline
     JOINT_BIND.clear();
     skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
