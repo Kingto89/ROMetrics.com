@@ -468,10 +468,6 @@ function freezeBindBaseFor(key, cfg) {
 
   const { bone, qBind, axis: rawAxis } = bind;
 
-  // --- Right-shoulder rotation sign corrections ---
-  if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
-  if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
-
     // --- Right-wrist direction fixes ---
   if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
   if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
@@ -764,18 +760,33 @@ if (key === 'sh_irer_l' || key === 'sh_irer_r') {
     resetAllBonesToInitial();
     applyAnatomicBaseline();
 
-    // 2️⃣ Shoulder →  Abduction (humerus out to side)
-    setPair(`sh_aa_${side}`, 70);
+// === IR/ER start posture ===
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+    const side = key.endsWith('_l') ? 'l' : 'r';
 
-    // 3️⃣ Elbow → 90° Flexion
-    setPair(`el_fe_${side}`, 90);
+// === IR/ER start posture ===
+if (key === 'sh_irer_l' || key === 'sh_irer_r') {
+    const side = key.endsWith('_l') ? 'l' : 'r';
 
-    // 4️⃣ Forearm → Neutral (vertical)
-    setPair(`fa_ps_${side}`, 0);
+    // FIRST STEP FIX — force ER to use the same abduction baseline as IR
+    const forcedAbd = getPair(`sh_aa_${side}`);
+    setPair(`sh_aa_${side}`, forcedAbd);
 
-    // 5️⃣ Wrist → Pronated (your ANAT baseline)
+    // SECOND FIX — HARD LOCK IR/ER START POSE
+    setPair(`sh_fe_${side}`, 0);    // eliminate forward flex drift
+    setPair(`sh_ru_${side}`, 0);    // eliminate horizontal drift
+    setPair(`sh_aa_${side}`, 70);   // your preferred IR/ER ABD baseline
+    setPair(`el_fe_${side}`, 90);   // elbow fixed at 90
+    setPair(`fa_ps_${side}`, 0);    // forearm neutral
     if (side === 'l') setPair('wr_ps_l', ANAT.wpsL);
     else               setPair('wr_ps_r', -ANAT.wpsL);
+
+    // Freeze this posture as new IR/ER bind baseline
+    JOINT_BIND.clear();
+    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+
+    log(`🔧 IR/ER baseline locked (${side.toUpperCase()}): Abd 70°, Elbow 90°, Forearm 0°, Wrist pronated`);
+}
 
     // 6️⃣ Freeze this posture as new IR/ER bind baseline
     JOINT_BIND.clear();
