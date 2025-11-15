@@ -539,12 +539,7 @@ const BLENDER_ORDER = [
 
   /* ===== Populate bones (sorted) ===== */
   function populateBones(){
-    if (!skeleton) {
-      const o = document.createElement("option");
-      o.value = ""; o.textContent = "(No skeleton)";
-      boneSel.appendChild(o);
-      return;
-    }
+    if (!skeleton) return;
     const bones = [...skeleton.bones].sort((a,b)=>{
       const ai = ORDER_INDEX[(a.name||"").toLowerCase()];
       const bi = ORDER_INDEX[(b.name||"").toLowerCase()];
@@ -558,7 +553,6 @@ const BLENDER_ORDER = [
       const o = document.createElement("option");
       o.value = String(skeleton.bones.indexOf(b));
       o.textContent = b.name || `Bone ${i}`;
-      boneSel.appendChild(o);
       if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
     });
     rx.value = "0"; ry.value = "0"; rz.value = "0";
@@ -625,7 +619,6 @@ function selectBoneByName(name){
   }
 }
   function setBoneRotationFromUI(){
-    const idx = parseInt(boneSel.value||"-1",10);
     if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
     const b = skeleton.bones[idx];
     const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
@@ -636,7 +629,6 @@ function selectBoneByName(name){
     b.quaternion.copy(qBase).multiply(qDelta);
   }
   function zeroSelectedBone(){
-    const idx = parseInt(boneSel.value||"-1",10);
     if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
     const b = skeleton.bones[idx];
     const qb = initialBoneRot.get(b);
@@ -1171,7 +1163,6 @@ actionDeg.addEventListener("input", ()=> {
     if (model) scene.remove(model);
     model = null; skeleton = null;
     initialBoneRot.clear(); JOINT_BIND.clear();
-    boneSel.innerHTML = "";
     DRUJ.l = DRUJ.r = null;
   }
   function loadModel(){
