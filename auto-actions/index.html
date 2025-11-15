@@ -1027,7 +1027,7 @@ if (CURRENT_ACTION.key==='hip_irer_l' || CURRENT_ACTION.key==='hip_irer_r'){
 
   // maintain the setup posture every tick
   setPair(`hip_fe_${side}`, 95);
-  setPair(`knee_fe_${side}`, 90);
+  setPair(`knee_fe_${side}`, -90);
 
   // rotation amount (positive = whatever your menu defines)
   const rotDeg = CURRENT_ACTION.sign * val;
