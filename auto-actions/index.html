@@ -848,7 +848,7 @@ if (cfg.key === 'foot_invev_l') {
     list.forEach(cfg=>{
     if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
     else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
-    else if (/^clavicle_/.test(cfg.key)) add('Clavicle', dirEntriesFromPair(cfg)); // ✅ show clavicle
+    else if (false && /^clavicle_/.test(cfg.key)) add('Clavicle', dirEntriesFromPair(cfg)); // hidden
     else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
     else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
     // Forearm group intentionally NOT added (removed from UI)
