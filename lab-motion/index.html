@@ -426,34 +426,67 @@ if(/^foot_invev_/.test(key)){
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-/* ===== Populate bones (simple, stable) ===== */
+/* ===== Populate bones (clean grouped menu) ===== */
 function populateBones(){
+  if (!skeleton) return;
+
   boneSel.innerHTML = "";
-  if (!skeleton) {
-    const o = document.createElement("option");
-    o.value = ""; 
-    o.textContent = "(No skeleton)";
-    boneSel.appendChild(o);
-    return;
-  }
 
-  skeleton.bones.forEach((b,i)=>{
-    const o = document.createElement("option");
-    o.value = String(i);
-    o.textContent = b.name || `Bone ${i}`;
-    boneSel.appendChild(o);
+  // Create groups
+  const spineGroup = document.createElement("optgroup");
+  spineGroup.label = "Spine & Head";
 
-    // store baseline rotation if not saved
-    if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+  const leftGroup = document.createElement("optgroup");
+  leftGroup.label = "Left Side";
+
+  const rightGroup = document.createElement("optgroup");
+  rightGroup.label = "Right Side";
+
+  boneSel.appendChild(spineGroup);
+  boneSel.appendChild(leftGroup);
+  boneSel.appendChild(rightGroup);
+
+  // Helper: hide garbage names
+  const skip = name =>
+    !name ||
+    name.includes("pelvis") ||
+    name.includes("root") ||
+    name.includes("hips") ||
+    name.includes("spine0") && false; // allow spine01+ ONLY
+
+  skeleton.bones.forEach((b, i) => {
+    const name = (b.name || "").toLowerCase();
+    if (skip(name)) return;
+
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = b.name;
+
+    if (name.startsWith("spine") || name === "neck" || name === "head") {
+      spineGroup.appendChild(opt);
+    }
+    else if (name.endsWith("_l") || name.endsWith(".l")) {
+      leftGroup.appendChild(opt);
+    }
+    else if (name.endsWith("_r") || name.endsWith(".r")) {
+      rightGroup.appendChild(opt);
+    }
+    else {
+      // Anything else → treat it as spine by default (safe)
+      spineGroup.appendChild(opt);
+    }
+
+    if (!initialBoneRot.has(b))
+      initialBoneRot.set(b, b.quaternion.clone());
   });
 
-  // Default selection = first bone
-  if (boneSel.options.length > 0) {
-    boneSel.value = boneSel.options[0].value;
+  // Default select first spine bone
+  if (spineGroup.children.length > 0) {
+    boneSel.value = spineGroup.children[0].value;
   }
 
-  rx.value = "0"; 
-  ry.value = "0"; 
+  rx.value = "0";
+  ry.value = "0";
   rz.value = "0";
   setBoneRotationFromUI();
 }
