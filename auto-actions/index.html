@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>3D Motion Lab — Automated Actions</title>
+<title>3D Motion Lab — Automated </title>
 
 <script type="importmap">
 {
@@ -61,6 +61,13 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
     <div class="content">
 
+      <div class="row" style="align-items:center">
+        <label style="display:flex;gap:6px;align-items:center;margin:0;">
+          <input id="antiBox" type="checkbox"/>
+          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+        </label>
+      </div>
+
       <label>Body Region</label>
       <div class="seg">
         <button id="segUpper" class="on">Upper Body</button>
@@ -71,11 +78,72 @@ optgroup{color:#9fb0c9;font-style:normal}
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
-      <input type="range" id="actionDeg" style="display:none" disabled min="-90" max="150" step="1" value="0">
-      <button id="actionGo">▶️ Perform Action</button>
+      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
+
+      <details>
+        <summary>Bone (Advanced)</summary>
+        <label>Bone (Blender order)</label>
+        <select id="boneSel"></select>
+        <div class="row">
+          <div style="flex:1">
+            <label>Rotate X (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
+          </div>
+          <div style="flex:1">
+            <label>Rotate Y (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
+          </div>
+        </div>
+        <label>Rotate Z (°)</label>
+        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
+
+        <div class="row" style="margin-top:6px">
+          <button id="zeroBone" class="mini">Zero Bone</button>
+          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+        </div>
+
+      </details>
+
+      <details>
+        <summary>Model</summary>
+        <div class="row">
+          <div style="flex:1">
+            <label>Model X (m)</label>
+            <input type="range" min="-2" max="2" step="0.01" value="0" id="mx">
+          </div>
+          <div style="flex:1">
+            <label>Model Z (m)</label>
+            <input type="range" min="-2" max="2" step="0.01" value="0.6" id="mz">
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Model Y (m)</label>
+            <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="my">
+          </div>
+          <div style="flex:1">
+            <label>Scale (%)</label>
+            <input type="range" min="40" max="200" step="1" value="125" id="ms">
+          </div>
+        </div>
+        <label>Yaw (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="myaw">
+        <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
+      </details>
 
       <label>Event Log</label>
       <pre id="log"></pre>
+    </div>
+  </div>
+
+    <div class="body" id="romBody">
+      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
+      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
+      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
+      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
+      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
+      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
+      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
     </div>
   </div>
 
@@ -104,9 +172,24 @@ optgroup{color:#9fb0c9;font-style:normal}
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
+  const zeroAll = document.getElementById("zeroAll");
+
+  const boneSel = document.getElementById("boneSel");
+  const rx = document.getElementById("rx");
+  const ry = document.getElementById("ry");
+  const rz = document.getElementById("rz");
+  const zeroBone = document.getElementById("zeroBone");
+
+  const mx = document.getElementById("mx");
+  const my = document.getElementById("my");
+  const mz = document.getElementById("mz");
+  const ms = document.getElementById("ms");
+  const myaw = document.getElementById("myaw");
+  const resetModel = document.getElementById("resetModel");
+
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
-  enabled: true,
+  enabled: false,
   // ===== Existing upper body =====
   trunkLatLMax: 30,
   trunkLatRMax: 30,
@@ -247,6 +330,16 @@ if(/^foot_invev_/.test(key)){
     return null;
   }
 
+  const antiBox = document.getElementById('antiBox');
+  if (antiBox){
+    antiBox.checked = COLLIM.enabled;
+    antiBox.addEventListener('click', (e)=>{
+      if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
+      COLLIM.enabled = !!antiBox.checked;
+      log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
+    });
+  }
+
   /* ===== Draggable panel ===== */
   (function(){
     let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
@@ -307,14 +400,6 @@ if(/^foot_invev_/.test(key)){
 
   let model = null, skeleton = null;
   const initialBoneRot = new Map();
-    /* ===== Minimal bone reset (required for load + baseline) ===== */
-function resetAllBonesToInitial() {
-  if (!skeleton) return;
-  skeleton.bones.forEach(b => {
-    const q = initialBoneRot.get(b);
-    if (q) b.quaternion.copy(q);
-  });
-}
 
   function pickModelUrl(){
     const u = new URL(location.href);
@@ -330,6 +415,87 @@ function resetAllBonesToInitial() {
     const box = new THREE.Box3().setFromObject(model);
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
+  }
+
+  /* ===== Blender order for Advanced menu ===== */
+  const BLENDER_ORDER = [
+    "pelvis",
+    "spine01","spine02","spine03",
+    "neck","head",
+    "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
+    "thumb01_L","thumb02_L","thumb03_L",
+    "index00_L","index01_L","index02_L","index03_L",
+    "middle00_L","middle01_L","middle02_L","middle03_L",
+    "ring00_L","ring01_L","ring02_L","ring03_L",
+    "pinky00_L","pinky01_L","pinky02_L","pinky03_L",
+    "clavicle_R","upperarm_R","upperarm_twist_R","lowerarm_R","lowerarm_twist_R","hand_R",
+    "thumb01_R","thumb02_R","thumb03_R",
+    "index00_R","index01_R","index02_R","index03_R",
+    "middle00_R","middle01_R","middle02_R","middle03_R",
+    "ring00_R","ring01_R","ring02_R","ring03_R",
+    "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
+    "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
+    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
+  ];
+  const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
+
+  /* ===== Populate bones (sorted) ===== */
+  function populateBones(){
+    boneSel.innerHTML = "";
+    if (!skeleton) {
+      const o = document.createElement("option");
+      o.value = ""; o.textContent = "(No skeleton)";
+      boneSel.appendChild(o);
+      return;
+    }
+    const bones = [...skeleton.bones].sort((a,b)=>{
+      const ai = ORDER_INDEX[(a.name||"").toLowerCase()];
+      const bi = ORDER_INDEX[(b.name||"").toLowerCase()];
+      const av = (ai===undefined) ? 9999 : ai;
+      const bv = (bi===undefined) ? 9999 : bi;
+      if (av!==bv) return av-bv;
+      return (a.name||"").localeCompare(b.name||"");
+    });
+
+    bones.forEach((b,i)=>{
+      const o = document.createElement("option");
+      o.value = String(skeleton.bones.indexOf(b));
+      o.textContent = b.name || `Bone ${i}`;
+      boneSel.appendChild(o);
+      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+    });
+    if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    setBoneRotationFromUI();
+  }
+  function setBoneRotationFromUI(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
+    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
+    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
+    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
+    b.quaternion.copy(qBase).multiply(qDelta);
+  }
+  function zeroSelectedBone(){
+    const idx = parseInt(boneSel.value||"-1",10);
+    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+    const b = skeleton.bones[idx];
+    const qb = initialBoneRot.get(b);
+    if (qb) b.quaternion.copy(qb);
+    rx.value="0"; ry.value="0"; rz.value="0";
+  }
+  function resetAllBonesToInitial(){
+    if (!skeleton) return;
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+    JOINT_BIND.forEach(obj=>{
+      if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
+    });
   }
 
   /* ===== Rig profile & axis ===== */
@@ -596,10 +762,26 @@ if (cfg.key === 'hip_aa_r'){
   push('Hip R — Adduction', +1, maxPos);
   return out;
 }
-    // --- Left Hip fix: rename only ---
+
+// --- Left Hip fix:  Internal ↔ External labels ---
 if (cfg.key === 'hip_irer_l') {
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
+  // External Rotation (positive)
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+
+  // Internal Rotation (negative)
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+
+  return out;
+}
+
+// --- Right Hip fix:  Internal ↔ External labels ---
+if (cfg.key === 'hip_irer_r') {
+  // External Rotation (positive)
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, maxPos);
+
+  // Internal Rotation (negative)
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, absMin);
+
   return out;
 }
 
@@ -740,21 +922,13 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
- // Shoulder IR/ER → prep position: elbow 90° + shoulder 35° abduction + 5° wrist pronation
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-  const side = key.endsWith('_l') ? 'l' : 'r';
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
+      if (key==='sh_irer_l' || key==='sh_irer_r'){
+       const side = key.endsWith('_l') ? 'l' : 'r';
+       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+      }
 
-  // 1️⃣ Set elbow flexion to 90°
-  setPair(`el_fe_${side}`, 90);
-
-  // 2️⃣ Set shoulder abduction to 35°
-  setPair(`sh_aa_${side}`, 35);
-
-  // 3️⃣ Apply 5° pronation at the *wrist*, since forearm bind is not detected
-  setPair(`wr_ps_${side}`, 5);
-
-  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 35°, Wrist Pro 5°`);
-}
       syncActionUI(true);
       return;
     }
@@ -827,55 +1001,21 @@ actionDeg.addEventListener("input", ()=> {
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
 
-/* === AUTO-ACTION BUTTON: Perform full ROM automatically === */
-const actionBtn = document.getElementById("actionGo");
-
-actionBtn.onclick = () => {
-  if (!CURRENT_ACTION) {
-    log("❌ Select a motion first.");
-    return;
-  }
-
-  // Reset slider to zero
-  actionDeg.value = "0";
-  actionDeg.dispatchEvent(new Event("input"));
-
-  // Target = anticollision limit OR configured max
-  const cap = capFor(CURRENT_ACTION);
-  const target = typeof cap === "number" ? cap : CURRENT_ACTION.max;
-
-  let cur = 0;
-  const step = 2;
-
-  function animate() {
-// === Shoulder auto-zero on new selection ===
-const shoulderKeys = ['sh_aa_l','sh_aa_r','sh_irer_l','sh_irer_r'];
-if (shoulderKeys.includes(key)) {
-    const bind = resolveBind(key, cfg);
-    if (bind?.bone) {
-        const q = initialBoneRot.get(bind.bone);
-        if (q) bind.bone.quaternion.copy(q);
-        log(`(Auto-zero) Shoulder baseline reset for ${key}`);
-    }
-}
-    cur += step;
-    if (cur >= target) cur = target;
-
-    actionDeg.value = String(cur);
-    actionDeg.dispatchEvent(new Event("input"));
-
-    if (cur < target) requestAnimationFrame(animate);
-    else log(`✅ Action complete: ${CURRENT_ACTION.label} reached ${target}°`);
-  }
-
-  animate();
-};
+  zeroAll.onclick = ()=>{
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
+    rx.value = "0"; ry.value = "0"; rz.value = "0";
+    pairLabel.textContent = "Angle (°)";
+    log("All motions zeroed → returned to anatomic baseline.");
+  };
 
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
     if (model) scene.remove(model);
     model = null; skeleton = null;
     initialBoneRot.clear(); JOINT_BIND.clear();
+    boneSel.innerHTML = "";
     DRUJ.l = DRUJ.r = null;
   }
   function loadModel(){
@@ -892,6 +1032,7 @@ if (shoulderKeys.includes(key)) {
         scene.add(model);
         groundSnap();
         msg.textContent = "✅ Model loaded";
+        populateBones();
         detectRigProfile();
         fillActionMenu();
 // 🧩 Fix the right shoulder alignment BEFORE binding baselines
@@ -919,6 +1060,10 @@ resetAllBonesToInitial();
 // 4️⃣ Apply anatomic offsets on top of corrected baseline
 applyAnatomicBaseline();
 
+// ✅ Enable anticollision by default
+COLLIM.enabled = true;
+if (antiBox) antiBox.checked = true;
+
 log("Right-shoulder baseline rebaked.");
 log("Anticollision default ON.");
 log("Anatomic baseline applied on load.");
@@ -932,6 +1077,21 @@ log("Anatomic baseline applied on load.");
   }
   loadModel();
     
+  /* ===== Advanced controls wiring ===== */
+  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
+  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
+    if (!model) return;
+    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
+    model.scale.setScalar(parseInt(ms.value,10)/100);
+    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
+  }));
+  zeroBone.onclick = zeroSelectedBone;
+  resetModel.onclick = ()=>{
+    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
+    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
+    groundSnap();
+  };
 
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
@@ -1250,7 +1410,6 @@ function toggleCollisionTuner(show) {
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
 
-
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
     camera.aspect = innerWidth/innerHeight;
@@ -1265,3 +1424,5 @@ function toggleCollisionTuner(show) {
   </script>
 </body>
 </html>
+
+
