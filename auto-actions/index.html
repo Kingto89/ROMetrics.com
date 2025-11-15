@@ -613,9 +613,6 @@ function freezeBindBaseFor(key, cfg) {
   let x = 0, y = 0, z = 0;
   let flip = 1;
   let axis = rawAxis;
-  if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-    axis = 'y';
-}
   if (axis.startsWith('-')) {
     flip = -1;
     axis = axis.slice(1);
