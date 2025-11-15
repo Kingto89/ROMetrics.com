@@ -80,32 +80,52 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
+<details>
+  <summary>Bone (Advanced)</summary>
 
-      <details>
-        <summary>Bone (Advanced)</summary>
-        <div class="row">
-          <select id="boneSel" style="flex:1;"></select>
-          <select id="boneSel2" style="flex:1;"></select>
-        </div>
-        <div class="row">
-          <div style="flex:1">
-            <label>Rotate X (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
-          </div>
-          <div style="flex:1">
-            <label>Rotate Y (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
-          </div>
-        </div>
-        <label>Rotate Z (°)</label>
-        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
+  <div class="row">
 
-        <div class="row" style="margin-top:6px">
-          <button id="zeroBone" class="mini">Zero Bone</button>
-          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-        </div>
+    <!-- LEFT column -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:11px;display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="bone1Active" checked>
+        Active
+      </label>
+      <select id="boneSel"></select>
+    </div>
 
-      </details>
+    <!-- RIGHT column -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:11px;display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="bone2Active">
+        Active
+      </label>
+      <select id="boneSel2"></select>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div style="flex:1">
+      <label>Rotate X (°)</label>
+      <input type="range" min="-180" max="180" step="1" value="0" id="rx">
+    </div>
+    <div style="flex:1">
+      <label>Rotate Y (°)</label>
+      <input type="range" min="-180" max="180" step="1" value="0" id="ry">
+    </div>
+  </div>
+
+  <label>Rotate Z (°)</label>
+  <input type="range" min="-180" max="180" step="1" value="0" id="rz">
+
+  <div class="row" style="margin-top:6px">
+    <button id="zeroBone" class="mini">Zero Bone</button>
+    <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+  </div>
+
+</details>
+
 
       <details>
         <summary>Model</summary>
@@ -165,38 +185,76 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+/* ===== UI ===== */
+const msg = document.getElementById("msg");
+const logEl = document.getElementById("log");
+const log = (t)=>{ 
+  logEl.textContent += t + "\n"; 
+  logEl.scrollTop = logEl.scrollHeight; 
+};
 
-  /* ===== UI ===== */
-  const msg = document.getElementById("msg");
-  const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+const panel = document.getElementById("panel");
+const dragbar = document.getElementById("dragbar");
+const romBtn = document.getElementById("romBtn");
+const romModal = document.getElementById("romModal");
+const romClose = document.getElementById("romClose");
 
-  const panel = document.getElementById("panel");
-  const dragbar = document.getElementById("dragbar");
-  const romBtn = document.getElementById("romBtn");
-  const romModal = document.getElementById("romModal");
-  const romClose = document.getElementById("romClose");
+const segUpper = document.getElementById("segUpper");
+const segLower = document.getElementById("segLower");
 
-  const segUpper = document.getElementById("segUpper");
-  const segLower = document.getElementById("segLower");
+const actionSel = document.getElementById("actionSel");
+const actionDeg = document.getElementById("actionDeg");
+const pairLabel = document.getElementById("pairLabel");
+const zeroAll = document.getElementById("zeroAll");
 
-  const actionSel = document.getElementById("actionSel");
-  const actionDeg = document.getElementById("actionDeg");
-  const pairLabel = document.getElementById("pairLabel");
-  const zeroAll = document.getElementById("zeroAll");
+/* ===== TWO-DROPDOWN BONE SYSTEM ===== */
+const boneSel  = document.getElementById("boneSel");   // LEFT dropdown
+const boneSel2 = document.getElementById("boneSel2");  // RIGHT dropdown
 
-  const boneSel = document.getElementById("boneSel");
-  const rx = document.getElementById("rx");
-  const ry = document.getElementById("ry");
-  const rz = document.getElementById("rz");
-  const zeroBone = document.getElementById("zeroBone");
+const bone1Active = document.getElementById("bone1Active"); // LEFT Active checkbox
+const bone2Active = document.getElementById("bone2Active"); // RIGHT Active checkbox
 
-  const mx = document.getElementById("mx");
-  const my = document.getElementById("my");
-  const mz = document.getElementById("mz");
-  const ms = document.getElementById("ms");
-  const myaw = document.getElementById("myaw");
-  const resetModel = document.getElementById("resetModel");
+// Guarantee only one dropdown is active at a time
+function syncBoneActive(which){
+  if (which === "left"){
+    bone1Active.checked = true;
+    bone2Active.checked = false;
+  } else {
+    bone1Active.checked = false;
+    bone2Active.checked = true;
+  }
+}
+
+// Default: LEFT dropdown controls sliders
+syncBoneActive("left");
+
+// checkbox switching logic
+bone1Active.addEventListener("change", ()=>{
+  if (bone1Active.checked) syncBoneActive("left");
+});
+
+bone2Active.addEventListener("change", ()=>{
+  if (bone2Active.checked) syncBoneActive("right");
+});
+
+// Which dropdown should sliders use?
+function getActiveBoneSel(){
+  return bone2Active.checked ? boneSel2 : boneSel;
+}
+
+/* ===== Bone rotation sliders ===== */
+const rx = document.getElementById("rx");
+const ry = document.getElementById("ry");
+const rz = document.getElementById("rz");
+const zeroBone = document.getElementById("zeroBone");
+
+/* ===== Model transform sliders ===== */
+const mx = document.getElementById("mx");
+const my = document.getElementById("my");
+const mz = document.getElementById("mz");
+const ms = document.getElementById("ms");
+const myaw = document.getElementById("myaw");
+const resetModel = document.getElementById("resetModel");
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
