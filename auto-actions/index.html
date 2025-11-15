@@ -552,6 +552,29 @@ if(/^foot_invev_/.test(key)){
 
   const JOINT_BIND = new Map();
   function resolveBind(key,cfg){
+    // --- Clavicle fallback: try real clavicle, else shoulder/collar, else upperarm parent
+if (/^clavicle_/.test(key)) {
+  const side = key.endsWith('_l') ? 'l' : 'r';
+  // try direct clavicle/collar/shoulder
+  let bone = findBoneBy({ side, hints:[/clavicle|collar|shoulder/i], key });
+  if (!bone) {
+    // fallback: take upperarm (humerus) and use its parent as a pseudo-clavicle
+    const upper = findBoneBy({ side, hints:[/upperarm|humerus/i], key });
+    bone = upper && upper.parent ? upper.parent : upper;
+  }
+  if (bone) {
+    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
+    const axis = 'z'; // clavicle elevation/depression
+    const obj = { bone, qBind, axis };
+    JOINT_BIND.set(key, obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis}) [clavicle-fallback]`);
+    return obj;
+  } else {
+    log(`No bind for ${key} (clavicle fallback failed)`);
+    return null;
+  }
+}
+
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     if (/^trunk_/.test(key)) {
       const b = getExactBoneByName('spine01');
@@ -646,8 +669,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
-    {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-55, max:55, hints:[/clavicle_L/i]},
-    {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-55, max:55, hints:[/clavicle_R/i]},
+    {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle|collar|shoulder|upperarm/i]},
+    {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle|collar|shoulder|upperarm/i]},
 
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
