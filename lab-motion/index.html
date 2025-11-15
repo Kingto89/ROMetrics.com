@@ -426,13 +426,13 @@ if(/^foot_invev_/.test(key)){
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-/* ===== Populate bones (clean grouped menu) ===== */
+/* ===== Populate bones (grouped + STRICT head-to-toe order) ===== */
 function populateBones(){
   if (!skeleton) return;
 
   boneSel.innerHTML = "";
 
-  // Create groups
+  // ----- Create groups -----
   const spineGroup = document.createElement("optgroup");
   spineGroup.label = "Spine & Head";
 
@@ -446,50 +446,77 @@ function populateBones(){
   boneSel.appendChild(leftGroup);
   boneSel.appendChild(rightGroup);
 
-  // Helper: hide garbage names
-  const skip = name =>
-    !name ||
-    name.includes("pelvis") ||
-    name.includes("root") ||
-    name.includes("hips") ||
-    name.includes("spine0") && false; // allow spine01+ ONLY
+  // ----- STRICT ORDER MAP (head → toes) -----
+  const ORDER = [
+    "spine01","spine02","spine03",
+    "neck","head",
 
-  skeleton.bones.forEach((b, i) => {
-    const name = (b.name || "").toLowerCase();
-    if (skip(name)) return;
+    "clavicle_l","upperarm_l","upperarm_twist_l","lowerarm_l","lowerarm_twist_l",
+    "hand_l","thumb01_l","thumb02_l","thumb03_l",
+    "index00_l","index01_l","index02_l","index03_l",
+    "middle00_l","middle01_l","middle02_l","middle03_l",
+    "ring00_l","ring01_l","ring02_l","ring03_l",
+    "pinky00_l","pinky01_l","pinky02_l","pinky03_l",
+    "thigh_l","thigh_twist_l","calf_l","calf_twist_l","foot_l","toes_l",
 
+    "clavicle_r","upperarm_r","upperarm_twist_r","lowerarm_r","lowerarm_twist_r",
+    "hand_r","thumb01_r","thumb02_r","thumb03_r",
+    "index00_r","index01_r","index02_r","index03_r",
+    "middle00_r","middle01_r","middle02_r","middle03_r",
+    "ring00_r","ring01_r","ring02_r","ring03_r",
+    "pinky00_r","pinky01_r","pinky02_r","pinky03_r",
+    "thigh_r","thigh_twist_r","calf_r","calf_twist_r","foot_r","toes_r"
+  ];
+
+  const ORDER_MAP = Object.fromEntries(
+    ORDER.map((n,i)=>[n, i])
+  );
+
+  // ----- Filter + sort actual skeleton bones -----
+  const list = skeleton.bones
+    .map((b,i)=>({ b, i, name:(b.name||"").toLowerCase() }))
+    .filter(o => 
+      o.name && 
+      !o.name.includes("pelvis") &&
+      !o.name.includes("root")
+    )
+    .sort((a,b)=>{
+      const ai = ORDER_MAP[a.name] ?? 9999;
+      const bi = ORDER_MAP[b.name] ?? 9999;
+      return ai - bi;
+    });
+
+  // ----- Fill groups -----
+  for (const item of list){
     const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = b.name;
+    opt.value = String(item.i);
+    opt.textContent = item.b.name;
 
-    if (name.startsWith("spine") || name === "neck" || name === "head") {
+    const n = item.name;
+
+    if (n.startsWith("spine") || n==="neck" || n==="head"){
       spineGroup.appendChild(opt);
     }
-    else if (name.endsWith("_l") || name.endsWith(".l")) {
+    else if (n.endsWith("_l") || n.endsWith(".l")){
       leftGroup.appendChild(opt);
     }
-    else if (name.endsWith("_r") || name.endsWith(".r")) {
+    else if (n.endsWith("_r") || n.endsWith(".r")){
       rightGroup.appendChild(opt);
     }
-    else {
-      // Anything else → treat it as spine by default (safe)
-      spineGroup.appendChild(opt);
-    }
 
-    if (!initialBoneRot.has(b))
-      initialBoneRot.set(b, b.quaternion.clone());
-  });
+    if (!initialBoneRot.has(item.b))
+      initialBoneRot.set(item.b, item.b.quaternion.clone());
+  }
 
-  // Default select first spine bone
-  if (spineGroup.children.length > 0) {
+  // Default: first spine bone
+  if (spineGroup.children.length){
     boneSel.value = spineGroup.children[0].value;
   }
 
-  rx.value = "0";
-  ry.value = "0";
-  rz.value = "0";
+  rx.value="0"; ry.value="0"; rz.value="0";
   setBoneRotationFromUI();
 }
+
 
 /* ===== Apply rotation from sliders ===== */
 function setBoneRotationFromUI(){
