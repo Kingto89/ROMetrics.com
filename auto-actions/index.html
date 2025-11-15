@@ -290,14 +290,12 @@ if(/^foot_invev_/.test(key)){
   }
 
   const antiBox = document.getElementById('antiBox');
-  if (antiBox){
-    antiBox.checked = COLLIM.enabled;
-    antiBox.addEventListener('click', (e)=>{
-      if (e.shiftKey){ e.preventDefault(); toggleCollisionTuner(true); return; }
-      COLLIM.enabled = !!antiBox.checked;
-      log(`Anticollision ${COLLIM.enabled ? 'ENABLED' : 'DISABLED'}.`);
-    });
-  }
+if (antiBox){
+  COLLIM.enabled = true;            // always on
+  antiBox.checked = true;           // checkbox state locked
+  antiBox.parentElement.style.display = 'none'; // hide the label+checkbox in UI
+  antiBox.addEventListener('click', (e)=> e.preventDefault()); // ignore clicks
+}
 
   /* ===== Draggable panel ===== */
   (function(){
