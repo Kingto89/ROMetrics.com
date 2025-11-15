@@ -554,7 +554,7 @@ if(/^foot_invev_/.test(key)){
   function resolveBind(key,cfg){
     // --- Clavicle fallback: try real clavicle, else shoulder/collar, else upperarm parent
 if (/^clavicle_/.test(key)) {
-  const side = key.endsWith('_L') ? 'L' : 'R';
+    const side = /_L$/.test(key) ? 'l' : 'r';
   // try direct clavicle/collar/shoulder
   let bone = findBoneBy({ side, hints:[/clavicle|collar|shoulder/i], key });
   if (!bone) {
