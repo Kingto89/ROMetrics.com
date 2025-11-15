@@ -494,7 +494,7 @@ if(/^foot_invev_/.test(key)){
         foot_invev_l:'z', foot_invev_r:'z',
         trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
         cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
-        cle_L:'z', clavicle_R:'z',
+        clavicle_L:'z', clavicle_R:'z',
       };
       if (key in map) return map[key];
     }
@@ -742,12 +742,7 @@ if (cfg.key === 'sh_irer_r'){
   push('Shoulder R — External Rotation', -1, absMin);
   return out;
 }
-    // Shoulder R IR/ER — explicit labels
-if (cfg.key === 'sh_irer_r'){
-  push('Shoulder R — External Rotation', +1, maxPos);
-  push('Shoulder R — Internal Rotation', -1, absMin);
-  return out;
-}
+
 // Shoulder L IR/ER — explicit labels
 if (cfg.key === 'sh_irer_l'){
   push('Shoulder L — External Rotation', +1, maxPos);
