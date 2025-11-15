@@ -83,7 +83,10 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <details>
         <summary>Bone (Advanced)</summary>
-        <select id="boneSel"></select>
+        <div class="row">
+          <select id="boneSel" style="flex:1;"></select>
+          <select id="boneSel2" style="flex:1;"></select>
+        </div>
         <div class="row">
           <div style="flex:1">
             <label>Rotate X (°)</label>
@@ -430,6 +433,7 @@ function populateBones(){
   if (!skeleton) return;
 
   boneSel.innerHTML = "";
+  boneSel2.innerHTML = "";
 
   // ----- Create groups -----
   const spineGroup = document.createElement("optgroup");
@@ -445,6 +449,19 @@ function populateBones(){
   boneSel.appendChild(leftGroup);
   boneSel.appendChild(rightGroup);
 
+  // Same groups for second dropdown
+const spineGroup2 = document.createElement("optgroup");
+spineGroup2.label = "Spine & Head";
+
+const leftGroup2 = document.createElement("optgroup");
+leftGroup2.label = "Left Side";
+
+const rightGroup2 = document.createElement("optgroup");
+rightGroup2.label = "Right Side";
+
+boneSel2.appendChild(spineGroup2);
+boneSel2.appendChild(leftGroup2);
+boneSel2.appendChild(rightGroup2);
   // ----- STRICT ORDER MAP (head → toes) -----
   const ORDER = [
     "spine01","spine02","spine03",
