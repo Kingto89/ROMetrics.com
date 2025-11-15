@@ -112,16 +112,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     </div>
   </div>
 
-    <div class="body" id="romBody">
-      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
-      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
-      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
-      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
-      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
-      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
-      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
-    </div>
-  </div>
 
   <div id="msg">Loading…</div>
   <canvas id="c"></canvas>
@@ -476,30 +466,31 @@ if(/^foot_invev_/.test(key)){
     log(`Rig profile: ${RIG_PROFILE}`);
   }
   function axisFor(profile, key, defAxis){
-    if (profile==='mixamo'){
-      const map = {
-        sh_fe_l:'x', sh_fe_r:'x',
-        sh_aa_l:'z', sh_aa_r:'-z',
-        sh_irer_l:'y', sh_irer_r:'y',
-        el_fe_l:'x', el_fe_r:'x',
-        fa_ps_l:'y', fa_ps_r:'y',
-        wr_ps_l:'y', wr_ps_r:'y',
-        wr_fe_l:'x', wr_fe_r:'x',
-        wr_ru_l:'z', wr_ru_r:'z',
-        hip_fe_l:'x', hip_fe_r:'x',
-        hip_aa_l:'z', hip_aa_r:'z',
-        hip_irer_l:'y', hip_irer_r:'y',
-        knee_fe_l:'x', knee_fe_r:'x',
-        ankle_dfpf_l:'x', ankle_dfpf_r:'x',
-        foot_invev_l:'z', foot_invev_r:'z',
-        trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
-        cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
-        clavicle_L:'z', clavicle_R:'z',
-      };
-      if (key in map) return map[key];
-    }
-    return defAxis;
+  if (profile==='mixamo'){
+    const map = {
+      sh_fe_l:'x', sh_fe_r:'x',
+      sh_aa_l:'z', sh_aa_r:'-z',
+      sh_irer_l:'y', sh_irer_r:'y',
+      el_fe_l:'x', el_fe_r:'x',
+      fa_ps_l:'y', fa_ps_r:'y',
+      wr_ps_l:'y', wr_ps_r:'y',
+      wr_fe_l:'x', wr_fe_r:'x',
+      wr_ru_l:'z', wr_ru_r:'z',
+      hip_fe_l:'x', hip_fe_r:'x',
+      hip_aa_l:'z', hip_aa_r:'z',
+      hip_irer_l:'y', hip_irer_r:'y',
+      knee_fe_l:'x', knee_fe_r:'x',
+      ankle_dfpf_l:'x', ankle_dfpf_r:'x',
+      foot_invev_l:'z', foot_invev_r:'z',
+      trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
+      cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y',
+      clavicle_L:'z', clavicle_R:'z',
+    };
+    if (key in map) return map[key];
   }
+  return defAxis;
+}
+
 
   /* ===== Bone finding ===== */
   const EXCLUDE = /(pelvis|root|scapula)/i;
