@@ -933,7 +933,7 @@ actionDeg.addEventListener("input", ()=> {
     setPair(`el_fe_${side}`, 90);
 
     // RIGHT shoulder needs sign flip on your rig
-    let rotDeg = -signed;
+    let rotDeg = signed;
 
     // compute coupled Abd/Add amount (IR → Add, ER → Abd)
     const amt = Math.min(30, Math.abs(rotDeg)*0.3) * (rotDeg>0 ? -1 : +1); // − = Add, + = Abd
