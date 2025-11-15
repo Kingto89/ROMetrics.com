@@ -976,7 +976,9 @@ document.getElementById("autoMoveBtn").onclick = () => {
   const cap = capFor(CURRENT_ACTION);
   if (typeof cap === "number") target = cap;
 
-  let current = parseFloat(actionDeg.value) || 0;
+    let current = 0;  
+  actionDeg.value = 0;
+  actionDeg.dispatchEvent(new Event("input"));
   const step = 1;    // speed: 1 degree per tick
   const interval = 10; // speed: lower = faster
 
