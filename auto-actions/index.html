@@ -655,8 +655,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-    {key:'sh_irer_l', pair:'Shoulder L — External / Internal', side:'l', plane:'transverse', neutral:0, min:-110, max:70, hints:[/upperarm_L/i]},
-    {key:'sh_irer_r', pair:'Shoulder R — External / Internal', side:'r', plane:'transverse', neutral:0, min:-110, max:70, hints:[/upperarm_R/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — External / Internal', side:'l', plane:'transverse', neutral:0, min:-90, max:70, hints:[/upperarm_L/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — External / Internal', side:'r', plane:'transverse', neutral:0, min:-90, max:70, hints:[/upperarm_R/i]},
 
     // ELBOW — fix so Flexion moves (150), Extension small (10)
     {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
@@ -882,7 +882,7 @@ if (cfg.key === 'foot_invev_l') {
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-22, psL:-2, wpsL:-73 };
+  const ANAT = { addL:-12, psL:-2, wpsL:-73 };
 function applyAnatomicBaseline(){
   // 🦴 Apply identical baselines to both arms (no mirroring)
   setPair('sh_aa_l', ANAT.addL);
