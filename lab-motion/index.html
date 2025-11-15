@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1198,6 +1197,7 @@ actionDeg.addEventListener("input", ()=> {
         populateBones();
         detectRigProfile();
         fillActionMenu();
+        buildAdvancedMenu();
 // 🧩 Fix the right shoulder alignment BEFORE binding baselines
 const shoulderR = findBoneBy({ key: 'upperarm_R' });
 if (shoulderR) {
