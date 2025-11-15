@@ -1041,6 +1041,12 @@ if (CURRENT_ACTION.key==='hip_irer_l' || CURRENT_ACTION.key==='hip_irer_r'){
 });
 document.getElementById("autoMoveBtn").onclick = () => {
   if (!CURRENT_ACTION) return;
+  // 🔒 Hold seated/90–90 posture at the moment the run starts (Hip IR/ER only)
+  if (/^hip_irer_/.test(CURRENT_ACTION.key)){
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+    setPair(`hip_fe_${side}`, 95);    // hip flexion stays at 95°
+    setPair(`knee_fe_${side}`, -90);  // knee FLEX stays at −90°
+  }
 
   let target = CURRENT_ACTION.max;
   const cap = capFor(CURRENT_ACTION);
