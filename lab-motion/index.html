@@ -428,12 +428,10 @@ if(/^foot_invev_/.test(key)){
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-/* ===== Populate bones (grouped + STRICT head-to-toe order) ===== */
 function populateBones(){
-  if (!skeleton) return;
-
   boneSel.innerHTML = "";
   boneSel2.innerHTML = "";
+  if (!skeleton) return;
 
   // ----- Create groups -----
   const spineGroup = document.createElement("optgroup");
@@ -449,19 +447,62 @@ function populateBones(){
   boneSel.appendChild(leftGroup);
   boneSel.appendChild(rightGroup);
 
-  // Same groups for second dropdown
-const spineGroup2 = document.createElement("optgroup");
-spineGroup2.label = "Spine & Head";
+  // ----- Second dropdown -----
+  const spineGroup2 = document.createElement("optgroup");
+  spineGroup2.label = "Spine & Head";
 
-const leftGroup2 = document.createElement("optgroup");
-leftGroup2.label = "Left Side";
+  const leftGroup2 = document.createElement("optgroup");
+  leftGroup2.label = "Left Side";
 
-const rightGroup2 = document.createElement("optgroup");
-rightGroup2.label = "Right Side";
+  const rightGroup2 = document.createElement("optgroup");
+  rightGroup2.label = "Right Side";
 
-boneSel2.appendChild(spineGroup2);
-boneSel2.appendChild(leftGroup2);
-boneSel2.appendChild(rightGroup2);
+  boneSel2.appendChild(spineGroup2);
+  boneSel2.appendChild(leftGroup2);
+  boneSel2.appendChild(rightGroup2);
+
+  // ----- Fill both dropdowns -----
+  skeleton.bones.forEach((b, i)=>{
+    const name = (b.name || "").toLowerCase();
+    if (!name) return;
+
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = b.name;
+
+    if (!initialBoneRot.has(b))
+      initialBoneRot.set(b, b.quaternion.clone());
+
+    if (name.startsWith("spine") || name==="neck" || name==="head" || name.includes("breast")) {
+      spineGroup.appendChild(opt);
+      spineGroup2.appendChild(opt.cloneNode(true));
+      return;
+    }
+
+    if (name.endsWith("_l") || name.endsWith(".l")) {
+      leftGroup.appendChild(opt);
+      leftGroup2.appendChild(opt.cloneNode(true));
+      return;
+    }
+
+    if (name.endsWith("_r") || name.endsWith(".r")) {
+      rightGroup.appendChild(opt);
+      rightGroup2.appendChild(opt.cloneNode(true));
+      return;
+    }
+  });
+
+  if (spineGroup.children.length > 0) {
+    boneSel.value = spineGroup.children[0].value;
+    boneSel2.value = spineGroup.children[0].value;
+  }
+
+  rx.value="0"; 
+  ry.value="0"; 
+  rz.value="0";
+  setBoneRotationFromUI();
+}
+
   // ----- STRICT ORDER MAP (head → toes) -----
   const ORDER = [
     "spine01","spine02","spine03",
