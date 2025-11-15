@@ -53,6 +53,50 @@ optgroup{color:#9fb0c9;font-style:normal}
 }
 .rom-head{width:160px;color:#9fb0c9}
 .badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
+/* === Advanced Anatomical Menu Layout === */
+#advMenu{
+  margin-top:8px;
+  padding:6px 4px;
+  border:1px solid #162235;
+  border-radius:8px;
+  background:#0b1426;
+}
+
+.advTopBtn{
+  width:100%;
+  padding:6px 8px;
+  margin-bottom:4px;
+  background:#1e293b;
+  color:#e2e8f0;
+  border:1px solid #334155;
+  border-radius:6px;
+  text-align:center;
+  font-size:12px;
+}
+
+.advGrid{
+  display:grid;
+  grid-template-columns: 1fr;
+  row-gap:4px;
+  margin-top:10px;
+}
+
+.advRow{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  column-gap:6px;
+}
+
+.advBtn{
+  padding:6px 8px;
+  background:#0f172a;
+  color:#e2e8f0;
+  border:1px solid #334155;
+  border-radius:6px;
+  text-align:center;
+  font-size:12px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -85,6 +129,8 @@ optgroup{color:#9fb0c9;font-style:normal}
         <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
+        <label style="margin-top:12px;">Advanced Anatomical Menu</label>
+      <div id="advMenu"></div>
         <div class="row">
           <div style="flex:1">
             <label>Rotate X (°)</label>
@@ -426,26 +472,72 @@ if(/^foot_invev_/.test(key)){
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-  /* ===== Blender order for Advanced menu ===== */
-  const BLENDER_ORDER = [
-    "pelvis",
-    "spine01","spine02","spine03",
-    "neck","head",
-    "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
-    "thumb01_L","thumb02_L","thumb03_L",
-    "index00_L","index01_L","index02_L","index03_L",
-    "middle00_L","middle01_L","middle02_L","middle03_L",
-    "ring00_L","ring01_L","ring02_L","ring03_L",
-    "pinky00_L","pinky01_L","pinky02_L","pinky03_L",
-    "clavicle_R","upperarm_R","upperarm_twist_R","lowerarm_R","lowerarm_twist_R","hand_R",
-    "thumb01_R","thumb02_R","thumb03_R",
-    "index00_R","index01_R","index02_R","index03_R",
-    "middle00_R","middle01_R","middle02_R","middle03_R",
-    "ring00_R","ring01_R","ring02_R","ring03_R",
-    "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
-    "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
-    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
-  ];
+/* ===== Anatomical Advanced Menu Order (Head → Toe, Paired R|L) ===== */
+const BLENDER_ORDER = [
+  // Centered top section
+  "root",
+  "head",
+  "neck",
+  "spine01",
+  "spine02",
+  "spine03",
+
+  // Shoulder girdle
+  "clavicle_R","clavicle_L",
+
+  // Upper arm
+  "upperarm_R","upperarm_L",
+  "upperarm_twist_R","upperarm_twist_L",
+
+  // Lower arm
+  "lowerarm_R","lowerarm_L",
+  "lowerarm_twist_R","lowerarm_twist_L",
+
+  // Hands
+  "hand_R","hand_L",
+
+  // Thumbs
+  "thumb01_R","thumb01_L",
+  "thumb02_R","thumb02_L",
+  "thumb03_R","thumb03_L",
+
+  // Index fingers
+  "index00_R","index00_L",
+  "index01_R","index01_L",
+  "index02_R","index02_L",
+  "index03_R","index03_L",
+
+  // Middle fingers
+  "middle00_R","middle00_L",
+  "middle01_R","middle01_L",
+  "middle02_R","middle02_L",
+  "middle03_R","middle03_L",
+
+  // Ring fingers
+  "ring00_R","ring00_L",
+  "ring01_R","ring01_L",
+  "ring02_R","ring02_L",
+  "ring03_R","ring03_L",
+
+  // Pinky fingers
+  "pinky00_R","pinky00_L",
+  "pinky01_R","pinky01_L",
+  "pinky02_R","pinky02_L",
+  "pinky03_R","pinky03_L",
+
+  // Legs
+  "thigh_R","thigh_L",
+  "thigh_twist_R","thigh_twist_L",
+
+  // Calves
+  "calf_R","calf_L",
+  "calf_twist_R","calf_twist_L",
+
+  // Feet
+  "foot_R","foot_L",
+  "toes_R","toes_L"
+];
+  
   const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
 
   /* ===== Populate bones (sorted) ===== */
@@ -476,7 +568,67 @@ if(/^foot_invev_/.test(key)){
     if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     setBoneRotationFromUI();
+    /* ===== Build Anatomical Advanced Menu (Option B) ===== */
+function buildAdvancedMenu(){
+  const adv = document.getElementById("advMenu");
+  adv.innerHTML = "";
+
+  // Top centered bones
+  const centerBlock = ["root","head","neck","spine01","spine02","spine03"];
+  centerBlock.forEach(bone=>{
+    const btn = document.createElement("button");
+    btn.className = "advTopBtn";
+    btn.textContent = bone;
+    btn.onclick = ()=>selectBoneByName(bone);
+    adv.appendChild(btn);
+  });
+
+  // 2-column grid for paired rows
+  const grid = document.createElement("div");
+  grid.className = "advGrid";
+  adv.appendChild(grid);
+
+  const pairs = BLENDER_ORDER.filter(b=>!centerBlock.includes(b));
+
+  for(let i=0;i<pairs.length;i+=2){
+    const R = pairs[i];
+    const L = pairs[i+1];
+
+    const row = document.createElement("div");
+    row.className = "advRow";
+
+    const btnR = document.createElement("button");
+    btnR.className = "advBtn";
+    btnR.textContent = R;
+    btnR.onclick = ()=>selectBoneByName(R);
+
+    const btnL = document.createElement("button");
+    btnL.className = "advBtn";
+    btnL.textContent = L;
+    btnL.onclick = ()=>selectBoneByName(L);
+
+    row.appendChild(btnR);
+    row.appendChild(btnL);
+
+    grid.appendChild(row);
   }
+}
+/* ===== Select bone from name (Advanced Menu click) ===== */
+function selectBoneByName(name){
+  if(!skeleton) return;
+
+  const idx = skeleton.bones.findIndex(
+    b => (b.name || "").toLowerCase() === name.toLowerCase()
+  );
+
+  if(idx >= 0){
+    boneSel.value = String(idx);
+    rx.value = "0";
+    ry.value = "0";
+    rz.value = "0";
+    setBoneRotationFromUI();
+  }
+}
   function setBoneRotationFromUI(){
     const idx = parseInt(boneSel.value||"-1",10);
     if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
