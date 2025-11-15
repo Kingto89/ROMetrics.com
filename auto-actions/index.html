@@ -613,7 +613,7 @@ function freezeBindBaseFor(key, cfg) {
   let x = 0, y = 0, z = 0;
   let flip = 1;
   let axis = rawAxis;
-  if (key === 'clavicle_l' || key === 'clavicle_r') {
+  if (key === 'clavicle_L' || key === 'clavicle_R') {
   axis = 'z';  // ✅ force clavicle to rotate on Z axis
 }
   if (axis.startsWith('-')) {
@@ -654,8 +654,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
-     {key:'clavicle_l', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_L/i]},
-     {key:'clavicle_r', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_R/i]},
+     {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_L/i]},
+     {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_R/i]},
 
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
@@ -920,7 +920,7 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
   setPair(`wr_ps_${side}`, 9);
-  setPair(`clavicle_${side}`, 75);  
+  setPair(`clavicle_${side}`, 25);  
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
 
