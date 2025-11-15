@@ -869,7 +869,7 @@ if (cfg.key === 'foot_invev_l') {
   segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
-  const ANAT = { addL:-32, psL:-2, wpsL:-73 };
+  const ANAT = { addL:-22, psL:-2, wpsL:-73 };
 function applyAnatomicBaseline(){
   // 🦴 Apply identical baselines to both arms (no mirroring)
   setPair('sh_aa_l', ANAT.addL);
