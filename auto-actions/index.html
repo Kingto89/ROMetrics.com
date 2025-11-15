@@ -731,8 +731,8 @@ function freezeBindBaseFor(key, cfg) {
       return out;
     }
     if (cfg.key === 'clavicle_L'){
-  push('Clavicle L — Elevation', -1, maxPos);
-  push('Clavicle L — Depression', +1, absMin);
+  push('Clavicle L — Elevation', +1, maxPos);
+  push('Clavicle L — Depression', -1, absMin);
   return out;
 }
 if (cfg.key === 'clavicle_R'){
