@@ -532,51 +532,6 @@ function populateBones(){
     ORDER.map((n,i)=>[n, i])
   );
 
-  // ----- Filter + sort actual skeleton bones -----
-  const list = skeleton.bones
-    .map((b,i)=>({ b, i, name:(b.name||"").toLowerCase() }))
-    .filter(o => 
-      o.name && 
-      !o.name.includes("pelvis") &&
-      !o.name.includes("root")
-    )
-    .sort((a,b)=>{
-      const ai = ORDER_MAP[a.name] ?? 9999;
-      const bi = ORDER_MAP[b.name] ?? 9999;
-      return ai - bi;
-    });
-
-  // ----- Fill groups -----
-  for (const item of list){
-    const opt = document.createElement("option");
-    opt.value = String(item.i);
-    opt.textContent = item.b.name;
-
-    const n = item.name;
-
-    if (n.startsWith("spine") || n==="neck" || n==="head"){
-      spineGroup.appendChild(opt);
-    }
-    else if (n.endsWith("_l") || n.endsWith(".l")){
-      leftGroup.appendChild(opt);
-    }
-    else if (n.endsWith("_r") || n.endsWith(".r")){
-      rightGroup.appendChild(opt);
-    }
-
-    if (!initialBoneRot.has(item.b))
-      initialBoneRot.set(item.b, item.b.quaternion.clone());
-  }
-
-  // Default: first spine bone
-  if (spineGroup.children.length){
-    boneSel.value = spineGroup.children[0].value;
-  }
-
-  rx.value="0"; ry.value="0"; rz.value="0";
-  setBoneRotationFromUI();
-}
-
 
 /* ===== Apply rotation from sliders ===== */
 function setBoneRotationFromUI(){
