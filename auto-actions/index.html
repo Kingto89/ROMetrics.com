@@ -554,7 +554,7 @@ if(/^foot_invev_/.test(key)){
   function resolveBind(key,cfg){
     // --- Clavicle fallback: try real clavicle, else shoulder/collar, else upperarm parent
 if (/^clavicle_/.test(key)) {
-  const side = key.endsWith('_l') ? 'l' : 'r';
+  const side = key.endsWith('_L') ? 'L' : 'R';
   // try direct clavicle/collar/shoulder
   let bone = findBoneBy({ side, hints:[/clavicle|collar|shoulder/i], key });
   if (!bone) {
@@ -935,7 +935,7 @@ function applyAnatomicBaseline(){
 // Shoulder IR/ER → set elbow to 90° baseline immediately
 if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
-  setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+  setPair(`el_fe_${side}`, 90); // elbow flexion to 150°
   setPair(`wr_ps_${side}`, 9);
   setPair(`clavicle_${side}`, 55);  
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
