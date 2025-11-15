@@ -426,86 +426,84 @@ if(/^foot_invev_/.test(key)){
     if (isFinite(minY)) model.position.y -= minY;
   }
 
-  /* ===== Blender order for Advanced menu ===== */
-  const BLENDER_ORDER = [
-    "pelvis",
-    "spine01","spine02","spine03",
-    "neck","head",
-    "clavicle_L","upperarm_L","upperarm_twist_L","lowerarm_L","lowerarm_twist_L","hand_L",
-    "thumb01_L","thumb02_L","thumb03_L",
-    "index00_L","index01_L","index02_L","index03_L",
-    "middle00_L","middle01_L","middle02_L","middle03_L",
-    "ring00_L","ring01_L","ring02_L","ring03_L",
-    "pinky00_L","pinky01_L","pinky02_L","pinky03_L",
-    "clavicle_R","upperarm_R","upperarm_twist_R","lowerarm_R","lowerarm_twist_R","hand_R",
-    "thumb01_R","thumb02_R","thumb03_R",
-    "index00_R","index01_R","index02_R","index03_R",
-    "middle00_R","middle01_R","middle02_R","middle03_R",
-    "ring00_R","ring01_R","ring02_R","ring03_R",
-    "pinky00_R","pinky01_R","pinky02_R","pinky03_R",
-    "thigh_L","thigh_twist_L","calf_L","calf_twist_L","foot_L","toes_L",
-    "thigh_R","thigh_twist_R","calf_R","calf_twist_R","foot_R","toes_R"
-  ];
-  const ORDER_INDEX = Object.fromEntries(BLENDER_ORDER.map((n,i)=>[n.toLowerCase(), i]));
+/* ===== Populate bones (simple, stable) ===== */
+function populateBones(){
+  boneSel.innerHTML = "";
+  if (!skeleton) {
+    const o = document.createElement("option");
+    o.value = ""; 
+    o.textContent = "(No skeleton)";
+    boneSel.appendChild(o);
+    return;
+  }
 
-  /* ===== Populate bones (sorted) ===== */
-  function populateBones(){
-    boneSel.innerHTML = "";
-    if (!skeleton) {
-      const o = document.createElement("option");
-      o.value = ""; o.textContent = "(No skeleton)";
-      boneSel.appendChild(o);
-      return;
-    }
-    const bones = [...skeleton.bones].sort((a,b)=>{
-      const ai = ORDER_INDEX[(a.name||"").toLowerCase()];
-      const bi = ORDER_INDEX[(b.name||"").toLowerCase()];
-      const av = (ai===undefined) ? 9999 : ai;
-      const bv = (bi===undefined) ? 9999 : bi;
-      if (av!==bv) return av-bv;
-      return (a.name||"").localeCompare(b.name||"");
-    });
+  skeleton.bones.forEach((b,i)=>{
+    const o = document.createElement("option");
+    o.value = String(i);
+    o.textContent = b.name || `Bone ${i}`;
+    boneSel.appendChild(o);
 
-    bones.forEach((b,i)=>{
-      const o = document.createElement("option");
-      o.value = String(skeleton.bones.indexOf(b));
-      o.textContent = b.name || `Bone ${i}`;
-      boneSel.appendChild(o);
-      if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
-    });
-    if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
-    rx.value = "0"; ry.value = "0"; rz.value = "0";
-    setBoneRotationFromUI();
+    // store baseline rotation if not saved
+    if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+  });
+
+  // Default selection = first bone
+  if (boneSel.options.length > 0) {
+    boneSel.value = boneSel.options[0].value;
   }
-  function setBoneRotationFromUI(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
-    b.quaternion.copy(qBase).multiply(qDelta);
-  }
-  function zeroSelectedBone(){
-    const idx = parseInt(boneSel.value||"-1",10);
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const qb = initialBoneRot.get(b);
-    if (qb) b.quaternion.copy(qb);
-    rx.value="0"; ry.value="0"; rz.value="0";
-  }
-  function resetAllBonesToInitial(){
-    if (!skeleton) return;
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
+
+  rx.value = "0"; 
+  ry.value = "0"; 
+  rz.value = "0";
+  setBoneRotationFromUI();
+}
+
+/* ===== Apply rotation from sliders ===== */
+function setBoneRotationFromUI(){
+  const idx = parseInt(boneSel.value||"-1",10);
+  if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+  const b = skeleton.bones[idx];
+
+  const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
+  const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
+  const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
+
+  const qDelta = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(ex,ey,ez,"XYZ")
+  );
+  const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
+  b.quaternion.copy(qBase).multiply(qDelta);
+}
+
+/* ===== Zero selected bone ===== */
+function zeroSelectedBone(){
+  const idx = parseInt(boneSel.value||"-1",10);
+  if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
+
+  const b = skeleton.bones[idx];
+  const qb = initialBoneRot.get(b);
+  if (qb) b.quaternion.copy(qb);
+
+  rx.value="0"; 
+  ry.value="0"; 
+  rz.value="0";
+}
+
+/* ===== Reset all bones to baseline ===== */
+function resetAllBonesToInitial(){
+  if (!skeleton) return;
+
+  skeleton.bones.forEach(b=>{
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+
+  if (JOINT_BIND) {
     JOINT_BIND.forEach(obj=>{
       if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
     });
   }
+}
 
   /* ===== Rig profile & axis ===== */
   let RIG_PROFILE = 'generic';
