@@ -944,7 +944,7 @@ actionDeg.addEventListener("input", ()=> {
     const cfgRot = cfgFromKey(keyRot), cfgAA = cfgFromKey(keyAA);
     const bR = resolveBind(keyRot, cfgRot);
     const bA = resolveBind(keyAA,  cfgAA);
-
+    if (bR) bR.axis = 'y'; 
     if (bR && bA && bR.bone === bA.bone){
       const base = bR.qBind.clone();
 
