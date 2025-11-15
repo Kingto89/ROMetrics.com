@@ -494,6 +494,7 @@ if(/^foot_invev_/.test(key)){
         foot_invev_l:'z', foot_invev_r:'z',
         trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
         cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y'
+        clavicle_L:'z', clavicle_R:'z',
       };
       if (key in map) return map[key];
     }
@@ -613,9 +614,7 @@ function freezeBindBaseFor(key, cfg) {
   let x = 0, y = 0, z = 0;
   let flip = 1;
   let axis = rawAxis;
-  if (key === 'clavicle_L' || key === 'clavicle_R') {
-  axis = 'z';  // ✅ force clavicle to rotate on Z axis
-}
+  if (key === 'clavicle_L' || key === 'clavicle_R') { axis = 'z'; }
   if (axis.startsWith('-')) {
     flip = -1;
     axis = axis.slice(1);
@@ -654,8 +653,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
     {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
 
-     {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_L/i]},
-     {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_R/i]},
+    {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_L/i]},
+    {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-25, max:25, hints:[/clavicle_R/i]},
 
     {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
     {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
@@ -718,6 +717,16 @@ function freezeBindBaseFor(key, cfg) {
       push('Cervical Rotation — Left', +1, maxPos);
       return out;
     }
+    if (cfg.key === 'clavicle_L'){
+  push('Clavicle L — Elevation', +1, maxPos);
+  push('Clavicle L — Depression', -1, absMin);
+  return out;
+}
+if (cfg.key === 'clavicle_R'){
+  push('Clavicle R — Elevation', +1, maxPos);
+  push('Clavicle R — Depression', -1, absMin);
+  return out;
+}
 
     // Shoulder Abd/Add — Right side normal orientation
    if (cfg.key==='sh_aa_r'){
