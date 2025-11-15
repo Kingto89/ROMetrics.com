@@ -895,7 +895,7 @@ function applyAnatomicBaseline(){
 if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
-  setPair(`wr_pr_${side}`, 5); // pronate wrist 5°
+  setPair(`wr_ps_${side}`, 5);
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
 
