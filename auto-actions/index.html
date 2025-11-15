@@ -622,6 +622,11 @@ function freezeBindBaseFor(key, cfg) {
   if (axis === 'x') x = r;
   if (axis === 'y') y = r;
   if (axis === 'z') z = r;
+  if (axis === 'bone') {
+  // rotate around the bone's own local Z axis
+  bone.rotateZ(r);
+  return;
+}
 
   const e = new THREE.Euler(x, y, z, "XYZ");
   const qDelta = new THREE.Quaternion().setFromEuler(e);
