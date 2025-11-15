@@ -79,7 +79,8 @@ optgroup{color:#9fb0c9;font-style:normal}
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
-      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0">
+      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+      <button id="autoMoveBtn" class="mini">Run Action</button>
 
      <details id="boneAdv">
     <summary>Bone (Advanced)</summary>
@@ -968,8 +969,19 @@ actionDeg.addEventListener("input", ()=> {
   // === Generic path (everything else) ===
   applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
 });
+document.getElementById("autoMoveBtn").onclick = () => {
+  if (!CURRENT_ACTION) return;
 
-  zeroAll.onclick = ()=>{
+  let target = CURRENT_ACTION.max;
+
+  const cap = capFor(CURRENT_ACTION);
+  if (typeof cap === "number") target = cap;
+
+  actionDeg.value = target;
+  actionDeg.dispatchEvent(new Event("input"));
+};
+
+    zeroAll.onclick = ()=>{
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     actionSel.value = ""; actionDeg.value = "0"; actionDeg.disabled = true; 
