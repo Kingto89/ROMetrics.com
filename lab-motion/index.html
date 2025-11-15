@@ -611,14 +611,25 @@ function selectBoneByName(name){
     b => (b.name || "").toLowerCase() === name.toLowerCase()
   );
 
-  if(idx >= 0){
+  if (idx >= 0) {
+    CURRENT_BONE_IDX = idx;       // *** THIS WAS MISSING ***
     rx.value = "0";
     ry.value = "0";
     rz.value = "0";
     setBoneRotationFromUI();
   }
 }
-  function setBoneRotationFromUI(){
+
+/* ===== Apply rotation from sliders to selected bone ===== */
+function setBoneRotationFromUI(){
+  if (!skeleton || CURRENT_BONE_IDX < 0) return;
+
+  const bone = skeleton.bones[CURRENT_BONE_IDX];
+
+  bone.rotation.x = THREE.MathUtils.degToRad(parseFloat(rx.value));
+  bone.rotation.y = THREE.MathUtils.degToRad(parseFloat(ry.value));
+  bone.rotation.z = THREE.MathUtils.degToRad(parseFloat(rz.value));
+}
     if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
     const b = skeleton.bones[idx];
     const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
