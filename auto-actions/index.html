@@ -501,7 +501,7 @@ if(/^foot_invev_/.test(key)){
   }
 
   /* ===== Bone finding ===== */
-  const EXCLUDE = /(pelvis|root|clavicle|scapula)/i;
+  const EXCLUDE = /(pelvis|root|scapula)/i;
   function sideRegex(side){
     if (!side) return [/.*/];
     return side==='l'
