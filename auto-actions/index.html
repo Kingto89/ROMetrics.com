@@ -913,7 +913,6 @@ function applyAnatomicBaseline(){
 if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
-  setPair(`sh_aa_${side}`, -15); // slight outward lift (~15° abduction)
   setPair(`wr_ps_${side}`, 9);
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
