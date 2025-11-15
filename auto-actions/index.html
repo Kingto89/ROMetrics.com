@@ -104,32 +104,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       </details>
 
-      <details>
-        <summary>Model</summary>
-        <div class="row">
-          <div style="flex:1">
-            <label>Model X (m)</label>
-            <input type="range" min="-2" max="2" step="0.01" value="0" id="mx">
-          </div>
-          <div style="flex:1">
-            <label>Model Z (m)</label>
-            <input type="range" min="-2" max="2" step="0.01" value="0.6" id="mz">
-          </div>
-        </div>
-        <div class="row">
-          <div style="flex:1">
-            <label>Model Y (m)</label>
-            <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="my">
-          </div>
-          <div style="flex:1">
-            <label>Scale (%)</label>
-            <input type="range" min="40" max="200" step="1" value="125" id="ms">
-          </div>
-        </div>
-        <label>Yaw (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="myaw">
-        <div class="row"><button id="resetModel" class="mini">Reset Model</button></div>
-      </details>
 
       <label>Event Log</label>
       <pre id="log"></pre>
@@ -179,13 +153,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const ry = document.getElementById("ry");
   const rz = document.getElementById("rz");
   const zeroBone = document.getElementById("zeroBone");
-
-  const mx = document.getElementById("mx");
-  const my = document.getElementById("my");
-  const mz = document.getElementById("mz");
-  const ms = document.getElementById("ms");
-  const myaw = document.getElementById("myaw");
-  const resetModel = document.getElementById("resetModel");
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
@@ -1080,18 +1047,6 @@ log("Anatomic baseline applied on load.");
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
   [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
-  [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
-    if (!model) return;
-    model.position.set(parseFloat(mx.value), parseFloat(my.value), parseFloat(mz.value));
-    model.scale.setScalar(parseInt(ms.value,10)/100);
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(myaw.value));
-  }));
-  zeroBone.onclick = zeroSelectedBone;
-  resetModel.onclick = ()=>{
-    mx.value="0"; my.value="0"; mz.value="0.6"; ms.value="125"; myaw.value="0";
-    if (model){ model.position.set(0,0,0.6); model.scale.setScalar(1.25); model.rotation.y=0; }
-    groundSnap();
-  };
 
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
