@@ -950,7 +950,7 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
 if (key==='hip_irer_l' || key==='hip_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`hip_fe_${side}`, 95);   // hip flexed up for stable rotation
-  setPair(`knee_fe_${side}`, 90);  // knee flexed to 90°
+  setPair(`knee_fe_${side}`, -90);  // knee flexed to 90°
   log(`Hip ${side.toUpperCase()} set to FE=95°, Knee ${side.toUpperCase()} to FE=90° for hip rotation setup.`);
 }
       syncActionUI(true);
