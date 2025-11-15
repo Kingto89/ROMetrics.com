@@ -227,7 +227,6 @@ optgroup{color:#9fb0c9;font-style:normal}
   const pairLabel = document.getElementById("pairLabel");
   const zeroAll = document.getElementById("zeroAll");
 
-  const boneSel = document.getElementById("boneSel");
   const rx = document.getElementById("rx");
   const ry = document.getElementById("ry");
   const rz = document.getElementById("rz");
@@ -540,7 +539,6 @@ const BLENDER_ORDER = [
 
   /* ===== Populate bones (sorted) ===== */
   function populateBones(){
-    boneSel.innerHTML = "";
     if (!skeleton) {
       const o = document.createElement("option");
       o.value = ""; o.textContent = "(No skeleton)";
@@ -563,7 +561,6 @@ const BLENDER_ORDER = [
       boneSel.appendChild(o);
       if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
     });
-    if (skeleton.bones.length) boneSel.value = boneSel.options[0].value;
     rx.value = "0"; ry.value = "0"; rz.value = "0";
     setBoneRotationFromUI();
     }
@@ -621,7 +618,6 @@ function selectBoneByName(name){
   );
 
   if(idx >= 0){
-    boneSel.value = String(idx);
     rx.value = "0";
     ry.value = "0";
     rz.value = "0";
@@ -1239,7 +1235,6 @@ log("Anatomic baseline applied on load.");
   loadModel();
     
   /* ===== Advanced controls wiring ===== */
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
   [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
   [mx,my,mz,ms,myaw].forEach(el => el.addEventListener("input", () => {
     if (!model) return;
