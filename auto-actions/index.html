@@ -484,7 +484,7 @@ if(/^foot_invev_/.test(key)){
       foot_invev_l:'z', foot_invev_r:'z',
       trunk_fe:'x', trunk_lat:'z', trunk_rot:'y',
       cerv_fe:'x',  cerv_lat:'z',  cerv_rot:'y',
-      clavicle_L:'z', clavicle_R:'z',
+      clavicle_L:'z', clavicle_R:'-z',
     };
     if (key in map) return map[key];
   }
@@ -564,7 +564,7 @@ if (/^clavicle_/.test(key)) {
   }
   if (bone) {
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const axis = 'z'; // clavicle elevation/depression
+    const axis = axisFor(RIG_PROFILE, key, 'z'); // allow '-z' mapping
     const obj = { bone, qBind, axis };
     JOINT_BIND.set(key, obj);
     log(`Bound ${key} → ${bone.name} (axis ${axis}) [clavicle-fallback]`);
@@ -627,10 +627,7 @@ function freezeBindBaseFor(key, cfg) {
   // Handle flipped axis (e.g. "-z" for mirrored rig)
   let x = 0, y = 0, z = 0;
   let flip = 1;
-  let axis = rawAxis;
-  if (key === 'clavicle_L' || key === 'clavicle_R') {
-  axis = 'z';
-}
+  let axis = rawAxis || 'z'; // use mapped axis; default 'z' if missing
   if (axis.startsWith('-')) {
     flip = -1;
     axis = axis.slice(1);
