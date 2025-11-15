@@ -564,7 +564,7 @@ if (/^clavicle_/.test(key)) {
   }
   if (bone) {
     const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const axis = axisFor(RIG_PROFILE, key, 'z'); // allow '-z' mapping
+    const axis = axisFor(RIG_PROFILE, key, (RIG_PROFILE === 'mixamo') ? 'z' : 'y');
     const obj = { bone, qBind, axis };
     JOINT_BIND.set(key, obj);
     log(`Bound ${key} → ${bone.name} (axis ${axis}) [clavicle-fallback]`);
