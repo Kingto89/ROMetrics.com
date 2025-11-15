@@ -470,7 +470,9 @@ function freezeBindBaseFor(key, cfg) {
   const qRot = new THREE.Quaternion().setFromAxisAngle(axisWorld, THREE.MathUtils.degToRad(rot));
 
   // ---- 3. Reset to bind then apply the local-axis rotation ----
+  const pivot = bone.position.clone()
   bone.quaternion.copy(qBind).multiply(qRot);
+  bone.position.copy(pivot);  // restore exact position (prevents elbow translation)
 }
 
   /* ===== Motions (paired configs; UI splits) ===== */
