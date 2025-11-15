@@ -707,8 +707,6 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
