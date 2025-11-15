@@ -345,6 +345,7 @@ function resetAllBonesToInitial() {
       const map = {
         sh_fe_l:'x', sh_fe_r:'x',
         sh_aa_l:'z', sh_aa_r:'-z',
+        sh_irer_l:'y', sh_irer_r:'x',
         el_fe_l:'x', el_fe_r:'x',
         fa_ps_l:'y', fa_ps_r:'y',
         wr_ps_l:'y', wr_ps_r:'y',
@@ -352,6 +353,7 @@ function resetAllBonesToInitial() {
         wr_ru_l:'z', wr_ru_r:'z',
         hip_fe_l:'x', hip_fe_r:'x',
         hip_aa_l:'z', hip_aa_r:'z',
+        hip_irer_l:'y', hip_irer_r:'y',
         knee_fe_l:'x', knee_fe_r:'x',
         ankle_dfpf_l:'x', ankle_dfpf_r:'x',
         foot_invev_l:'z', foot_invev_r:'z',
@@ -461,19 +463,43 @@ function freezeBindBaseFor(key, cfg) {
 
   const { bone, qBind, axis: rawAxis } = bind;
 
-  // ---- 1. Internal/external rotation degrees ----
-  let rot = deg;
-  const isRight = key.endsWith('_r');
-  if (isRight) rot = -rot; // your rig flips on R side
-  const axisWorld = new THREE.Vector3(1,0,0); // use humeral X-axis for true IR/ER swing
+  // --- Right-shoulder rotation sign corrections ---
+  if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
+  if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
 
-  const qRot = new THREE.Quaternion().setFromAxisAngle(axisWorld, THREE.MathUtils.degToRad(rot));
+    // --- Right-wrist direction fixes ---
+  if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
+  if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
 
-  // ---- 3. Reset to bind then apply the local-axis rotation ----
-  const pivot = bone.position.clone()
-  bone.quaternion.copy(qBind).multiply(qRot);
-  bone.position.copy(pivot);  // restore exact position (prevents elbow translation)
+
+  const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
+
+  // Handle flipped axis (e.g. "-z" for mirrored rig)
+  let x = 0, y = 0, z = 0;
+  let flip = 1;
+  let axis = rawAxis;
+  if (axis.startsWith('-')) {
+    flip = -1;
+    axis = axis.slice(1);
+  }
+
+  const r = flip * rad;
+  if (axis === 'x') x = r;
+  if (axis === 'y') y = r;
+  if (axis === 'z') z = r;
+
+  const e = new THREE.Euler(x, y, z, "XYZ");
+  const qDelta = new THREE.Quaternion().setFromEuler(e);
+  bone.quaternion.copy(qBind).multiply(qDelta);
+
+  // --- Debug: confirm right-shoulder direction ---
+  if (CURRENT_ACTION?.key === "sh_aa_r") {
+    console.log(
+      `Right-shoulder: ${bone.name}, axis: ${axis}, flipped: ${flip === -1}, deg=${deg}, r=${r.toFixed(3)}`
+    );
+  }
 }
+
 
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
@@ -576,12 +602,7 @@ if (cfg.key === 'hip_irer_l') {
   push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
   return out;
 }
-    // --- Left Hip fix: rename only ---
-if (cfg.key === 'hip_irer_r') {
-  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, absMin);
-  return out;
-}
+
 // --- Left Foot fix: 
 if (cfg.key === 'foot_invev_l') {
   push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, maxPos);
@@ -709,6 +730,8 @@ function applyAnatomicBaseline(){
 
   // Always return to anatomic when changing actions; then freeze bind
   actionSel.addEventListener("change", ()=>{
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
     CURRENT_ACTION = null;
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
@@ -717,24 +740,13 @@ function applyAnatomicBaseline(){
       CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
       freezeBindBaseFor(key,cfg);
 
-// Shoulder IR/ER → prep position: elbow 90° + shoulder 55° abduction + 5° wrist pronation
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-  const side = key.endsWith('_l') ? 'l' : 'r';
+      // Shoulder IR/ER → set elbow to 90° baseline immediately
+      if (key==='sh_irer_l' || key==='sh_irer_r'){
+       const side = key.endsWith('_l') ? 'l' : 'r';
+       setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+        log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+      }
 
-  // 1️⃣ Set elbow flexion first (stabilizes chain)
-  setPair(`el_fe_${side}`, 90);
-
-  // 2️⃣ Apply shoulder abduction to 55° — before freezing bind
-  setPair(`sh_aa_${side}`, 55);
-
-  // 3️⃣ Now freeze shoulder baseline AFTER abduction is applied
-  freezeBindBaseFor(`sh_aa_${side}`, cfgFromKey(`sh_aa_${side}`));
-
-  // 4️⃣ Apply wrist pronation
-  setPair(`wr_ps_${side}`, 5);
-
-  log(`Prep for Shoulder ${side.toUpperCase()} IR/ER → Elbow 90°, Abd 55°, Wrist Pro 5°`);
-}
       syncActionUI(true);
       return;
     }
@@ -759,6 +771,9 @@ actionDeg.addEventListener("input", ()=> {
   // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
   if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
     const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+
+    // keep elbow flexed for stability
+    setPair(`el_fe_${side}`, 90);
 
     // RIGHT shoulder needs sign flip on your rig
     let rotDeg = signed;
@@ -797,7 +812,7 @@ actionDeg.addEventListener("input", ()=> {
       // fallback if binds differ: still apply rotation (with R-side fix)
       applyPairAngle(keyRot, cfgRot, rotDeg);
     }
-    return; // 
+    return; // IMPORTANT: stop here so we don't also run the generic path
   }
 
   // === Generic path (everything else) ===
@@ -872,20 +887,19 @@ if (shoulderR) {
 }
 
 // === Rebuild baselines with corrected orientations ===
+// 1️⃣ Clear and rebuild bind data AFTER shoulder correction
 JOINT_BIND.clear();
 
-// 1️⃣ Re-record each bone’s corrected quaternion
+// 2️⃣ Re-record each bone’s corrected quaternion as its new baseline
 skeleton.bones.forEach(b => {
   initialBoneRot.set(b, b.quaternion.clone());
 });
 
-// 2️⃣ ✅ Apply anatomic offsets BEFORE rebaking baseline
-applyAnatomicBaseline();
-
-// 3️⃣ ✅ Freeze that as the new true baseline
+// 3️⃣ Now capture the new baseline for reference motions
 resetAllBonesToInitial();
 
-log("Anatomic baseline baked before motion binding.");
+// 4️⃣ Apply anatomic offsets on top of corrected baseline
+applyAnatomicBaseline();
 
 log("Right-shoulder baseline rebaked.");
 log("Anticollision default ON.");
