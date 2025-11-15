@@ -938,7 +938,7 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
   setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
   setPair(`wr_ps_${side}`, 9);
-  setPair(`clavicle_${side}`, 55);  
+  setPair(`clavicle_${side.toUpperCase()}`, 45);  
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
 
