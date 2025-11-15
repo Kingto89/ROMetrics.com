@@ -630,12 +630,6 @@ function freezeBindBaseFor(key, cfg) {
 
   const e = new THREE.Euler(x, y, z, "XYZ");
   const qDelta = new THREE.Quaternion().setFromEuler(e);
-  // ---- TRUE LOCAL HUMERUS ROTATION FOR IR/ER ----
-if (key === 'sh_irer_l' || key === 'sh_irer_r') {
-    bone.quaternion.multiply(new THREE.Quaternion()
-        .setFromAxisAngle(new THREE.Vector3(0,1,0), flip * rad));
-    return;
-}
   bone.quaternion.copy(qBind).multiply(qDelta);
 
   // --- Debug: confirm right-shoulder direction ---
