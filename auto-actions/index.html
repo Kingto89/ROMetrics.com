@@ -725,6 +725,19 @@ if (cfg.key === 'sh_irer_r'){
   push('Shoulder R — External Rotation', -1, absMin);
   return out;
 }
+    // Shoulder R IR/ER — explicit labels
+if (cfg.key === 'sh_irer_r'){
+  push('Shoulder R — External Rotation', +1, maxPos);
+  push('Shoulder R — Internal Rotation', -1, absMin);
+  return out;
+}
+// Shoulder L IR/ER — explicit labels
+if (cfg.key === 'sh_irer_l'){
+  push('Shoulder L — External Rotation', +1, maxPos);
+  push('Shoulder L — Internal Rotation', -1, absMin);
+  return out;
+}
+
  // === Hip Abduction / Adduction explicit labels ===
 if (cfg.key === 'hip_aa_l'){
   push('Hip L — Abduction', +1, maxPos);
