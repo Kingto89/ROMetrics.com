@@ -760,9 +760,6 @@ actionDeg.addEventListener("input", ()=> {
   if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
     const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
 
-    // keep elbow flexed for stability
-    setPair(`el_fe_${side}`, 90);
-
     // RIGHT shoulder needs sign flip on your rig
     let rotDeg = signed;
     if (side === 'r') rotDeg = -rotDeg;
