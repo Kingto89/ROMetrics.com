@@ -630,22 +630,13 @@ function setBoneRotationFromUI(){
   bone.rotation.y = THREE.MathUtils.degToRad(parseFloat(ry.value));
   bone.rotation.z = THREE.MathUtils.degToRad(parseFloat(rz.value));
 }
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,"XYZ"));
-    const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
-    b.quaternion.copy(qBase).multiply(qDelta);
-  }
-  function zeroSelectedBone(){
-    if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
-    const b = skeleton.bones[idx];
-    const qb = initialBoneRot.get(b);
-    if (qb) b.quaternion.copy(qb);
-    rx.value="0"; ry.value="0"; rz.value="0";
-  }
+function zeroSelectedBone(){
+  if (!skeleton || CURRENT_BONE_IDX < 0) return;
+  const b = skeleton.bones[CURRENT_BONE_IDX];
+  const qb = initialBoneRot.get(b);
+  if (qb) b.quaternion.copy(qb);
+  rx.value="0"; ry.value="0"; rz.value="0";
+}
   function resetAllBonesToInitial(){
     if (!skeleton) return;
     skeleton.bones.forEach(b=>{
