@@ -61,14 +61,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
     <div class="content">
 
-      <div class="row" style="align-items:center">
-        <button id="romBtn" class="mini">📘 ROM Reference</button>
-        <label style="display:flex;gap:6px;align-items:center;margin:0;">
-          <input id="antiBox" type="checkbox"/>
-          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-        </label>
-      </div>
-
       <label>Body Region</label>
       <div class="seg">
         <button id="segUpper" class="on">Upper Body</button>
@@ -159,22 +151,6 @@ optgroup{color:#9fb0c9;font-style:normal}
     </div>
   </div>
 
-  <div class="modal" id="romModal" aria-modal="true" role="dialog">
-    <div class="top">
-      <h4>ROM Reference</h4>
-      <button class="x" id="romClose" aria-label="Close">✕</button>
-    </div>
-    <div class="body" id="romBody">
-      <div class="rom-item"><summary>Shoulder</summary><div class="inner">Flex 0–180°, Ext 0–60°, Abd 0–180°, ER 0–90°, IR 0–70°</div></div>
-      <div class="rom-item"><summary>Elbow</summary><div class="inner">Flex 0–150°, Ext 0–10°</div></div>
-      <div class="rom-item"><summary>Wrist</summary><div class="inner">Flex 0–80°, Ext 0–70°, UD 0–40°, RD 0–20°, Pro/Sup as wrist proxy</div></div>
-      <div class="rom-item"><summary>Hip</summary><div class="inner">Flex 0–120°, Ext 0–30°, Abd 0–45°, Add 0–30°</div></div>
-      <div class="rom-item"><summary>Knee</summary><div class="inner">Flex 0–150°, Ext 0–5°</div></div>
-      <div class="rom-item"><summary>Ankle/Foot</summary><div class="inner">DF 0–20°, PF 0–50°, Inv 0–35°, Ev 0–20°</div></div>
-      <div class="rom-item"><summary>Trunk/Cervical</summary><div class="inner">Flex/Ext, Lat Flex L/R, Rotation L/R (norms per course)</div></div>
-    </div>
-  </div>
-
   <div id="msg">Loading…</div>
   <canvas id="c"></canvas>
 
@@ -195,9 +171,6 @@ const log = (t)=>{
 
 const panel = document.getElementById("panel");
 const dragbar = document.getElementById("dragbar");
-const romBtn = document.getElementById("romBtn");
-const romModal = document.getElementById("romModal");
-const romClose = document.getElementById("romClose");
 
 const segUpper = document.getElementById("segUpper");
 const segLower = document.getElementById("segLower");
@@ -1556,12 +1529,6 @@ function toggleCollisionTuner(show) {
   colTunerVisible = show === undefined ? !colTunerVisible : !!show;
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
-
-
-  /* ===== ROM modal wiring ===== */
-  romBtn.onclick = ()=>{ romModal.classList.add('on'); };
-  romClose.onclick = ()=>{ romModal.classList.remove('on'); };
-  window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') romModal.classList.remove('on'); });
 
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
