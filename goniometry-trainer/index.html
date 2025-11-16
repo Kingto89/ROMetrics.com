@@ -674,34 +674,45 @@ const Gonio = (() => {
     );
   }
 
-/* ---------- OUTER + INNER NUMBERS ---------- */
-numsOut.innerHTML = "";
-numsIn.innerHTML  = "";
+  /* ---------- OUTER + INNER NUMBERS ---------- */
+  numsOut.innerHTML = "";
+  numsIn.innerHTML  = "";
 
-const rWhite = R   - 8;   // outer number radius
-const rInner = Rin + 9;   // inner number radius
+  const rWhite = R   - 8;   // outer-number radius
+  const rInner = Rin + 9;   // inner-number radius
 
+   /* ---------- OUTER (0–80–0–80–0) ---------- */
+  const OUTER_ANGLE_SHIFT = +20;   // <— rotate outer labels by 20°
 
-/* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
-   (so inner 0,10,20,…,170,180,170,…,10)
-*/
-for (let d = 0; d < 360; d += 10){
-  const inner = innerFromD(d);
+  for (let d = 0; d < 360; d += 10){
+    const inner = innerFromD(d);
+    const outer = Math.abs(90 - inner);       // complement
 
-  if (inner % 10 !== 0) continue;          
-  if (inner === 0 && d !== 180) continue;
+    if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
 
-  const a = (d - 90) * Math.PI / 180;
-  const x = Math.cos(a) * rInner;
-  const y = Math.sin(a) * rInner;
+    // apply 20° shift ONLY to outer label positions
+    const a = (d - 90 + OUTER_ANGLE_SHIFT) * Math.PI / 180;
+    const x = Math.cos(a) * rWhite;
+    const y = Math.sin(a) * rWhite;
 
-  // existing placement (DO NOT CHANGE)
-  text(numsIn, x, y, String(inner), "labelInner");
+    text(numsOut, x, y, String(outer), "labelOuter");
+  }
 
-  // ⭐ NEW LINE: straighten text ONLY — no movement, no rotation offset
-  const el = numsIn.lastChild;
-  el.setAttribute("transform", `rotate(${-d + 90} ${x} ${y})`);
-}
+  /* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
+     (so inner 0,10,20,…,170,180,170,…,10)
+  */
+  for (let d = 0; d < 360; d += 10){
+    const inner = innerFromD(d);
+
+    if (inner % 10 !== 0) continue;          // every 10°
+    if (inner === 0 && d !== 180) continue;  // single 0 at bottom only
+
+    const a = (d - 90) * Math.PI / 180;
+    const x = Math.cos(a) * rInner;
+    const y = Math.sin(a) * rInner;
+
+    text(numsIn, x, y, String(inner), "labelInner");
+  }
 
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
