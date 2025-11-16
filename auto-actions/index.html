@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ROMetrics — Manual Muscle Testing (MMT)</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ROMetrics — MMT + Motion Lab</title>
 
 <script type="importmap">
 {
@@ -16,264 +15,401 @@
 </script>
 
 <style>
-/* Base styles from MMT Full Index */
-:root{--bg:#0b0f14;--card:rgba(255,255,255,.88);--ink:#0f172a;}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#111}
-.bg{position:fixed;inset:0;background:#0b0f14 url('./assets/bg_pt_office.jpg') center/cover no-repeat;filter:saturate(1.05) brightness(.9)}
-.overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(11,15,20,.25),rgba(11,15,20,.6))}
-.wrap{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;max-width:1200px;margin:32px auto;padding:12px}
-.card{backdrop-filter:blur(10px);background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
-.header{padding:14px 16px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
-.title{font-weight:700}
-.muted{color:#1f2937;opacity:.75}
-.panel{padding:14px 16px}
-
-/* Stage now holds the canvas */
-.stage{
-  height:min(65vh,520px);
-  display:flex;align-items:center;justify-content:center;
-  padding: 0; /* Remove padding */
-  position: relative; /* For canvas positioning */
+:root{
+  --bg:#0b1220;--panel:#0f172a;--line:#1f2937;
+  --ctrl:#1e293b;--text:#e2e8f0;--muted:#9ca3af;
+  --accent:#3b82f6;--accent2:#60a5fa;
 }
-
-/* Canvas styling to fit inside the .stage card */
-#c {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  border-radius: 16px; /* Match card */
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{
+  position:fixed;left:12px;top:12px;width:380px;max-height:92vh;z-index:20;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;overflow:hidden
 }
-
-.controls{width:280px}
-.controls .panel{display:grid;gap:10px;position:relative;}
-.select, button {
-  width:100%;padding:10px 12px;border-radius:10px;
-  border:1px solid rgba(0,0,0,.08);font-size:14px;background:#fff;
+.dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;
+  font-weight:700;display:flex;align-items:center;gap:8px}
+.dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
+.content{padding:12px;overflow:auto}
+label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
+select,button,input[type=range],input[type=number]{
+  width:100%;margin:6px 0 8px 0;padding:8px 10px;
+  border-radius:10px;background:var(--ctrl);
+  border:1px solid #334155;color:#e2e8f0
 }
-button {
-  cursor:pointer; font-weight: 600; background: #eee;
+.row{display:flex;gap:8px}.row>button{flex:1}
+.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
+.seg button.on{background:#1f2c43;color:#fff;border-color:#47618e}
+details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
+summary{cursor:pointer;font-weight:600;color:#dbe7ff}
+#log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
+#msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
+#hud{
+  position:fixed;top:10px;right:16px;z-index:50;
+  background:rgba(15,23,42,.85);border:1px solid #334155;
+  border-radius:12px;padding:10px 16px;color:#e2e8f0;
+  font:600 14px system-ui;display:none;backdrop-filter:blur(6px);
 }
-button:disabled {
-  opacity: 0.5; cursor: not-allowed;
-}
-.small{font-size:12px;color:#475569}
-#testCountdown{font-weight:600;padding-left:10px;font-size: 18px; color: #000;}
-.row{display:flex;align-items:center;gap:10px;}
+#hud span{font-size:20px;color:var(--accent2)}
 </style>
 </head>
 <body>
-<div class="bg"></div><div class="overlay"></div>
-<main class="wrap">
-  <section class="card stage" aria-label="3D stage">
-    <canvas id="c"></canvas>
-  </section>
-  <aside class="card controls" aria-label="MMT controls">
-    <div class="header">
-      <div><div class="title">ROMetrics — MMT</div>
-      <div class="muted small">Select test level & muscle</div></div>
+<div class="panel" id="panel">
+  <div class="dragbar" id="dragbar">🏋️‍♀️ MMT Trainer <span class="hint">drag</span></div>
+  <div class="content">
+    <div class="seg">
+      <button id="segUpper" class="on">Upper</button>
+      <button id="segLower">Lower</button>
     </div>
-    <div class="panel">
-      <select id="testLevel" class="select">
-        <option value="3-5">Level 3–5</option>
-        <option value="0-2">Level 0–2</option>
-      </select>
-      <select id="test" class="select" size="10"></select>
-      <div class="row">
-        <button id="startBtn">Start Test</button>
-        <span id="testCountdown"></span>
-      </div>
+
+    <label>Action</label>
+    <select id="actionSel"></select>
+
+    <label>Angle (°)</label>
+    <input type="range" id="actionDeg" min="0" max="150" value="0">
+    <div class="row">
+      <button id="autoMoveBtn" class="mini">Run Action</button>
+      <button id="zeroAll" class="mini">Zero</button>
     </div>
-  </aside>
-</main>
+
+    <hr style="opacity:.2;margin:6px 0">
+
+    <label>MMT Test Level</label>
+    <select id="mmtLevel">
+      <option value="">(Select Level)</option>
+      <option value="3">Grade 3 — against gravity</option>
+      <option value="4">Grade 4 — mod resistance</option>
+      <option value="5">Grade 5 — max resistance</option>
+    </select>
+    <div class="row">
+      <button id="mmtStart" class="mini">Start Test</button>
+      <button id="mmtStop" class="mini">Stop</button>
+    </div>
+
+    <label>Event Log</label>
+    <pre id="log"></pre>
+  </div>
+</div>
+
+<div id="hud">Hold… <span id="hudTimer">3</span></div>
+<div id="msg">Loading…</div>
+<canvas id="c"></canvas>
 <script type="module">
-// Imports from Actions index
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ---------- Scene Setup (Adapted for UI) ---------- */
-const stageEl = document.querySelector(".stage");
-const canvas = document.getElementById("c");
+const msg = document.getElementById("msg");
+const logEl = document.getElementById("log");
+function log(t){logEl.textContent+=t+"\\n";logEl.scrollTop=logEl.scrollHeight;}
+const hud=document.getElementById("hud");
+const hudTimer=document.getElementById("hudTimer");
 
-const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-renderer.setSize(stageEl.clientWidth, stageEl.clientHeight);
+/* ===== THREE setup ===== */
+const canvas=document.getElementById("c");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(devicePixelRatio);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
-// Set transparent background to see the card's backdrop-filter
-renderer.setClearColor(0x000000, 0); 
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 
-const scene = new THREE.Scene();
-// No background color, let the CSS handle it
-// scene.background = new THREE.Color(0x0b1220); 
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0b1220);
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.01,100);
+camera.position.set(1.6,1.6,3.2);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=0.08;
+controls.minDistance=0.6;controls.maxDistance=6;
+controls.target.set(0,1.1,0);
+scene.add(new THREE.HemisphereLight(0xffffff,0x333344,0.7));
+const key=new THREE.DirectionalLight(0xffffff,1.2);
+key.position.set(2.5,4,2.5);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+scene.add(key);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({opacity:0.45}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 
-const camera = new THREE.PerspectiveCamera(45, stageEl.clientWidth / stageEl.clientHeight, 0.01, 100);
-camera.position.set(1.6, 1.6, 3.2);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.2, 0);
-controls.enableDamping = true;
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
-const dir = new THREE.DirectionalLight(0xffffff, 1.5);
-dir.position.set(2.5, 4, 2.5);
-dir.castShadow = true;
-scene.add(dir);
-
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20),
-  new THREE.ShadowMaterial({ opacity: 0.2 })); // Slightly lighter shadow
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-
-// Resize listener adapted to the .stage element
-window.addEventListener("resize", () => {
-  const w = stageEl.clientWidth;
-  const h = stageEl.clientHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-});
-
-/* ---------- Model Loader (from Actions) ---------- */
-function pickModelUrl() {
-  const u = new URL(location.href);
-  const q = u.searchParams.get("model");
-  if (q && /^https?:\/\//i.test(q)) return q;
-  if (q && q.trim()) return new URL(q, location.href).href;
-  // Use asset path from MMT Full Index
-  return "./assets/Roma_ROMetrics.glb"; 
-}
-let MODEL_URL = pickModelUrl(), model = null, skeleton = [];
-const loader = new GLTFLoader();
+/* ===== Loader ===== */
+const loader=new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
-const draco = new DRACOLoader();
-draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
+const draco=new DRACOLoader();draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
 loader.setDRACOLoader(draco);
+const ktx2=new KTX2Loader();ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/");
+ktx2.detectSupport(renderer);loader.setKTX2Loader(ktx2);
 
-loader.load(MODEL_URL, gltf => {
-  model = gltf.scene;
-  model.traverse(o => {
-    if (o.isSkinnedMesh && o.skeleton) skeleton = o.skeleton.bones;
-    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
-  });
-  scene.add(model);
-  const box = new THREE.Box3().setFromObject(model);
-  model.position.y -= box.min.y;
-  console.log("✅ Model loaded:", MODEL_URL);
-});
-
-/* ---------- Utilities (from Actions) ---------- */
-function resolveBind(name) { return skeleton.find(b => b.name === name) || null; }
-function resetAll() { skeleton.forEach(b => b.rotation.set(0, 0, 0)); }
-function animateToPose(boneName, axis, deg, duration = 1000) {
-  const bone = resolveBind(boneName); if (!bone) return;
-  const start = bone.rotation[axis], end = THREE.MathUtils.degToRad(deg);
-  const startTime = performance.now();
-  function step(now) {
-    const t = Math.min((now - startTime) / duration, 1);
-    bone.rotation[axis] = THREE.MathUtils.lerp(start, end, t);
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+let model=null,skeleton=null;
+function pickModelUrl(){
+  const u=new URL(location.href);
+  const q=u.searchParams.get("model");
+  if(q&&/^https?:/i.test(q))return q;
+  if(q&&q.trim())return new URL(q,location.href).href;
+  return "../assets/Roma_ROMetrics.glb";
 }
+const MODEL_URL=pickModelUrl();
 
-/* ---------- Actions (from Actions) ---------- */
-const ACTIONS = {
-  "shoulder-flexion": { bone: "upperarm_r", axis: "x", deg: 90, midpoint: 45 },
-  "shoulder-extension": { bone: "upperarm_r", axis: "x", deg: -60, midpoint: -30 },
-  "shoulder-abduction": { bone: "upperarm_r", axis: "z", deg: 90, midpoint: 45 },
-  "elbow-flexion": { bone: "lowerarm_r", axis: "x", deg: -145, midpoint: -70 },
-  "elbow-extension": { bone: "lowerarm_r", axis: "x", deg: 0, midpoint: -10 },
-  "hip-flexion": { bone: "thigh_r", axis: "x", deg: 120, midpoint: 60 },
-  "hip-extension": { bone: "thigh_r", axis: "x", deg: -30, midpoint: -15 },
-  "knee-flexion": { bone: "calf_r", axis: "x", deg: -135, midpoint: -70 },
-  "ankle-dorsiflexion": { bone: "foot_r", axis: "x", deg: 20, midpoint: 10 },
-  "ankle-plantarflexion": { bone: "foot_r", axis: "x", deg: -50, midpoint: -25 }
+/* ===== Basic motion data placeholder (to be extended below) ===== */
+const ACTIONS={};
+
+/* ===== Load model ===== */
+function loadModel(){
+  msg.textContent="Loading…";log("Loading model…");
+  loader.load(MODEL_URL,g=>{
+    model=g.scene;
+    model.traverse(o=>{
+      if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}
+      if(o.isSkinnedMesh&&!skeleton)skeleton=o.skeleton;
+    });
+    scene.add(model);
+    msg.textContent="✅ Model loaded";
+    log("Model loaded and added to scene.");
+  },xhr=>{
+    const pct=xhr.lengthComputable?Math.min(100,Math.round(xhr.loaded/xhr.total*100)):null;
+    msg.textContent=pct!==null?`Loading ${pct}%`:"Loading…";
+  },err=>{console.error(err);msg.textContent="⚠️ Load error";log("Error loading model");});
+}
+loadModel();
+
+/* ===== COLLISION LIMITS (Safe ROM) ===== */
+const COLLIM={
+ enabled:true,
+ shFlexL:170,shFlexR:170,shExtL:60,shExtR:60,
+ shAbdL:170,shAbdR:170,shAddL:30,shAddR:30,
+ shIRL:70,shIRR:70,shERL:90,shERR:90,
+ elFlexL:150,elFlexR:150,elExtL:10,elExtR:10,
+ hipFlexL:110,hipFlexR:110,hipExtL:30,hipExtR:30,
+ hipAbdL:45,hipAbdR:45,hipAddL:25,hipAddR:25,
+ kneeFlexL:150,kneeFlexR:150,kneeExtL:5,kneeExtR:5,
+ anklePF_L:50,anklePF_R:50,ankleDF_L:20,ankleDF_R:20
 };
 
-/* ---------- Perform Action (from Actions) ---------- */
-function performAction(key, level = "3-5") {
-  if (!ACTIONS[key]) return;
-  const act = ACTIONS[key];
-  // Per your request, "3-5" uses midpoint, "0-2" will use 0 (reset)
-  const deg = (level === "3-5") ? act.midpoint : 0;
-  animateToPose(act.bone, act.axis, deg, 1200);
+/* ===== BONES + ROTATION UTIL ===== */
+function findBone(name){
+ if(!skeleton)return null;
+ const lname=name.toLowerCase();
+ return skeleton.bones.find(b=>(b.name||'').toLowerCase()===lname)||null;
+}
+function rotBone(bone,deg,axis='x'){
+ if(!bone)return;
+ const r=THREE.MathUtils.degToRad(deg);
+ const e=new THREE.Euler();
+ if(axis==='x')e.set(r,0,0);
+ if(axis==='y')e.set(0,r,0);
+ if(axis==='z')e.set(0,0,r);
+ const q=new THREE.Quaternion().setFromEuler(e);
+ bone.quaternion.copy(q);
 }
 
-/* ---------- UI (Adapted for MMT Index) ---------- */
-// Get UI elements using MMT Full Index IDs
-const testSel = document.getElementById("test");
-const testLevel = document.getElementById("testLevel");
-const startBtn = document.getElementById("startBtn");
-const status = document.getElementById("testCountdown");
+/* ===== MOTION MAPS ===== */
+ACTIONS.upper=[
+ {label:"Shoulder L Flexion",bone:"upperarm_L",axis:"x",max:COLLIM.shFlexL},
+ {label:"Shoulder R Flexion",bone:"upperarm_R",axis:"x",max:COLLIM.shFlexR},
+ {label:"Shoulder L Abduction",bone:"upperarm_L",axis:"z",max:COLLIM.shAbdL},
+ {label:"Shoulder R Abduction",bone:"upperarm_R",axis:"z",max:-COLLIM.shAbdR},
+ {label:"Elbow L Flexion",bone:"lowerarm_L",axis:"x",max:COLLIM.elFlexL},
+ {label:"Elbow R Flexion",bone:"lowerarm_R",axis:"x",max:COLLIM.elFlexR},
+ {label:"Wrist L Flexion",bone:"hand_L",axis:"x",max:80},
+ {label:"Wrist R Flexion",bone:"hand_R",axis:"x",max:80}
+];
+ACTIONS.lower=[
+ {label:"Hip L Flexion",bone:"thigh_L",axis:"x",max:COLLIM.hipFlexL},
+ {label:"Hip R Flexion",bone:"thigh_R",axis:"x",max:COLLIM.hipFlexR},
+ {label:"Knee L Flexion",bone:"calf_L",axis:"x",max:COLLIM.kneeFlexL},
+ {label:"Knee R Flexion",bone:"calf_R",axis:"x",max:COLLIM.kneeFlexR},
+ {label:"Ankle L Plantarflex",bone:"foot_L",axis:"x",max:COLLIM.anklePF_L},
+ {label:"Ankle R Plantarflex",bone:"foot_R",axis:"x",max:COLLIM.anklePF_R}
+];
 
-(async function populateTests() {
-  const res = await fetch("https://raw.githubusercontent.com/Kingto89/ROMetrics/main/mmt/rometrics_mmt_library.md");
-  const text = await res.text();
-  const matches = [...text.matchAll(/^###\s+(.*?)$/gm)];
-  for (const m of matches) {
-    const opt = document.createElement("option");
-    opt.value = m[1].toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    opt.textContent = m[1];
-    testSel.appendChild(opt);
+/* ===== UI ELEMENTS ===== */
+const segUpper=document.getElementById("segUpper");
+const segLower=document.getElementById("segLower");
+const actionSel=document.getElementById("actionSel");
+const actionDeg=document.getElementById("actionDeg");
+const zeroAll=document.getElementById("zeroAll");
+const autoMoveBtn=document.getElementById("autoMoveBtn");
+const mmtLevel=document.getElementById("mmtLevel");
+const mmtStart=document.getElementById("mmtStart");
+const mmtStop=document.getElementById("mmtStop");
+
+let currentGroup="upper";
+function fillMenu(){
+ actionSel.innerHTML="";
+ const list=ACTIONS[currentGroup];
+ const ph=document.createElement("option");
+ ph.value="";ph.textContent="(Select a motion)";
+ actionSel.appendChild(ph);
+ list.forEach(a=>{
+   const opt=document.createElement("option");
+   opt.value=a.label;opt.textContent=a.label;
+   actionSel.appendChild(opt);
+ });
+ actionSel.value="";
+ actionDeg.disabled=true;
+}
+segUpper.onclick=()=>{currentGroup="upper";segUpper.classList.add("on");segLower.classList.remove("on");fillMenu();};
+segLower.onclick=()=>{currentGroup="lower";segLower.classList.add("on");segUpper.classList.remove("on");fillMenu();};
+fillMenu();
+
+/* ===== RESET BONES ===== */
+function resetPose(){
+ if(!skeleton)return;
+ skeleton.bones.forEach(b=>{
+   b.quaternion.identity();
+ });
+}
+
+/* ===== ACTION SELECTION — AUTO-POSE ===== */
+let currentAction=null;
+actionSel.onchange=()=>{
+ resetPose();
+ const label=actionSel.value;
+ if(!label)return;
+ const list=ACTIONS[currentGroup];
+ currentAction=list.find(a=>a.label===label);
+ if(!currentAction)return;
+ const bone=findBone(currentAction.bone);
+ if(bone){
+   // halfway pose preview before test
+   rotBone(bone,currentAction.max*0.5,currentAction.axis);
+   log(`Auto-pose loaded for ${label}`);
+ }
+ actionDeg.disabled=false;
+};
+
+/* ===== RANGE MANUAL CONTROL ===== */
+actionDeg.oninput=()=>{
+ if(!currentAction)return;
+ const bone=findBone(currentAction.bone);
+ if(!bone)return;
+ const v=Math.min(currentAction.max,parseFloat(actionDeg.value)||0);
+ rotBone(bone,v,currentAction.axis);
+};
+
+/* ===== AUTO MOVE ===== */
+autoMoveBtn.onclick=()=>{
+ if(!currentAction)return;
+ let v=0;const step=2;
+ const bone=findBone(currentAction.bone);
+ if(!bone)return;
+ const timer=setInterval(()=>{
+   v+=step;
+   if(v>=currentAction.max){clearInterval(timer);}
+   rotBone(bone,v,currentAction.axis);
+ },30);
+};
+
+/* ===== ZERO BUTTON ===== */
+zeroAll.onclick=()=>{resetPose();log("All bones reset to neutral.");};
+/* ===== MMT TEST LOGIC ===== */
+let mmtTimer=null;
+let holding=false;
+function startMMT(){
+  if(!currentAction)return log("❌ Select a motion first.");
+  const lvl=parseInt(mmtLevel.value);
+  if(!lvl)return log("❌ Select MMT grade before starting.");
+  const bone=findBone(currentAction.bone);
+  if(!bone)return log("❌ No bone for motion.");
+
+  // === assume test position (halfway)
+  rotBone(bone,currentAction.max*0.5,currentAction.axis);
+  log(`🧠 MMT ${lvl} started — ${currentAction.label}`);
+
+  // === countdown UI ===
+  let count=3;
+  hud.style.display="block";
+  hudTimer.textContent=count;
+  holding=true;
+  mmtTimer=setInterval(()=>{
+    count--;
+    hudTimer.textContent=count;
+    if(count<=0){
+      clearInterval(mmtTimer);
+      holdPhase(lvl,bone);
+    }
+  },1000);
+}
+
+function holdPhase(lvl,bone){
+  log(`💪 Holding at resistance level ${lvl}…`);
+  let t=0;
+  const dur=lvl===5?5000:lvl===4?4000:3000;
+  const step=50;
+  const base=bone.quaternion.clone();
+  const amp=THREE.MathUtils.degToRad(2+lvl); // slight oscillation
+  const start=performance.now();
+  function tick(now){
+    if(!holding)return;
+    t=now-start;
+    const off=Math.sin(t*0.01)*amp;
+    const e=new THREE.Euler();
+    if(currentAction.axis==='x')e.set(off,0,0);
+    if(currentAction.axis==='y')e.set(0,off,0);
+    if(currentAction.axis==='z')e.set(0,0,off);
+    const q=new THREE.Quaternion().setFromEuler(e);
+    bone.quaternion.copy(base).multiply(q);
+    if(t<dur)requestAnimationFrame(tick);
+    else finishMMT();
   }
+  requestAnimationFrame(tick);
+}
+
+function finishMMT(){
+  holding=false;
+  hud.style.display="none";
+  log("✅ MMT hold complete. Returning to neutral…");
+  setTimeout(()=>{resetPose();},1000);
+}
+
+mmtStart.onclick=startMMT;
+mmtStop.onclick=()=>{
+  holding=false;
+  hud.style.display="none";
+  clearInterval(mmtTimer);
+  resetPose();
+  log("⏹️ Test aborted — reset.");
+};
+
+/* ===== PANEL DRAG ===== */
+(function(){
+ let drag=false,sx=0,sy=0,startL=0,startT=0;
+ const p=document.getElementById("panel"),bar=document.getElementById("dragbar");
+ bar.addEventListener("pointerdown",e=>{
+   drag=true;sx=e.clientX;sy=e.clientY;
+   const r=p.getBoundingClientRect();startL=r.left;startT=r.top;
+ });
+ window.addEventListener("pointermove",e=>{
+   if(!drag)return;
+   const dx=e.clientX-sx,dy=e.clientY-sy;
+   p.style.left=Math.max(6,startL+dx)+"px";
+   p.style.top=Math.max(6,startT+dy)+"px";
+ });
+ window.addEventListener("pointerup",()=>{drag=false;});
 })();
 
-/* ---------- Auto-Pose on Selection ---------- */
-let selectedTest = null;
-startBtn.disabled = true; // Disabled by default
-
-testSel.addEventListener("change", () => {
-  selectedTest = testSel.value;
-  startBtn.disabled = !selectedTest; // Enable button
-  resetAll();
-  performAction(selectedTest, testLevel.value);
+/* ===== RENDER LOOP ===== */
+addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
 });
-
-testLevel.addEventListener("change", () => {
-  if (selectedTest) {
-    resetAll();
-    performAction(selectedTest, testLevel.value);
-  }
-});
-
-/* ---------- Timed Test (from Actions) ---------- */
-let holdTimers = [];
-function beginTest() {
-  if (!selectedTest) return;
-  // Re-run the pose in case it was moved
-  resetAll();
-  performAction(selectedTest, testLevel.value);
-  status.textContent = "3";
-  holdTimers = [
-    setTimeout(() => status.textContent = "4", 3000),
-    setTimeout(() => status.textContent = "5", 6000),
-    setTimeout(() => status.textContent = "Test Complete", 9000)
-  ];
-}
-function endTest() {
-  holdTimers.forEach(clearTimeout); holdTimers = [];
-  // Clear status after a delay, but don't reset pose
-  setTimeout(() => { 
-    if(status.textContent !== "Test Complete") status.textContent = ""; 
-  }, 1000);
-}
-startBtn.addEventListener("pointerdown", beginTest);
-startBtn.addEventListener("pointerup", endTest);
-
-/* ---------- Render (from Actions) ---------- */
-function render() {
-  requestAnimationFrame(render);
+(function animate(){
   controls.update();
-  renderer.render(scene, camera);
-}
-render();
+  renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+})();
+/* ===== STATUS ON LOAD ===== */
+log("ROMetrics MMT Trainer initialized.");
+msg.textContent="Ready.";
 </script>
 </body>
 </html>
+<!-- ✅ END OF FULL MMT INTEGRATED INDEX -->
+
+  
