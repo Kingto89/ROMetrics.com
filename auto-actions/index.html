@@ -370,7 +370,7 @@ if (antiBox){
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "../assets/Roma_ROMetrics.glb";
+    return "/ROMetrics.com/assets/Roma_ROMetrics.glb";
   }
   let MODEL_URL = pickModelUrl();
 
