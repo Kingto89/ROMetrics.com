@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ROMetrics — Manual Muscle Testing (MMT)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+:root{--bg:#0b0f14;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:Inter,system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{position:fixed;right:16px;top:16px;width:320px;max-height:calc(100% - 32px);overflow-y:auto;background:var(--panel);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.4);padding:14px}
+h2{margin:0 0 8px;font-size:18px;color:#fff}
+label{font-weight:600;display:block;margin-top:8px;margin-bottom:4px}
+select,button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#111;font-size:14px}
+button{cursor:pointer;font-weight:600}
+#status{margin-top:8px;text-align:center;font-weight:700;font-size:18px}
+.hand{position:absolute;width:100px;user-select:none;cursor:grab;touch-action:none;z-index:50}
+#handL{bottom:60px;left:80px}
+#handR{bottom:60px;right:80px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="panel">
+  <h2>ROMetrics — MMT</h2>
+  <label for="testLevel">Test Level</label>
+  <select id="testLevel">
+    <option value="3-5">Level 3–5</option>
+    <option value="0-2">Level 0–2</option>
+  </select>
+  <label for="testSel">Muscle Test</label>
+  <select id="testSel" size="10"></select>
+  <button id="startBtn" disabled>Start Test</button>
+  <div id="status"></div>
+</div>
+<img id="handL" class="hand" src="./assets/hand_L.png">
+<img id="handR" class="hand" src="./assets/hand_R.png">
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+/* ---------- Scene Setup ---------- */
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0f14);
+const camera = new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);
+camera.position.set(0,1.5,3);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1.2,0);
+controls.update();
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(2,5,3);
+scene.add(light,new THREE.AmbientLight(0xffffff,0.4));
+
+/* ---------- Model Load ---------- */
+let model=null,mixer=null,clock=new THREE.Clock();
+const loader=new GLTFLoader();
+loader.load('./assets/Roma_ROMetrics.glb',g=>{
+  model=g.scene;
+  model.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  scene.add(model);
+},undefined,e=>console.error(e));
+
+/* ---------- Auto-Action Logic (from index(4)) ---------- */
+const ACTIONS={
+  'elbow-flexion':{bone:'elbow_r',axis:'x',start:0,end:90},
+  'shoulder-abduction':{bone:'shoulder_r',axis:'z',start:0,end:90},
+  'hip-flexion':{bone:'hip_r',axis:'x',start:0,end:90},
+  'knee-extension':{bone:'knee_r',axis:'x',start:0,end:-90}
+};
+let skeleton=[];
+function findSkeleton(obj){
+  obj.traverse(o=>{
+    if(o.isBone)skeleton.push(o);
+  });
+}
+function getBone(name){
+  return skeleton.find(b=>b.name.toLowerCase().includes(name));
+}
+function setPose(action,progress){
+  const a=ACTIONS[action];
+  if(!a)return;
+  const bone=getBone(a.bone);
+  if(!bone)return;
+  const rad=THREE.MathUtils.degToRad(a.start+(a.end-a.start)*progress);
+  if(a.axis==='x')bone.rotation.x=rad;
+  if(a.axis==='y')bone.rotation.y=rad;
+  if(a.axis==='z')bone.rotation.z=rad;
+}
+function resetPose(){
+  skeleton.forEach(b=>b.rotation.set(0,0,0));
+}
+
+/* ---------- Hand Drag / Placement ---------- */
+function makeDraggable(el){
+  el.addEventListener('pointerdown',ev=>el.setPointerCapture(ev.pointerId));
+  el.addEventListener('pointermove',ev=>{
+    if(el.hasPointerCapture(ev.pointerId)){
+      el.style.left=(el.offsetLeft+ev.movementX)+'px';
+      el.style.top=(el.offsetTop+ev.movementY)+'px';
+    }
+  });
+}
+makeDraggable(document.getElementById('handL'));
+makeDraggable(document.getElementById('handR'));
+function getCenter(el){
+  const r=el.getBoundingClientRect();
+  return [r.left+r.width/2,r.top+r.height/2];
+}
+function near([x1,y1],[x2,y2],r=120){
+  return Math.hypot(x1-x2,y1-y2)<=r;
+}
+
+/* ---------- Test Selection & Level Logic ---------- */
+const testSel=document.getElementById('testSel');
+const levelSel=document.getElementById('testLevel');
+const startBtn=document.getElementById('startBtn');
+const status=document.getElementById('status');
+let currentAction=null;
+const TESTS=[
+  {id:'elbow-flexion',label:'Elbow Flexion',handL:[200,200],handR:[300,300]},
+  {id:'shoulder-abduction',label:'Shoulder Abduction',handL:[220,220],handR:[360,320]},
+  {id:'hip-flexion',label:'Hip Flexion',handL:[260,260],handR:[380,400]},
+  {id:'knee-extension',label:'Knee Extension',handL:[280,280],handR:[420,420]}
+];
+TESTS.forEach(t=>{
+  const o=document.createElement('option');
+  o.value=t.id;o.textContent=t.label;
+  testSel.appendChild(o);
+});
+function handsReady(){
+  if(!currentAction)return false;
+  const test=TESTS.find(t=>t.id===currentAction);
+  const L=getCenter(document.getElementById('handL'));
+  const R=getCenter(document.getElementById('handR'));
+  return near(L,test.handL)&&near(R,test.handR);
+}
+function updateBtn(){startBtn.disabled=!(currentAction&&handsReady());}
+['pointermove','pointerup'].forEach(ev=>{
+  handL.addEventListener(ev,updateBtn);
+  handR.addEventListener(ev,updateBtn);
+});
+testSel.addEventListener('change',()=>{
+  currentAction=testSel.value;
+  if(levelSel.value==='3-5'){
+    setPose(currentAction,0.5);
+  }else resetPose();
+  updateBtn();
+});
+levelSel.addEventListener('change',()=>{
+  if(levelSel.value==='3-5'&&currentAction)setPose(currentAction,0.5);
+  else resetPose();
+  updateBtn();
+});
+
+/* ---------- Test Progress Logic ---------- */
+let timers=[];
+startBtn.addEventListener('pointerdown',()=>{
+  if(startBtn.disabled)return;
+  resetPose();
+  setPose(currentAction,0.5);
+  status.textContent='3';
+  timers.push(setTimeout(()=>status.textContent='4',3000));
+  timers.push(setTimeout(()=>status.textContent='5',6000));
+  timers.push(setTimeout(()=>status.textContent='Test Complete',9000));
+});
+startBtn.addEventListener('pointerup',()=>{
+  timers.forEach(clearTimeout);timers=[];
+  if(status.textContent!=='Test Complete')status.textContent='';
+});
+
+/* ---------- Animate ---------- */
+function animate(){
+  requestAnimationFrame(animate);
+  if(model&&!skeleton.length)findSkeleton(model);
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
