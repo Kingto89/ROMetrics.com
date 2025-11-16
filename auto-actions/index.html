@@ -19,51 +19,37 @@
   --bg:#0b1220;--panel:#0f172a;--line:#1f2937;
   --ctrl:#1e293b;--text:#e2e8f0;--muted:#94a3b8;
 }
-html,body {
-  margin:0;height:100%;background:var(--bg);
-  color:var(--text);overflow:hidden;
-  font-family:Inter,system-ui,sans-serif;
-}
-canvas {
-  position:fixed;inset:0;width:100%;height:100%;
-  display:block;background:var(--bg);
-}
-.panel {
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  overflow:hidden;font-family:Inter,system-ui,sans-serif;}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{
   position:fixed;right:24px;top:24px;width:340px;
   background:var(--panel);border:1px solid var(--line);
   border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.45);
 }
-.panel h2 {
-  margin:0 0 10px;font-weight:700;color:#fff;font-size:18px;
-}
+.panel h2{margin:0 0 10px;font-weight:700;font-size:18px}
 label{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
-select,button {
+select,button{
   width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;
-  border:1px solid var(--line);background:var(--ctrl);
-  color:#fff;font-size:14px;
+  border:1px solid var(--line);background:var(--ctrl);color:#fff;
+  font-size:14px;
 }
-button {cursor:pointer;font-weight:600;}
-#status {
-  text-align:center;margin-top:10px;font-size:18px;font-weight:700;
-}
+button{cursor:pointer;font-weight:600}
+#status{text-align:center;margin-top:10px;font-size:18px;font-weight:700}
 </style>
 </head>
 
 <body>
 <canvas id="c"></canvas>
-
 <div class="panel">
   <h2>ROMetrics — MMT</h2>
-
   <label>Test Level</label>
   <select id="testLevel">
     <option value="3-5" selected>Level 3–5</option>
     <option value="0-2">Level 0–2</option>
   </select>
-
   <label>Action</label>
   <select id="actionSel" size="10"></select>
-
   <button id="startBtn">Start Test</button>
   <div id="status"></div>
 </div>
@@ -75,37 +61,26 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ========== Scene Setup ========== */
+/* ---------- Scene ---------- */
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(devicePixelRatio);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.shadowMap.enabled=true;
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0b1220);
-
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1220);
 const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.01,100);
 camera.position.set(1.6,1.6,3.2);
-
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,1.2,0);
-controls.enableDamping=true;
-controls.update();
+controls.target.set(0,1.2,0);controls.enableDamping=true;
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x444455,0.8));
 const dir=new THREE.DirectionalLight(0xffffff,1.2);
-dir.position.set(2.5,4,2.5);
-dir.castShadow=true;
-scene.add(dir);
+dir.position.set(2.5,4,2.5);dir.castShadow=true;scene.add(dir);
 
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(20,20),
-  new THREE.ShadowMaterial({opacity:0.3})
-);
-ground.rotation.x=-Math.PI/2;
-ground.receiveShadow=true;
-scene.add(ground);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(20,20),
+  new THREE.ShadowMaterial({opacity:0.3}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 
 window.addEventListener("resize",()=>{
   camera.aspect=innerWidth/innerHeight;
@@ -113,7 +88,7 @@ window.addEventListener("resize",()=>{
   renderer.setSize(innerWidth,innerHeight);
 });
 
-/* ========== Dynamic Model Loader ========== */
+/* ---------- Model Loader ---------- */
 function pickModelUrl(){
   const u=new URL(location.href);
   const q=u.searchParams.get("model");
@@ -121,11 +96,8 @@ function pickModelUrl(){
   if(q && q.trim()) return new URL(q,location.href).href;
   return "../assets/Roma_ROMetrics.glb";
 }
-let MODEL_URL=pickModelUrl();
-let model=null,skeleton=[];
-
-const loader=new GLTFLoader();
-loader.setMeshoptDecoder(MeshoptDecoder);
+let MODEL_URL=pickModelUrl(),model=null,skeleton=[];
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
 const draco=new DRACOLoader();
 draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
 loader.setDRACOLoader(draco);
@@ -133,34 +105,21 @@ loader.setDRACOLoader(draco);
 loader.load(MODEL_URL,gltf=>{
   model=gltf.scene;
   model.traverse(o=>{
-    if(o.isSkinnedMesh && o.skeleton) skeleton=o.skeleton.bones;
+    if(o.isSkinnedMesh&&o.skeleton)skeleton=o.skeleton.bones;
     if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}
   });
   scene.add(model);
   const box=new THREE.Box3().setFromObject(model);
   model.position.y-=box.min.y;
-  console.log("✅ Model loaded from",MODEL_URL);
-},xhr=>{
-  console.log("Loading",Math.round(xhr.loaded/xhr.total*100)+"%");
-},err=>{
-  console.error("❌ Model load failed",err);
+  console.log("✅ Model loaded:",MODEL_URL);
 });
 
-/* ========== Utility Functions ========== */
-function resolveBind(name){
-  return skeleton.find(b=>b.name===name)||null;
-}
-function resetAll(){
-  skeleton.forEach(b=>{
-    b.rotation.set(0,0,0);
-    if(b.position)b.position.set(0,0,0);
-  });
-}
+/* ---------- Utilities ---------- */
+function resolveBind(name){return skeleton.find(b=>b.name===name)||null;}
+function resetAll(){skeleton.forEach(b=>b.rotation.set(0,0,0));}
 function animateToPose(boneName,axis,deg,duration=1000){
-  const bone=resolveBind(boneName);
-  if(!bone)return;
-  const start=bone.rotation[axis];
-  const end=THREE.MathUtils.degToRad(deg);
+  const bone=resolveBind(boneName);if(!bone)return;
+  const start=bone.rotation[axis],end=THREE.MathUtils.degToRad(deg);
   const startTime=performance.now();
   function step(now){
     const t=Math.min((now-startTime)/duration,1);
@@ -170,7 +129,7 @@ function animateToPose(boneName,axis,deg,duration=1000){
   requestAnimationFrame(step);
 }
 
-/* ========== Action Map ========== */
+/* ---------- Actions ---------- */
 const ACTIONS={
   "shoulder-flexion":{bone:"upperarm_r",axis:"x",deg:90,midpoint:45},
   "shoulder-extension":{bone:"upperarm_r",axis:"x",deg:-60,midpoint:-30},
@@ -184,7 +143,7 @@ const ACTIONS={
   "ankle-plantarflexion":{bone:"foot_r",axis:"x",deg:-50,midpoint:-25}
 };
 
-/* ========== Action Execution ========== */
+/* ---------- Perform Action ---------- */
 function performAction(key,level="3-5"){
   if(!ACTIONS[key])return;
   const act=ACTIONS[key];
@@ -192,7 +151,7 @@ function performAction(key,level="3-5"){
   animateToPose(act.bone,act.axis,deg,1200);
 }
 
-/* ========== UI Elements ========== */
+/* ---------- UI ---------- */
 const testSel=document.getElementById("actionSel");
 const testLevel=document.getElementById("testLevel");
 const startBtn=document.getElementById("startBtn");
@@ -201,7 +160,7 @@ const status=document.getElementById("status");
 (async function populateTests(){
   const res=await fetch("https://raw.githubusercontent.com/Kingto89/ROMetrics/main/mmt/rometrics_mmt_library.md");
   const text=await res.text();
-  const matches=[...text.matchAll(/^###\s+(.*?)$/gm)];
+  const matches=[...text.matchAll(/^###\\s+(.*?)$/gm)];
   for(const m of matches){
     const opt=document.createElement("option");
     opt.value=m[1].toLowerCase().replace(/[^a-z0-9]+/g,"-");
@@ -210,15 +169,20 @@ const status=document.getElementById("status");
   }
 })();
 
-/* ========== Test Flow ========== */
-let selectedTest=null,holdTimers=[];
-testSel.addEventListener("change",()=>{selectedTest=testSel.value;});
+/* ---------- Auto-Pose on Selection ---------- */
+let selectedTest=null;
+testSel.addEventListener("change",()=>{
+  selectedTest=testSel.value;
+  resetAll();
+  performAction(selectedTest,testLevel.value);
+});
 
+/* ---------- Timed Test ---------- */
+let holdTimers=[];
 function beginTest(){
   if(!selectedTest)return;
-  const lvl=testLevel.value;
   resetAll();
-  performAction(selectedTest,lvl);
+  performAction(selectedTest,testLevel.value);
   status.textContent="3";
   holdTimers=[
     setTimeout(()=>status.textContent="4",3000),
@@ -227,14 +191,13 @@ function beginTest(){
   ];
 }
 function endTest(){
-  holdTimers.forEach(clearTimeout);
-  holdTimers=[];
+  holdTimers.forEach(clearTimeout);holdTimers=[];
   setTimeout(()=>{resetAll();status.textContent="";},1000);
 }
 startBtn.addEventListener("pointerdown",beginTest);
 startBtn.addEventListener("pointerup",endTest);
 
-/* ========== Render Loop ========== */
+/* ---------- Render ---------- */
 function render(){
   requestAnimationFrame(render);
   controls.update();
