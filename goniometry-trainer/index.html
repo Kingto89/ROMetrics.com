@@ -624,15 +624,18 @@ const Gonio = (() => {
     const numsOut = document.getElementById('numsOut');
     const numsIn = document.getElementById('numsIn');
     const R = 120, Rin = 86;
+const NS = "http://www.w3.org/2000/svg";
+
 const line = (p,x1,y1,x2,y2,cls)=>{
-  const n = document.createElementNS(svgNS,'line');
+  const n = document.createElementNS(NS,'line');
   n.setAttribute('x1',x1); n.setAttribute('y1',y1);
   n.setAttribute('x2',x2); n.setAttribute('y2',y2);
   if(cls) n.setAttribute('class',cls);
   p.appendChild(n);
 };
+
 const text = (p,x,y,t,cls)=>{
-  const n = document.createElementNS(svgNS,'text');
+  const n = document.createElementNS(NS,'text');
   n.setAttribute('x',x); n.setAttribute('y',y);
   n.setAttribute('class',cls);
   n.textContent = t;
@@ -643,17 +646,16 @@ const text = (p,x,y,t,cls)=>{
 /* ===== TICKS (unchanged) ===== */
 for(let d=0; d<360; d+=5){
   const a=(d-90)*Math.PI/180, big=d%30===0, len=big?12:6;
-  line(ticks,
+  line(
+    ticks,
     Math.cos(a)*(R-len), Math.sin(a)*(R-len),
     Math.cos(a)*R,       Math.sin(a)*R,
     big?'tick tickBig':'tick'
   );
 }
 
-/* ============================================================
-   OUTER WHITE NUMBERS (0–20–40–60–80 mirrored)
-   ============================================================ */
-numsOut.innerHTML = "";
+/* ===== OUTER WHITE NUMBERS ===== */
+numsOut.innerHTML="";
 const rWhite = R - 8;
 
 for(let w=0; w<=80; w+=20){
@@ -661,14 +663,12 @@ for(let w=0; w<=80; w+=20){
   angs.forEach(a=>{
     const th=(a-90)*Math.PI/180;
     const x=Math.cos(th)*rWhite, y=Math.sin(th)*rWhite;
-    text(numsOut, x, y, String(w), 'labelOuter');
+    text(numsOut,x,y,String(w),'labelOuter');
   });
 }
 
-/* ============================================================
-   INNER RED NUMBERS (mirrored 0→90→0; correct alignment)
-   ============================================================ */
-numsIn.innerHTML = "";
+/* ===== INNER RED NUMBERS ===== */
+numsIn.innerHTML="";
 const rInner = Rin + 9;
 
 for(let w=0; w<=80; w+=20){
@@ -681,9 +681,10 @@ for(let w=0; w<=80; w+=20){
   angs.forEach((a,i)=>{
     const th=(a-90)*Math.PI/180;
     const x=Math.cos(th)*rInner, y=Math.sin(th)*rInner;
-    text(numsIn, x, y, String(vals[i]), 'labelInner');
+    text(numsIn,x,y,String(vals[i]),'labelInner');
   });
 }
+
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
     buildTipRuler(armB_ruler, -380, -1, 'B');
