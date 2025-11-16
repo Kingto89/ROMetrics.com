@@ -682,7 +682,7 @@ const Gonio = (() => {
   const rInner = Rin + 9;   // inner-number radius
 
    /* ---------- OUTER (0–80–0–80–0) ---------- */
-  const OUTER_ANGLE_SHIFT = +10;   // <— rotate outer labels by 20°
+  const OUTER_ANGLE_SHIFT = +20;   // <— rotate outer labels 
 
   for (let d = 0; d < 360; d += 10){
     const inner = innerFromD(d);
@@ -690,7 +690,7 @@ const Gonio = (() => {
 
     if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
 
-    // apply 10° shift ONLY to outer label positions
+    // apply shift ONLY to outer label positions
     const a = (d - 90 + OUTER_ANGLE_SHIFT) * Math.PI / 180;
     const x = Math.cos(a) * rWhite;
     const y = Math.sin(a) * rWhite;
