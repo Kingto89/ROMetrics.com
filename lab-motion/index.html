@@ -622,7 +622,7 @@ function setBoneRotationFromUI(){
 
 /* ===== Zero selected bone ===== */
 function zeroSelectedBone(){
-  const idx = parseInt(boneSel.value||"-1",10);
+    const idx = parseInt(getActiveBoneSel().value || "-1", 10);
   if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
 
   const b = skeleton.bones[idx];
