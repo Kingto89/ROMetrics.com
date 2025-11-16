@@ -628,10 +628,36 @@ const Gonio = (() => {
     const line=(p,x1,y1,x2,y2,cls)=>{ const n=document.createElementNS('http://www.w3.org/2000/svg','line'); n.setAttribute('x1',x1);n.setAttribute('y1',y1);n.setAttribute('x2',x2);n.setAttribute('y2',y2); if(cls)n.setAttribute('class',cls); p.appendChild(n); };
     const text=(p,x,y,t,cls,rot)=>{ const n=document.createElementNS('http://www.w3.org/2000/svg','text'); n.setAttribute('x',x); n.setAttribute('y',y); n.setAttribute('class',cls||'labelOuter'); if(rot)n.setAttribute('transform',`rotate(${rot} ${x} ${y})`); n.textContent=t; p.appendChild(n); return n; };
     for(let d=0; d<360; d+=5){ const a=(d-90)*Math.PI/180, big=d%30===0, len=big?12:6; line(ticks,Math.cos(a)*(R-len),Math.sin(a)*(R-len),Math.cos(a)*R,Math.sin(a)*R,big?'tick tickBig':'tick'); }
-    const rWhite=R-8;
-    for(let d=0; d<360; d+=10){ const diff90=Math.abs(((d-90)%360+540)%360-180); const diff270=Math.abs(((d-270)%360+540)%360-180); const val=Math.min(diff90,diff270); if(val%20===0 && val<=80){ const a=(d-90)*Math.PI/180,x=Math.cos(a)*rWhite,y=Math.sin(a)*rWhite; text(numsOut,x,y,String(val),'labelOuter'); } }
-    const rInner=Rin+9, valFromTheta=th=>{const t=(th+180)%360; return t<=180?t:360-t;};
-    for(let th=0; th<360; th+=10){ const v=valFromTheta(th); if(v%10!==0) continue; if(v===0 && th!==180) continue; const a=(th-90)*Math.PI/180,x=Math.cos(a)*rInner,y=Math.sin(a)*rInner; text(numsIn,x,y,String(v),'labelInner'); }
+/* ==== FIXED WHITE + RED NUMBER LABELS (COMPACT) ==== */
+
+numsOut.innerHTML=""; numsIn.innerHTML="";
+const rWhite=R-8, rInner=Rin+9;
+const xy=(a,r)=>{const rad=(a-90)*Math.PI/180; return{ x:Math.cos(rad)*r, y:Math.sin(rad)*r }; };
+
+// OUTER WHITE
+for(let w=0; w<=80; w+=20){
+  const angs=[ (90-w+360)%360, (90+w)%360 ];
+  angs.forEach(a=>{
+    const p=xy(a,rWhite), t=document.createElementNS(svgNS,'text');
+    t.setAttribute('x',p.x); t.setAttribute('y',p.y);
+    t.setAttribute('class','labelOuter'); t.textContent=w;
+    numsOut.appendChild(t);
+  });
+}
+
+// INNER RED
+for(let w=0; w<=80; w+=20){
+  const angs=[ (90-w+360)%360, (90+w)%360 ];
+  const vals=[ ((90-w+360)%360)<=180?((90-w+360)%360):(360-((90-w+360)%360)),
+               ((90+w)%360)<=180?((90+w)%360):(360-((90+w)%360)) ];
+  angs.forEach((a,i)=>{
+    const p=xy(a,rInner), t=document.createElementNS(svgNS,'text');
+    t.setAttribute('x',p.x); t.setAttribute('y',p.y);
+    t.setAttribute('class','labelInner'); t.textContent=vals[i];
+    numsIn.appendChild(t);
+  });
+});
+
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
     buildTipRuler(armB_ruler, -380, -1, 'B');
