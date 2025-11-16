@@ -682,52 +682,26 @@ const rWhite = R   - 8;   // outer number radius
 const rInner = Rin + 9;   // inner number radius
 
 
-/* ============================================================
-   OUTER RING (0–80–0–80–0) — natural geometry + 10° left shift
-   ============================================================ */
-
-// shift ALL outer labels 10° LEFT
-numsOut.setAttribute("transform", "rotate(10)");
-
-for (let d = 0; d < 360; d += 10) {
-
-  const inner = innerFromD(d);        // already correct: 0→180→0
-  const outer = Math.abs(90 - inner); // yields 0,20,40,60,80
-
-  if (outer % 20 !== 0 || outer > 80) continue;
-
-  const a = (d - 90) * Math.PI / 180;
-  const x = Math.cos(a) * rWhite;
-  const y = Math.sin(a) * rWhite;
-
-  text(numsOut, x, y, String(outer), "labelOuter");
-}
-
-
-
-/* ============================================================
-   INNER RING (0→180→0) — upright, readable, no tilt
-   ============================================================ */
-
-for (let d = 0; d < 360; d += 10) {
-
+/* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
+   (so inner 0,10,20,…,170,180,170,…,10)
+*/
+for (let d = 0; d < 360; d += 10){
   const inner = innerFromD(d);
 
-  if (inner % 10 !== 0) continue;
-  if (inner === 0 && d !== 180) continue; // single bottom 0 only
+  if (inner % 10 !== 0) continue;          
+  if (inner === 0 && d !== 180) continue;
 
   const a = (d - 90) * Math.PI / 180;
   const x = Math.cos(a) * rInner;
   const y = Math.sin(a) * rInner;
 
-  // place number normally
-  text(numsIn, x, y, inner.toString().padStart(2, "0"), "labelInner");
+  // existing placement (DO NOT CHANGE)
+  text(numsIn, x, y, String(inner), "labelInner");
 
-  // straighten ONLY the text, do NOT rotate position
+  // ⭐ NEW LINE: straighten text ONLY — no movement, no rotation offset
   const el = numsIn.lastChild;
-  el.setAttribute("transform", `rotate(0 ${x} ${y})`);
+  el.setAttribute("transform", `rotate(${-d + 90} ${x} ${y})`);
 }
-
 
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
