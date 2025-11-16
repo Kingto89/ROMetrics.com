@@ -474,74 +474,102 @@ function populateBones(){
   boneSel2.innerHTML = "";
   if (!skeleton) return;
 
-  // ----- Create groups -----
+  // ----- Groups for each dropdown -----
   const spineGroup  = document.createElement("optgroup");
-  spineGroup.label = "Spine & Head";
+  spineGroup.label  = "Spine & Head";
+  const leftGroup   = document.createElement("optgroup");
+  leftGroup.label   = "Left Side";
 
-  const leftGroup = document.createElement("optgroup");
-  leftGroup.label = "Left Side";
-
-  const rightGroup = document.createElement("optgroup");
-  rightGroup.label = "Right Side";
+  const spineGroup2 = document.createElement("optgroup");
+  spineGroup2.label = "Spine & Head";
+  const rightGroup2 = document.createElement("optgroup");
+  rightGroup2.label = "Right Side";
 
   boneSel.appendChild(spineGroup);
-  boneSel2.appendChild(spineGroup.cloneNode());
-
   boneSel.appendChild(leftGroup);
-  boneSel2.appendChild(rightGroup);
 
-  // ----- Fill both dropdowns with *filtered* bones -----
-  skeleton.bones.forEach((b,i)=>{
-    const name = (b.name||"").toLowerCase();
+  boneSel2.appendChild(spineGroup2);
+  boneSel2.appendChild(rightGroup2);
+
+  // ----- Collect bones first so we can sort by ORDER_MAP -----
+  const spineArr = [];
+  const leftArr  = [];
+  const rightArr = [];
+
+  skeleton.bones.forEach((b, i) => {
+    const name = (b.name || "").toLowerCase();
     if (!name) return;
 
-    // reset baseline storage
-    if (!initialBoneRot.has(b))
+    if (!initialBoneRot.has(b)) {
       initialBoneRot.set(b, b.quaternion.clone());
+    }
 
-    // option for this bone
-    const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = b.name;
+    const entry = { boneIndex: i, nameLower: name, label: b.name };
 
-    const opt2 = opt.cloneNode(true);
-
-    // --- SPINE / HEAD / NECK / BREAST → both selects ---
-    if (
+    const isMidline =
       name.startsWith("spine") ||
       name === "neck" ||
       name === "head" ||
-      name.includes("breast")
-    ){
-      spineGroup.appendChild(opt);
-      boneSel2.querySelector("optgroup[label='Spine & Head']").appendChild(opt2);
-      return;
-    }
+      name.includes("breast");
 
-    // --- LEFT bones → only LEFT dropdown ---
-    if (name.endsWith("_l") || name.endsWith(".l")){
-      leftGroup.appendChild(opt);
-      return;
-    }
+    const isLeft  = !isMidline && (name.endsWith("_l") || name.endsWith(".l"));
+    const isRight = !isMidline && (name.endsWith("_r") || name.endsWith(".r"));
 
-    // --- RIGHT bones → only RIGHT dropdown ---
-    if (name.endsWith("_r") || name.endsWith(".r")){
-      rightGroup.appendChild(opt2);
-      return;
+    if (isMidline) {
+      spineArr.push(entry);          // goes in BOTH dropdowns
+    } else if (isLeft) {
+      leftArr.push(entry);           // ONLY left dropdown
+    } else if (isRight) {
+      rightArr.push(entry);          // ONLY right dropdown
     }
   });
 
-  // Default to first spine bone
-  if (spineGroup.children.length){
-    const first = spineGroup.children[0].value;
-    boneSel.value  = first;
-    boneSel2.value = first;
+  // ----- Sort using ORDER_MAP (head → toes) -----
+  const orderKey = (e) => {
+    const n = e.nameLower;
+    const idx = (ORDER_MAP[n] !== undefined) ? ORDER_MAP[n] : 9999;
+    return idx * 100 + e.boneIndex;  // stable-ish
+  };
+
+  [spineArr, leftArr, rightArr].forEach(arr => arr.sort((a,b) => orderKey(a) - orderKey(b)));
+
+  // ----- Append in sorted order -----
+  spineArr.forEach(e => {
+    const opt1 = document.createElement("option");
+    opt1.value = String(e.boneIndex);
+    opt1.textContent = e.label;
+    spineGroup.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = String(e.boneIndex);
+    opt2.textContent = e.label;
+    spineGroup2.appendChild(opt2);
+  });
+
+  leftArr.forEach(e => {
+    const opt = document.createElement("option");
+    opt.value = String(e.boneIndex);
+    opt.textContent = e.label;
+    leftGroup.appendChild(opt);
+  });
+
+  rightArr.forEach(e => {
+    const opt = document.createElement("option");
+    opt.value = String(e.boneIndex);
+    opt.textContent = e.label;
+    rightGroup2.appendChild(opt);
+  });
+
+  // Default to first spine bone if available
+  if (spineGroup.children.length) {
+    const firstVal = spineGroup.children[0].value;
+    boneSel.value  = firstVal;
+    boneSel2.value = firstVal;
   }
 
   rx.value = ry.value = rz.value = "0";
   setBoneRotationFromUI();
 }
-
 
   // ----- STRICT ORDER MAP (head → toes) -----
   const ORDER = [
