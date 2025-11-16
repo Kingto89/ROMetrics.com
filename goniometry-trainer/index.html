@@ -623,7 +623,7 @@ const Gonio = (() => {
     const ticks = document.getElementById('ticks');
     const numsOut = document.getElementById('numsOut');
     const numsIn = document.getElementById('numsIn');
-    const R = 120, Rin = 86;
+   const R = 120, Rin = 86;
 const NS = "http://www.w3.org/2000/svg";
 
 const line = (p,x1,y1,x2,y2,cls)=>{
@@ -654,36 +654,40 @@ for(let d=0; d<360; d+=5){
   );
 }
 
-/* ===== OUTER WHITE NUMBERS ===== */
-numsOut.innerHTML="";
+/* ===========================================
+   OUTER WHITE — correct PT arc 0→80→0
+   MUST sit only on 10° long ticks
+=========================================== */
+numsOut.innerHTML = "";
 const rWhite = R - 8;
 
-for(let w=0; w<=80; w+=20){
-  const angs = [ (90-w+360)%360, (90+w)%360 ];
-  angs.forEach(a=>{
-    const th=(a-90)*Math.PI/180;
-    const x=Math.cos(th)*rWhite, y=Math.sin(th)*rWhite;
-    text(numsOut,x,y,String(w),'labelOuter');
-  });
+for(let d=0; d<360; d+=10){
+  // symmetric outer mapping 0..80..0
+  const d90  = Math.abs(((d - 90 )%360 + 540)%360 - 180);
+  const d270 = Math.abs(((d - 270)%360 + 540)%360 - 180);
+  const v = Math.min(d90, d270);          // 0..80..0
+  if(v % 20 !== 0 || v > 80) continue;    // show ONLY 0,20,40,60,80
+  const a=(d-90)*Math.PI/180;
+  text(numsOut, Math.cos(a)*rWhite, Math.sin(a)*rWhite, String(v), 'labelOuter');
 }
 
-/* ===== INNER RED NUMBERS ===== */
-numsIn.innerHTML="";
+/* ===========================================
+   INNER RED — correct PT arc 0→180→0
+   MUST sit only on 10° long ticks
+=========================================== */
+numsIn.innerHTML = "";
 const rInner = Rin + 9;
 
-for(let w=0; w<=80; w+=20){
-  const angs=[ (90-w+360)%360, (90+w)%360 ];
-  const vals=[
-    ((90-w+360)%360)<=180?((90-w+360)%360):(360-((90-w+360)%360)),
-    ((90+w)%360)<=180?((90+w)%360):(360-((90+w)%360))
-  ];
+for(let d=0; d<360; d+=10){
+  // symmetric inner arc 0..180..0
+  const t = (d + 180) % 360;
+  const v = (t <= 180 ? t : 360 - t);     // 0..180..0
 
-  angs.forEach((a,i)=>{
-    const th=(a-90)*Math.PI/180;
-    const x=Math.cos(th)*rInner, y=Math.sin(th)*rInner;
-    text(numsIn,x,y,String(vals[i]),'labelInner');
-  });
+  if(v % 10 !== 0) continue;              // only long ticks
+  const a=(d-90)*Math.PI/180;
+  text(numsIn, Math.cos(a)*rInner, Math.sin(a)*rInner, String(v), 'labelInner');
 }
+
 
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
