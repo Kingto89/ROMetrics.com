@@ -1556,11 +1556,41 @@ async function loadGonioPlacement(region, motion){
     const m  = md.match(re);
     const sec = m ? m[2].trim() : md;
 
-    alert(`📌 ${motion}\n\n${sec}`);
   }catch(e){
-    alert("No placement note found.");
   }
 }
+document.getElementById("showGonio").onclick = async () => {
+  const key = document.getElementById("actionSel")?.value;
+  if (!key){
+    alert("Select an action first.");
+    return;
+  }
+
+  const region = regionFromKey(key);
+  const motion = motionNameFromKey(key);
+  if (!region){
+    alert("Region not found for this action.");
+    return;
+  }
+
+  // Load Markdown file
+  const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
+  try{
+    const r = await fetch(url);
+    if (!r.ok) throw new Error();
+    const md = await r.text();
+    const sec = extractPlacementSection(md, motion);
+
+    document.getElementById("aaNoteTitle").textContent = motion;
+    document.getElementById("aaNoteBody").innerHTML = mdToHtml(sec);
+    document.getElementById("aaNote").classList.remove("hide");
+  }catch(e){
+    document.getElementById("aaNoteTitle").textContent = motion;
+    document.getElementById("aaNoteBody").textContent = "No placement note found.";
+    document.getElementById("aaNote").classList.remove("hide");
+  }
+};
+
 
 document.getElementById("showGonio").onclick = async () => {
   const key = document.getElementById("actionSel")?.value || motionSel?.value;
