@@ -620,6 +620,7 @@ const Gonio = (() => {
   const shortest=(a,b)=>{ let d=clamp360(a-b); return d>180? 360-d: d; };
 
   (function build(){
+    const NS = "http://www.w3.org/2000/svg";
     const ticks = document.getElementById('ticks');
     const numsOut = document.getElementById('numsOut');
     const numsIn = document.getElementById('numsIn');
