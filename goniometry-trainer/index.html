@@ -268,6 +268,7 @@ const rotateCCWEl = document.getElementById("rotateCCW");
 
 const regionSel = document.getElementById("regionSel");
 const motionSel = document.getElementById("motionSel");
+let CURRENT_ACTION = null;
 const note = document.getElementById("note");
 const noteTitle = document.getElementById("noteTitle");
 const noteBody = document.getElementById("noteBody");
@@ -276,6 +277,7 @@ document.getElementById("noteClose").onclick = ()=> note.classList.add("hide");
 const resetROMBtn = document.getElementById("resetROM");
 const startROMBtn = document.getElementById("startROM");
 const resetMeasurementBtn = document.getElementById("resetMeasurement");
+const runActionBtn = document.getElementById("runAction");
 
 const modelX = document.getElementById("modelX");
 const modelZ = document.getElementById("modelZ");
@@ -630,6 +632,27 @@ document.getElementById("controllers").open = false;
 
 /* Sliders */
 sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gonio.refresh(); };
+
+/* ===================== RUN ACTION (Step 3 wiring only) ===================== */
+runActionBtn.onclick = () => {
+  const key = motionSel.value;
+
+  if (!key || key === "(No motions)") {
+    log("❌ No valid motion selected.");
+    return;
+  }
+
+  CURRENT_ACTION = ACTIONS.find(a => a.key === key);
+
+  if (!CURRENT_ACTION) {
+    log("❌ Action not found: " + key);
+    return;
+  }
+
+  log(`🎬 Ready to run action: ${CURRENT_ACTION.motion} (${CURRENT_ACTION.key})`);
+
+  // Movement engine comes in Step 4
+};
 
 /* NEW: CW/CCW handlers (each zeroes the other) */
 rotateCWEl.oninput = ()=>{
