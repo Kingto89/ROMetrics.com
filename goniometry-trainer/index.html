@@ -284,6 +284,128 @@ const modelYaw = document.getElementById("modelYaw");
 const resetPose = document.getElementById("resetPose");
 
 const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+  /* ===== Bone finding ===== */
+const EXCLUDE = /(pelvis|root|scapula)/i;
+function sideRegex(side){
+  if (!side) return [/.*/];
+  return side==='l'
+    ? [/\bleft\b/i, /\b_left\b/i, /\.l\b/i, /_l\b/i, /\bl\b(?![a-z])/i, /mixamorig:.*left/i]
+    : [/\bright\b/i, /\b_right\b/i, /\.r\b/i, /_r\b/i, /\br\b(?![a-z])/i, /mixamorig:.*right/i];
+}
+function findBoneBy(cfg){
+  if (!skeleton) return null;
+  const names = skeleton.bones.map(b=>b.name.toLowerCase());
+  const sideREs = sideRegex(cfg.side);
+
+  const HINTS = cfg.hints || [];
+  const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
+                    (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
+  const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
+
+  for (const cand of tryList){
+    for (let i=0;i<names.length;i++){
+      if (EXCLUDE.test(names[i])) continue;
+      if (cfg.side && !sideREs.some(r=>r.test(names[i])) ) continue;
+      if (cand.test(names[i])) return skeleton.bones[i];
+    }
+  }
+  if (!cfg.side){
+    for (const cand of tryList){
+      for (let i=0;i<names.length;i++){
+        if (EXCLUDE.test(names[i])) continue;
+        if (cand.test(names[i])) return skeleton.bones[i];
+      }
+    }
+  }
+  return null;
+}
+/* ===== DRUJ proxy (kept) ===== */
+const DRUJ = { l:null, r:null };
+function ensureDRUJProxy(side){
+  if (!skeleton) return null;
+  if (DRUJ[side]) return DRUJ[side];
+  const handCfg = { side, hints:[/hand|wrist/i] };
+  let hand = findBoneBy(handCfg);
+  if (!hand) return null;
+  const pivot = new THREE.Object3D();
+  const parent = hand.parent; if (!parent) return null;
+  parent.add(pivot);
+  pivot.position.copy(hand.position);
+  pivot.quaternion.copy(hand.quaternion);
+  pivot.scale.copy(hand.scale);
+  pivot.add(hand);
+  hand.position.set(0,0,0); hand.quaternion.identity(); hand.scale.set(1,1,1);
+  initialBoneRot.set(pivot, pivot.quaternion.clone());
+  DRUJ[side] = { pivot };
+  log(`Created DRUJ proxy for ${side.toUpperCase()}`);
+  return DRUJ[side];
+}
+
+const JOINT_BIND = new Map();
+function resolveBind(key,cfg){
+  // --- Clavicle fallback: try real clavicle, else shoulder/collar, else upperarm parent
+if (/^clavicle_/.test(key)) {
+    const side = /_L$/.test(key) ? 'l' : 'r';
+  // try direct clavicle/collar/shoulder
+  let bone = findBoneBy({ side, hints:[/clavicle|collar|shoulder/i], key });
+  if (!bone) {
+    // fallback: take upperarm (humerus) and use its parent as a pseudo-clavicle
+    const upper = findBoneBy({ side, hints:[/upperarm|humerus/i], key });
+    bone = upper && upper.parent ? upper.parent : upper;
+  }
+  if (bone) {
+    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
+    const axis = axisFor(RIG_PROFILE, key, 'z'); // allow '-z' mapping
+    const obj = { bone, qBind, axis };
+    JOINT_BIND.set(key, obj);
+    log(`Bound ${key} → ${bone.name} (axis ${axis}) [clavicle-fallback]`);
+    return obj;
+  } else {
+    log(`No bind for ${key} (clavicle fallback failed)`);
+    return null;
+  }
+}
+
+  if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
+  if (/^trunk_/.test(key)) {
+    const b = getExactBoneByName('spine01');
+    if (b) {
+      const qBind = (initialBoneRot.get(b) || b.quaternion.clone()).clone();
+      const axis = axisFor(RIG_PROFILE, key, ({sagittal:'x', frontal:'z', transverse:'y'})[cfg.plane] || 'x');
+      const obj = { bone: b, qBind, axis };
+      JOINT_BIND.set(key, obj);
+      log(`Bound ${key} → spine01 (axis ${axis}) [hard-bind]`);
+      return obj;
+    }
+  }
+  let bone = findBoneBy({...cfg, key});
+  if ((!bone) && (key==='wr_ps_l' || key==='fa_ps_l')) { const p=ensureDRUJProxy('l'); bone=p&&p.pivot; }
+  if ((!bone) && (key==='wr_ps_r' || key==='fa_ps_r')) { const p=ensureDRUJProxy('r'); bone=p&&p.pivot; }
+  if (!bone) { log(`No bind for ${key}`); return null; }
+  const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
+  const baseAxis = ({sagittal:'x',frontal:'z',transverse:'y'})[cfg.plane] || 'x';
+  const axis = axisFor(RIG_PROFILE, key, baseAxis);
+  const obj = {bone, qBind, axis};
+  JOINT_BIND.set(key,obj);
+  log(`Bound ${key} → ${bone.name} (axis ${axis})`);
+  return obj;
+}
+function cfgFromKey(k){ 
+  return [...UPPER,...LOWER].find(x=>x.key===k) || null; 
+}
+const ANAT = { addL:-32, psL:-2, wpsL:-73 };
+function applyAnatomicBaseline(){
+  setPair('sh_aa_l', ANAT.addL);
+  setPair('sh_aa_r', ANAT.addL);
+  setPair('fa_ps_l', ANAT.psL);
+  setPair('fa_ps_r', ANAT.psL);
+  setPair('wr_ps_l', ANAT.wpsL);
+  setPair('wr_ps_r', -ANAT.wpsL);
+  log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
+}
+
+  
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
   enabled: false,
@@ -482,6 +604,7 @@ if(/^foot_invev_/.test(key)){
   }
 }
 
+  
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
