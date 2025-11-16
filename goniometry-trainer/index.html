@@ -625,102 +625,78 @@ const Gonio = (() => {
   const numsOut = document.getElementById('numsOut');
   const numsIn  = document.getElementById('numsIn');
 
-   const R   = 120;
-  const Rin = 86;
+ const R   = 120;
+const Rin = 86;
 
-  /* ---------- HELPERS ---------- */
-  const line = (p,x1,y1,x2,y2,cls)=>{
-    const n = document.createElementNS(NS,'line');
-    n.setAttribute('x1',x1); n.setAttribute('y1',y1);
-    n.setAttribute('x2',x2); n.setAttribute('y2',y2);
-    if(cls) n.setAttribute('class',cls);
-    p.appendChild(n);
-  };
+/* ---------- HELPERS ---------- */
+const line = (p,x1,y1,x2,y2,cls)=>{
+  const n=document.createElementNS(NS,'line');
+  n.setAttribute('x1',x1); n.setAttribute('y1',y1);
+  n.setAttribute('x2',x2); n.setAttribute('y2',y2);
+  if(cls) n.setAttribute('class',cls);
+  p.appendChild(n);
+};
 
-  const text = (p,x,y,t,cls)=>{
-    const n = document.createElementNS(NS,'text');
-    n.setAttribute('x',x); n.setAttribute('y',y);
-    n.setAttribute('class',cls);
-    n.textContent = t;
-    p.appendChild(n);
-    return n;
-  };
+const text = (p,x,y,t,cls)=>{
+  const n=document.createElementNS(NS,'text');
+  n.setAttribute('x',x); n.setAttribute('y',y);
+  n.setAttribute('class',cls);
+  n.textContent = t;
+  p.appendChild(n);
+  return n;
+};
 
-  /* ============================================
-       TICK BAND — LONG = 10°, MEDIUM = 5°
-       (Ticks BETWEEN inner + outer numbers)
-  ============================================ */
-  const tickInnerR = Rin + 4;      // band start
-  const tickOuterR = R - 12;       // band end
+/* ---------- TICKS (LONG = 10°, MED = 5°) ---------- */
+/* Ticks positioned BETWEEN inner+outer numbers */
+for (let d=0; d<360; d+=5){
+  const a = (d-90)*Math.PI/180;
+  const long = (d % 10 === 0);
+  const len  = long ? 11 : 6;
+  const r0   = Rin + 4;     // start (between rings)
+  const r1   = Rin + 4 + len;  // end
+  line(
+    ticks,
+    Math.cos(a)*r0, Math.sin(a)*r0,
+    Math.cos(a)*r1, Math.sin(a)*r1,
+    long ? "tick tickBig" : "tick"
+  );
+}
 
-  for (let d = 0; d < 360; d += 5) {
-    const a = (d - 90) * Math.PI/180;
-    const big = (d % 10 === 0);
+/* ---------- OUTER (0–80–0–80–0) ---------- */
+numsOut.innerHTML="";
+const rOuter = R - 5;
 
-    const r1 = tickInnerR;
-    const r2 = big ? tickOuterR : (tickOuterR - 4);
+for (let d=0; d<360; d+=10){
+  let diff = Math.abs(((d-90+360)%360) - 180);
+  let out  = diff <= 80 ? diff : (160-diff);
 
-    line(
-      ticks,
-      Math.cos(a)*r1,
-      Math.sin(a)*r1,
-      Math.cos(a)*r2,
-      Math.sin(a)*r2,
-      big ? "tick tickBig" : "tick"
-    );
-  }
+  if (out % 20 !== 0) continue;
 
-  /* ============================================
-              OUTER NUMBERS (0–80–80–0–…)
-     Sequence: 0 → 20 → 40 → 60 → 80 → 80 → 60 → 40 → 20 → 0 → 20 → 40 …
-  ============================================ */
-  numsOut.innerHTML = "";
-  const rOuter = R - 4;
+  const a = (d-90)*Math.PI/180;
+  const x = Math.cos(a)*rOuter;
+  const y = Math.sin(a)*rOuter;
 
-  for (let d = 0; d < 360; d += 20) {
-    const angle = (d - 90 + 360) % 360;
+  text(numsOut,x,y,String(out),'labelOuter');
+}
 
-    // map to 0–80–80–0 repeating pattern
-    let outer;
-    if (angle <= 180) outer = Math.min(angle, 80);
-    else outer = Math.min(360 - angle, 80);
+/* ---------- INNER (0 → 180 → 0) ---------- */
+/* 0° IS AT BOTTOM (6 o’clock) */
+numsIn.innerHTML="";
+const rInner = Rin - 2;
 
-    // sequence: 0,20,40,60,80,80,60,40,20,0,...
-    outer = outer - (outer % 20);
+for (let d=0; d<360; d+=10){
+  const raw = (d + 180) % 360;      // bottom = 0°
+  let inner;
 
-    const a = (d - 90) * Math.PI/180;
-    const x = Math.cos(a)*rOuter;
-    const y = Math.sin(a)*rOuter;
+  if      (raw <= 180) inner = raw;         // 0→180
+  else if (raw > 180)  inner = 360 - raw;   // 170→0
 
-    text(numsOut, x, y, String(outer), 'labelOuter');
-  }
+  const a = (d-90)*Math.PI/180;
+  const x = Math.cos(a)*rInner;
+  const y = Math.sin(a)*rInner;
 
-  /* ============================================
-         INNER NUMBERS (0 → 180 → 0)
-         0–10–20…–170–180–170–160…–10–0
-         10s appear under LONG ticks
-  ============================================ */
-  numsIn.innerHTML = "";
-  const rInnerTxt = Rin + 12;
-
-  for (let d = 0; d < 360; d += 10) {
-
-    // map right horizontal = 0
-    let raw = (d + 270) % 360;
-
-    // convert to 0→180→0
-    let inner = (raw <= 180) ? raw : (360 - raw);
-
-    // round to nearest 10
-    inner = Math.round(inner / 10) * 10;
-
-    const a = (d - 90) * Math.PI/180;
-    const x = Math.cos(a)*rInnerTxt;
-    const y = Math.sin(a)*rInnerTxt;
-
-    text(numsIn, x, y, String(inner), 'labelInner');
-  }
-
+  text(numsIn,x,y,String(inner),'labelInner');
+}
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
     buildTipRuler(armB_ruler, -380, -1, 'B');
