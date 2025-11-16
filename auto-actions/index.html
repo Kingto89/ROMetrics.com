@@ -81,7 +81,7 @@ optgroup{color:#9fb0c9;font-style:normal}
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
       <div class="row" style="display:flex; gap:8px;">
-  <button id="showGonio" class="mini" style="flex:1;">📌 Show Gonio Placement</button>
+  <button id="" class="mini" style="flex:1;">📌 Show Gonio Placement</button>
   <button id="autoMoveBtn" class="mini" style="flex:1;">▶️ Run Action</button>
 </div>
 
@@ -1592,20 +1592,6 @@ document.getElementById("showGonio").onclick = async () => {
 };
 
 
-document.getElementById("showGonio").onclick = async () => {
-  const key = document.getElementById("actionSel")?.value || motionSel?.value;
-  if (!key){
-    alert("Select an action first.");
-    return;
-  }
-  const region = regionFromKey(key);
-  const motion = motionNameFromKey(key);
-  if (!region){
-    alert("Region not found for this action.");
-    return;
-  }
-  await loadGonioPlacement(region, motion);
-};
 
   </script>
 </body>
