@@ -593,7 +593,8 @@ function populateBones(){
 
 /* ===== Apply rotation from sliders ===== */
 function setBoneRotationFromUI(){
-  const idx = parseInt(boneSel.value||"-1",10);
+const activeSel = getActiveBoneSel();
+const idx = parseInt(activeSel.value || "-1", 10);
   if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
   const b = skeleton.bones[idx];
 
