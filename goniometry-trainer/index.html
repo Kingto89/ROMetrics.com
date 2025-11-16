@@ -712,6 +712,16 @@ const Gonio = (() => {
     const y = Math.sin(a) * rInner;
 
     text(numsIn, x, y, String(inner), "labelInner");
+    const el = numsIn.lastChild;
+
+// current angle (same as parent rotation)
+const ang = (d - 90);
+
+// === Apply: un-rotate + horizontal flip ===
+el.setAttribute(
+  "transform",
+  `rotate(${-ang} ${x} ${y}) scale(-1,1)`
+);
   }
 
 
