@@ -1489,6 +1489,58 @@ function toggleCollisionTuner(show) {
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
+  /* ===================== GONIO PLACEMENT LOADER ===================== */
+function regionFromKey(key){
+  if (key.startsWith("trunk_")) return "thoracic_lumbar_spine";
+  if (key.startsWith("cerv_"))  return "cervical_spine";
+  if (key.startsWith("clavicle")) return "glenohumeral_joint";
+  if (key.startsWith("sh_"))    return "glenohumeral_joint";
+  if (key.startsWith("el_"))    return "elbow_radioulnar";
+  if (key.startsWith("wr_"))    return "wrist";
+  if (key.startsWith("hip_"))   return "hip";
+  if (key.startsWith("knee_"))  return "knee";
+  if (key.startsWith("ankle_")) return "talocrural_ankle";
+  if (key.startsWith("foot_"))  return "transverse_tarsal_subtalar";
+  return null;
+}
+
+function motionNameFromKey(key){
+  const a = ACTIONS.find(x => x.key === key);
+  return a ? a.motion : "(General)";
+}
+
+async function loadGonioPlacement(region, motion){
+  const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("Missing MD");
+    const md = await res.text();
+
+    const re = new RegExp(`(^|\\n)##?\\s*${motion}\\s*\\n([\\s\\S]*?)(\\n##?\\s|$)`,'i');
+    const m  = md.match(re);
+    const sec = m ? m[2].trim() : md;
+
+    alert(`📌 ${motion}\n\n${sec}`);
+  }catch(e){
+    alert("No placement note found.");
+  }
+}
+
+document.getElementById("showGonio").onclick = async () => {
+  const key = document.getElementById("actionSel")?.value || motionSel?.value;
+  if (!key){
+    alert("Select an action first.");
+    return;
+  }
+  const region = regionFromKey(key);
+  const motion = motionNameFromKey(key);
+  if (!region){
+    alert("Region not found for this action.");
+    return;
+  }
+  await loadGonioPlacement(region, motion);
+};
+
   </script>
 </body>
 </html>
