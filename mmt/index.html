@@ -69,8 +69,8 @@ button{cursor:pointer;font-weight:700}
   <div id="status"></div>
 </div>
 
-<img id="handL" class="hand" src="../assets/hand_L.png">
-<img id="handR" class="hand" src="../assets/hand_R.png">
+<img id="handL" class="hand" src="./assets/hand_L.png">
+<img id="handR" class="hand" src="./assets/hand_R.png">
 
 <script type="module">
 import * as THREE from 'three';
@@ -102,15 +102,16 @@ window.addEventListener('resize',()=>{
   renderer.setSize(innerWidth,innerHeight);
 });
 
-/* ---------- Load Roma Model ---------- */
+/* ---------- Load Roma Model (Correct Live Path) ---------- */
 let model=null,skeleton=[];
 const loader=new GLTFLoader();
+const MODEL_URL="/ROMetrics/assets/Roma_ROMetrics.glb?v=1";
 try{
-  const glb=await loader.loadAsync('../assets/models/Roma_ROMetrics.glb');
+  const glb=await loader.loadAsync(MODEL_URL);
   model=glb.scene;
   model.traverse(o=>{if(o.isBone)skeleton.push(o);});
   scene.add(model);
-  console.log('✅ Roma model loaded from ./assets/models/Roma_ROMetrics.glb');
+  console.log('✅ Roma model loaded from',MODEL_URL);
 }catch(e){console.error('❌ Model load failed',e);}
 
 /* ---------- Core Helpers ---------- */
