@@ -593,8 +593,9 @@ function populateBones(){
 
 /* ===== Apply rotation from sliders ===== */
 function setBoneRotationFromUI(){
-const activeSel = getActiveBoneSel();
-const idx = parseInt(activeSel.value || "-1", 10);
+  const activeSel = getActiveBoneSel();     // ✅ FIX — use active dropdown
+  const idx = parseInt(activeSel.value || "-1", 10);
+
   if (!skeleton || isNaN(idx) || !skeleton.bones[idx]) return;
   const b = skeleton.bones[idx];
 
@@ -602,8 +603,8 @@ const idx = parseInt(activeSel.value || "-1", 10);
   const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
   const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
 
-  const qDelta = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(ex,ey,ez,"XYZ")
+  const qDelta = new THREE.QuaternionsetFromEuler(
+    new THREE.Euler(ex, ey, ez, "XYZ")
   );
   const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
   b.quaternion.copy(qBase).multiply(qDelta);
