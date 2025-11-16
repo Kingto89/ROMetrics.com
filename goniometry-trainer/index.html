@@ -696,7 +696,7 @@ const Gonio = (() => {
     const x = Math.cos(a) * rInner;
     const y = Math.sin(a) * rInner;
 
-    text(numsIn, x, y, String(inner), "labelInner").setAttribute('transform', `rotate(${180 - d} ${x} ${y})`);
+    text(numsIn, x, y, String(inner), "labelInner").setAttribute('transform', `rotate(${360 - d} ${x} ${y})`);
   }
 
 
