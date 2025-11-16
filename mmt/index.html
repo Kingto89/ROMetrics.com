@@ -209,9 +209,16 @@ const status=document.getElementById('status');
 let selectedTest=null,holdTimers=[];
 
 testSel.addEventListener('change',()=>{
-  selectedTest=testSel.value;
+  testSel.addEventListener('change',()=>{
+  selectedTest = testSel.value;
+  
+  // 🔥 Instant pose on select (fixes your issue)
+  resetAll();
+  performAction(selectedTest, testLevel.value);
+
   updateHandGate();
 });
+  
 function updateHandGate(){
   startBtn.disabled=!(selectedTest&&handsReady());
 }
