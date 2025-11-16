@@ -286,30 +286,117 @@ const resetPose = document.getElementById("resetPose");
 
 const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-/* Motions */
-const REGION_MOTIONS = {
-  cervical_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
-  thoracic_lumbar_spine: ["Flexion","Extension","Lateral Flexion","Rotation"],
-  glenohumeral_joint: ["Flexion","Extension","Abduction","Internal Rotation","External Rotation"],
-  elbow_radioulnar: ["Flexion","Extension","Pronation","Supination"],
-  wrist: ["Flexion","Extension","Radial Deviation","Ulnar Deviation"],
-  hip: ["Flexion","Extension","Abduction","Adduction","Internal Rotation","External Rotation"],
-  knee: ["Flexion","Extension"],
-  talocrural_ankle: ["Dorsiflexion","Plantarflexion"],
-  transverse_tarsal_subtalar: ["Inversion","Eversion"],
-  fingers_mcp_pip_dip: ["MCP Flexion","MCP Extension","PIP Flexion","PIP Extension","DIP Flexion","DIP Extension"],
-  thumb_cmc_mcp_ip: ["CMC Flexion","CMC Extension","CMC Abduction","CMC Adduction","MCP Flexion","MCP Extension","IP Flexion","IP Extension"],
-  toes_mtp_pip_dip: ["MTP Flexion","MTP Extension","PIP Flexion","PIP Extension","DIP Flexion","DIP Extension"]
-};
+/* ===================== ACTION ENGINE MOTION CATALOG ===================== */
+/* DO NOT CHANGE — this is synced to Automated Actions index */
+const ACTIONS = [
+  // ----- Cervical -----
+  { key:"cv_flex",   region:"cervical_spine", motion:"Flexion",               side:"none" },
+  { key:"cv_ext",    region:"cervical_spine", motion:"Extension",             side:"none" },
+  { key:"cv_lat_l",  region:"cervical_spine", motion:"Lateral Flexion — Left",  side:"L" },
+  { key:"cv_lat_r",  region:"cervical_spine", motion:"Lateral Flexion — Right", side:"R" },
+  { key:"cv_rot_l",  region:"cervical_spine", motion:"Rotation — Left",         side:"L" },
+  { key:"cv_rot_r",  region:"cervical_spine", motion:"Rotation — Right",        side:"R" },
+
+  // ----- Thoracic/Lumbar -----
+  { key:"tr_flex",   region:"thoracic_lumbar_spine", motion:"Flexion",   side:"none" },
+  { key:"tr_ext",    region:"thoracic_lumbar_spine", motion:"Extension", side:"none" },
+  { key:"tr_lat_l",  region:"thoracic_lumbar_spine", motion:"Lateral Flexion — Left",  side:"L" },
+  { key:"tr_lat_r",  region:"thoracic_lumbar_spine", motion:"Lateral Flexion — Right", side:"R" },
+  { key:"tr_rot_l",  region:"thoracic_lumbar_spine", motion:"Rotation — Left",         side:"L" },
+  { key:"tr_rot_r",  region:"thoracic_lumbar_spine", motion:"Rotation — Right",        side:"R" },
+
+  // ----- Shoulder -----
+  { key:"sh_flex_l",  region:"glenohumeral_joint", motion:"Flexion — Left",  side:"L" },
+  { key:"sh_flex_r",  region:"glenohumeral_joint", motion:"Flexion — Right", side:"R" },
+  { key:"sh_ext_l",   region:"glenohumeral_joint", motion:"Extension — Left",  side:"L" },
+  { key:"sh_ext_r",   region:"glenohumeral_joint", motion:"Extension — Right", side:"R" },
+  { key:"sh_abd_l",   region:"glenohumeral_joint", motion:"Abduction — Left",  side:"L" },
+  { key:"sh_abd_r",   region:"glenohumeral_joint", motion:"Abduction — Right", side:"R" },
+  { key:"sh_irer_l",  region:"glenohumeral_joint", motion:"Internal Rotation — Left",  side:"L" },
+  { key:"sh_irer_r",  region:"glenohumeral_joint", motion:"Internal Rotation — Right", side:"R" },
+  { key:"sh_er_l",    region:"glenohumeral_joint", motion:"External Rotation — Left",  side:"L" },
+  { key:"sh_er_r",    region:"glenohumeral_joint", motion:"External Rotation — Right", side:"R" },
+
+  // ----- Elbow / Radioulnar -----
+  { key:"el_flex_l",  region:"elbow_radioulnar", motion:"Flexion — Left", side:"L" },
+  { key:"el_flex_r",  region:"elbow_radioulnar", motion:"Flexion — Right",side:"R" },
+  { key:"el_ext_l",   region:"elbow_radioulnar", motion:"Extension — Left", side:"L" },
+  { key:"el_ext_r",   region:"elbow_radioulnar", motion:"Extension — Right",side:"R" },
+  { key:"fa_pron_l",  region:"elbow_radioulnar", motion:"Pronation — Left", side:"L" },
+  { key:"fa_pron_r",  region:"elbow_radioulnar", motion:"Pronation — Right",side:"R" },
+  { key:"fa_sup_l",   region:"elbow_radioulnar", motion:"Supination — Left", side:"L" },
+  { key:"fa_sup_r",   region:"elbow_radioulnar", motion:"Supination — Right",side:"R" },
+
+  // ----- Wrist -----
+  { key:"wr_flex_l",  region:"wrist", motion:"Flexion — Left",  side:"L" },
+  { key:"wr_flex_r",  region:"wrist", motion:"Flexion — Right", side:"R" },
+  { key:"wr_ext_l",   region:"wrist", motion:"Extension — Left", side:"L" },
+  { key:"wr_ext_r",   region:"wrist", motion:"Extension — Right",side:"R" },
+  { key:"wr_rad_l",   region:"wrist", motion:"Radial Deviation — Left",  side:"L" },
+  { key:"wr_rad_r",   region:"wrist", motion:"Radial Deviation — Right", side:"R" },
+  { key:"wr_uln_l",   region:"wrist", motion:"Ulnar Deviation — Left",  side:"L" },
+  { key:"wr_uln_r",   region:"wrist", motion:"Ulnar Deviation — Right", side:"R" },
+
+  // ----- Hip -----
+  { key:"hip_flex_l", region:"hip", motion:"Flexion — Left",  side:"L" },
+  { key:"hip_flex_r", region:"hip", motion:"Flexion — Right", side:"R" },
+  { key:"hip_ext_l",  region:"hip", motion:"Extension — Left",  side:"L" },
+  { key:"hip_ext_r",  region:"hip", motion:"Extension — Right", side:"R" },
+  { key:"hip_abd_l",  region:"hip", motion:"Abduction — Left",  side:"L" },
+  { key:"hip_abd_r",  region:"hip", motion:"Abduction — Right", side:"R" },
+  { key:"hip_add_l",  region:"hip", motion:"Adduction — Left",  side:"L" },
+  { key:"hip_add_r",  region:"hip", motion:"Adduction — Right", side:"R" },
+  { key:"hip_ir_l",   region:"hip", motion:"Internal Rotation — Left",  side:"L" },
+  { key:"hip_ir_r",   region:"hip", motion:"Internal Rotation — Right", side:"R" },
+  { key:"hip_er_l",   region:"hip", motion:"External Rotation — Left",  side:"L" },
+  { key:"hip_er_r",   region:"hip", motion:"External Rotation — Right", side:"R" },
+
+  // ----- Knee -----
+  { key:"kn_flex_l",  region:"knee", motion:"Flexion — Left",  side:"L" },
+  { key:"kn_flex_r",  region:"knee", motion:"Flexion — Right", side:"R" },
+  { key:"kn_ext_l",   region:"knee", motion:"Extension — Left", side:"L" },
+  { key:"kn_ext_r",   region:"knee", motion:"Extension — Right",side:"R" },
+
+  // ----- Ankle -----
+  { key:"ank_dorsi_l", region:"talocrural_ankle", motion:"Dorsiflexion — Left",  side:"L" },
+  { key:"ank_dorsi_r", region:"talocrural_ankle", motion:"Dorsiflexion — Right", side:"R" },
+  { key:"ank_plant_l", region:"talocrural_ankle", motion:"Plantarflexion — Left",  side:"L" },
+  { key:"ank_plant_r", region:"talocrural_ankle", motion:"Plantarflexion — Right", side:"R" },
+
+  // ----- Foot -----
+  { key:"foot_inv_l", region:"transverse_tarsal_subtalar", motion:"Inversion — Left",  side:"L" },
+  { key:"foot_inv_r", region:"transverse_tarsal_subtalar", motion:"Inversion — Right", side:"R" },
+  { key:"foot_evr_l", region:"transverse_tarsal_subtalar", motion:"Eversion — Left",  side:"L" },
+  { key:"foot_evr_r", region:"transverse_tarsal_subtalar", motion:"Eversion — Right", side:"R" }
+];
+  
+/* Build Motion dropdown using real auto-action catalog */
 function refreshMotions(){
-  const list = REGION_MOTIONS?.[regionSel.value] || [];
   motionSel.innerHTML = "";
-  (list.length? list: ["(No motions)"]).forEach(t=>{
-    const o=document.createElement("option"); o.value=t; o.textContent=t; motionSel.appendChild(o);
+
+  const region = regionSel.value;
+
+  // Filter motions belonging to this region
+  const list = ACTIONS.filter(a => a.region === region);
+
+  if (list.length === 0){
+    const o = document.createElement("option");
+    o.textContent = "(No motions)";
+    motionSel.appendChild(o);
+    return;
+  }
+
+  list.forEach(a => {
+    const o = document.createElement("option");
+    o.value = a.key;          // store the action key (important)
+    o.textContent = a.motion; // readable text shown to user
+    motionSel.appendChild(o);
   });
 }
+
 refreshMotions();
 regionSel.onchange = refreshMotions;
+
 
 /* ===================== THREE SETUP ===================== */
 const canvas = document.getElementById("c");
