@@ -621,12 +621,11 @@ const Gonio = (() => {
 
 (function build(){
   const NS = "http://www.w3.org/2000/svg";
-
   const ticks   = document.getElementById('ticks');
   const numsOut = document.getElementById('numsOut');
   const numsIn  = document.getElementById('numsIn');
 
-  const R   = 120;
+   const R   = 120;
   const Rin = 86;
 
   /* ---------- HELPERS ---------- */
@@ -647,52 +646,79 @@ const Gonio = (() => {
     return n;
   };
 
-  /* ---------- TICKS (LONG EVERY 10°, SHORT EVERY 5°) ---------- */
-  for (let d=0; d<360; d+=5){
-    const a = (d - 90)*Math.PI/180;
+  /* ============================================
+       TICK BAND — LONG = 10°, MEDIUM = 5°
+       (Ticks BETWEEN inner + outer numbers)
+  ============================================ */
+  const tickInnerR = Rin + 4;      // band start
+  const tickOuterR = R - 12;       // band end
+
+  for (let d = 0; d < 360; d += 5) {
+    const a = (d - 90) * Math.PI/180;
     const big = (d % 10 === 0);
-    const len = big ? 12 : 6;
+
+    const r1 = tickInnerR;
+    const r2 = big ? tickOuterR : (tickOuterR - 4);
+
     line(
       ticks,
-      Math.cos(a)*(R-len),
-      Math.sin(a)*(R-len),
-      Math.cos(a)*R,
-      Math.sin(a)*R,
+      Math.cos(a)*r1,
+      Math.sin(a)*r1,
+      Math.cos(a)*r2,
+      Math.sin(a)*r2,
       big ? "tick tickBig" : "tick"
     );
   }
 
-  /* ===== OUTER + INNER NUMBERS ===== */
+  /* ============================================
+              OUTER NUMBERS (0–80–80–0–…)
+     Sequence: 0 → 20 → 40 → 60 → 80 → 80 → 60 → 40 → 20 → 0 → 20 → 40 …
+  ============================================ */
   numsOut.innerHTML = "";
-  numsIn.innerHTML  = "";
+  const rOuter = R - 4;
 
-  const rWhite = R - 8;
-  const rInner = Rin + 9;
+  for (let d = 0; d < 360; d += 20) {
+    const angle = (d - 90 + 360) % 360;
 
-  /* ---------- OUTER (0–80–0–80–0) ---------- */
-  for (let d=0; d<360; d+=10){
-    let diff  = Math.abs(((d-90+360)%360) - 180);
-    let outer = (diff <= 80) ? diff : (160 - diff);
+    // map to 0–80–80–0 repeating pattern
+    let outer;
+    if (angle <= 180) outer = Math.min(angle, 80);
+    else outer = Math.min(360 - angle, 80);
 
-    if (outer % 20 !== 0) continue;
+    // sequence: 0,20,40,60,80,80,60,40,20,0,...
+    outer = outer - (outer % 20);
 
-    const a = (d - 90)*Math.PI/180;
-    const x = Math.cos(a)*rWhite;
-    const y = Math.sin(a)*rWhite;
+    const a = (d - 90) * Math.PI/180;
+    const x = Math.cos(a)*rOuter;
+    const y = Math.sin(a)*rOuter;
 
-    text(numsOut,x,y,String(outer),'labelOuter');
+    text(numsOut, x, y, String(outer), 'labelOuter');
   }
 
-  /* ---------- INNER (0 → 180 → 0 WITH ONE 180) ---------- */
-  for (let d=0; d<360; d+=10){
+  /* ============================================
+         INNER NUMBERS (0 → 180 → 0)
+         0–10–20…–170–180–170–160…–10–0
+         10s appear under LONG ticks
+  ============================================ */
+  numsIn.innerHTML = "";
+  const rInnerTxt = Rin + 12;
+
+  for (let d = 0; d < 360; d += 10) {
+
+    // map right horizontal = 0
     let raw = (d + 270) % 360;
+
+    // convert to 0→180→0
     let inner = (raw <= 180) ? raw : (360 - raw);
 
-    const a = (d - 90)*Math.PI/180;
-    const x = Math.cos(a)*rInner;
-    const y = Math.sin(a)*rInner;
+    // round to nearest 10
+    inner = Math.round(inner / 10) * 10;
 
-    text(numsIn,x,y,String(inner),'labelInner');
+    const a = (d - 90) * Math.PI/180;
+    const x = Math.cos(a)*rInnerTxt;
+    const y = Math.sin(a)*rInnerTxt;
+
+    text(numsIn, x, y, String(inner), 'labelInner');
   }
 
 
