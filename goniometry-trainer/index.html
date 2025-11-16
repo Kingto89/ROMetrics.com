@@ -85,9 +85,6 @@
     <option value="knee">Knee</option>
     <option value="talocrural_ankle">Talocrural (Ankle)</option>
     <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
-    <option value="fingers_mcp_pip_dip">Fingers (MCP, PIP, DIP)</option>
-    <option value="thumb_cmc_mcp_ip">Thumb (CMC, MCP, IP)</option>
-    <option value="toes_mtp_pip_dip">Toes (MTP, PIP, DIP)</option>
   </select>
 
   <label>Motion</label>
@@ -287,90 +284,253 @@ const modelYaw = document.getElementById("modelYaw");
 const resetPose = document.getElementById("resetPose");
 
 const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
+const COLLIM = {
+  enabled: false,
+  // ===== Existing upper body =====
+  trunkLatLMax: 30,
+  trunkLatRMax: 30,
+  cervRotLMax: 80,
+  cervRotRMax: 80,
+  shExtLMax: 60, shExtRMax: 60,
+  shAddLMax: 30, shAddRMax: 30,
+  shFlexLMax: 170, shFlexRMax: 170,
+  shAbdLMax: 170, shAbdRMax: 170,
+  shIRLMax: 70, shIRRMax: 70,
+  shERLMax: 90, shERRMax: 90,
+  elExtLMax: 10, elExtRMax: 10,
+  elFlexLMax: 150, elFlexRMax: 150,
+  wrSupLMax: 95, wrSupRMax: 95,
 
-/* ===================== ACTION ENGINE MOTION CATALOG ===================== */
-/* DO NOT CHANGE — this is synced to Automated Actions index */
-const ACTIONS = [
-  // ----- Cervical -----
-  { key:"cv_flex",   region:"cervical_spine", motion:"Flexion",               side:"none" },
-  { key:"cv_ext",    region:"cervical_spine", motion:"Extension",             side:"none" },
-  { key:"cv_lat_l",  region:"cervical_spine", motion:"Lateral Flexion — Left",  side:"L" },
-  { key:"cv_lat_r",  region:"cervical_spine", motion:"Lateral Flexion — Right", side:"R" },
-  { key:"cv_rot_l",  region:"cervical_spine", motion:"Rotation — Left",         side:"L" },
-  { key:"cv_rot_r",  region:"cervical_spine", motion:"Rotation — Right",        side:"R" },
+  // ===== NEW lower body defaults =====
+  hipFlexLMax: 110, hipFlexRMax: 110,
+  hipExtLMax: 30,  hipExtRMax: 30,
+  hipAbdLMax: 45,  hipAbdRMax: 45,
+  hipAddLMax: 25,  hipAddRMax: 25,
+  hipIRLMax: 45,  hipIRRMax: 45,
+  kneeFlexLMax: 150, kneeFlexRMax: 150,
+  kneeExtLMax: 5,   kneeExtRMax: 5,
+  anklePF_LMax: 50, anklePF_RMax: 50,
+  ankleDF_LMax: 20, ankleDF_RMax: 20,
+  footInvLMax: 35,  footInvRMax: 35,
+  footEvLMax: 20,   footEvRMax: 20,
 
-  // ----- Thoracic/Lumbar -----
-  { key:"tr_flex",   region:"thoracic_lumbar_spine", motion:"Flexion",   side:"none" },
-  { key:"tr_ext",    region:"thoracic_lumbar_spine", motion:"Extension", side:"none" },
-  { key:"tr_lat_l",  region:"thoracic_lumbar_spine", motion:"Lateral Flexion — Left",  side:"L" },
-  { key:"tr_lat_r",  region:"thoracic_lumbar_spine", motion:"Lateral Flexion — Right", side:"R" },
-  { key:"tr_rot_l",  region:"thoracic_lumbar_spine", motion:"Rotation — Left",         side:"L" },
-  { key:"tr_rot_r",  region:"thoracic_lumbar_spine", motion:"Rotation — Right",        side:"R" },
+  load() {
+    try {
+      const raw = localStorage.getItem('rometrics_collim');
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      Object.keys(this).forEach(k=>{
+        if(k!=='enabled'&&k!=='load'&&k!=='save')
+          if(typeof o[k]==='number') this[k]=o[k];
+      });
+    } catch(e){}
+  },
+  save() {
+    try {
+      const o={};
+      Object.keys(this).forEach(k=>{
+        if(typeof this[k]==='number') o[k]=this[k];
+      });
+      localStorage.setItem('rometrics_collim', JSON.stringify(o));
+    } catch(e){}
+  }
+};
+COLLIM.load();
 
-  // ----- Shoulder -----
-  { key:"sh_flex_l",  region:"glenohumeral_joint", motion:"Flexion — Left",  side:"L" },
-  { key:"sh_flex_r",  region:"glenohumeral_joint", motion:"Flexion — Right", side:"R" },
-  { key:"sh_ext_l",   region:"glenohumeral_joint", motion:"Extension — Left",  side:"L" },
-  { key:"sh_ext_r",   region:"glenohumeral_joint", motion:"Extension — Right", side:"R" },
-  { key:"sh_abd_l",   region:"glenohumeral_joint", motion:"Abduction — Left",  side:"L" },
-  { key:"sh_abd_r",   region:"glenohumeral_joint", motion:"Abduction — Right", side:"R" },
-  { key:"sh_irer_l",  region:"glenohumeral_joint", motion:"Internal Rotation — Left",  side:"L" },
-  { key:"sh_irer_r",  region:"glenohumeral_joint", motion:"Internal Rotation — Right", side:"R" },
-  { key:"sh_er_l",    region:"glenohumeral_joint", motion:"External Rotation — Left",  side:"L" },
-  { key:"sh_er_r",    region:"glenohumeral_joint", motion:"External Rotation — Right", side:"R" },
+function capFor(action){
+  COLLIM.load();  // ✅ refresh saved limits before applying
+  if(!COLLIM.enabled || !action) return null; // no cap
+  const { key, sign } = action; // sign: +1 or -1
+    // Cervical rotation L/R
+    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    if (/^sh_fe_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (sign > 0) { // Flexion
+        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      }
+    }
 
-  // ----- Elbow / Radioulnar -----
-  { key:"el_flex_l",  region:"elbow_radioulnar", motion:"Flexion — Left", side:"L" },
-  { key:"el_flex_r",  region:"elbow_radioulnar", motion:"Flexion — Right",side:"R" },
-  { key:"el_ext_l",   region:"elbow_radioulnar", motion:"Extension — Left", side:"L" },
-  { key:"el_ext_r",   region:"elbow_radioulnar", motion:"Extension — Right",side:"R" },
-  { key:"fa_pron_l",  region:"elbow_radioulnar", motion:"Pronation — Left", side:"L" },
-  { key:"fa_pron_r",  region:"elbow_radioulnar", motion:"Pronation — Right",side:"R" },
-  { key:"fa_sup_l",   region:"elbow_radioulnar", motion:"Supination — Left", side:"L" },
-  { key:"fa_sup_r",   region:"elbow_radioulnar", motion:"Supination — Right",side:"R" },
+// Shoulder Abd/Add — handle L normally; R corrected
+if (/^sh_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction (normal)
+    return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+  } else {
+    // ✅ Right side corrected: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+  }
+}
 
-  // ----- Wrist -----
-  { key:"wr_flex_l",  region:"wrist", motion:"Flexion — Left",  side:"L" },
-  { key:"wr_flex_r",  region:"wrist", motion:"Flexion — Right", side:"R" },
-  { key:"wr_ext_l",   region:"wrist", motion:"Extension — Left", side:"L" },
-  { key:"wr_ext_r",   region:"wrist", motion:"Extension — Right",side:"R" },
-  { key:"wr_rad_l",   region:"wrist", motion:"Radial Deviation — Left",  side:"L" },
-  { key:"wr_rad_r",   region:"wrist", motion:"Radial Deviation — Right", side:"R" },
-  { key:"wr_uln_l",   region:"wrist", motion:"Ulnar Deviation — Left",  side:"L" },
-  { key:"wr_uln_r",   region:"wrist", motion:"Ulnar Deviation — Right", side:"R" },
+    // Shoulder IR/ER caps
+if (/^sh_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { // Internal Rotation
+    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+  } else { // External Rotation
+    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+  }
+}
+  // === Elbow Flexion / Extension ===
+if (/^el_fe_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { 
+    // Flexion
+    return isLeft ? COLLIM.elFlexLMax : COLLIM.elFlexRMax;
+  } else if (sign < 0) {
+    // Extension
+    return isLeft ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+  }
+}
+    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
+    if(/^wr_ps_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
+    }
+    // Trunk lateral (existing)
+    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    // Hip Flexion (both)
+if(/^hip_fe_/.test(key)){
+  if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
+}
+// Hip Abduction / Adduction
+if (/^hip_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
+  } else {
+    // Right: + = Adduction, − = Abduction
+    return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
+  }
+}
+// Hip Internal / External Rotation
+if (/^hip_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  // symmetric cap for both directions (you can split later if needed)
+  return isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax;
+}
 
-  // ----- Hip -----
-  { key:"hip_flex_l", region:"hip", motion:"Flexion — Left",  side:"L" },
-  { key:"hip_flex_r", region:"hip", motion:"Flexion — Right", side:"R" },
-  { key:"hip_ext_l",  region:"hip", motion:"Extension — Left",  side:"L" },
-  { key:"hip_ext_r",  region:"hip", motion:"Extension — Right", side:"R" },
-  { key:"hip_abd_l",  region:"hip", motion:"Abduction — Left",  side:"L" },
-  { key:"hip_abd_r",  region:"hip", motion:"Abduction — Right", side:"R" },
-  { key:"hip_add_l",  region:"hip", motion:"Adduction — Left",  side:"L" },
-  { key:"hip_add_r",  region:"hip", motion:"Adduction — Right", side:"R" },
-  { key:"hip_ir_l",   region:"hip", motion:"Internal Rotation — Left",  side:"L" },
-  { key:"hip_ir_r",   region:"hip", motion:"Internal Rotation — Right", side:"R" },
-  { key:"hip_er_l",   region:"hip", motion:"External Rotation — Left",  side:"L" },
-  { key:"hip_er_r",   region:"hip", motion:"External Rotation — Right", side:"R" },
+// Knee Flexion / Extension (only flexion capped)
+if(/^knee_fe_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
+  if(sign < 0) return null; // no cap on extension
+}
 
-  // ----- Knee -----
-  { key:"kn_flex_l",  region:"knee", motion:"Flexion — Left",  side:"L" },
-  { key:"kn_flex_r",  region:"knee", motion:"Flexion — Right", side:"R" },
-  { key:"kn_ext_l",   region:"knee", motion:"Extension — Left", side:"L" },
-  { key:"kn_ext_r",   region:"knee", motion:"Extension — Right",side:"R" },
+// Ankle PF / DF
+if(/^ankle_dfpf_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax;
+}
 
-  // ----- Ankle -----
-  { key:"ank_dorsi_l", region:"talocrural_ankle", motion:"Dorsiflexion — Left",  side:"L" },
-  { key:"ank_dorsi_r", region:"talocrural_ankle", motion:"Dorsiflexion — Right", side:"R" },
-  { key:"ank_plant_l", region:"talocrural_ankle", motion:"Plantarflexion — Left",  side:"L" },
-  { key:"ank_plant_r", region:"talocrural_ankle", motion:"Plantarflexion — Right", side:"R" },
+// Foot Inversion / Eversion
+if(/^foot_invev_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.footEvLMax : COLLIM.footEvRMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.footInvLMax : COLLIM.footInvRMax;
+}
+    return null;
+  }
 
-  // ----- Foot -----
-  { key:"foot_inv_l", region:"transverse_tarsal_subtalar", motion:"Inversion — Left",  side:"L" },
-  { key:"foot_inv_r", region:"transverse_tarsal_subtalar", motion:"Inversion — Right", side:"R" },
-  { key:"foot_evr_l", region:"transverse_tarsal_subtalar", motion:"Eversion — Left",  side:"L" },
-  { key:"foot_evr_r", region:"transverse_tarsal_subtalar", motion:"Eversion — Right", side:"R" }
-];
+     function applyPairAngle(key, cfg, deg) {
+  const bind = resolveBind(key, cfg);
+  if (!bind) return;
+
+  const { bone, qBind, axis: rawAxis } = bind;
+
+  // --- Right-shoulder rotation sign corrections ---
+  if (key === 'sh_irer_r') deg = -deg;          // Shoulder IR/ER
+  if (key === 'sh_aa_r')  deg = -deg;           // Shoulder Abd/Add (reverse direction)
+
+    // --- Right-wrist direction fixes ---
+  if (key === 'wr_ps_r') deg = -deg;  // flip pronation/supination
+  if (key === 'wr_ru_r') deg = -deg;  // flip radial/ulnar deviation
+
+
+  const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
+
+  // Handle flipped axis (e.g. "-z" for mirrored rig)
+  let x = 0, y = 0, z = 0;
+  let flip = 1;
+  let axis = rawAxis || 'z'; // use mapped axis; default 'z' if missing
+  if (axis.startsWith('-')) {
+    flip = -1;
+    axis = axis.slice(1);
+  }
+
+  const r = flip * rad;
+  if (axis === 'x') x = r;
+  if (axis === 'y') y = r;
+  if (axis === 'z') z = r;
+  if (axis === 'bone') {
+  // rotate around the bone's own local Z axis
+  bone.rotateZ(r);
+  return;
+}
+
+  const e = new THREE.Euler(x, y, z, "XYZ");
+  const qDelta = new THREE.Quaternion().setFromEuler(e);
+  bone.quaternion.copy(qBind).multiply(qDelta);
+
+  // --- Debug: confirm right-shoulder direction ---
+  if (CURRENT_ACTION?.key === "sh_aa_r") {
+    console.log(
+      `Right-shoulder: ${bone.name}, axis: ${axis}, flipped: ${flip === -1}, deg=${deg}, r=${r.toFixed(3)}`
+    );
+  }
+}
+
+  /* ===== Motions (paired configs; UI splits) ===== */
+  const UPPER = [
+    {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
+    {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
+    {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
+
+    {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60,  max:70,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45,  max:45,  hints:[/^neck$|cspine|head/i]},
+    {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80,  max:80,  hints:[/^neck$|cspine|head/i]},
+
+    {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
+    {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
+
+    {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30,  max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+    {key:'sh_irer_l', pair:'Shoulder L — External / Internal', side:'l', plane:'transverse', neutral:0, min:-90, max:70, hints:[/upperarm_L/i]},
+    {key:'sh_irer_r', pair:'Shoulder R — External / Internal', side:'r', plane:'transverse', neutral:0, min:-90, max:70, hints:[/upperarm_R/i]},
+
+    // ELBOW — fix so Flexion moves (150), Extension small (10)
+    {key:'el_fe_l',   pair:'Elbow L — Flex / Ext',               side:'l', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+    {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+
+     // ===== Wrist — corrected direction for right side =====
+    {key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
+    {key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]}, // 🔁 flipped
+
+    {key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+    {key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+
+    {key:'wr_ru_l', pair:'Wrist L — Radial / Ulnar Dev', side:'l', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
+    {key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, invert:true, hints:[/wrist|hand/i]}, // 🔁 flipped
+
+];   
+  const LOWER = [
+    {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
+    {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
+    {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_aa_r', pair:'Hip R — Add / Abd', side:'r', plane:'frontal', neutral:0, min:-30, max:45, hints:[/thigh|femur/i]},
+    {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+    {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
+    {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
+    {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
+    {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
+  ];
   
 /* Build Motion dropdown using real auto-action catalog */
 function refreshMotions(){
