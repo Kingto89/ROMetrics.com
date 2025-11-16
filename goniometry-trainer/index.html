@@ -748,7 +748,8 @@ const Gonio = (() => {
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
   function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
-  function applyLabelFix(){ const t=-(baseRot+userRot); labelsFixed.setAttribute('transform',`rotate(${t})`); numsInWrap.setAttribute('transform',`rotate(${-t})`); }
+  function applyLabelFix(){const t=-(baseRot+userRot);labelsFixed.setAttribute('transform',`rotate(${t})`);numsInWrap.setAttribute('transform','rotate(0)');fixInnerUpright(t);}
+  function fixInnerUpright(t){document.querySelectorAll('#numsIn text').forEach(n=>{const x=parseFloat(n.getAttribute('x')),y=parseFloat(n.getAttribute('y'));n.setAttribute('transform',`rotate(${-t} ${x} ${y})`);});}
   function updateRulerUpright(){
     const labels = document.querySelectorAll('.ruLbl');
     labels.forEach(t=>{
