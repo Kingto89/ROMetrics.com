@@ -674,28 +674,25 @@ const Gonio = (() => {
     );
   }
 
-  /* ---------- OUTER + INNER NUMBERS ---------- */
-  numsOut.innerHTML = "";
-  numsIn.innerHTML  = "";
-
-  const rWhite = R   - 8;   // outer-number radius
-  const rInner = Rin + 9;   // inner-number radius
-
-/* ============================================================
-   OUTER + INNER LABELS (correct geometry, no forced misalignment)
-   ============================================================ */
-
+/* ---------- OUTER + INNER NUMBERS ---------- */
 numsOut.innerHTML = "";
 numsIn.innerHTML  = "";
 
-/* ------ OUTER RING: 0–80–0–80–0 (natural 20° lead) ------ */
+const rWhite = R   - 8;   // outer number radius
+const rInner = Rin + 9;   // inner number radius
 
-// Rotate entire OUTER text group once (not the math)
-numsOut.setAttribute("transform", "rotate(20)");
+
+/* ============================================================
+   OUTER RING (0–80–0–80–0) — natural geometry + 10° left shift
+   ============================================================ */
+
+// shift ALL outer labels 10° LEFT
+numsOut.setAttribute("transform", "rotate(10)");
 
 for (let d = 0; d < 360; d += 10) {
-  const inner = innerFromD(d);        // 0→180→0
-  const outer = Math.abs(90 - inner); // 0,20,40,60,80
+
+  const inner = innerFromD(d);        // already correct: 0→180→0
+  const outer = Math.abs(90 - inner); // yields 0,20,40,60,80
 
   if (outer % 20 !== 0 || outer > 80) continue;
 
@@ -707,24 +704,28 @@ for (let d = 0; d < 360; d += 10) {
 }
 
 
-/* ------ INNER RING: 0→180→0 (readable and upright) ------ */
+
+/* ============================================================
+   INNER RING (0→180→0) — upright, readable, no tilt
+   ============================================================ */
 
 for (let d = 0; d < 360; d += 10) {
+
   const inner = innerFromD(d);
 
   if (inner % 10 !== 0) continue;
-  if (inner === 0 && d !== 180) continue;
+  if (inner === 0 && d !== 180) continue; // single bottom 0 only
 
   const a = (d - 90) * Math.PI / 180;
   const x = Math.cos(a) * rInner;
   const y = Math.sin(a) * rInner;
 
-  // Standard placement
+  // place number normally
   text(numsIn, x, y, inner.toString().padStart(2, "0"), "labelInner");
 
-  // Make text read left-to-right WITHOUT rotating position
+  // straighten ONLY the text, do NOT rotate position
   const el = numsIn.lastChild;
-  el.setAttribute("transform", `rotate(${-(d - 90)} ${x} ${y})`);
+  el.setAttribute("transform", `rotate(0 ${x} ${y})`);
 }
 
 
