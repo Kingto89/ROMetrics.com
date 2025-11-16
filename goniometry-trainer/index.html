@@ -604,7 +604,124 @@ if(/^foot_invev_/.test(key)){
   }
 }
 
-  
+/* ===== Axis profile for rig ===== */
+const RIG_PROFILE = {
+  trunk:    { x:'+x', y:'+y', z:'+z' },
+  cerv:     { x:'+x', y:'+y', z:'+z' },
+  clavicle: { x:'+z', y:'+y', z:'+z' },
+
+  shoulder: {
+    sh_fe_l : { x:'+x', y:'+y', z:'+z' },
+    sh_fe_r : { x:'+x', y:'+y', z:'-z' },
+    sh_aa_l : { x:'+z', y:'+y', z:'+z' },
+    sh_aa_r : { x:'-z', y:'+y', z:'-z' },
+    sh_irer_l:{ x:'+y', y:'+y', z:'+z' },
+    sh_irer_r:{ x:'+y', y:'+y', z:'-z' },
+  },
+
+  elbow: {
+    el_fe_l : { x:'+x', y:'+y', z:'+z' },
+    el_fe_r : { x:'+x', y:'+y', z:'-z' },
+  },
+
+  wrist: {
+    wr_ps_l : { x:'+y', y:'+y', z:'+z' },
+    wr_ps_r : { x:'+y', y:'+y', z:'-z' },
+    wr_fe_l : { x:'+x', y:'+y', z:'+z' },
+    wr_fe_r : { x:'+x', y:'+y', z:'-z' },
+    wr_ru_l : { x:'+z', y:'+y', z:'+z' },
+    wr_ru_r : { x:'-z', y:'+y', z:'-z' },
+  },
+
+  hip: {
+    hip_fe_l : { x:'+x', y:'+y', z:'+z' },
+    hip_fe_r : { x:'+x', y:'+y', z:'-z' },
+    hip_aa_l : { x:'+z', y:'+y', z:'+z' },
+    hip_aa_r : { x:'-z', y:'+y', z:'-z' },
+    hip_irer_l:{ x:'+y', y:'+y', z:'+z' },
+    hip_irer_r:{ x:'+y', y:'+y', z:'-z' },
+  },
+
+  knee: {
+    knee_fe_l: { x:'+x', y:'+y', z:'+z' },
+    knee_fe_r: { x:'+x', y:'+y', z:'-z' },
+  },
+
+  ankle: {
+    ankle_dfpf_l: { x:'+x', y:'+y', z:'+z' },
+    ankle_dfpf_r: { x:'+x', y:'+y', z:'-z' },
+    foot_invev_l: { x:'+z', y:'+y', z:'+z' },
+    foot_invev_r: { x:'-z', y:'+y', z:'-z' },
+  }
+};
+
+  /* ===== axis override (rig-profile aware) ===== */
+function axisFor(profile, key, base){
+  if (!profile) return base;
+  const cat = Object.keys(profile).find(k => key.startsWith(k));
+  if (!cat) return base;
+  const p = profile[cat];
+  if (!p) return base;
+  const o = p[key];
+  if (!o) return base;
+  return o[base] || base;
+}
+
+  /* ===== Safely apply pair with cap ===== */
+function setPair(key, deg){
+  const cfg = cfgFromKey(key);
+  if (!cfg) return;
+
+  const cap = capFor({key, sign: Math.sign(deg)});
+  const use = (typeof cap === 'number')
+    ? Math.max(-cap, Math.min(cap, deg))
+    : deg;
+
+  applyPairAngle(key, cfg, use);
+}
+
+  /* ===== Engine for paired motions ===== */
+function applyPair(key, deg){
+  const cfg = cfgFromKey(key);
+  if (!cfg) return;
+
+  const isL = cfg.side === 'l';
+  const sign = Math.sign(deg) || 1;
+
+  const cap = capFor({key, sign});
+  const use = (typeof cap === 'number')
+    ? Math.max(-cap, Math.min(cap, deg))
+    : deg;
+
+  applyPairAngle(key, cfg, use);
+}
+
+  /* ===== Automated Action Runner ===== */
+function runAutoAction(action){
+  if (!action) return;
+
+  const cfg = cfgFromKey(action.key);
+  if (!cfg) { log(`❌ No cfg for ${action.key}`); return; }
+
+  const dir = action.side === "L" || action.side === "l" ? +1 :
+              action.side === "R" || action.side === "r" ? -1 : +1;
+
+  let t = 0;
+  const dur = 1.2; // seconds
+  const target = cfg.max * dir;
+
+  function easeStep(){
+    t += clock.getDelta();
+    const k = Math.min(1, t / dur);
+    const eased = target * (0.5 - 0.5 * Math.cos(Math.PI * k));
+    applyPair(action.key, eased);
+
+    if (k < 1) requestAnimationFrame(easeStep);
+  }
+
+  requestAnimationFrame(easeStep);
+}
+
   /* ===== Motions (paired configs; UI splits) ===== */
   const UPPER = [
     {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
