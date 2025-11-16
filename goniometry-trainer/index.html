@@ -619,69 +619,81 @@ const Gonio = (() => {
   const toDegUp=(x,y)=>clamp360(Math.atan2(-y,x)*180/Math.PI+90);
   const shortest=(a,b)=>{ let d=clamp360(a-b); return d>180? 360-d: d; };
 
-  (function build(){
-    const NS = "http://www.w3.org/2000/svg";
-    const ticks = document.getElementById('ticks');
-    const numsOut = document.getElementById('numsOut');
-    const numsIn = document.getElementById('numsIn');
+(function build(){
+  const NS = "http://www.w3.org/2000/svg";
 
+  const ticks   = document.getElementById('ticks');
+  const numsOut = document.getElementById('numsOut');
+  const numsIn  = document.getElementById('numsIn');
 
-    /* =============================
-   OUTER + INNER NUMBER SYSTEM
-   (ONE 180 — then 170 back to 0)
-============================= */
+  const R   = 120;
+  const Rin = 86;
 
-const rWhite = R - 8;
-const rInner = Rin + 9;
-numsOut.innerHTML = "";
-numsIn.innerHTML = "";
+  /* ---------- HELPERS ---------- */
+  const line = (p,x1,y1,x2,y2,cls)=>{
+    const n = document.createElementNS(NS,'line');
+    n.setAttribute('x1',x1); n.setAttribute('y1',y1);
+    n.setAttribute('x2',x2); n.setAttribute('y2',y2);
+    if(cls) n.setAttribute('class',cls);
+    p.appendChild(n);
+  };
 
-/* ========= OUTER (0–80–0) ========== */
-for (let d=0; d<360; d+=10) {
-  let diff = Math.abs(((d - 90 + 360) % 360) - 180);
-  let outer = (diff <= 80) ? diff : (160 - diff);
+  const text = (p,x,y,t,cls)=>{
+    const n = document.createElementNS(NS,'text');
+    n.setAttribute('x',x); n.setAttribute('y',y);
+    n.setAttribute('class',cls);
+    n.textContent = t;
+    p.appendChild(n);
+    return n;
+  };
 
-  if (outer % 20 !== 0) continue;
-
-  const a = (d - 90) * Math.PI/180;
-  const x = Math.cos(a)*rWhite;
-  const y = Math.sin(a)*rWhite;
-
-  const t = document.createElementNS(NS,'text');
-  t.setAttribute('x',x);
-  t.setAttribute('y',y);
-  t.setAttribute('class','labelOuter');
-  t.textContent = outer;
-  numsOut.appendChild(t);
-}
-
-/* ========= INNER (0 → 180 → 0 with ONE 180) ========= */
-for (let d=0; d<360; d+=10) {
-
-  // ANGLE where 0° = right horizontal
-  let raw = (d + 270) % 360;      
-
-  // Convert to full goniometer pattern:
-  // 0→180 on right → ONE 180 → 170→0 on left
-  let inner;
-  if (raw <= 180) {
-    inner = raw;                 // rising side 0 → 180
-  } else {
-    inner = 360 - raw;           // falling side 170 → 0
+  /* ---------- TICKS (LONG EVERY 10°, SHORT EVERY 5°) ---------- */
+  for (let d=0; d<360; d+=5){
+    const a = (d - 90)*Math.PI/180;
+    const big = (d % 10 === 0);
+    const len = big ? 12 : 6;
+    line(
+      ticks,
+      Math.cos(a)*(R-len),
+      Math.sin(a)*(R-len),
+      Math.cos(a)*R,
+      Math.sin(a)*R,
+      big ? "tick tickBig" : "tick"
+    );
   }
 
-  const a = (d - 90) * Math.PI/180;
-  const x = Math.cos(a)*rInner;
-  const y = Math.sin(a)*rInner;
+  /* ===== OUTER + INNER NUMBERS ===== */
+  numsOut.innerHTML = "";
+  numsIn.innerHTML  = "";
 
-  const t = document.createElementNS(NS,'text');
-  t.setAttribute('x',x);
-  t.setAttribute('y',y);
-  t.setAttribute('class','labelInner');
-  t.textContent = inner;
-  numsIn.appendChild(t);
-}
+  const rWhite = R - 8;
+  const rInner = Rin + 9;
 
+  /* ---------- OUTER (0–80–0–80–0) ---------- */
+  for (let d=0; d<360; d+=10){
+    let diff  = Math.abs(((d-90+360)%360) - 180);
+    let outer = (diff <= 80) ? diff : (160 - diff);
+
+    if (outer % 20 !== 0) continue;
+
+    const a = (d - 90)*Math.PI/180;
+    const x = Math.cos(a)*rWhite;
+    const y = Math.sin(a)*rWhite;
+
+    text(numsOut,x,y,String(outer),'labelOuter');
+  }
+
+  /* ---------- INNER (0 → 180 → 0 WITH ONE 180) ---------- */
+  for (let d=0; d<360; d+=10){
+    let raw = (d + 270) % 360;
+    let inner = (raw <= 180) ? raw : (360 - raw);
+
+    const a = (d - 90)*Math.PI/180;
+    const x = Math.cos(a)*rInner;
+    const y = Math.sin(a)*rInner;
+
+    text(numsIn,x,y,String(inner),'labelInner');
+  }
 
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
