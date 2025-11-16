@@ -623,69 +623,62 @@ const Gonio = (() => {
     const ticks = document.getElementById('ticks');
     const numsOut = document.getElementById('numsOut');
     const numsIn = document.getElementById('numsIn');
-   const R = 120, Rin = 86;
-const NS = "http://www.w3.org/2000/svg";
 
-const line = (p,x1,y1,x2,y2,cls)=>{
-  const n = document.createElementNS(NS,'line');
-  n.setAttribute('x1',x1); n.setAttribute('y1',y1);
-  n.setAttribute('x2',x2); n.setAttribute('y2',y2);
-  if(cls) n.setAttribute('class',cls);
-  p.appendChild(n);
-};
 
-const text = (p,x,y,t,cls)=>{
-  const n = document.createElementNS(NS,'text');
-  n.setAttribute('x',x); n.setAttribute('y',y);
-  n.setAttribute('class',cls);
-  n.textContent = t;
-  p.appendChild(n);
-  return n;
-};
+    /* =============================
+   OUTER + INNER NUMBER SYSTEM
+   (ONE 180 — then 170 back to 0)
+============================= */
 
-/* ===== TICKS (unchanged) ===== */
-for(let d=0; d<360; d+=5){
-  const a=(d-90)*Math.PI/180, big=d%30===0, len=big?12:6;
-  line(
-    ticks,
-    Math.cos(a)*(R-len), Math.sin(a)*(R-len),
-    Math.cos(a)*R,       Math.sin(a)*R,
-    big?'tick tickBig':'tick'
-  );
-}
-
-/* ===========================================
-   OUTER WHITE — correct PT arc 0→80→0
-   MUST sit only on 10° long ticks
-=========================================== */
-numsOut.innerHTML = "";
 const rWhite = R - 8;
+const rInner = Rin + 9;
+numsOut.innerHTML = "";
+numsIn.innerHTML = "";
 
-for(let d=0; d<360; d+=10){
-  // symmetric outer mapping 0..80..0
-  const d90  = Math.abs(((d - 90 )%360 + 540)%360 - 180);
-  const d270 = Math.abs(((d - 270)%360 + 540)%360 - 180);
-  const v = Math.min(d90, d270);          // 0..80..0
-  if(v % 20 !== 0 || v > 80) continue;    // show ONLY 0,20,40,60,80
-  const a=(d-90)*Math.PI/180;
-  text(numsOut, Math.cos(a)*rWhite, Math.sin(a)*rWhite, String(v), 'labelOuter');
+/* ========= OUTER (0–80–0) ========== */
+for (let d=0; d<360; d+=10) {
+  let diff = Math.abs(((d - 90 + 360) % 360) - 180);
+  let outer = (diff <= 80) ? diff : (160 - diff);
+
+  if (outer % 20 !== 0) continue;
+
+  const a = (d - 90) * Math.PI/180;
+  const x = Math.cos(a)*rWhite;
+  const y = Math.sin(a)*rWhite;
+
+  const t = document.createElementNS(NS,'text');
+  t.setAttribute('x',x);
+  t.setAttribute('y',y);
+  t.setAttribute('class','labelOuter');
+  t.textContent = outer;
+  numsOut.appendChild(t);
 }
 
-/* ===========================================
-   INNER RED — correct PT arc 0→180→0
-   MUST sit only on 10° long ticks
-=========================================== */
-numsIn.innerHTML = "";
-const rInner = Rin + 9;
+/* ========= INNER (0 → 180 → 0 with ONE 180) ========= */
+for (let d=0; d<360; d+=10) {
 
-for(let d=0; d<360; d+=10){
-  // symmetric inner arc 0..180..0
-  const t = (d + 180) % 360;
-  const v = (t <= 180 ? t : 360 - t);     // 0..180..0
+  // ANGLE where 0° = right horizontal
+  let raw = (d + 270) % 360;      
 
-  if(v % 10 !== 0) continue;              // only long ticks
-  const a=(d-90)*Math.PI/180;
-  text(numsIn, Math.cos(a)*rInner, Math.sin(a)*rInner, String(v), 'labelInner');
+  // Convert to full goniometer pattern:
+  // 0→180 on right → ONE 180 → 170→0 on left
+  let inner;
+  if (raw <= 180) {
+    inner = raw;                 // rising side 0 → 180
+  } else {
+    inner = 360 - raw;           // falling side 170 → 0
+  }
+
+  const a = (d - 90) * Math.PI/180;
+  const x = Math.cos(a)*rInner;
+  const y = Math.sin(a)*rInner;
+
+  const t = document.createElementNS(NS,'text');
+  t.setAttribute('x',x);
+  t.setAttribute('y',y);
+  t.setAttribute('class','labelInner');
+  t.textContent = inner;
+  numsIn.appendChild(t);
 }
 
 
