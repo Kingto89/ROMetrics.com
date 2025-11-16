@@ -118,6 +118,42 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   <div id="msg">Loading…</div>
   <canvas id="c"></canvas>
+<!-- ===================== Placement Note Bubble ===================== -->
+<div id="aaNote" class="aa-note hide">
+  <button id="aaNoteClose" class="x">✕</button>
+  <h4 id="aaNoteTitle">Note</h4>
+  <div id="aaNoteBody" class="md">Loading…</div>
+</div>
+
+<style>
+.aa-note{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  width:min(420px,90vw);
+  background:rgba(2,6,23,.9);
+  border:1px solid #334155;
+  border-radius:12px;
+  padding:14px 46px 14px 14px;
+  z-index:2000;
+  backdrop-filter:blur(6px);
+  max-height:60vh;
+  overflow:auto;
+}
+.aa-note.hide{ display:none; }
+.aa-note .x{
+  position:absolute;
+  top:8px;
+  right:10px;
+  background:transparent;
+  border:0;
+  font-size:20px;
+  color:#94a3b8;
+  cursor:pointer;
+}
+.aa-note .md *{ margin:0 0 6px 0; line-height:1.35; }
+.aa-note h4{ margin:0 0 6px 0; }
+</style>
 
   <script type="module">
   import * as THREE from "three";
