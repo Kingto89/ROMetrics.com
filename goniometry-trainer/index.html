@@ -690,7 +690,7 @@ const Gonio = (() => {
 
     if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
 
-    // apply 20° shift ONLY to outer label positions
+    // apply 10° shift ONLY to outer label positions
     const a = (d - 90 + OUTER_ANGLE_SHIFT) * Math.PI / 180;
     const x = Math.cos(a) * rWhite;
     const y = Math.sin(a) * rWhite;
@@ -711,7 +711,8 @@ const Gonio = (() => {
     const x = Math.cos(a) * rInner;
     const y = Math.sin(a) * rInner;
 
-    text(numsIn, x, y, String(inner), "labelInner");
+    const tEl = text(numsIn, x, y, String(inner), "labelInner");
+tEl.setAttribute("transform", `scale(1, -1)`);
   }
 
 
