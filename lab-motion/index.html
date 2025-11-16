@@ -603,9 +603,9 @@ function setBoneRotationFromUI(){
   const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
   const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
 
-  const qDelta = new THREE.QuaternionsetFromEuler(
-    new THREE.Euler(ex, ey, ez, "XYZ")
-  );
+  const qDelta = new THREE.Quaternion().setFromEuler(
+  new THREE.Euler(ex, ey, ez, "XYZ")
+);
   const qBase = initialBoneRot.get(b) || new THREE.Quaternion();
   b.quaternion.copy(qBase).multiply(qDelta);
 }
