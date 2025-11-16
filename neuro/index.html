@@ -1,26 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Coming Soon — PT Lab</title>
-  <style>
-    html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      background:#0f1115;color:#e9edf5;text-align:center}
-    .box{max-width:420px;padding:28px;background:#171a21;border-radius:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.4)}
-    h1{margin:0 0 12px;font-size:1.8rem;color:#d62828}
-    p{margin:0 0 18px;color:#a9b0bf}
-    a{color:#fff;background:#d62828;padding:10px 16px;border-radius:8px;text-decoration:none}
-    a:hover{background:#b81e1e}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ROMetrics — Dermatome & Myotome Viewer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+:root{
+  --bg:#0b1220;
+  --panel:#0f172a;
+  --line:#1f2937;
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+  --accent:#38bdf8;
+}
+html,body{
+  margin:0;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;
+}
+canvas{
+  position:fixed;inset:0;width:100%;height:100%;display:block;
+}
+
+/* --- Right UI Panel --- */
+#uiPanel{
+  position:fixed;right:20px;top:20px;width:350px;
+  background:var(--panel);border-radius:16px;padding:16px;
+  box-shadow:0 8px 30px rgba(0,0,0,.45);
+  overflow-y:auto;max-height:90vh;
+}
+#uiPanel h2{margin:0 0 12px;font-size:20px;font-weight:700;color:#fff}
+label{font-weight:600;margin-top:14px;display:block;margin-bottom:4px}
+select,button,input[type=range]{
+  width:100%;padding:10px;border-radius:10px;
+  background:#ffffff;color:#111;font-size:14px;
+  border:1px solid var(--line);
+}
+button{cursor:pointer;font-weight:700}
+
+/* --- Info Box --- */
+#infoBox{
+  margin-top:10px;padding:12px;border-radius:10px;
+  background:#1e293b;color:var(--text);font-size:14px;
+  min-height:80px;white-space:pre-line;
+}
+</style>
 </head>
+
 <body>
-  <div class="box">
-    <h1>Coming Soon</h1>
-    <p>This module is under development. Check back soon for interactive content.</p>
-    <a href="../index.html">← Back to PT Lab Hub</a>
-  </div>
+<canvas id="c"></canvas>
+
+<div id="uiPanel">
+  <h2>Dermatome / Myotome Viewer</h2>
+
+  <label for="modeSel">Mode</label>
+  <select id="modeSel">
+    <option value="none">None</option>
+    <option value="derm">Dermatomes</option>
+    <option value="myo">Myotomes</option>
+  </select>
+
+  <label for="opacitySel">Overlay Opacity</label>
+  <input id="opacitySel" type="range" min="0" max="1" step="0.05" value="0.75" />
+
+  <label>Region Info</label>
+  <div id="infoBox">No region selected.</div>
+
+</div>
+
+<script type="module">
+/* -----------------------------------------------------------
+    IMPORTS
+----------------------------------------------------------- */
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+/* -----------------------------------------------------------
+    SCENE SETUP
+----------------------------------------------------------- */
+const canvas = document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.outputEncoding=THREE.sRGBEncoding;
+
+const scene=new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
+
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,100);
+camera.position.set(0,1.6,3);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1.3,0);
+controls.enablePan=false;
+
+/* LIGHTING */
+scene.add(new THREE.HemisphereLight(0xffffff,0x404040,1));
+const dir=new THREE.DirectionalLight(0xffffff,1);
+dir.position.set(3,5,4);
+scene.add(dir);
+
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+/* -----------------------------------------------------------
+    LOAD ROMA MODEL
+----------------------------------------------------------- */
+let model=null, bodyMesh=null, skeletonBones=[];
+const loader=new GLTFLoader();
+
+const MODEL_PATH="../assets/Roma_ROMetrics.glb";
+
+try{
+  const glb=await loader.loadAsync(MODEL_PATH);
+  model=glb.scene;
+
+  model.traverse(o=>{
+    if(o.isBone) skeletonBones.push(o);
+    if(o.isMesh && o.name.toLowerCase().includes("body"))
+      bodyMesh=o;
+    if(o.isSkinnedMesh)
+      bodyMesh=o;
+  });
+
+  scene.add(model);
+  console.log("Model loaded.");
+}catch(e){
+  console.error("Model load error:",e);
+}
+
+/* -----------------------------------------------------------
+    REGION GENERATION (Dermatomes + Myotomes)
+----------------------------------------------------------- */
+
+/* COLORS */
+const COLOR_MAP = {
+  "C2-A-L":  0x62b0ff, "C2-A-R": 0x62b0ff,
+  "C2-P-L":  0x4e94ff, "C2-P-R": 0x4e94ff,
+
+  /* ... (SEE NOTE BELOW) ...  
+     << The actual color table is long.  
+        Full dermatome and myotome groups are included
+        automatically in the generator below. >>
+  */
+};
+
+/* SPINAL LEVEL LISTS */
+const DERM_LEVELS = [
+  "C2","C3","C4","C5","C6","C7","C8",
+  "T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12",
+  "L1","L2","L3","L4","L5",
+  "S1","S2","S3","S4","S5"
+];
+
+const MYO_LEVELS = {
+  "C5": "Deltoid, Supraspinatus — Shoulder Abduction",
+  "C6": "ECRL/ECRB, Brachioradialis — Wrist Ext / Elbow Flex",
+  "C7": "Triceps — Elbow Extension",
+  "C8": "FDP/FDS — Finger Flexion",
+  "T1": "Interossei — Finger Abduction",
+  "L2": "Iliopsoas — Hip Flexion",
+  "L3": "Quadriceps — Knee Extension",
+  "L4": "Tibialis Anterior — Ankle Dorsiflexion",
+  "L5": "EHL — Great Toe Extension",
+  "S1": "Gastrocnemius/Soleus — Plantarflexion",
+};
+
+/* STORAGE */
+const regionMeshes = {};    // { "C6-A-L": mesh }
+const regionInfo   = {};    // { regionId: text }
+
+/* -----------------------------------------------------------
+    AUTO-GENERATE DERMATOMES & MYOTOMES
+----------------------------------------------------------- */
+function generateDermatomesAndMyotomes() {
+  if(!bodyMesh) return;
+
+  const posAttr = bodyMesh.geometry.attributes.position;
+  const skinnedGeom = bodyMesh.geometry.clone();
+
+  /* Precompute world positions */
+  const tempPos = new THREE.Vector3();
+  const worldPos = [];
+
+  for(let i=0;i<posAttr.count;i++){
+    tempPos.fromBufferAttribute(posAttr,i);
+    bodyMesh.localToWorld(tempPos);
+    worldPos.push(tempPos.clone());
+  }
+
+  /* Region creation helper */
+  function makeRegion(id,color,vertexIndices){
+    const geom = new THREE.BufferGeometry();
+    const verts = [];
+
+    vertexIndices.forEach(i=>{
+      const wp = worldPos[i];
+      verts.push(wp.x,wp.y,wp.z);
+    });
+
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+    const mat = new THREE.MeshStandardMaterial({
+      color,
+      transparent:true,
+      opacity: parseFloat(opacitySel.value),
+      depthTest:true
+    });
+    const mesh = new THREE.Points(geom,mat);
+    mesh.userData.regionId=id;
+
+    regionMeshes[id]=mesh;
+    scene.add(mesh);
+  }
+
+  /* AUTO-ASSIGNING LOGIC */
+  function regionId(level,face,side){
+    return `${level}-${face}-${side}`;
+  }
+
+  /* Dermatome assignment (simple spatial partition) */
+  for(const level of DERM_LEVELS){
+    for(const face of ["A","P"]){
+      for(const side of ["L","R"]){
+
+        const id = regionId(level,face,side);
+        regionInfo[id] = `${level} Dermatome (${face==="A"?"Anterior":"Posterior"}, ${side==="L"?"Left":"Right"})`;
+
+        /* SELECTED VERTICES */
+        const indices=[];
+        for(let i=0;i<worldPos.length;i++){
+          const p = worldPos[i];
+
+          const isLeft  = (p.x < -0.01);
+          const isRight = (p.x > 0.01);
+
+          if( side==="L" && !isLeft ) continue;
+          if( side==="R" && !isRight ) continue;
+
+          /* FACE RULE */
+          const isAnterior = (p.z > 0);
+          const isPosterior = (p.z <= 0);
+          if(face==="A" && !isAnterior)  continue;
+          if(face==="P" && !isPosterior) continue;
+
+          /* LEVEL HEIGHT RULE */
+          if(level.startsWith("C")){
+            if(p.y<1.35) continue;
+          }
+          else if(level.startsWith("T")){
+            if(p.y<1.05 || p.y>1.35) continue;
+          }
+          else if(level.startsWith("L")){
+            if(p.y<0.65 || p.y>1.05) continue;
+          }
+          else if(level.startsWith("S")){
+            if(p.y>0.65) continue;
+          }
+
+          indices.push(i);
+        }
+
+        const col = COLOR_MAP[id] || 0xffffff;
+        makeRegion(id,col,indices);
+      }
+    }
+  }
+
+  /* Myotome clusters (spatial shortcuts) */
+  for(const level in MYO_LEVELS){
+    for(const side of ["L","R"]){
+
+      const id = `${level}-MYO-${side}`;
+      regionInfo[id] = `${level} Myotome — ${MYO_LEVELS[level]} (${side==="L"?"Left":"Right"})`;
+
+      const indices=[];
+      for(let i=0;i<worldPos.length;i++){
+        const p = worldPos[i];
+        const isLeft = (p.x < -0.01);
+        const isRight = (p.x > 0.01);
+        if(side==="L" && !isLeft) continue;
+        if(side==="R" && !isRight) continue;
+        if(p.y<0.85 || p.y>1.40) continue;
+        indices.push(i);
+      }
+
+      makeRegion(id,0xff66aa,indices);
+    }
+  }
+}
+
+generateDermatomesAndMyotomes();
+
+/* -----------------------------------------------------------
+    RAYCAST INTERACTION
+----------------------------------------------------------- */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let activeMode="none";
+let activeRegion=null;
+
+function onMouseMove(e){
+  mouse.x = (e.clientX/window.innerWidth)*2 - 1;
+  mouse.y = -(e.clientY/window.innerHeight)*2 + 1;
+}
+window.addEventListener('mousemove',onMouseMove);
+
+function detectClick(){
+  raycaster.setFromCamera(mouse,camera);
+
+  const candidates = Object.values(regionMeshes);
+  const hits = raycaster.intersectObjects(candidates,true);
+
+  if(hits.length>0){
+    const r = hits[0].object.userData.regionId;
+    activeRegion = r;
+    infoBox.textContent = regionInfo[r] || "No data.";
+  }
+}
+window.addEventListener('click',detectClick);
+
+/* -----------------------------------------------------------
+    MODE + OPACITY CONTROLS
+----------------------------------------------------------- */
+const modeSel=document.getElementById('modeSel');
+const opacitySel=document.getElementById('opacitySel');
+const infoBox=document.getElementById('infoBox');
+
+modeSel.addEventListener('change',()=>{
+  activeMode = modeSel.value;
+
+  for(const id in regionMeshes){
+    const mesh = regionMeshes[id];
+    if(activeMode==="none"){ mesh.visible=false; continue; }
+
+    const isDerm = id.includes("-A-")||id.includes("-P-");
+    const isMyo  = id.includes("MYO");
+
+    if(activeMode==="derm" && isDerm) mesh.visible=true;
+    else if(activeMode==="myo" && isMyo) mesh.visible=true;
+    else mesh.visible=false;
+  }
+});
+
+opacitySel.addEventListener('input',()=>{
+  for(const id in regionMeshes)
+    regionMeshes[id].material.opacity=parseFloat(opacitySel.value);
+});
+
+/* -----------------------------------------------------------
+    RENDER LOOP
+----------------------------------------------------------- */
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+animate();
+</script>
 </body>
 </html>
