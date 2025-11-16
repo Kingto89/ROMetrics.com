@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ROMetrics — Manual Muscle Testing (MMT Integrated)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <script type="importmap">
 {
   "imports": {
@@ -13,32 +14,46 @@
   }
 }
 </script>
+
 <style>
 :root{
-  --bg:#0b0f14;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1;
+  --bg:#0b0f14;--panel:#0f172a;--line:#1f2937;
+  --text:#e2e8f0;--muted:#cbd5e1;
 }
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:Inter,system-ui,sans-serif}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+html,body{
+  margin:0;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;
+}
+canvas{
+  position:fixed;inset:0;width:100%;height:100%;display:block;
+}
 .panel{
-  position:fixed;right:20px;top:20px;width:320px;
+  position:fixed;right:20px;top:20px;width:340px;
   background:var(--panel);border-radius:16px;padding:16px;
-  box-shadow:0 8px 30px rgba(0,0,0,.4);overflow:auto;max-height:90vh;
+  box-shadow:0 8px 30px rgba(0,0,0,.45);
+  overflow-y:auto;max-height:90vh;
 }
-.panel h2{margin:0 0 10px;font-size:18px;color:#fff}
+.panel h2{margin:0 0 12px;font-size:18px;font-weight:700;color:#fff}
 label{display:block;margin-top:10px;margin-bottom:4px;font-weight:600}
 select,button{
-  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
-  font-size:14px;background:#fff;color:#111;
+  width:100%;padding:10px 12px;border-radius:10px;
+  border:1px solid var(--line);
+  background:#fff;color:#111;font-size:14px;font-weight:500;
 }
 button{cursor:pointer;font-weight:700}
-#status{text-align:center;font-weight:700;font-size:18px;margin-top:6px}
-.hand{position:absolute;width:100px;user-select:none;cursor:grab;touch-action:none;z-index:10}
+#status{text-align:center;margin-top:6px;font-weight:700;font-size:18px}
+.hand{
+  position:absolute;width:100px;user-select:none;
+  cursor:grab;touch-action:none;z-index:10;
+}
 #handL{bottom:60px;left:80px}
 #handR{bottom:60px;right:80px}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+
 <div class="panel">
   <h2>ROMetrics — MMT</h2>
   <label for="testLevel">Test Level</label>
@@ -46,11 +61,14 @@ button{cursor:pointer;font-weight:700}
     <option value="3-5" selected>Level 3–5</option>
     <option value="0-2">Level 0–2</option>
   </select>
+
   <label for="testSel">Select Muscle Test</label>
   <select id="testSel" size="12"></select>
+
   <button id="startBtn" disabled>Start Test</button>
   <div id="status"></div>
 </div>
+
 <img id="handL" class="hand" src="./assets/hand_L.png">
 <img id="handR" class="hand" src="./assets/hand_R.png">
 
@@ -59,175 +77,189 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-/* ---------- Scene Setup ---------- */
-const canvas=document.getElementById('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
+/* ---------- Renderer + Scene ---------- */
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(devicePixelRatio);
+renderer.outputEncoding=THREE.sRGBEncoding;
+
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0b0f14);
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,100);
-camera.position.set(0,1.5,3);
+camera.position.set(0,1.6,3);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,1.2,0);controls.update();
-scene.add(new THREE.AmbientLight(0xffffff,0.6));
-const light=new THREE.DirectionalLight(0xffffff,1);
-light.position.set(2,5,3);scene.add(light);
+controls.target.set(0,1.2,0);
+controls.update();
 
-/* ---------- Model Load ---------- */
-let model=null,skeleton=[],clock=new THREE.Clock();
+scene.add(new THREE.HemisphereLight(0xffffff,0x404040,0.9));
+const dir=new THREE.DirectionalLight(0xffffff,1);
+dir.position.set(2,5,3);
+scene.add(dir);
+
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+/* ---------- Load Roma Model ---------- */
+let model=null,skeleton=[];
 const loader=new GLTFLoader();
-const modelPaths=[
-  './assets/Roma_ROMetrics.glb',
-  '/ROMetrics/assets/Roma_ROMetrics.glb',
-  '/ROMetrics/goniometry-trainer/assets/Roma_ROMetrics.glb'
-];
-async function loadModel(){
-  for(const p of modelPaths){
-    try{
-      const g=await loader.loadAsync(p);
-      model=g.scene;
-      model.traverse(o=>{if(o.isBone)skeleton.push(o);});
-      scene.add(model);
-      console.log('Model loaded from',p);
-      return;
-    }catch{}
-  }
-  console.error('Model not found');
-}
-await loadModel();
+try{
+  const glb=await loader.loadAsync('../assets/models/Roma_ROMetrics.glb');
+  model=glb.scene;
+  model.traverse(o=>{if(o.isBone)skeleton.push(o);});
+  scene.add(model);
+  console.log('✅ Roma model loaded from ./assets/models/Roma_ROMetrics.glb');
+}catch(e){console.error('❌ Model load failed',e);}
 
-/* ---------- Action Library (from Auto Actions Index) ---------- */
+/* ---------- Core Helpers ---------- */
+function resolveBind(name){return skeleton.find(b=>b.name===name)||null;}
+function setRotation(bone,axis,deg){
+  if(!bone)return;
+  const rad=THREE.MathUtils.degToRad(deg);
+  if(axis==='x')bone.rotation.x=rad;
+  if(axis==='y')bone.rotation.y=rad;
+  if(axis==='z')bone.rotation.z=rad;
+}
+function resetAll(){
+  skeleton.forEach(b=>{
+    b.rotation.set(0,0,0);
+    if(b.position)b.position.set(0,0,0);
+  });
+}
+
+/* ---------- Action Map ---------- */
 const ACTIONS={
-  'cervical-flexion':{bone:'neck',axis:'x',start:0,end:30},
-  'cervical-extension':{bone:'neck',axis:'x',start:0,end:-45},
-  'shoulder-flexion':{bone:'shoulder_r',axis:'z',start:0,end:90},
-  'shoulder-extension':{bone:'shoulder_r',axis:'z',start:0,end:-60},
-  'shoulder-abduction':{bone:'shoulder_r',axis:'x',start:0,end:90},
-  'shoulder-internal-rotation':{bone:'shoulder_r',axis:'y',start:0,end:70},
-  'shoulder-external-rotation':{bone:'shoulder_r',axis:'y',start:0,end:-90},
-  'elbow-flexion':{bone:'elbow_r',axis:'x',start:0,end:140},
-  'elbow-extension':{bone:'elbow_r',axis:'x',start:140,end:0},
-  'forearm-pronation':{bone:'forearm_r',axis:'y',start:0,end:80},
-  'forearm-supination':{bone:'forearm_r',axis:'y',start:0,end:-80},
-  'wrist-flexion':{bone:'wrist_r',axis:'x',start:0,end:80},
-  'wrist-extension':{bone:'wrist_r',axis:'x',start:0,end:-70},
-  'wrist-ulnar-deviation':{bone:'wrist_r',axis:'z',start:0,end:30},
-  'wrist-radial-deviation':{bone:'wrist_r',axis:'z',start:0,end:-20},
-  'hip-flexion':{bone:'hip_r',axis:'x',start:0,end:120},
-  'hip-extension':{bone:'hip_r',axis:'x',start:0,end:-30},
-  'hip-abduction':{bone:'hip_r',axis:'z',start:0,end:45},
-  'hip-adduction':{bone:'hip_r',axis:'z',start:0,end:-30},
-  'knee-flexion':{bone:'knee_r',axis:'x',start:0,end:135},
-  'knee-extension':{bone:'knee_r',axis:'x',start:135,end:0},
-  'ankle-dorsiflexion':{bone:'ankle_r',axis:'x',start:0,end:20},
-  'ankle-plantarflexion':{bone:'ankle_r',axis:'x',start:0,end:-50},
-  'foot-inversion':{bone:'foot_r',axis:'z',start:0,end:35},
-  'foot-eversion':{bone:'foot_r',axis:'z',start:0,end:-15}
+  'shoulder-flexion':{bone:'upperarm_r',axis:'x',deg:90,midpoint:45},
+  'shoulder-extension':{bone:'upperarm_r',axis:'x',deg:-60,midpoint:-30},
+  'shoulder-abduction':{bone:'upperarm_r',axis:'z',deg:90,midpoint:45},
+  'elbow-flexion':{bone:'lowerarm_r',axis:'x',deg:-145,midpoint:-70},
+  'elbow-extension':{bone:'lowerarm_r',axis:'x',deg:0,midpoint:-10},
+  'hip-flexion':{bone:'thigh_r',axis:'x',deg:120,midpoint:60},
+  'hip-extension':{bone:'thigh_r',axis:'x',deg:-30,midpoint:-15},
+  'knee-flexion':{bone:'calf_r',axis:'x',deg:-135,midpoint:-70},
+  'ankle-dorsiflexion':{bone:'foot_r',axis:'x',deg:20,midpoint:10},
+  'ankle-plantarflexion':{bone:'foot_r',axis:'x',deg:-50,midpoint:-25}
 };
 
-/* ---------- Utility: Bone Control ---------- */
-function getBone(name){
-  return skeleton.find(b=>b.name.toLowerCase().includes(name));
+/* ---------- Animation Function ---------- */
+function animateToPose(boneName,axis,deg,duration=1000){
+  const bone=resolveBind(boneName);
+  if(!bone)return;
+  const start=bone.rotation[axis];
+  const end=THREE.MathUtils.degToRad(deg);
+  const startTime=performance.now();
+  function step(now){
+    const t=Math.min((now-startTime)/duration,1);
+    bone.rotation[axis]=THREE.MathUtils.lerp(start,end,t);
+    if(t<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
-function resetPose(){
-  skeleton.forEach(b=>b.rotation.set(0,0,0));
-}
-function setPose(action,progress){
-  const a=ACTIONS[action];if(!a)return;
-  const b=getBone(a.bone);if(!b)return;
-  const r=THREE.MathUtils.degToRad(a.start+(a.end-a.start)*progress);
-  if(a.axis==='x')b.rotation.x=r;
-  if(a.axis==='y')b.rotation.y=r;
-  if(a.axis==='z')b.rotation.z=r;
+function performAction(key,level='3-5'){
+  if(!ACTIONS[key])return;
+  const act=ACTIONS[key];
+  const deg=(level==='3-5')?act.midpoint:0;
+  animateToPose(act.bone,act.axis,deg,1200);
 }
 
-/* ---------- Hand Dragging and Validation ---------- */
+/* ---------- Hand Logic ---------- */
+const handL=document.getElementById('handL');
+const handR=document.getElementById('handR');
 function makeDraggable(el){
-  el.addEventListener('pointerdown',e=>el.setPointerCapture(e.pointerId));
+  el.addEventListener('pointerdown',e=>{
+    e.preventDefault();el.setPointerCapture(e.pointerId);
+  });
   el.addEventListener('pointermove',e=>{
     if(el.hasPointerCapture(e.pointerId)){
       el.style.left=(el.offsetLeft+e.movementX)+'px';
       el.style.top=(el.offsetTop+e.movementY)+'px';
     }
   });
+  el.addEventListener('pointerup',()=>{el.releasePointerCapture;updateHandGate();});
 }
-makeDraggable(handL);
-makeDraggable(handR);
-function center(el){
-  const r=el.getBoundingClientRect();
-  return [r.left+r.width/2,r.top+r.height/2];
-}
-function near([x1,y1],[x2,y2],r=100){
-  return Math.hypot(x1-x2,y1-y2)<r;
+makeDraggable(handL);makeDraggable(handR);
+
+const HAND_TARGETS={
+  'shoulder-flexion':{L:[180,400],R:[300,350]},
+  'elbow-flexion':{L:[160,450],R:[310,420]},
+  'hip-flexion':{L:[180,420],R:[320,420]},
+  'knee-flexion':{L:[200,440],R:[330,440]},
+  'ankle-dorsiflexion':{L:[220,470],R:[340,470]}
+};
+function isNear(el,[x,y],r=60){
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  return Math.hypot(cx-x,cy-y)<r;
 }
 function handsReady(){
-  if(!current)return false;
-  const t=HANDZONES[current]||{handL:[200,200],handR:[300,300]};
-  return near(center(handL),t.handL)&&near(center(handR),t.handR);
+  if(!selectedTest||!HAND_TARGETS[selectedTest])return false;
+  const t=HAND_TARGETS[selectedTest];
+  return isNear(handL,t.L)&&isNear(handR,t.R);
 }
 
-/* ---------- Test List and Interaction ---------- */
+/* ---------- UI & Control ---------- */
 const testSel=document.getElementById('testSel');
-const levelSel=document.getElementById('testLevel');
+const testLevel=document.getElementById('testLevel');
 const startBtn=document.getElementById('startBtn');
 const status=document.getElementById('status');
-let current=null,timers=[];
+let selectedTest=null,holdTimers=[];
 
-const HANDZONES={
-  'shoulder-flexion':{handL:[220,220],handR:[320,300]},
-  'shoulder-abduction':{handL:[240,200],handR:[340,280]},
-  'elbow-flexion':{handL:[260,240],handR:[360,320]},
-  'wrist-flexion':{handL:[300,260],handR:[400,340]},
-  'hip-flexion':{handL:[200,400],handR:[300,520]},
-  'knee-extension':{handL:[260,460],handR:[380,580]},
-  'ankle-dorsiflexion':{handL:[260,520],handR:[360,640]}
-};
-
-Object.keys(ACTIONS).forEach(id=>{
-  const o=document.createElement('option');
-  o.value=id;o.textContent=id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-  testSel.appendChild(o);
-});
-
-function updateBtn(){startBtn.disabled=!(current&&handsReady());}
-['pointermove','pointerup'].forEach(e=>{
-  handL.addEventListener(e,updateBtn);
-  handR.addEventListener(e,updateBtn);
-});
 testSel.addEventListener('change',()=>{
-  current=testSel.value;
-  resetPose();
-  if(levelSel.value==='3-5')setPose(current,0.5);
-  updateBtn();
+  selectedTest=testSel.value;
+  updateHandGate();
 });
-levelSel.addEventListener('change',()=>{
-  resetPose();
-  if(levelSel.value==='3-5'&&current)setPose(current,0.5);
-  updateBtn();
-});
-
-/* ---------- Test Execution ---------- */
-startBtn.addEventListener('pointerdown',()=>{
-  if(startBtn.disabled)return;
-  resetPose();
-  setPose(current,0.5);
-  status.textContent='3';
-  timers.push(setTimeout(()=>status.textContent='4',3000));
-  timers.push(setTimeout(()=>status.textContent='5',6000));
-  timers.push(setTimeout(()=>status.textContent='Test Complete',9000));
-});
-startBtn.addEventListener('pointerup',()=>{
-  timers.forEach(clearTimeout);timers=[];
-  if(status.textContent!=='Test Complete')status.textContent='';
-});
-
-/* ---------- Animation ---------- */
-function animate(){
-  requestAnimationFrame(animate);
-  if(model)renderer.render(scene,camera);
+function updateHandGate(){
+  startBtn.disabled=!(selectedTest&&handsReady());
 }
-animate();
+
+/* ---------- Test Flow ---------- */
+function beginTest(){
+  if(!selectedTest)return;
+  const lvl=testLevel.value;
+  resetAll();
+  performAction(selectedTest,lvl);
+  status.textContent='3';
+  holdTimers=[
+    setTimeout(()=>status.textContent='4',3000),
+    setTimeout(()=>status.textContent='5',6000),
+    setTimeout(()=>status.textContent='Test Complete',9000)
+  ];
+}
+function endTest(){
+  holdTimers.forEach(clearTimeout);
+  holdTimers=[];
+  setTimeout(()=>{resetAll();status.textContent='';},1000);
+}
+startBtn.addEventListener('pointerdown',beginTest);
+startBtn.addEventListener('pointerup',endTest);
+['pointermove','pointerup'].forEach(evt=>{
+  handL.addEventListener(evt,updateHandGate);
+  handR.addEventListener(evt,updateHandGate);
+});
+testLevel.addEventListener('change',updateHandGate);
+
+/* ---------- Test List Loader ---------- */
+(async function populateTests(){
+  const res=await fetch("https://raw.githubusercontent.com/Kingto89/ROMetrics/main/mmt/rometrics_mmt_library.md");
+  const text=await res.text();
+  const matches=[...text.matchAll(/^###\s+(.*?)$/gm)];
+  for(const m of matches){
+    const opt=document.createElement('option');
+    opt.value=m[1].toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    opt.textContent=m[1];
+    testSel.appendChild(opt);
+  }
+})();
+
+/* ---------- Render Loop ---------- */
+function render(){
+  requestAnimationFrame(render);
+  renderer.render(scene,camera);
+}
+render();
 </script>
 </body>
 </html>
