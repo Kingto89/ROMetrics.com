@@ -692,11 +692,11 @@ const Gonio = (() => {
     if (inner % 10 !== 0) continue;          // every 10°
     if (inner === 0 && d !== 180) continue;  // single 0 at bottom only
 
-    const a = (d - 180) * Math.PI / 180;
+    const a = (d - 90) * Math.PI / 180;
     const x = Math.cos(a) * rInner;
     const y = Math.sin(a) * rInner;
 
-    text(numsIn, x, y, String(inner), "labelInner").setAttribute('transform', `rotate(${90 - d} ${x} ${y})`);
+    text(numsIn, x, y, String(inner), "labelInner").setAttribute('transform', `rotate(${180 - d} ${x} ${y})`);
   }
 
 
