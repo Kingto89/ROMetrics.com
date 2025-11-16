@@ -711,8 +711,8 @@ const Gonio = (() => {
     const x = Math.cos(a) * rInner;
     const y = Math.sin(a) * rInner;
 
-    const tEl = text(numsIn, x, y, String(inner), "labelInner");
-tEl.setAttribute("transform", `scale(1, -1)`);
+    text(numsIn, x, y, String(inner), "labelInner");
+    numsIn.lastChild.setAttribute("transform", `scale(-1,1) translate(${-2*x},0)`);
   }
 
 
