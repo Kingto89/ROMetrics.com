@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ROMetrics — Manual Muscle Testing (MMT)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <script type="importmap">
 {
@@ -15,193 +16,262 @@
 </script>
 
 <style>
-:root {
-  --bg:#0b1220;--panel:#0f172a;--line:#1f2937;
-  --ctrl:#1e293b;--text:#e2e8f0;--muted:#94a3b8;
+/* Base styles from MMT Full Index */
+:root{--bg:#0b0f14;--card:rgba(255,255,255,.88);--ink:#0f172a;}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#111}
+.bg{position:fixed;inset:0;background:#0b0f14 url('./assets/bg_pt_office.jpg') center/cover no-repeat;filter:saturate(1.05) brightness(.9)}
+.overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(11,15,20,.25),rgba(11,15,20,.6))}
+.wrap{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;max-width:1200px;margin:32px auto;padding:12px}
+.card{backdrop-filter:blur(10px);background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
+.header{padding:14px 16px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+.title{font-weight:700}
+.muted{color:#1f2937;opacity:.75}
+.panel{padding:14px 16px}
+
+/* Stage now holds the canvas */
+.stage{
+  height:min(65vh,520px);
+  display:flex;align-items:center;justify-content:center;
+  padding: 0; /* Remove padding */
+  position: relative; /* For canvas positioning */
 }
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-  overflow:hidden;font-family:Inter,system-ui,sans-serif;}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{
-  position:fixed;right:24px;top:24px;width:340px;
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.45);
+
+/* Canvas styling to fit inside the .stage card */
+#c {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 16px; /* Match card */
 }
-.panel h2{margin:0 0 10px;font-weight:700;font-size:18px}
-label{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
-select,button{
-  width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;
-  border:1px solid var(--line);background:var(--ctrl);color:#fff;
-  font-size:14px;
+
+.controls{width:280px}
+.controls .panel{display:grid;gap:10px;position:relative;}
+.select, button {
+  width:100%;padding:10px 12px;border-radius:10px;
+  border:1px solid rgba(0,0,0,.08);font-size:14px;background:#fff;
 }
-button{cursor:pointer;font-weight:600}
-#status{text-align:center;margin-top:10px;font-size:18px;font-weight:700}
+button {
+  cursor:pointer; font-weight: 600; background: #eee;
+}
+button:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+.small{font-size:12px;color:#475569}
+#testCountdown{font-weight:600;padding-left:10px;font-size: 18px; color: #000;}
+.row{display:flex;align-items:center;gap:10px;}
 </style>
 </head>
-
 <body>
-<canvas id="c"></canvas>
-<div class="panel">
-  <h2>ROMetrics — MMT</h2>
-  <label>Test Level</label>
-  <select id="testLevel">
-    <option value="3-5" selected>Level 3–5</option>
-    <option value="0-2">Level 0–2</option>
-  </select>
-  <label>Action</label>
-  <select id="actionSel" size="10"></select>
-  <button id="startBtn">Start Test</button>
-  <div id="status"></div>
-</div>
-
+<div class="bg"></div><div class="overlay"></div>
+<main class="wrap">
+  <section class="card stage" aria-label="3D stage">
+    <canvas id="c"></canvas>
+  </section>
+  <aside class="card controls" aria-label="MMT controls">
+    <div class="header">
+      <div><div class="title">ROMetrics — MMT</div>
+      <div class="muted small">Select test level & muscle</div></div>
+    </div>
+    <div class="panel">
+      <select id="testLevel" class="select">
+        <option value="3-5">Level 3–5</option>
+        <option value="0-2">Level 0–2</option>
+      </select>
+      <select id="test" class="select" size="10"></select>
+      <div class="row">
+        <button id="startBtn">Start Test</button>
+        <span id="testCountdown"></span>
+      </div>
+    </div>
+  </aside>
+</main>
 <script type="module">
+// Imports from Actions index
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ---------- Scene ---------- */
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
-renderer.setSize(innerWidth,innerHeight);
+/* ---------- Scene Setup (Adapted for UI) ---------- */
+const stageEl = document.querySelector(".stage");
+const canvas = document.getElementById("c");
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+renderer.setSize(stageEl.clientWidth, stageEl.clientHeight);
 renderer.setPixelRatio(devicePixelRatio);
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.shadowMap.enabled=true;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+// Set transparent background to see the card's backdrop-filter
+renderer.setClearColor(0x000000, 0); 
 
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1220);
-const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.01,100);
-camera.position.set(1.6,1.6,3.2);
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,1.2,0);controls.enableDamping=true;
+const scene = new THREE.Scene();
+// No background color, let the CSS handle it
+// scene.background = new THREE.Color(0x0b1220); 
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x444455,0.8));
-const dir=new THREE.DirectionalLight(0xffffff,1.2);
-dir.position.set(2.5,4,2.5);dir.castShadow=true;scene.add(dir);
+const camera = new THREE.PerspectiveCamera(45, stageEl.clientWidth / stageEl.clientHeight, 0.01, 100);
+camera.position.set(1.6, 1.6, 3.2);
 
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(20,20),
-  new THREE.ShadowMaterial({opacity:0.3}));
-ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.2, 0);
+controls.enableDamping = true;
 
-window.addEventListener("resize",()=>{
-  camera.aspect=innerWidth/innerHeight;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
+const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+dir.position.set(2.5, 4, 2.5);
+dir.castShadow = true;
+scene.add(dir);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20),
+  new THREE.ShadowMaterial({ opacity: 0.2 })); // Slightly lighter shadow
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Resize listener adapted to the .stage element
+window.addEventListener("resize", () => {
+  const w = stageEl.clientWidth;
+  const h = stageEl.clientHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
+  renderer.setSize(w, h);
 });
 
-/* ---------- Model Loader ---------- */
-function pickModelUrl(){
-  const u=new URL(location.href);
-  const q=u.searchParams.get("model");
-  if(q && /^https?:\/\//i.test(q)) return q;
-  if(q && q.trim()) return new URL(q,location.href).href;
-  return "../assets/Roma_ROMetrics.glb";
+/* ---------- Model Loader (from Actions) ---------- */
+function pickModelUrl() {
+  const u = new URL(location.href);
+  const q = u.searchParams.get("model");
+  if (q && /^https?:\/\//i.test(q)) return q;
+  if (q && q.trim()) return new URL(q, location.href).href;
+  // Use asset path from MMT Full Index
+  return "./assets/Roma_ROMetrics.glb"; 
 }
-let MODEL_URL=pickModelUrl(),model=null,skeleton=[];
-const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
-const draco=new DRACOLoader();
+let MODEL_URL = pickModelUrl(), model = null, skeleton = [];
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+const draco = new DRACOLoader();
 draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
 loader.setDRACOLoader(draco);
 
-loader.load(MODEL_URL,gltf=>{
-  model=gltf.scene;
-  model.traverse(o=>{
-    if(o.isSkinnedMesh&&o.skeleton)skeleton=o.skeleton.bones;
-    if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}
+loader.load(MODEL_URL, gltf => {
+  model = gltf.scene;
+  model.traverse(o => {
+    if (o.isSkinnedMesh && o.skeleton) skeleton = o.skeleton.bones;
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
   });
   scene.add(model);
-  const box=new THREE.Box3().setFromObject(model);
-  model.position.y-=box.min.y;
-  console.log("✅ Model loaded:",MODEL_URL);
+  const box = new THREE.Box3().setFromObject(model);
+  model.position.y -= box.min.y;
+  console.log("✅ Model loaded:", MODEL_URL);
 });
 
-/* ---------- Utilities ---------- */
-function resolveBind(name){return skeleton.find(b=>b.name===name)||null;}
-function resetAll(){skeleton.forEach(b=>b.rotation.set(0,0,0));}
-function animateToPose(boneName,axis,deg,duration=1000){
-  const bone=resolveBind(boneName);if(!bone)return;
-  const start=bone.rotation[axis],end=THREE.MathUtils.degToRad(deg);
-  const startTime=performance.now();
-  function step(now){
-    const t=Math.min((now-startTime)/duration,1);
-    bone.rotation[axis]=THREE.MathUtils.lerp(start,end,t);
-    if(t<1)requestAnimationFrame(step);
+/* ---------- Utilities (from Actions) ---------- */
+function resolveBind(name) { return skeleton.find(b => b.name === name) || null; }
+function resetAll() { skeleton.forEach(b => b.rotation.set(0, 0, 0)); }
+function animateToPose(boneName, axis, deg, duration = 1000) {
+  const bone = resolveBind(boneName); if (!bone) return;
+  const start = bone.rotation[axis], end = THREE.MathUtils.degToRad(deg);
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    bone.rotation[axis] = THREE.MathUtils.lerp(start, end, t);
+    if (t < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
-/* ---------- Actions ---------- */
-const ACTIONS={
-  "shoulder-flexion":{bone:"upperarm_r",axis:"x",deg:90,midpoint:45},
-  "shoulder-extension":{bone:"upperarm_r",axis:"x",deg:-60,midpoint:-30},
-  "shoulder-abduction":{bone:"upperarm_r",axis:"z",deg:90,midpoint:45},
-  "elbow-flexion":{bone:"lowerarm_r",axis:"x",deg:-145,midpoint:-70},
-  "elbow-extension":{bone:"lowerarm_r",axis:"x",deg:0,midpoint:-10},
-  "hip-flexion":{bone:"thigh_r",axis:"x",deg:120,midpoint:60},
-  "hip-extension":{bone:"thigh_r",axis:"x",deg:-30,midpoint:-15},
-  "knee-flexion":{bone:"calf_r",axis:"x",deg:-135,midpoint:-70},
-  "ankle-dorsiflexion":{bone:"foot_r",axis:"x",deg:20,midpoint:10},
-  "ankle-plantarflexion":{bone:"foot_r",axis:"x",deg:-50,midpoint:-25}
+/* ---------- Actions (from Actions) ---------- */
+const ACTIONS = {
+  "shoulder-flexion": { bone: "upperarm_r", axis: "x", deg: 90, midpoint: 45 },
+  "shoulder-extension": { bone: "upperarm_r", axis: "x", deg: -60, midpoint: -30 },
+  "shoulder-abduction": { bone: "upperarm_r", axis: "z", deg: 90, midpoint: 45 },
+  "elbow-flexion": { bone: "lowerarm_r", axis: "x", deg: -145, midpoint: -70 },
+  "elbow-extension": { bone: "lowerarm_r", axis: "x", deg: 0, midpoint: -10 },
+  "hip-flexion": { bone: "thigh_r", axis: "x", deg: 120, midpoint: 60 },
+  "hip-extension": { bone: "thigh_r", axis: "x", deg: -30, midpoint: -15 },
+  "knee-flexion": { bone: "calf_r", axis: "x", deg: -135, midpoint: -70 },
+  "ankle-dorsiflexion": { bone: "foot_r", axis: "x", deg: 20, midpoint: 10 },
+  "ankle-plantarflexion": { bone: "foot_r", axis: "x", deg: -50, midpoint: -25 }
 };
 
-/* ---------- Perform Action ---------- */
-function performAction(key,level="3-5"){
-  if(!ACTIONS[key])return;
-  const act=ACTIONS[key];
-  const deg=(level==="3-5")?act.midpoint:0;
-  animateToPose(act.bone,act.axis,deg,1200);
+/* ---------- Perform Action (from Actions) ---------- */
+function performAction(key, level = "3-5") {
+  if (!ACTIONS[key]) return;
+  const act = ACTIONS[key];
+  // Per your request, "3-5" uses midpoint, "0-2" will use 0 (reset)
+  const deg = (level === "3-5") ? act.midpoint : 0;
+  animateToPose(act.bone, act.axis, deg, 1200);
 }
 
-/* ---------- UI ---------- */
-const testSel=document.getElementById("actionSel");
-const testLevel=document.getElementById("testLevel");
-const startBtn=document.getElementById("startBtn");
-const status=document.getElementById("status");
+/* ---------- UI (Adapted for MMT Index) ---------- */
+// Get UI elements using MMT Full Index IDs
+const testSel = document.getElementById("test");
+const testLevel = document.getElementById("testLevel");
+const startBtn = document.getElementById("startBtn");
+const status = document.getElementById("testCountdown");
 
-(async function populateTests(){
-  const res=await fetch("https://raw.githubusercontent.com/Kingto89/ROMetrics/main/mmt/rometrics_mmt_library.md");
-  const text=await res.text();
-  const matches=[...text.matchAll(/^###\\s+(.*?)$/gm)];
-  for(const m of matches){
-    const opt=document.createElement("option");
-    opt.value=m[1].toLowerCase().replace(/[^a-z0-9]+/g,"-");
-    opt.textContent=m[1];
+(async function populateTests() {
+  const res = await fetch("https://raw.githubusercontent.com/Kingto89/ROMetrics/main/mmt/rometrics_mmt_library.md");
+  const text = await res.text();
+  const matches = [...text.matchAll(/^###\s+(.*?)$/gm)];
+  for (const m of matches) {
+    const opt = document.createElement("option");
+    opt.value = m[1].toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    opt.textContent = m[1];
     testSel.appendChild(opt);
   }
 })();
 
 /* ---------- Auto-Pose on Selection ---------- */
-let selectedTest=null;
-testSel.addEventListener("change",()=>{
-  selectedTest=testSel.value;
+let selectedTest = null;
+startBtn.disabled = true; // Disabled by default
+
+testSel.addEventListener("change", () => {
+  selectedTest = testSel.value;
+  startBtn.disabled = !selectedTest; // Enable button
   resetAll();
-  performAction(selectedTest,testLevel.value);
+  performAction(selectedTest, testLevel.value);
 });
 
-/* ---------- Timed Test ---------- */
-let holdTimers=[];
-function beginTest(){
-  if(!selectedTest)return;
+testLevel.addEventListener("change", () => {
+  if (selectedTest) {
+    resetAll();
+    performAction(selectedTest, testLevel.value);
+  }
+});
+
+/* ---------- Timed Test (from Actions) ---------- */
+let holdTimers = [];
+function beginTest() {
+  if (!selectedTest) return;
+  // Re-run the pose in case it was moved
   resetAll();
-  performAction(selectedTest,testLevel.value);
-  status.textContent="3";
-  holdTimers=[
-    setTimeout(()=>status.textContent="4",3000),
-    setTimeout(()=>status.textContent="5",6000),
-    setTimeout(()=>status.textContent="Test Complete",9000)
+  performAction(selectedTest, testLevel.value);
+  status.textContent = "3";
+  holdTimers = [
+    setTimeout(() => status.textContent = "4", 3000),
+    setTimeout(() => status.textContent = "5", 6000),
+    setTimeout(() => status.textContent = "Test Complete", 9000)
   ];
 }
-function endTest(){
-  holdTimers.forEach(clearTimeout);holdTimers=[];
-  setTimeout(()=>{resetAll();status.textContent="";},1000);
+function endTest() {
+  holdTimers.forEach(clearTimeout); holdTimers = [];
+  // Clear status after a delay, but don't reset pose
+  setTimeout(() => { 
+    if(status.textContent !== "Test Complete") status.textContent = ""; 
+  }, 1000);
 }
-startBtn.addEventListener("pointerdown",beginTest);
-startBtn.addEventListener("pointerup",endTest);
+startBtn.addEventListener("pointerdown", beginTest);
+startBtn.addEventListener("pointerup", endTest);
 
-/* ---------- Render ---------- */
-function render(){
+/* ---------- Render (from Actions) ---------- */
+function render() {
   requestAnimationFrame(render);
   controls.update();
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
 }
 render();
 </script>
