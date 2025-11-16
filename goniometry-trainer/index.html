@@ -681,40 +681,52 @@ const Gonio = (() => {
   const rWhite = R   - 8;   // outer-number radius
   const rInner = Rin + 9;   // inner-number radius
 
-   /* ---------- OUTER (0–80–0–80–0) ---------- */
-  const OUTER_ANGLE_SHIFT = +20;   // <— rotate outer labels by 20°
+/* ============================================================
+   OUTER + INNER LABELS (correct geometry, no forced misalignment)
+   ============================================================ */
 
-  for (let d = 0; d < 360; d += 10){
-    const inner = innerFromD(d);
-    const outer = Math.abs(90 - inner);       // complement
+numsOut.innerHTML = "";
+numsIn.innerHTML  = "";
 
-    if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
+/* ------ OUTER RING: 0–80–0–80–0 (natural 20° lead) ------ */
 
-    // apply 20° shift ONLY to outer label positions
-    const a = (d - 90 + OUTER_ANGLE_SHIFT) * Math.PI / 180;
-    const x = Math.cos(a) * rWhite;
-    const y = Math.sin(a) * rWhite;
+// Rotate entire OUTER text group once (not the math)
+numsOut.setAttribute("transform", "rotate(20)");
 
-    text(numsOut, x, y, String(outer), "labelOuter");
-  }
+for (let d = 0; d < 360; d += 10) {
+  const inner = innerFromD(d);        // 0→180→0
+  const outer = Math.abs(90 - inner); // 0,20,40,60,80
 
-  /* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
-     (so inner 0,10,20,…,170,180,170,…,10)
-  */
-  for (let d = 0; d < 360; d += 10){
-    const inner = innerFromD(d);
+  if (outer % 20 !== 0 || outer > 80) continue;
 
-    if (inner % 10 !== 0) continue;          // every 10°
-    if (inner === 0 && d !== 180) continue;  // single 0 at bottom only
+  const a = (d - 90) * Math.PI / 180;
+  const x = Math.cos(a) * rWhite;
+  const y = Math.sin(a) * rWhite;
 
-    const a = (d - 90) * Math.PI / 180;
-    const x = Math.cos(a) * rInner;
-    const y = Math.sin(a) * rInner;
+  text(numsOut, x, y, String(outer), "labelOuter");
+}
 
-    text(numsIn, x, y, String(inner), "labelInner");
-    const el = numsIn.lastChild;
-    el.setAttribute("transform", `rotate(360 ${x} ${y})`);
-  }
+
+/* ------ INNER RING: 0→180→0 (readable and upright) ------ */
+
+for (let d = 0; d < 360; d += 10) {
+  const inner = innerFromD(d);
+
+  if (inner % 10 !== 0) continue;
+  if (inner === 0 && d !== 180) continue;
+
+  const a = (d - 90) * Math.PI / 180;
+  const x = Math.cos(a) * rInner;
+  const y = Math.sin(a) * rInner;
+
+  // Standard placement
+  text(numsIn, x, y, inner.toString().padStart(2, "0"), "labelInner");
+
+  // Make text read left-to-right WITHOUT rotating position
+  const el = numsIn.lastChild;
+  el.setAttribute("transform", `rotate(${-(d - 90)} ${x} ${y})`);
+}
+
 
 
     buildTipRuler(armA_ruler, +380, +1, 'A');
