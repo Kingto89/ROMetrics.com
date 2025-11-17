@@ -182,6 +182,9 @@ optgroup{color:#9fb0c9;font-style:normal}
 
   const segUpper = document.getElementById("segUpper");
   const segLower = document.getElementById("segLower");
+  // ==== FIX: disable old segment buttons (they no longer exist) ====
+const segUpperExists = !!segUpper;
+const segLowerExists = !!segLower;
 
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
@@ -917,6 +920,23 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
+  function refreshActionsByRegion(region){
+    // Map region → upper/lower set
+    if (
+      region === "cervical_spine" ||
+      region === "thoracic_lumbar_spine" ||
+      region === "glenohumeral_joint" ||
+      region === "elbow_radioulnar" ||
+      region === "wrist"
+    ){
+        CURRENT = UPPER;
+    } else {
+        CURRENT = LOWER;
+    }
+
+    fillActionMenu();
+}
+
   function fillActionMenu(){
     actionSel.innerHTML = "";
     const ph = document.createElement("option");
@@ -955,8 +975,14 @@ if (cfg.key === 'foot_invev_l') {
     actionDeg.disabled = false;
   }
 
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
-  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
+
+// Region dropdown now controls action list
+document.getElementById("regionSel").onchange = () => {
+    refreshActionsByRegion(regionSel.value);
+};
+
+// disable old buttons
+// (no actions needed)
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
