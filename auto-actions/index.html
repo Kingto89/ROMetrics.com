@@ -197,16 +197,17 @@ async function loadNote(region, motion){
 }
 
 
-/* ===== Events ===== */
+// ===== Goniometer Note Button =====
 showNote.onclick = async () => {
   const region = regionSel.value;
-  const motion = motionSel.value;
+  const motion = actionSel.value || motionSel?.value || "";
+
   await loadNote(region, motion);
-  note.classList.remove("hide");
+  note.classList.remove("hide");   // show note bubble
 };
 
-closeNote.onclick = () => {
-  note.classList.add("hide");
+noteClose.onclick = () => {
+  note.classList.add("hide");      // hide note bubble
 };
 
 
