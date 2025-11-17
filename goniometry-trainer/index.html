@@ -845,7 +845,7 @@ function applyRot(){
 
   // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
   function setPose(cx,cy,baseDeg,movDeg){
-    panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
+    panX=cx; panY=cy; baseRot=baseDeg; mov = clamp360(movDeg);
     clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
   }
 
