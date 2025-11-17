@@ -136,7 +136,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 /* ===== UI ===== */
-const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
+const regionSel = document.getElementById("regionSel");   
 const showNote = document.getElementById("showNote");
 const notePopup = document.getElementById("notePopup");
 const closeNote = document.getElementById("closeNote");
@@ -929,14 +929,16 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-  function fillActionMenu(){
-    actionSel.innerHTML = 
-    // ⛔ If no region selected → no actions at all
-  if (!regionSel.value){
+  function fillActionMenu() {
+  // ⛔ If no region selected → no actions at all
+  if (!regionSel.value) {
+    actionSel.innerHTML = "";
     actionSel.disabled = true;
     return;
   }
 
+  // Region selected → populate normally
+  actionSel.innerHTML = "";
   actionSel.disabled = false;
 
   const list = CURRENT || [];
