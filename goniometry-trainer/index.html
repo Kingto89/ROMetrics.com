@@ -497,7 +497,7 @@ function setAngleHUD(angle, romStr=""){
 }
 let romActive = false;
 startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
-resetROMBtn.onclick  = ()=>{ romActive = false; log(`ROM reset`); };
+resetROMBtn.onclick = ()=>{ romActive=false; Gonio.zeroHere(); setAngleHUD(0,""); log(`ROM reset`); };
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
 
 /* Pills */
@@ -867,7 +867,7 @@ for (let d = 0; d < 360; d += 10){
   function getPan(){ return { x: panX, y: panY }; }
 
   // Angle is from zeroRef to mov 
-  function currentAngle(){ const raw=clamp360(mov-zeroRef); return (!romActive&&raw===0)?0:(raw===0?360:raw); }
+  function currentAngle(){ const raw=clamp360(mov-zeroRef); const fwd=(360-raw)%360; return (!romActive&&raw===0)?0:(fwd===0?360:fwd); }
 
   return {
     show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
