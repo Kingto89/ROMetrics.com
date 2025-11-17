@@ -440,38 +440,47 @@ function refreshScreenDots(){
   else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
 
  if (scr.fulcrum && scr.stationary && scr.moving) {
-    const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+  const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
 
-    /* ---- Convert FULCRUM to local space ---- */
-    const fulPt  = svg.createSVGPoint();
-    fulPt.x = Fs.x;
-    fulPt.y = Fs.y;
-    const fulLocal = fulPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+  const baseDeg = Gonio.degFromScreenVec(
+    Ss.x - Fs.x,
+    Ss.y - Fs.y
+  );
 
-    /* ---- Convert STATIONARY to local space ---- */
-    const statPt = svg.createSVGPoint();
-    statPt.x = Ss.x;
-    statPt.y = Ss.y;
-    const statLocal = statPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+  const movDeg  = Gonio.degFromScreenVec(
+    Ms.x - Fs.x,
+    Ms.y - Fs.y
+  );
 
-    /* ---- Convert MOVING to local space ---- */
-    const movPt  = svg.createSVGPoint();
-    movPt.x = Ms.x;
-    movPt.y = Ms.y;
-    const movLocal = movPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+  const inst = document.getElementById('instrument');
+  const firstReveal = inst.style.display !== 'block';
+  inst.style.display = 'block';
 
-    /* ---- Both angles now from SAME coordinate system ---- */
-    const baseDeg = Gonio.degFromScreenVec(
-        statLocal.x - fulLocal.x,
-        statLocal.y - fulLocal.y
-    );
+  if (firstReveal) {
+    Gonio.setZoom(1);
+    const targetFrac  = 0.18;
+    const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
+    const autoScale   = Math.max(0.25, Math.min(0.9, targetBound / 140));
+    Gonio.setScale(autoScale);
+    sizeEl.value = Math.round(autoScale * 100);
+  }
 
-    const movDeg  = Gonio.degFromScreenVec(
-        movLocal.x - fulLocal.x,
-        movLocal.y - fulLocal.y
-    );
+  Gonio.show();
+  Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+  Gonio.zeroHere();
 
-    Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+  rotateCWEl.value = 0;
+  rotateCCWEl.value = 0;
+  rotateMoveEl.value = 0;
+
+  const p = Gonio.getPan();
+  gonioXEl.value = Math.round(p.x);
+  gonioYEl.value = Math.round(p.y);
+
+  setAngleHUD(Gonio.angle, romString());
+  setGonioLock(false);
+} else {
+  document.getElementById('instrument').style.display = 'none';
 }
 
     const inst = document.getElementById('instrument');
