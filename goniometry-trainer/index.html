@@ -630,7 +630,7 @@ const Gonio = (() => {
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
   const clamp360=a=>(a%360+360)%360;
   const toDegUp=(x,y)=>clamp360(Math.atan2(-y,x)*180/Math.PI+90);
-  const shortest=(a,b)=>{ let d=clamp360(a-b); return d>180? 360-d: d; };
+  const shortest=(a,b)=>{ let d=clamp360(a-b); return d; };
 
 (function build(){
   const NS = "http://www.w3.org/2000/svg";
