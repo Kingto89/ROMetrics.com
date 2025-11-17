@@ -460,7 +460,7 @@ function refreshScreenDots(){
     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
     Gonio.zeroHere();
     // reset all controllers to 0 on first reveal
-    rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0;
+    rotateCWEl.value = 0; rotateMoveEl.value = 0;
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
     setGonioLock(false);
@@ -494,7 +494,7 @@ function setAngleHUD(angle, romStr=""){
   hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
 }
 let romActive = false;
-startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
+startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateCWEl.value = 0; rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
 resetROMBtn.onclick = ()=>{ romActive=false; Gonio.zeroHere(); setAngleHUD(0,""); log(`ROM reset`); };
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
 
@@ -532,11 +532,10 @@ document.getElementById("controllers").open = false;
 sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gonio.refresh(); };
 gonioRotateEl.oninput = ()=> { Gonio.setUserRot(parseFloat(gonioRotateEl.value)||0); Gonio.refresh(); };
 
-/* NEW: CW/CCW handlers (each zeroes the other) */
+/* NEW: CW handlers (each zeroes the other) */
 rotateCWEl.oninput = ()=>{
   if (lockGonio) return;
   const v = parseFloat(rotateCWEl.value)||0;
-  rotateCCWEl.value = 0;
   Gonio.setMovDegRel(v);             // positive relative rotation
   setAngleHUD(Gonio.angle, romString());
 };
