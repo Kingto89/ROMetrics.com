@@ -133,10 +133,11 @@
         <label>Rotate Goniometer (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
 
-        <!-- NEW:  straight-line controls
+        <!-- NEW: two straight-line controls (CW/CCW). Old single slider kept hidden for compatibility. -->
         <label>Rotate Moving Arm — CW (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="rotateCW">
-      
+        <label>Rotate Moving Arm — CCW (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
 
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
@@ -253,6 +254,7 @@ const gonioYEl = document.getElementById("gonioY");
 
 /* NEW: two straight-line controls */
 const rotateCWEl  = document.getElementById("rotateCW");
+const rotateCCWEl = document.getElementById("rotateCCW");
 
 const regionSel = document.getElementById("regionSel");
 const motionSel = document.getElementById("motionSel");
@@ -540,6 +542,13 @@ rotateCWEl.oninput = ()=>{
   Gonio.setMovDegRel(v);             // positive relative rotation
   setAngleHUD(Gonio.angle, romString());
 };
+rotateCCWEl.oninput = ()=>{
+  if (lockGonio) return;
+  const v = parseFloat(rotateCCWEl.value)||0;
+  rotateCWEl.value = 0;
+  Gonio.setMovDegRel(-v);            // negative relative rotation
+  setAngleHUD(Gonio.angle, romString());
+};
 
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
@@ -565,7 +574,7 @@ resetMeasurementBtn.onclick = ()=>{
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
   Gonio.hide(); romActive = false;
-  rotateCWEl.value = 0; rotateMoveEl.value = 0; 
+  rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; 
   setAngleHUD(0,"");
   log("Measurement reset");
 };
