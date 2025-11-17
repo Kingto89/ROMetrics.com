@@ -556,7 +556,7 @@ rotateCWEl.oninput = ()=>{
 
   // always count forward 0→360
   Gonio.setMovDegRel(v);
-  setAngleHUD(Gonio.angle, romString());
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
 };
 
 rotateCCWEl.oninput = ()=>{
@@ -568,7 +568,7 @@ rotateCCWEl.oninput = ()=>{
 
   // also count forward 0→360
   Gonio.setMovDegRel(-v);
-  setAngleHUD(Gonio.angle, romString());
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
 };
 
 
