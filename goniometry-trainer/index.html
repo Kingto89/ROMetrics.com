@@ -888,6 +888,8 @@ for (let d = 0; d < 360; d += 10){
   // Angle is from zeroRef to mov 
   function currentAngle(){
   const raw = clamp360(mov - zeroRef);
+  const d   = raw <= 180 ? raw : 360 - raw;  // shortest arc
+  return d;
   return raw; 
 }
 
