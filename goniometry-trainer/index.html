@@ -610,8 +610,9 @@ const clock = new THREE.Clock();
   clock.getDelta();
   controls.update();
   if (!document.getElementById('gonioHost').classList.contains('hide')) {
-    setAngleHUD(Gonio.angle, romString());
-  }
+    setAngleHUD(Gonio.getMovDegAbs(), romString());
+}
+
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 })();
