@@ -686,7 +686,7 @@ for (let d = 0; d < 360; d += 10){
   if (outer % 20 !== 0 || outer > 80) continue;
 
   // ❗ FIX: freeze outer-number angle exactly like inner dial
-  const a = (d - 100) * Math.PI / 180;
+  const a = (d - 80) * Math.PI / 180;
 
   const x = Math.cos(a) * rWhite;
   const y = Math.sin(a) * rWhite;
