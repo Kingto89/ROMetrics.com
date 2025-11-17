@@ -177,21 +177,27 @@ const NOTE_MAP = {
 /* ===== Load placement note ===== */
 async function loadNoteFile() {
   const region = regionSel.value;
+
   if (!region || !NOTE_MAP[region]) {
     noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
     return;
   }
 
   const filePath = `https://kingto89.github.io/ROMetrics.com/auto-actions/goniometry-placement-guide/${NOTE_MAP[region]}`;
+
   try {
     const res = await fetch(filePath);
     if (!res.ok) throw new Error("Missing file");
     const md = await res.text();
-    noteContent.textContent = md;
+
+    const converter = new showdown.Converter({ tables: true });
+    noteContent.innerHTML = converter.makeHtml(md);
+
   } catch (e) {
     noteContent.innerHTML = "<i>Could not load placement notes.</i>";
   }
 }
+
 
 /* ===== Events ===== */
 showNote.onclick = () => {
@@ -1633,6 +1639,6 @@ function toggleCollisionTuner(show) {
   </div>
   <div id="noteContent" style="margin-top:10px; font-size:13px; line-height:1.45;"></div>
 </div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 </body>
 </html>
