@@ -882,7 +882,8 @@ if (cfg.key === 'foot_invev_l') {
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
 
-    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    // CURRENT now holds ONLY the motions for the selected region
+    const list = CURRENT || [];
     const catalog = buildSeparatedCatalog(list);
     Object.keys(catalog).forEach(group=>{
       const og = document.createElement("optgroup"); og.label = group;
@@ -914,35 +915,54 @@ if (cfg.key === 'foot_invev_l') {
     actionDeg.disabled = false;
   }
 
-  regionSel.onchange = () => {
+regionSel.onchange = () => {
   const r = regionSel.value;
 
   if (r === "cervical_spine") {
-    CURRENT = UPPER.filter(x => x.key.startsWith("cerv_"));
+    CURRENT = UPPER.filter(x =>
+      x.key.startsWith("cerv_")
+    );
   }
   else if (r === "thoracic_lumbar_spine") {
-    CURRENT = UPPER.filter(x => x.key.startsWith("trunk_"));
+    CURRENT = UPPER.filter(x =>
+      x.key.startsWith("trunk_")
+    );
   }
   else if (r === "glenohumeral_joint") {
-    CURRENT = UPPER.filter(x => x.key.startsWith("sh_"));
+    CURRENT = UPPER.filter(x =>
+      x.key.startsWith("sh_")
+    );
   }
   else if (r === "elbow_radioulnar") {
-    CURRENT = UPPER.filter(x => x.key.startsWith("el_") || x.key.startsWith("wr_ps_"));
+    CURRENT = UPPER.filter(x =>
+      x.key.startsWith("el_") ||
+      x.key.startsWith("wr_ps_")
+    );
   }
   else if (r === "wrist") {
-    CURRENT = UPPER.filter(x => x.key.startsWith("wr_"));
+    CURRENT = UPPER.filter(x =>
+      x.key.startsWith("wr_")
+    );
   }
   else if (r === "hip") {
-    CURRENT = LOWER.filter(x => x.key.startsWith("hip_"));
+    CURRENT = LOWER.filter(x =>
+      x.key.startsWith("hip_")
+    );
   }
   else if (r === "knee") {
-    CURRENT = LOWER.filter(x => x.key.startsWith("knee_"));
+    CURRENT = LOWER.filter(x =>
+      x.key.startsWith("knee_")
+    );
   }
   else if (r === "talocrural_ankle") {
-    CURRENT = LOWER.filter(x => x.key.startsWith("ankle_"));
+    CURRENT = LOWER.filter(x =>
+      x.key.startsWith("ankle_")
+    );
   }
   else if (r === "transverse_tarsal_subtalar") {
-    CURRENT = LOWER.filter(x => x.key.startsWith("foot_"));
+    CURRENT = LOWER.filter(x =>
+      x.key.startsWith("foot_")
+    );
   }
   else {
     CURRENT = [];
@@ -951,6 +971,7 @@ if (cfg.key === 'foot_invev_l') {
   fillActionMenu();
   actionDeg.value = "0";
   actionDeg.disabled = true;
+  CURRENT_ACTION = null;
 };
 
 
