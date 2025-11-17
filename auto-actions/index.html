@@ -26,9 +26,9 @@ label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
 select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
 .row{display:flex;gap:8px}.row>button{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
-.seg{display:flex;gap:8px}
-.seg button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
-.seg button.on{background:#1f2c43;color:#fff;border-color:#47618e}
+.{display:flex;gap:8px}
+. button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
+. button.on{background:#1f2c43;color:#fff;border-color:#47618e}
 details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
 summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
@@ -69,11 +69,20 @@ optgroup{color:#9fb0c9;font-style:normal}
         </label>
       </div>
 
-      <label>Body Region</label>
-      <div class="seg">
-        <button id="segUpper" class="on">Upper Body</button>
-        <button id="segLower">Lower Body</button>
-      </div>
+     <label>Body Region</label>
+<select id="regionSel">
+    <option value="">(Select region…)</option>
+    <option value="cervical_spine">Cervical Spine</option>
+    <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
+    <option value="glenohumeral_joint">Glenohumeral Joint</option>
+    <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
+    <option value="wrist">Wrist</option>
+    <option value="hip">Hip</option>
+    <option value="knee">Knee</option>
+    <option value="talocrural_ankle">Talocrural (Ankle)</option>
+    <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
+</select>
+
 
       <label>Action</label>
       <select id="actionSel"></select>
@@ -125,15 +134,13 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
   /* ===== UI ===== */
+  const regionSel = document.getElementById("regionSel");
   const msg = document.getElementById("msg");
   const logEl = document.getElementById("log");
   const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
-
-  const segUpper = document.getElementById("segUpper");
-  const segLower = document.getElementById("segLower");
 
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
@@ -907,8 +914,45 @@ if (cfg.key === 'foot_invev_l') {
     actionDeg.disabled = false;
   }
 
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
-  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
+  regionSel.onchange = () => {
+  const r = regionSel.value;
+
+  if (r === "cervical_spine") {
+    CURRENT = UPPER.filter(x => x.key.startsWith("cerv_"));
+  }
+  else if (r === "thoracic_lumbar_spine") {
+    CURRENT = UPPER.filter(x => x.key.startsWith("trunk_"));
+  }
+  else if (r === "glenohumeral_joint") {
+    CURRENT = UPPER.filter(x => x.key.startsWith("sh_"));
+  }
+  else if (r === "elbow_radioulnar") {
+    CURRENT = UPPER.filter(x => x.key.startsWith("el_") || x.key.startsWith("wr_ps_"));
+  }
+  else if (r === "wrist") {
+    CURRENT = UPPER.filter(x => x.key.startsWith("wr_"));
+  }
+  else if (r === "hip") {
+    CURRENT = LOWER.filter(x => x.key.startsWith("hip_"));
+  }
+  else if (r === "knee") {
+    CURRENT = LOWER.filter(x => x.key.startsWith("knee_"));
+  }
+  else if (r === "talocrural_ankle") {
+    CURRENT = LOWER.filter(x => x.key.startsWith("ankle_"));
+  }
+  else if (r === "transverse_tarsal_subtalar") {
+    CURRENT = LOWER.filter(x => x.key.startsWith("foot_"));
+  }
+  else {
+    CURRENT = [];
+  }
+
+  fillActionMenu();
+  actionDeg.value = "0";
+  actionDeg.disabled = true;
+};
+
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
