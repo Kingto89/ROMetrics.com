@@ -57,78 +57,74 @@ optgroup{color:#9fb0c9;font-style:normal}
 </style>
 </head>
 <body>
-  <!-- Panel -->
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
-    <div class="content">
+<!-- Panel -->
+<div class="panel" id="panel">
+  <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
+  <div class="content">
 
-      <div class="row" style="align-items:center">
-        <label style="display:flex;gap:6px;align-items:center;margin:0;">
-          <input id="antiBox" type="checkbox"/>
-          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-        </label>
-      </div>
+    <!-- Anticollision -->
+    <div class="row" style="align-items:center">
+      <label style="display:flex;gap:6px;align-items:center;margin:0;">
+        <input id="antiBox" type="checkbox"/>
+        <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+      </label>
+    </div>
 
-      <label>Action</label>
+    <!-- REGION FIRST -->
+    <label>Region</label>
+    <select id="regionSel">
+      <option value="cervical_spine">Cervical Spine</option>
+      <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
+      <option value="glenohumeral_joint">Glenohumeral Joint</option>
+      <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
+      <option value="wrist">Wrist</option>
+      <option value="hip">Hip</option>
+      <option value="knee">Knee</option>
+      <option value="talocrural_ankle">Talocrural (Ankle)</option>
+      <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
+    </select>
+
+<!-- ACTION SECOND (populated by JS depending on Region) -->
+<label>Action</label>
 <select id="actionSel"></select>
 
+<!-- Angle + Buttons -->
+<label><span id="pairLabel">Angle (°)</span></label>
+<input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
 
-      <label>Body Region</label>
-<div class="row" id="bodyRegionRow">
-  <button id="upperBtn" class="pillNav sel">Upper Body</button>
-  <button id="lowerBtn" class="pillNav">Lower Body</button>
-</div>
-<style>
-  #bodyRegionRow, label[for="bodyRegionRow"] {
-    display:none !important;
-  }
-</style>
+    <div class="row" style="display:flex; gap:8px;">
+      <button id="showGonio" class="mini" style="flex:1;">📌 Show Gonio Placement</button>
+      <button id="autoMoveBtn" class="mini" style="flex:1;">▶️ Run Action</button>
+    </div>
 
-    
-<label>Region</label>
-<select id="regionSel">
-  <option value="cervical_spine">Cervical Spine</option>
-  <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
-  <option value="glenohumeral_joint">Glenohumeral Joint</option>
-  <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
-  <option value="wrist">Wrist</option>
-  <option value="hip">Hip</option>
-  <option value="knee">Knee</option>
-  <option value="talocrural_ankle">Talocrural (Ankle)</option>
-  <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
-</select>
+    <!-- ADVANCED BONE (hidden by your CSS) -->
+    <details id="boneAdv">
+      <summary>Bone (Advanced)</summary>
+      <label>Bone (Blender order)</label>
+      <select id="boneSel"></select>
 
-
-      <label><span id="pairLabel">Angle (°)</span></label>
-      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
-      <div class="row" style="display:flex; gap:8px;">
-  <button id="showGonio" class="mini" style="flex:1;">📌 Show Gonio Placement</button>
-  <button id="autoMoveBtn" class="mini" style="flex:1;">▶️ Run Action</button>
-</div>
-
-     <details id="boneAdv">
-    <summary>Bone (Advanced)</summary>
-        <label>Bone (Blender order)</label>
-        <select id="boneSel"></select>
-        <div class="row">
-          <div style="flex:1">
-            <label>Rotate X (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
-          </div>
-          <div style="flex:1">
-            <label>Rotate Y (°)</label>
-            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
-          </div>
+      <div class="row">
+        <div style="flex:1">
+          <label>Rotate X (°)</label>
+          <input type="range" min="-180" max="180" step="1" value="0" id="rx">
         </div>
-        <label>Rotate Z (°)</label>
-        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
-
-        <div class="row" style="margin-top:6px">
-          <button id="zeroBone" class="mini">Zero Bone</button>
-          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+        <div style="flex:1">
+          <label>Rotate Y (°)</label>
+          <input type="range" min="-180" max="180" step="1" value="0" id="ry">
         </div>
+      </div>
 
-      </details>
+      <label>Rotate Z (°)</label>
+      <input type="range" min="-180" max="180" step="1" value="0" id="rz">
+
+      <div class="row" style="margin-top:6px">
+        <button id="zeroBone" class="mini">Zero Bone</button>
+        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+      </div>
+    </details>
+
+  </div>
+</div>
 
 
       <label>Event Log</label>
