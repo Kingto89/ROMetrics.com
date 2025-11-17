@@ -39,7 +39,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
 .modal .top h4{margin:0;font-size:14px}
 .modal .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
-.modal .body{padding:12px;overflow:auto}
+.modal .{padding:12px;overflow:auto}
 .rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
 .rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
 .rom-item summary::-webkit-details-marker{display:none}
@@ -56,7 +56,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 #boneAdv { display:none !important; }
 </style>
 </head>
-<body>
+<>
 <!-- Panel -->
 <div class="panel" id="panel">
   <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
@@ -199,7 +199,7 @@ const segLower = null;
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
   enabled: false,
-  // ===== Existing upper body =====
+  // ===== Existing upper  =====
   trunkLatLMax: 30,
   trunkLatRMax: 30,
   cervRotLMax: 80,
@@ -214,7 +214,7 @@ const COLLIM = {
   elFlexLMax: 150, elFlexRMax: 150,
   wrSupLMax: 95, wrSupRMax: 95,
 
-  // ===== NEW lower body defaults =====
+  // ===== NEW lower  defaults =====
   hipFlexLMax: 110, hipFlexRMax: 110,
   hipExtLMax: 30,  hipExtRMax: 30,
   hipAbdLMax: 45,  hipAbdRMax: 45,
