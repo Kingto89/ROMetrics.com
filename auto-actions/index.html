@@ -521,6 +521,112 @@ if (antiBox){
     log(`Rig profile: ${RIG_PROFILE}`);
   }
   function axisFor(profile, key, defAxis){
+    function populateAdvancedMenuGrid(columns = 3){
+  const grid = document.getElementById('advBoneGrid');
+  if (!grid) return;
+
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+  grid.style.gap = '6px';
+  grid.style.maxHeight = '200px';
+  grid.style.overflowY = 'auto';
+  grid.style.margin = '6px 0';
+  grid.style.paddingRight = '4px';
+
+  grid.innerHTML = '';
+
+  if (!skeleton || !skeleton.bones?.length){
+    const p = document.createElement('div');
+    p.style.gridColumn = '1 / -1';
+    p.style.opacity = '0.7';
+    p.textContent = '(No skeleton)';
+    grid.appendChild(p);
+    return;
+  }
+
+  const bones = [...skeleton.bones].sort((a,b)=>{
+    const ai = ORDER_INDEX[(a.name||'').toLowerCase()];
+    const bi = ORDER_INDEX[(b.name||'').toLowerCase()];
+    const av = (ai===undefined) ? 9999 : ai;
+    const bv = (bi===undefined) ? 9999 : bi;
+    if (av!==bv) return av-bv;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+
+  bones.forEach(b=>{
+    if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
+  });
+
+  if (typeof window._advSelIdx !== 'number') window._advSelIdx = 0;
+
+  function applySlidersToSelected(){
+    const i = window._advSelIdx|0;
+    const bone = bones[i];
+    if (!bone) return;
+    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
+    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
+    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,'XYZ'));
+    const qBase  = initialBoneRot.get(bone) || bone.quaternion.clone();
+    bone.quaternion.copy(qBase).multiply(qDelta);
+  }
+
+  bones.forEach((b, i)=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = b.name || `Bone ${i}`;
+    btn.className = 'mini';
+    btn.style.whiteSpace = 'nowrap';
+    btn.style.overflow = 'hidden';
+    btn.style.textOverflow = 'ellipsis';
+    btn.dataset.idx = String(i);
+
+    function renderSelected(){
+      const isSel = (i === (window._advSelIdx|0));
+      btn.classList.toggle('on', isSel);
+      btn.style.background = isSel ? '#1f2c43' : 'var(--ctrl)';
+      btn.style.borderColor = isSel ? '#47618e' : '#334155';
+      btn.style.color = isSel ? '#fff' : '#cbd5e1';
+    }
+    renderSelected();
+
+    btn.addEventListener('click', ()=>{
+      window._advSelIdx = i;
+      [...grid.querySelectorAll('button')].forEach(b2=>{
+        b2.classList.remove('on');
+        b2.style.background = 'var(--ctrl)';
+        b2.style.borderColor = '#334155';
+        b2.style.color = '#cbd5e1';
+      });
+      renderSelected();
+      rx.value = '0'; ry.value = '0'; rz.value = '0';
+      applySlidersToSelected();
+    });
+
+    grid.appendChild(btn);
+  });
+
+  ['input','change'].forEach(ev=>{
+    rx.addEventListener(ev, applySlidersToSelected);
+    ry.addEventListener(ev, applySlidersToSelected);
+    rz.addEventListener(ev, applySlidersToSelected);
+  });
+
+  if (zeroBone){
+    zeroBone.onclick = ()=>{
+      const i = window._advSelIdx|0;
+      const bone = bones[i];
+      if (!bone) return;
+      const q0 = initialBoneRot.get(bone);
+      if (q0) bone.quaternion.copy(q0);
+      rx.value = '0'; ry.value = '0'; rz.value = '0';
+    };
+  }
+
+  const firstBtn = grid.querySelector(`button[data-idx="${window._advSelIdx|0}"]`) || grid.querySelector('button');
+  if (firstBtn) firstBtn.click();
+}
+
   if (profile==='mixamo'){
     const map = {
       sh_fe_l:'x', sh_fe_r:'x',
@@ -1182,6 +1288,7 @@ document.getElementById("autoMoveBtn").onclick = () => {
         scene.add(model);
         groundSnap();
         msg.textContent = "✅ Model loaded";
+        populateAdvancedMenuGrid(3);
         populateBones();
         detectRigProfile();
         fillActionMenu();
