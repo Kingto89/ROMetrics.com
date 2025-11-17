@@ -887,7 +887,12 @@ for (let d = 0; d < 360; d += 10){
   function getPan(){ return { x: panX, y: panY }; }
 
   // Angle is from zeroRef to mov 
-  function currentAngle(){const d=clamp360(mov-zeroRef);return d===0?0:d;}
+  function currentAngle(){
+  const raw = clamp360(mov - zeroRef);
+  const d   = raw <= 180 ? raw : 360 - raw;  // shortest arc
+  return d;
+}
+
 
   return {
     show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
