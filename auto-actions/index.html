@@ -182,7 +182,8 @@ async function loadNoteFile() {
     return;
   }
 
-  const filePath = `/goniometry-trainer/goniometer-placement-guide/${NOTE_MAP[region]}`;
+  const filePath = `goniometry-trainer/goniometer-placement-guide/${NOTE_MAP[region]}`;
+
 
   try {
     const res = await fetch(filePath);
