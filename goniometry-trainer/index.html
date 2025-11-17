@@ -139,9 +139,6 @@
 
         <input type="range" min="0" max="360" step="1" value="0" id="rotateMove" style="display:none">
 
-        <label>Rotate Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="rotateGonio">
-
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
         <label>Gonio Y (px)</label>
@@ -182,7 +179,6 @@
       <circle id="scrMoving" r="6" fill="#22c55e" cx="-100" cy="-100" style="display:none"/>
     </g>
     <g id="viewport" transform="translate(0,0) scale(1)">
-      <g id="rotWrap" transform="rotate(0)">
         <g id="mirrorWrap" transform="scale(1,1)">
           <g id="instrument">
             <g id="head">
@@ -555,7 +551,6 @@ rotateCCWEl.oninput = ()=>{
   setAngleHUD(Gonio.angle, romString());
 };
 
-rotateGonioEl.oninput= ()=>{ if (lockGonio) return; Gonio.setUserRot(parseFloat(rotateGonioEl.value)); setAngleHUD(Gonio.angle, romString()); };
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
 
@@ -605,7 +600,6 @@ const Gonio = (() => {
   const host  = document.getElementById('gonioHost');
   const svg   = document.getElementById('gonioSvg');
   const viewport   = document.getElementById('viewport');
-  const rotWrap    = document.getElementById('rotWrap');
   const numsInWrap = document.getElementById('numsInWrap');
   const labelsFixed= document.getElementById('labelsFixed');
   const armA_ruler = document.getElementById('armA_ruler');
@@ -742,22 +736,30 @@ for (let d = 0; d < 360; d += 10){
   })();
 
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
-  let baseRot=0, userRot=0, scale=1;
+  let baseRot=0, scale=1;
   let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
-  function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
-  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
-  function applyLabelFix(){ const t=-(baseRot+userRot); labelsFixed.setAttribute('transform',`rotate(${t})`); numsInWrap.setAttribute('transform',`rotate(${-t})`); }
-  function updateRulerUpright(){
-    const labels = document.querySelectorAll('.ruLbl');
-    labels.forEach(t=>{
-      const which=t.dataset.arm;
-      const base = (which==='A'? 0 : mov) + baseRot + userRot;
-      const x=+t.dataset.x, y=+t.dataset.y;
-      t.setAttribute('transform', `rotate(${-base} ${x} ${y})`);
-    });
-  }
+ function applyView(){
+  viewport.setAttribute('transform',
+    `translate(${panX},${panY}) scale(${zoom*scale})`
+  );
+}
+
+function applyLabelFix(){
+  labelsFixed.setAttribute('transform', 'rotate(0)');
+  numsInWrap.setAttribute('transform', 'rotate(0)');
+}
+
+function updateRulerUpright(){
+  const labels = document.querySelectorAll('.ruLbl');
+  labels.forEach(t=>{
+    const which = t.dataset.arm;
+    const base = (which === 'A' ? 0 : mov) + baseRot;
+    const x = +t.dataset.x, y = +t.dataset.y;
+    t.setAttribute('transform', `rotate(${-base} ${x} ${y})`);
+  });
+}
 
   /* --- KEY FIX: allow full up/down pan (very loose clamp) --- */
   function clampPanToViewport(){
@@ -775,7 +777,7 @@ for (let d = 0; d < 360; d += 10){
     document.getElementById('armB_grp').setAttribute('transform',`rotate(${mov})`);
     updateRulerUpright();
   }
-  clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
+  clampPanToViewport(); applyView(); applyLabelFix(); render();
 
   /* Pan by dragging anywhere on the instrument (except moving-arm handles) */
   const instrument = document.getElementById('instrument');
@@ -821,7 +823,6 @@ for (let d = 0; d < 360; d += 10){
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
     const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
-    const p = pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     mov = toDegUp(p.x, p.y); // 0..360
     render();
   }
@@ -842,7 +843,7 @@ for (let d = 0; d < 360; d += 10){
   // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
   function setPose(cx,cy,baseDeg,movDeg){
     panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
-    clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
+    clampPanToViewport(); applyView(); applyLabelFix(); render();
   }
 
   function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
@@ -853,8 +854,6 @@ for (let d = 0; d < 360; d += 10){
   function zeroHere(){ zeroRef = clamp360(mov); }
   function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
   function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
-  function setUserRot(deg){ userRot = clamp360(deg); applyRot(); applyLabelFix(); render(); }
-  function getUserRot(){ return clamp360(userRot); }
   function getMovDegAbs(){ return clamp360(mov); }
 
   // pan getters/setters for sliders
@@ -869,7 +868,7 @@ for (let d = 0; d < 360; d += 10){
     zeroHere, setMovDegRel, setMovDegAbs, setUserRot, getUserRot, getMovDegAbs,
     setPan, getPan,
     get angle(){ return currentAngle(); },
-    refresh: ()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
+    refresh: ()=>{ applyView(); applyLabelFix(); render(); }
   };
 })();
 window.Gonio = Gonio;
