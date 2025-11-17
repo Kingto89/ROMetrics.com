@@ -89,7 +89,10 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+      <div class="row">
       <button id="autoMoveBtn" class="mini">Run Action</button>
+      <button id="showNote" class="mini">📌 Goniometer Placement</button>
+      </div>
 
      <details id="boneAdv">
     <summary>Bone (Advanced)</summary>
@@ -132,26 +135,74 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+/* ===== UI ===== */
+const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
+const showNote = document.getElementById("showNote");
+const notePopup = document.getElementById("notePopup");
+const closeNote = document.getElementById("closeNote");
+const noteContent = document.getElementById("noteContent");
 
-  /* ===== UI ===== */
-  const regionSel = document.getElementById("regionSel");
-  const msg = document.getElementById("msg");
-  const logEl = document.getElementById("log");
-  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+const msg = document.getElementById("msg");
+const logEl = document.getElementById("log");
+const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-  const panel = document.getElementById("panel");
-  const dragbar = document.getElementById("dragbar");
+const panel = document.getElementById("panel");
+const dragbar = document.getElementById("dragbar");
 
-  const actionSel = document.getElementById("actionSel");
-  const actionDeg = document.getElementById("actionDeg");
-  const pairLabel = document.getElementById("pairLabel");
-  const zeroAll = document.getElementById("zeroAll");
+const actionSel = document.getElementById("actionSel");
+const actionDeg = document.getElementById("actionDeg");
+const pairLabel = document.getElementById("pairLabel");
+const zeroAll = document.getElementById("zeroAll");
 
-  const boneSel = document.getElementById("boneSel");
-  const rx = document.getElementById("rx");
-  const ry = document.getElementById("ry");
-  const rz = document.getElementById("rz");
-  const zeroBone = document.getElementById("zeroBone");
+const boneSel = document.getElementById("boneSel");
+const rx = document.getElementById("rx");
+const ry = document.getElementById("ry");
+const rz = document.getElementById("rz");
+const zeroBone = document.getElementById("zeroBone");
+
+/* ===== Region → MD file map ===== */
+const NOTE_MAP = {
+  cervical_spine: "cervical_spine.md",
+  thoracic_lumbar_spine: "thoracic_lumbar_spine.md",
+  glenohumeral_joint: "glenohumeral_joint.md",
+  elbow_radioulnar: "elbow_radioulnar.md",
+  wrist: "wrist.md",
+  hip: "hip.md",
+  knee: "knee.md",
+  talocrural_ankle: "talocrural_ankle.md",
+  transverse_tarsal_subtalar: "transverse_tarsal_subtalar.md"
+};
+
+/* ===== Load placement note ===== */
+async function loadNoteFile() {
+  const region = regionSel.value;
+  if (!region || !NOTE_MAP[region]) {
+    noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
+    return;
+  }
+
+  const filePath = `/goniometry-trainer/goniometer-placement-guide/${NOTE_MAP[region]}`;
+
+  try {
+    const res = await fetch(filePath);
+    if (!res.ok) throw new Error("Missing file");
+    const md = await res.text();
+    noteContent.textContent = md;
+  } catch (e) {
+    noteContent.innerHTML = "<i>Could not load placement notes.</i>";
+  }
+}
+
+/* ===== Events ===== */
+showNote.onclick = () => {
+  loadNoteFile();
+  notePopup.style.display = "block";
+};
+
+closeNote.onclick = () => {
+  notePopup.style.display = "none";
+};
+
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
@@ -1553,6 +1604,21 @@ function toggleCollisionTuner(show) {
     requestAnimationFrame(animate);
   })();
   </script>
+  <div id="notePopup" 
+     style="display:none; position:fixed; right:16px; bottom:16px;
+            width:min(420px,50vw); max-height:70vh;
+            background:#0c1628; color:#e2e8f0;
+            border:1px solid #334155; border-radius:10px;
+            padding:12px; overflow:auto; z-index:200;">
+  <div style="display:flex; align-items:center;">
+    <strong style="font-size:14px;">Goniometer Placement</strong>
+    <button id="closeNote" 
+            style="margin-left:auto; background:transparent; border:0;
+                   color:#9fb0c9; font-size:18px; cursor:pointer;">✕</button>
+  </div>
+  <div id="noteContent" style="margin-top:10px; font-size:13px; line-height:1.45;"></div>
+</div>
+
 </body>
 </html>
 
