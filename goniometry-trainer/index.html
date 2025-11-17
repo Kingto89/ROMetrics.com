@@ -130,6 +130,9 @@
 
         <label>Gonio Size (10–200%)</label>
         <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
+        <label>Rotate Goniometer (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="gonioSpin">
+
 
         <!-- NEW: two straight-line controls (CW/CCW). Old single slider kept hidden for compatibility. -->
         <label>Rotate Moving Arm — CW (°)</label>
@@ -139,8 +142,6 @@
 
         <input type="range" min="0" max="360" step="1" value="0" id="rotateMove" style="display:none">
 
-        <label>Rotate Entire Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="gonioSpin">
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
         <label>Gonio Y (px)</label>
@@ -253,19 +254,6 @@ const sizeEl = document.getElementById("gonioSize");
 const rotateMoveEl = document.getElementById("rotateMove"); // hidden legacy control
 const gonioXEl = document.getElementById("gonioX");
 const gonioYEl = document.getElementById("gonioY");
-
-const gonioSpinEl = document.getElementById("gonioSpin");
-gonioSpinEl.oninput = () => {
-  // Spin the entire goniometer, not the arms
-  const deg = parseFloat(gonioSpinEl.value) || 0;
-
-  // apply to the goniometer root
-  document.getElementById("rotWrap").setAttribute("transform", `rotate(${deg})`);
-
-  // maintain upright numbers/rulers
-  Gonio.refresh();
-};
-
 
 /* NEW: two straight-line controls */
 const rotateCWEl  = document.getElementById("rotateCW");
@@ -747,14 +735,18 @@ for (let d = 0; d < 360; d += 10){
       label(-26,tipY,'cm',-90); label(26,tipY,'in',90);
     }
   })();
-
+  
+  let spinOffset = 0;   
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
   let baseRot=0, userRot=0, scale=1;
   let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
-  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
+  function applyRot(){
+  rotWrap.setAttribute('transform', `rotate(${baseRot + userRot + spinOffset})`);
+}
+
   function applyLabelFix(){
   const t = -(baseRot + userRot);
 
@@ -893,6 +885,15 @@ for (let d = 0; d < 360; d += 10){
   };
 })();
 window.Gonio = Gonio;
+
+// ===================== GONIOMETER SPIN SLIDER (WORKING) =====================
+const gonioSpinEl = document.getElementById("gonioSpin");
+gonioSpinEl.oninput = () => {
+  spinOffset = parseFloat(gonioSpinEl.value) || 0;
+  applyRot();      // reapply transform
+  Gonio.refresh(); // fix numbers/rulers upright
+};
+
 
 /* ===================== NOTES LOADER (Markdown) ===================== */
 function mdToHtml(md){
