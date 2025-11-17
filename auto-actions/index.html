@@ -159,6 +159,8 @@ const rx = document.getElementById("rx");
 const ry = document.getElementById("ry");
 const rz = document.getElementById("rz");
 const zeroBone = document.getElementById("zeroBone");
+actionSel.disabled = true;
+actionDeg.disabled  = true;
 
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
@@ -928,7 +930,19 @@ if (cfg.key === 'foot_invev_l') {
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
   function fillActionMenu(){
-    actionSel.innerHTML = "";
+    actionSel.innerHTML = 
+    // ⛔ If no region selected → no actions at all
+  if (!regionSel.value){
+    actionSel.disabled = true;
+    return;
+  }
+
+  actionSel.disabled = false;
+
+  const list = CURRENT || [];
+  const catalog = buildSeparatedCatalog(list);
+  ...
+}
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
