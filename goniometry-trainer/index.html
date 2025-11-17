@@ -179,50 +179,44 @@
       <circle id="scrMoving" r="6" fill="#22c55e" cx="-100" cy="-100" style="display:none"/>
     </g>
     <g id="viewport" transform="translate(0,0) scale(1)">
-  <g id="rotWrap" transform="rotate(0)">
-    <g id="mirrorWrap" transform="scale(1,1)">
-      <g id="instrument">
+      <g id="rotWrap" transform="rotate(0)">
+        <g id="mirrorWrap" transform="scale(1,1)">
+          <g id="instrument">
+            <g id="head">
+              <circle r="120" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
+              <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>
+              <g id="ticks"></g>
+              <g id="numsOut"></g>
+              <g id="labelsFixed">
+              <g id="numsInWrap"><g id="numsIn"></g></g>
+            </g>
 
-        <!-- HEAD -->
-        <g id="head">
-          <circle r="120" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
-          <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>
-          <g id="ticks"></g>
-          <g id="numsOut"></g>
+              <circle r="3.2" fill="#94a3b8"/>
+            </g>
 
-          <g id="labelsFixed">
-            <g id="numsInWrap">
-              <g id="numsIn"></g>
+            <!-- Stationary (red) -->
+            <g id="armA_grp">
+              <rect x="-10" y="120" width="20" height="260" rx="10" stroke="#ef4444" fill="none" stroke-width="3" />
+              <line id="axisA" x1="0" y1="380" x2="0" y2="-116" stroke="#ef4444" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
+              <g id="armA_ruler"></g>
+              <circle id="armA_knob" cx="0" cy="380" r="10" fill="#ef4444"/>
+            </g>
+
+            <!-- Moving (green) -->
+            <g id="armB_grp">
+              <rect x="-10" y="-380" width="20" height="500" rx="10" stroke="#22c55e" fill="none" stroke-width="3"/>
+              <line id="axisB" x1="0" y1="-380" x2="0" y2="124" stroke="#22c55e" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
+              <g id="armB_ruler"></g>
+              <circle id="armB_knob" cx="0" cy="-380" r="10" fill="#22c55e"/>
+              <circle id="armB_handleKnob" cx="0" cy="-380" r="38" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+              <rect   id="armB_handleShaft" x="-20" y="-380" width="40" height="500" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
             </g>
           </g>
-
-          <circle r="3.2" fill="#94a3b8"/>
         </g>
-
-        <!-- Stationary (red) -->
-        <g id="armA_grp">
-          <rect x="-10" y="120" width="20" height="260" rx="10" stroke="#ef4444" fill="none" stroke-width="3"/>
-          <line id="axisA" x1="0" y1="380" x2="0" y2="-116" stroke="#ef4444" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
-          <g id="armA_ruler"></g>
-          <circle id="armA_knob" cx="0" cy="380" r="10" fill="#ef4444"/>
-        </g>
-
-        <!-- Moving (green) -->
-        <g id="armB_grp">
-          <rect x="-10" y="-380" width="20" height="500" rx="10" stroke="#22c55e" fill="none" stroke-width="3"/>
-          <line id="axisB" x1="0" y1="-380" x2="0" y2="124" stroke="#22c55e" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
-          <g id="armB_ruler"></g>
-          <circle id="armB_knob" cx="0" cy="-380" r="10" fill="#22c55e"/>
-          <circle id="armB_handleKnob" cx="0" cy="-380" r="38" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
-          <rect id="armB_handleShaft" x="-20" y="-380" width="40" height="500" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
-        </g>
-
       </g>
     </g>
-  </g>
-</g>
-
-
+  </svg>
+</div>
 
 <div id="msg">Loading…</div>
 <div class="hud" id="hud">Angle: 0°</div>
@@ -434,78 +428,48 @@ function setLineEl(el, a, b, onColor){
 }
 
 function refreshScreenDots(){
-  // draw dots and lines
   setDotEl(scrFulcrum,   scr.fulcrum);
   setDotEl(scrStationary,scr.stationary);
   setDotEl(scrMoving,    scr.moving);
-
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
 
-  // show/hide SVG host
   const host = document.getElementById('gonioHost');
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
-  if (anyPlaced) { 
-    host.classList.remove('hide'); 
-    host.setAttribute('aria-hidden','false'); 
-  } else { 
-    host.classList.add('hide');  
-    host.setAttribute('aria-hidden','true');  
-  }
+  if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
+  else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
 
-  // must have all 3 dots
-  if (!(scr.fulcrum && scr.stationary && scr.moving)) {
+  if(scr.fulcrum && scr.stationary && scr.moving){
+    const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+    const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+    const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+
+    const inst = document.getElementById('instrument');
+    const firstReveal = inst.style.display !== 'block';
+    inst.style.display = 'block';
+
+    if (firstReveal) {
+      Gonio.setZoom(1);
+      // make initial visual smaller so it never spawns huge
+      const targetFrac = 0.18;
+      const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
+      const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
+      Gonio.setScale(autoScale);
+      sizeEl.value = Math.round(autoScale * 100);
+    }
+
+    Gonio.show();
+    Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+    Gonio.zeroHere();
+    // reset all controllers to 0 on first reveal
+    rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0;
+    const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
+    setAngleHUD(Gonio.angle, romString());
+    setGonioLock(false);
+  } else {
     document.getElementById('instrument').style.display = 'none';
-    return;
   }
-
-  // compute angles (simple, for now)
-  const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
-
-  const baseDeg = Gonio.degFromScreenVec(
-    Ss.x - Fs.x,
-    Ss.y - Fs.y
-  );
-
-  const movDeg  = Gonio.degFromScreenVec(
-    Ms.x - Fs.x,
-    Ms.y - Fs.y
-  );
-
-  // show instrument
-  const inst = document.getElementById('instrument');
-  const firstReveal = inst.style.display !== 'block';
-  inst.style.display = 'block';
-
-  // auto-scale on first show
-  if (firstReveal) {
-    Gonio.setZoom(1);
-    const targetFrac  = 0.18;
-    const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-    const autoScale   = Math.max(0.25, Math.min(0.9, targetBound / 140));
-    Gonio.setScale(autoScale);
-    sizeEl.value = Math.round(autoScale * 100);
-  }
-
-  Gonio.show();
-  Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-  Gonio.zeroHere();
-
-  // reset sliders
-  rotateCWEl.value = 0;
-  rotateCCWEl.value = 0;
-  rotateMoveEl.value = 0;
-
-  // update pan sliders
-  const p = Gonio.getPan();
-  gonioXEl.value = Math.round(p.x);
-  gonioYEl.value = Math.round(p.y);
-
-  // update HUD + lock
-  setAngleHUD(Gonio.angle, romString());
-  setGonioLock(false);
 }
-
 
 function pickOnScreen(e){
   if(!target) return;
@@ -775,9 +739,7 @@ for (let d = 0; d < 360; d += 10){
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
-function applyRot(){ 
-  rotWrap.setAttribute('transform',`rotate(${baseRot})`);
-}
+  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
   function applyLabelFix(){
   const t = -(baseRot + userRot);
 
@@ -811,7 +773,7 @@ function applyRot(){
   function clampNow(){ clampPanToViewport(); applyView(); }
 
   function render(){
-    document.getElementById('armA_grp').setAttribute('transform','');
+    document.getElementById('armA_grp').setAttribute('transform','rotate(0)');
     document.getElementById('armB_grp').setAttribute('transform',`rotate(${mov})`);
     updateRulerUpright();
   }
@@ -881,7 +843,7 @@ function applyRot(){
 
   // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
   function setPose(cx,cy,baseDeg,movDeg){
-    panX=cx; panY=cy; baseRot=baseDeg; mov = clamp360(movDeg - baseDeg);
+    panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
     clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
   }
 
