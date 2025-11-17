@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,7 +137,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 /* ===== UI ===== */
-const regionSel = document.getElementById("regionSel");   
+const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
 const showNote = document.getElementById("showNote");
 const notePopup = document.getElementById("notePopup");
 const closeNote = document.getElementById("closeNote");
@@ -159,8 +160,6 @@ const rx = document.getElementById("rx");
 const ry = document.getElementById("ry");
 const rz = document.getElementById("rz");
 const zeroBone = document.getElementById("zeroBone");
-actionSel.disabled = true;
-actionDeg.disabled  = true;
 
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
@@ -929,21 +928,8 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-  function fillActionMenu() {
-
-  // ===== Block actions until region is chosen =====
-  if (!regionSel.value) {
+  function fillActionMenu(){
     actionSel.innerHTML = "";
-    actionSel.disabled = true;
-    return;
-  }
-
-  // ===== Region chosen → prepare to build menu =====
-  actionSel.innerHTML = "";
-  actionSel.disabled = false;
-
-    const list = CURRENT || [];
-    const catalog = buildSeparatedCatalog(list);
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
@@ -1636,5 +1622,3 @@ function toggleCollisionTuner(show) {
 
 </body>
 </html>
-
-
