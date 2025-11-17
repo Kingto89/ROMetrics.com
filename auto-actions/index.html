@@ -39,7 +39,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 .modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
 .modal .top h4{margin:0;font-size:14px}
 .modal .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
-.modal .{padding:12px;overflow:auto}
+.modal .body{padding:12px;overflow:auto}
 .rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
 .rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
 .rom-item summary::-webkit-details-marker{display:none}
@@ -57,114 +57,64 @@ optgroup{color:#9fb0c9;font-style:normal}
 </style>
 </head>
 <body>
-<!-- Panel -->
-<div class="panel" id="panel">
-  <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
-  <div class="content">
+  <!-- Panel -->
+  <div class="panel" id="panel">
+    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
+    <div class="content">
 
-    <!-- Anticollision -->
-    <div class="row" style="align-items:center">
-      <label style="display:flex;gap:6px;align-items:center;margin:0;">
-        <input id="antiBox" type="checkbox"/>
-        <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-      </label>
-    </div>
-
-    <!-- REGION FIRST -->
-    <label>Region</label>
-    <select id="regionSel">
-      <option value="cervical_spine">Cervical Spine</option>
-      <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
-      <option value="glenohumeral_joint">Glenohumeral Joint</option>
-      <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
-      <option value="wrist">Wrist</option>
-      <option value="hip">Hip</option>
-      <option value="knee">Knee</option>
-      <option value="talocrural_ankle">Talocrural (Ankle)</option>
-      <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
-    </select>
-
-<!-- ACTION SECOND (populated by JS depending on Region) -->
-<label>Action</label>
-<select id="actionSel"></select>
-
-<!-- Angle + Buttons -->
-<label><span id="pairLabel">Angle (°)</span></label>
-<input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
-
-    <div class="row" style="display:flex; gap:8px;">
-      <button id="showGonio" class="mini" style="flex:1;">📌 Show Gonio Placement</button>
-      <button id="autoMoveBtn" class="mini" style="flex:1;">▶️ Run Action</button>
-    </div>
-
-    <!-- ADVANCED BONE (hidden by your CSS) -->
-    <details id="boneAdv">
-      <summary>Bone (Advanced)</summary>
-      <label>Bone (Blender order)</label>
-      <select id="boneSel"></select>
-
-      <div class="row">
-        <div style="flex:1">
-          <label>Rotate X (°)</label>
-          <input type="range" min="-180" max="180" step="1" value="0" id="rx">
-        </div>
-        <div style="flex:1">
-          <label>Rotate Y (°)</label>
-          <input type="range" min="-180" max="180" step="1" value="0" id="ry">
-        </div>
+      <div class="row" style="align-items:center">
+        <label style="display:flex;gap:6px;align-items:center;margin:0;">
+          <input id="antiBox" type="checkbox"/>
+          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+        </label>
       </div>
 
-      <label>Rotate Z (°)</label>
-      <input type="range" min="-180" max="180" step="1" value="0" id="rz">
-
-      <div class="row" style="margin-top:6px">
-        <button id="zeroBone" class="mini">Zero Bone</button>
-        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+      <label>Body Region</label>
+      <div class="seg">
+        <button id="segUpper" class="on">Upper Body</button>
+        <button id="segLower">Lower Body</button>
       </div>
-    </details>
-<label>Event Log</label>
-<pre id="log"></pre>
+
+      <label>Action</label>
+      <select id="actionSel"></select>
+
+      <label><span id="pairLabel">Angle (°)</span></label>
+      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+      <button id="autoMoveBtn" class="mini">Run Action</button>
+
+     <details id="boneAdv">
+    <summary>Bone (Advanced)</summary>
+        <label>Bone (Blender order)</label>
+        <select id="boneSel"></select>
+        <div class="row">
+          <div style="flex:1">
+            <label>Rotate X (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="rx">
+          </div>
+          <div style="flex:1">
+            <label>Rotate Y (°)</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="ry">
+          </div>
+        </div>
+        <label>Rotate Z (°)</label>
+        <input type="range" min="-180" max="180" step="1" value="0" id="rz">
+
+        <div class="row" style="margin-top:6px">
+          <button id="zeroBone" class="mini">Zero Bone</button>
+          <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+        </div>
+
+      </details>
+
+
+      <label>Event Log</label>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
 
   <div id="msg">Loading…</div>
   <canvas id="c"></canvas>
-    </div></div>
-
-<!-- ===================== Placement Note Bubble ===================== -->
-<div id="aaNote" class="aa-note hide">
-  <button id="aaNoteClose" class="x">✕</button>
-  <h4 id="aaNoteTitle">Note</h4>
-  <div id="aaNoteBody" class="md">Loading…</div>
-</div>
-
-<style>
-.aa-note{
-  position:fixed;
-  right:16px;
-  bottom:16px;
-  width:min(420px,90vw);
-  background:rgba(2,6,23,.9);
-  border:1px solid #334155;
-  border-radius:12px;
-  padding:14px 46px 14px 14px;
-  z-index:2000;
-  backdrop-filter:blur(6px);
-  max-height:60vh;
-  overflow:auto;
-}
-.aa-note.hide{ display:none; }
-.aa-note .x{
-  position:absolute;
-  top:8px;
-  right:10px;
-  background:transparent;
-  border:0;
-  font-size:20px;
-  color:#94a3b8;
-  cursor:pointer;
-}
-.aa-note .md *{ margin:0 0 6px 0; line-height:1.35; }
-.aa-note h4{ margin:0 0 6px 0; }
-</style>
 
   <script type="module">
   import * as THREE from "three";
@@ -182,10 +132,8 @@ optgroup{color:#9fb0c9;font-style:normal}
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
 
-  // Upper/Lower toggle buttons no longer exist — keep placeholders
-const segUpper = null;
-const segLower = null;
-
+  const segUpper = document.getElementById("segUpper");
+  const segLower = document.getElementById("segLower");
 
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
@@ -201,7 +149,7 @@ const segLower = null;
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
   enabled: false,
-  // ===== Existing upper  =====
+  // ===== Existing upper body =====
   trunkLatLMax: 30,
   trunkLatRMax: 30,
   cervRotLMax: 80,
@@ -216,7 +164,7 @@ const COLLIM = {
   elFlexLMax: 150, elFlexRMax: 150,
   wrSupLMax: 95, wrSupRMax: 95,
 
-  // ===== NEW lower  defaults =====
+  // ===== NEW lower body defaults =====
   hipFlexLMax: 110, hipFlexRMax: 110,
   hipExtLMax: 30,  hipExtRMax: 30,
   hipAbdLMax: 45,  hipAbdRMax: 45,
@@ -422,7 +370,7 @@ if (antiBox){
     const q = u.searchParams.get("model");
     if (q && /^https?:\/\//i.test(q)) return q;
     if (q && q.trim()) return new URL(q, location.href).href;
-    return "/ROMetrics.com/assets/Roma_ROMetrics.glb";
+    return "../assets/Roma_ROMetrics.glb";
   }
   let MODEL_URL = pickModelUrl();
 
@@ -523,112 +471,6 @@ if (antiBox){
     log(`Rig profile: ${RIG_PROFILE}`);
   }
   function axisFor(profile, key, defAxis){
-    function populateAdvancedMenuGrid(columns = 3){
-  const grid = document.getElementById('advBoneGrid');
-  if (!grid) return;
-
-  grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-  grid.style.gap = '6px';
-  grid.style.maxHeight = '200px';
-  grid.style.overflowY = 'auto';
-  grid.style.margin = '6px 0';
-  grid.style.paddingRight = '4px';
-
-  grid.innerHTML = '';
-
-  if (!skeleton || !skeleton.bones?.length){
-    const p = document.createElement('div');
-    p.style.gridColumn = '1 / -1';
-    p.style.opacity = '0.7';
-    p.textContent = '(No skeleton)';
-    grid.appendChild(p);
-    return;
-  }
-
-  const bones = [...skeleton.bones].sort((a,b)=>{
-    const ai = ORDER_INDEX[(a.name||'').toLowerCase()];
-    const bi = ORDER_INDEX[(b.name||'').toLowerCase()];
-    const av = (ai===undefined) ? 9999 : ai;
-    const bv = (bi===undefined) ? 9999 : bi;
-    if (av!==bv) return av-bv;
-    return (a.name||'').localeCompare(b.name||'');
-  });
-
-  bones.forEach(b=>{
-    if (!initialBoneRot.has(b)) initialBoneRot.set(b, b.quaternion.clone());
-  });
-
-  if (typeof window._advSelIdx !== 'number') window._advSelIdx = 0;
-
-  function applySlidersToSelected(){
-    const i = window._advSelIdx|0;
-    const bone = bones[i];
-    if (!bone) return;
-    const ex = THREE.MathUtils.degToRad(parseFloat(rx.value)||0);
-    const ey = THREE.MathUtils.degToRad(parseFloat(ry.value)||0);
-    const ez = THREE.MathUtils.degToRad(parseFloat(rz.value)||0);
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(ex,ey,ez,'XYZ'));
-    const qBase  = initialBoneRot.get(bone) || bone.quaternion.clone();
-    bone.quaternion.copy(qBase).multiply(qDelta);
-  }
-
-  bones.forEach((b, i)=>{
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = b.name || `Bone ${i}`;
-    btn.className = 'mini';
-    btn.style.whiteSpace = 'nowrap';
-    btn.style.overflow = 'hidden';
-    btn.style.textOverflow = 'ellipsis';
-    btn.dataset.idx = String(i);
-
-    function renderSelected(){
-      const isSel = (i === (window._advSelIdx|0));
-      btn.classList.toggle('on', isSel);
-      btn.style.background = isSel ? '#1f2c43' : 'var(--ctrl)';
-      btn.style.borderColor = isSel ? '#47618e' : '#334155';
-      btn.style.color = isSel ? '#fff' : '#cbd5e1';
-    }
-    renderSelected();
-
-    btn.addEventListener('click', ()=>{
-      window._advSelIdx = i;
-      [...grid.querySelectorAll('button')].forEach(b2=>{
-        b2.classList.remove('on');
-        b2.style.background = 'var(--ctrl)';
-        b2.style.borderColor = '#334155';
-        b2.style.color = '#cbd5e1';
-      });
-      renderSelected();
-      rx.value = '0'; ry.value = '0'; rz.value = '0';
-      applySlidersToSelected();
-    });
-
-    grid.appendChild(btn);
-  });
-
-  ['input','change'].forEach(ev=>{
-    rx.addEventListener(ev, applySlidersToSelected);
-    ry.addEventListener(ev, applySlidersToSelected);
-    rz.addEventListener(ev, applySlidersToSelected);
-  });
-
-  if (zeroBone){
-    zeroBone.onclick = ()=>{
-      const i = window._advSelIdx|0;
-      const bone = bones[i];
-      if (!bone) return;
-      const q0 = initialBoneRot.get(bone);
-      if (q0) bone.quaternion.copy(q0);
-      rx.value = '0'; ry.value = '0'; rz.value = '0';
-    };
-  }
-
-  const firstBtn = grid.querySelector(`button[data-idx="${window._advSelIdx|0}"]`) || grid.querySelector('button');
-  if (firstBtn) firstBtn.click();
-}
-
   if (profile==='mixamo'){
     const map = {
       sh_fe_l:'x', sh_fe_r:'x',
@@ -1027,23 +869,6 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-  function refreshActionsByRegion(region){
-    // Map region → upper/lower set
-    if (
-      region === "cervical_spine" ||
-      region === "thoracic_lumbar_spine" ||
-      region === "glenohumeral_joint" ||
-      region === "elbow_radioulnar" ||
-      region === "wrist"
-    ){
-        CURRENT = UPPER;
-    } else {
-        CURRENT = LOWER;
-    }
-
-    fillActionMenu();
-}
-
   function fillActionMenu(){
     actionSel.innerHTML = "";
     const ph = document.createElement("option");
@@ -1082,14 +907,8 @@ if (cfg.key === 'foot_invev_l') {
     actionDeg.disabled = false;
   }
 
-
-// Region dropdown now controls action list
-document.getElementById("regionSel").onchange = () => {
-    refreshActionsByRegion(regionSel.value);
-};
-
-// disable old buttons
-// (no actions needed)
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
+  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
@@ -1290,7 +1109,6 @@ document.getElementById("autoMoveBtn").onclick = () => {
         scene.add(model);
         groundSnap();
         msg.textContent = "✅ Model loaded";
-        populateAdvancedMenuGrid(3);
         populateBones();
         detectRigProfile();
         fillActionMenu();
@@ -1668,113 +1486,6 @@ function toggleCollisionTuner(show) {
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
-  /* ===================== GONIO PLACEMENT LOADER ===================== */
-function regionFromKey(key){
-  if (key.startsWith("trunk_")) return "thoracic_lumbar_spine";
-  if (key.startsWith("cerv_"))  return "cervical_spine";
-  if (key.startsWith("clavicle")) return "glenohumeral_joint";
-  if (key.startsWith("sh_"))    return "glenohumeral_joint";
-  if (key.startsWith("el_"))    return "elbow_radioulnar";
-  if (key.startsWith("wr_"))    return "wrist";
-  if (key.startsWith("hip_"))   return "hip";
-  if (key.startsWith("knee_"))  return "knee";
-  if (key.startsWith("ankle_")) return "talocrural_ankle";
-  if (key.startsWith("foot_"))  return "transverse_tarsal_subtalar";
-  return null;
-}
-/* ===== ACTIONS (for gonio placement lookup) ===== */
-const ACTIONS = [...UPPER, ...LOWER].map(cfg => {
-  // Normalized motion names (matches .md section headers)
-  let motion = "";
-
-  if (/^trunk_fe/.test(cfg.key)) motion = "Flexion / Extension";
-  else if (/^trunk_lat/.test(cfg.key)) motion = "Lateral Flexion";
-  else if (/^trunk_rot/.test(cfg.key)) motion = "Rotation";
-
-  else if (/^cerv_fe/.test(cfg.key)) motion = "Flexion / Extension";
-  else if (/^cerv_lat/.test(cfg.key)) motion = "Lateral Flexion";
-  else if (/^cerv_rot/.test(cfg.key)) motion = "Rotation";
-
-  else if (/^sh_fe_/.test(cfg.key)) motion = "Flexion / Extension";
-  else if (/^sh_aa_/.test(cfg.key)) motion = "Abduction / Adduction";
-  else if (/^sh_irer_/.test(cfg.key)) motion = "Internal / External Rotation";
-
-  else if (/^el_fe_/.test(cfg.key)) motion = "Flexion / Extension";
-
-  else if (/^wr_ps_/.test(cfg.key)) motion = "Pronation / Supination";
-  else if (/^wr_fe_/.test(cfg.key)) motion = "Flexion / Extension";
-  else if (/^wr_ru_/.test(cfg.key)) motion = "Radial / Ulnar Deviation";
-
-  else if (/^hip_fe_/.test(cfg.key)) motion = "Flexion / Extension";
-  else if (/^hip_aa_/.test(cfg.key)) motion = "Abduction / Adduction";
-  else if (/^hip_irer_/.test(cfg.key)) motion = "Internal / External Rotation";
-
-  else if (/^knee_fe_/.test(cfg.key)) motion = "Flexion / Extension";
-
-  else if (/^ankle_dfpf_/.test(cfg.key)) motion = "Dorsiflexion / Plantarflexion";
-
-  else if (/^foot_invev_/.test(cfg.key)) motion = "Inversion / Eversion";
-
-  return {
-    key: cfg.key,
-    motion,
-    region: regionFromKey(cfg.key)
-  };
-});
-
-function motionNameFromKey(key){
-  const a = ACTIONS.find(x => x.key === key);
-  return a ? a.motion : "(General)";
-}
-
-async function loadGonioPlacement(region, motion){
-  const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
-  try{
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("Missing MD");
-    const md = await res.text();
-
-    const re = new RegExp(`(^|\\n)##?\\s*${motion}\\s*\\n([\\s\\S]*?)(\\n##?\\s|$)`,'i');
-    const m  = md.match(re);
-    const sec = m ? m[2].trim() : md;
-
-  }catch(e){
-  }
-}
-document.getElementById("showGonio").onclick = async () => {
-  const key = document.getElementById("actionSel")?.value;
-  if (!key){
-    alert("Select an action first.");
-    return;
-  }
-
-  const region = regionFromKey(key);
-  const motion = motionNameFromKey(key);
-  if (!region){
-    alert("Region not found for this action.");
-    return;
-  }
-
-  // Load Markdown file
-  const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
-  try{
-    const r = await fetch(url);
-    if (!r.ok) throw new Error();
-    const md = await r.text();
-    const sec = extractPlacementSection(md, motion);
-
-    document.getElementById("aaNoteTitle").textContent = motion;
-    document.getElementById("aaNoteBody").innerHTML = mdToHtml(sec);
-    document.getElementById("aaNote").classList.remove("hide");
-  }catch(e){
-    document.getElementById("aaNoteTitle").textContent = motion;
-    document.getElementById("aaNoteBody").textContent = "No placement note found.";
-    document.getElementById("aaNote").classList.remove("hide");
-  }
-};
-
-
-
   </script>
 </body>
 </html>
