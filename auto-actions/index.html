@@ -68,7 +68,19 @@ optgroup{color:#9fb0c9;font-style:normal}
           <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
         </label>
       </div>
-      
+
+      <label>Body Region</label>
+<div class="row" id="bodyRegionRow">
+  <button id="upperBtn" class="pillNav sel">Upper Body</button>
+  <button id="lowerBtn" class="pillNav">Lower Body</button>
+</div>
+<style>
+  #bodyRegionRow, label[for="bodyRegionRow"] {
+    display:none !important;
+  }
+</style>
+
+    
 <label>Region</label>
 <select id="regionSel">
   <option value="cervical_spine">Cervical Spine</option>
