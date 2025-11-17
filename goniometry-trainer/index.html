@@ -805,7 +805,7 @@ function applyRot(){
   function clampNow(){ clampPanToViewport(); applyView(); }
 
   function render(){
-    document.getElementById('armA_grp').setAttribute('transform','rotate(0)');
+    document.getElementById('armA_grp').setAttribute('transform','');
     document.getElementById('armB_grp').setAttribute('transform',`rotate(${mov})`);
     updateRulerUpright();
   }
