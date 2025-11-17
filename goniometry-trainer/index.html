@@ -744,7 +744,10 @@ for (let d = 0; d < 360; d += 10){
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
   function applyRot(){
-  rotWrap.setAttribute('transform', `rotate(${baseRot + spinOffset})`);
+  viewport.setAttribute(
+    'transform',
+    `translate(${panX},${panY}) scale(${zoom*scale}) rotate(${baseRot + spinOffset})`
+  );
 }
 
   function applyLabelFix(){
