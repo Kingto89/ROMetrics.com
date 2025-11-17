@@ -930,21 +930,20 @@ if (cfg.key === 'foot_invev_l') {
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
   function fillActionMenu() {
-  // ⛔ If no region selected → no actions at all
+
+  // ===== Block actions until region is chosen =====
   if (!regionSel.value) {
     actionSel.innerHTML = "";
     actionSel.disabled = true;
     return;
   }
 
-  // Region selected → populate normally
+  // ===== Region chosen → prepare to build menu =====
   actionSel.innerHTML = "";
   actionSel.disabled = false;
 
-  const list = CURRENT || [];
-  const catalog = buildSeparatedCatalog(list);
-  ...
-}
+    const list = CURRENT || [];
+    const catalog = buildSeparatedCatalog(list);
     const ph = document.createElement("option");
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
