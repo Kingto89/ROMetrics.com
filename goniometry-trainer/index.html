@@ -877,10 +877,6 @@ for (let d = 0; d < 360; d += 10){
   function zeroHere(){ zeroRef = clamp360(mov); }
   function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
   function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
-  function setUserRot(deg){ 
-  userRot = 0;        // always zero
-  // do nothing else
-}
   function getUserRot(){ return clamp360(userRot); }
   function getMovDegAbs(){ return clamp360(mov); }
 
