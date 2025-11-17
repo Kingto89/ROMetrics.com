@@ -1,5 +1,3 @@
-Gonio Train 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,7 +248,6 @@ const lockGonioBtn = document.getElementById("lockGonio");
 
 const sizeEl = document.getElementById("gonioSize");
 const rotateMoveEl = document.getElementById("rotateMove"); // hidden legacy control
-const rotateGonioEl = document.getElementById("rotateGonio");
 const gonioXEl = document.getElementById("gonioX");
 const gonioYEl = document.getElementById("gonioY");
 
@@ -465,7 +462,6 @@ function refreshScreenDots(){
     Gonio.zeroHere();
     // reset all controllers to 0 on first reveal
     rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0;
-    rotateGonioEl.value = Math.round(Gonio.getUserRot());
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
     setAngleHUD(Gonio.angle, romString());
     setGonioLock(false);
@@ -554,10 +550,6 @@ rotateCCWEl.oninput = ()=>{
   setAngleHUD(Gonio.angle, romString());
 };
 
-rotateGonioEl.oninput = ()=>{ 
-  rotateGonioEl.value = 0; 
-  // deactivated; goniometer dial no longer rotates
-};
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
 
@@ -582,7 +574,7 @@ resetMeasurementBtn.onclick = ()=>{
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
   Gonio.hide(); romActive = false;
-  rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; rotateGonioEl.value = 0;
+  rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; 
   setAngleHUD(0,"");
   log("Measurement reset");
 };
