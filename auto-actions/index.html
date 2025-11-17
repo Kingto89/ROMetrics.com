@@ -175,41 +175,39 @@ const NOTE_MAP = {
 };
 
 /* ===== Load placement note ===== */
-async function loadNote(region, motion){
-  const url = `./goniometer-placement-guide/${region}.md?${Date.now()}`;
-  try{
-    const res = await fetch(url);
-    if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+async function loadNoteFile() {
+  const region = regionSel.value;
+
+  if (!region || !NOTE_MAP[region]) {
+    noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
+    return;
+  }
+
+  const filePath = `https://kingto89.github.io/ROMetrics.com/auto-actions/goniometry-placement-guide/${NOTE_MAP[region]}`;
+
+  try {
+    const res = await fetch(filePath);
+    if (!res.ok) throw new Error("Missing file");
     const md = await res.text();
 
-    // Extract only the requested motion
-    const re = new RegExp(`(^|\\n)##?\\s*${motion}\\s*\\n([\\s\\S]*?)(\\n##?\\s|$)`,'i');
-    const m = md.match(re);
-    const section = m ? m[2].trim() : md;
+    const converter = new showdown.Converter({ tables: true });
+    noteContent.innerHTML = converter.makeHtml(md);
 
-    noteTitle.textContent = `${regionToTitle(region)} — ${motion}`;
-    noteBody.innerHTML = mdToHtml(section || "—");
-  }catch(e){
-    console.error(e);
-    noteTitle.textContent = `${regionToTitle(region)} — ${motion}`;
-    noteBody.textContent = "Failed to load note.";
+  } catch (e) {
+    noteContent.innerHTML = "<i>Could not load placement notes.</i>";
   }
 }
 
 
-// ===== Goniometer Note Button =====
-showNote.onclick = async () => {
-  const region = regionSel.value;
-  const motion = actionSel.value || motionSel?.value || "";
-
-  await loadNote(region, motion);
-  note.classList.remove("hide");   // show note bubble
+/* ===== Events ===== */
+showNote.onclick = () => {
+  loadNoteFile();
+  notePopup.style.display = "block";
 };
 
-noteClose.onclick = () => {
-  note.classList.add("hide");      // hide note bubble
+closeNote.onclick = () => {
+  notePopup.style.display = "none";
 };
-
 
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
