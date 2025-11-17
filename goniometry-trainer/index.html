@@ -743,11 +743,9 @@ for (let d = 0; d < 360; d += 10){
   let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
-  function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
-  function applyRot(){
-  mirrorWrap.setAttribute(
-    'transform',
-    `scale(1,1) rotate(${baseRot + spinOffset})`
+  function applyView(){
+  viewport.setAttribute('transform',
+    `translate(${panX},${panY}) scale(${zoom*scale})`
   );
 }
 
@@ -908,8 +906,8 @@ window.Gonio = Gonio;
 const gonioSpinEl = document.getElementById("gonioSpin");
 gonioSpinEl.oninput = () => {
   spinOffset = parseFloat(gonioSpinEl.value) || 0;
-  applyRot();      // reapply transform
-  Gonio.refresh(); // fix numbers/rulers upright
+  applyRot();
+  Gonio.refresh();
 };
 
 
