@@ -608,6 +608,7 @@ const Gonio = (() => {
   const labelsFixed= document.getElementById('labelsFixed');
   const armA_ruler = document.getElementById('armA_ruler');
   const armB_ruler = document.getElementById('armB_ruler');
+  const mirrorWrap = document.getElementById('mirrorWrap');
 
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
   const clamp360=a=>(a%360+360)%360;
@@ -744,9 +745,9 @@ for (let d = 0; d < 360; d += 10){
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
   function applyRot(){
-  viewport.setAttribute(
+  mirrorWrap.setAttribute(
     'transform',
-    `translate(${panX},${panY}) scale(${zoom*scale}) rotate(${baseRot + spinOffset})`
+    `scale(1,1) rotate(${baseRot + spinOffset})`
   );
 }
 
