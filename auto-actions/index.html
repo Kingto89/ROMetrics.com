@@ -928,11 +928,26 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-  function fillActionMenu(){
+function fillActionMenu() {
+
+  // --- No region selected → no actions ---
+  if (!regionSel.value) {
     actionSel.innerHTML = "";
-    const ph = document.createElement("option");
-    ph.value = ""; ph.textContent = "(Select a motion…)";
-    actionSel.appendChild(ph);
+    actionSel.disabled = true;
+    actionDeg.disabled = true;
+    CURRENT_ACTION = null;
+    return;
+  }
+
+  // --- Region selected → rebuild action menu ---
+  actionSel.innerHTML = "";
+  actionSel.disabled = false;
+
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "(Select a motion…)";
+  actionSel.appendChild(ph);
+
 
     // CURRENT now holds ONLY the motions for the selected region
     const list = CURRENT || [];
