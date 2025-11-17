@@ -428,18 +428,32 @@ function setLineEl(el, a, b, onColor){
 }
 
 function refreshScreenDots(){
+  // draw dots and lines
   setDotEl(scrFulcrum,   scr.fulcrum);
   setDotEl(scrStationary,scr.stationary);
   setDotEl(scrMoving,    scr.moving);
+
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
 
+  // show/hide SVG host
   const host = document.getElementById('gonioHost');
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
-  if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
-  else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
+  if (anyPlaced) { 
+    host.classList.remove('hide'); 
+    host.setAttribute('aria-hidden','false'); 
+  } else { 
+    host.classList.add('hide');  
+    host.setAttribute('aria-hidden','true');  
+  }
 
- if (scr.fulcrum && scr.stationary && scr.moving) {
+  // must have all 3 dots
+  if (!(scr.fulcrum && scr.stationary && scr.moving)) {
+    document.getElementById('instrument').style.display = 'none';
+    return;
+  }
+
+  // compute angles (simple, for now)
   const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
 
   const baseDeg = Gonio.degFromScreenVec(
@@ -452,10 +466,12 @@ function refreshScreenDots(){
     Ms.y - Fs.y
   );
 
+  // show instrument
   const inst = document.getElementById('instrument');
   const firstReveal = inst.style.display !== 'block';
   inst.style.display = 'block';
 
+  // auto-scale on first show
   if (firstReveal) {
     Gonio.setZoom(1);
     const targetFrac  = 0.18;
@@ -469,46 +485,21 @@ function refreshScreenDots(){
   Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
   Gonio.zeroHere();
 
+  // reset sliders
   rotateCWEl.value = 0;
   rotateCCWEl.value = 0;
   rotateMoveEl.value = 0;
 
+  // update pan sliders
   const p = Gonio.getPan();
   gonioXEl.value = Math.round(p.x);
   gonioYEl.value = Math.round(p.y);
 
+  // update HUD + lock
   setAngleHUD(Gonio.angle, romString());
   setGonioLock(false);
-} else {
-  document.getElementById('instrument').style.display = 'none';
 }
 
-    const inst = document.getElementById('instrument');
-    const firstReveal = inst.style.display !== 'block';
-    inst.style.display = 'block';
-
-    if (firstReveal) {
-      Gonio.setZoom(1);
-      // make initial visual smaller so it never spawns huge
-      const targetFrac = 0.18;
-      const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-      const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
-      Gonio.setScale(autoScale);
-      sizeEl.value = Math.round(autoScale * 100);
-    }
-
-    Gonio.show();
-    Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-    Gonio.zeroHere();
-    // reset all controllers to 0 on first reveal
-    rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0;
-    const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
-    setAngleHUD(Gonio.angle, romString());
-    setGonioLock(false);
-  } else {
-    document.getElementById('instrument').style.display = 'none';
-  }
-}
 
 function pickOnScreen(e){
   if(!target) return;
