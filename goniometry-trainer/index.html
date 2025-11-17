@@ -439,21 +439,40 @@ function refreshScreenDots(){
   if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
   else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
 
-  if(scr.fulcrum && scr.stationary && scr.moving){
+ if (scr.fulcrum && scr.stationary && scr.moving) {
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
-    const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+
+    /* ---- Convert FULCRUM to local space ---- */
+    const fulPt  = svg.createSVGPoint();
+    fulPt.x = Fs.x;
+    fulPt.y = Fs.y;
+    const fulLocal = fulPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+
+    /* ---- Convert STATIONARY to local space ---- */
+    const statPt = svg.createSVGPoint();
+    statPt.x = Ss.x;
+    statPt.y = Ss.y;
+    const statLocal = statPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+
+    /* ---- Convert MOVING to local space ---- */
     const movPt  = svg.createSVGPoint();
-movPt.x = Ms.x;
-movPt.y = Ms.y;
-const movLocal = movPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+    movPt.x = Ms.x;
+    movPt.y = Ms.y;
+    const movLocal = movPt.matrixTransform(rotWrap.getScreenCTM().inverse());
 
-const fulPt  = svg.createSVGPoint();
-fulPt.x = Fs.x;
-fulPt.y = Fs.y;
-const fulLocal = fulPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+    /* ---- Both angles now from SAME coordinate system ---- */
+    const baseDeg = Gonio.degFromScreenVec(
+        statLocal.x - fulLocal.x,
+        statLocal.y - fulLocal.y
+    );
 
-const movDeg = Gonio.degFromScreenVec(movLocal.x - fulLocal.x, movLocal.y - fulLocal.y);
+    const movDeg  = Gonio.degFromScreenVec(
+        movLocal.x - fulLocal.x,
+        movLocal.y - fulLocal.y
+    );
 
+    Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+}
 
     const inst = document.getElementById('instrument');
     const firstReveal = inst.style.display !== 'block';
