@@ -133,11 +133,17 @@
         <label>Rotate Goniometer (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
 
-        <!-- NEW: two straight-line controls (CW/CCW). Old single slider kept hidden for compatibility. -->
-        <label>Rotate Moving Arm — CW (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="rotateCW">
-        <label>Rotate Moving Arm — CCW (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
+        <label>
+  Rotate Moving Arm — CW (°)
+  <input type="checkbox" id="cwMode" style="margin-left:8px; width:auto; vertical-align:middle">
+</label>
+<input type="range" min="0" max="360" step="1" value="0" id="rotateCW">
+
+<label>
+  Rotate Moving Arm — CCW (°)
+  <input type="checkbox" id="ccwMode" style="margin-left:8px; width:auto; vertical-align:middle">
+</label>
+<input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
 
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
@@ -255,6 +261,10 @@ const gonioYEl = document.getElementById("gonioY");
 /* NEW: two straight-line controls */
 const rotateCWEl  = document.getElementById("rotateCW");
 const rotateCCWEl = document.getElementById("rotateCCW");
+const cwMode  = document.getElementById("cwMode");
+const ccwMode = document.getElementById("ccwMode");
+cwMode.onchange = ()=>{ if(cwMode.checked){ ccwMode.checked=false; } };
+ccwMode.onchange = ()=>{ if(ccwMode.checked){ cwMode.checked=false; } };
 
 const regionSel = document.getElementById("regionSel");
 const motionSel = document.getElementById("motionSel");
@@ -496,8 +506,8 @@ function setAngleHUD(angle, romStr=""){
   hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
 }
 let romActive = false;
-startROMBtn.onclick = ()=>{ Gonio.zeroHere(); rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; romActive = true; log(`ROM start @ 0°`); };
-resetROMBtn.onclick = ()=>{ romActive=false; Gonio.zeroHere(); setAngleHUD(0,""); log(`ROM reset`); };
+startROMBtn.onclick=()=>{Gonio.zeroHere();Gonio.setMovDegAbs(0);rotateCWEl.value=0;rotateCCWEl.value=0;romActive=true;setAngleHUD(0,"");log("ROM start @ 0°");};
+resetROMBtn.onclick=()=>{romActive=false;Gonio.zeroHere();Gonio.setMovDegAbs(0);rotateCWEl.value=0;rotateCCWEl.value=0;setAngleHUD(0,"");log("ROM reset → 0°");};
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
 
 /* Pills */
@@ -535,20 +545,32 @@ sizeEl.oninput       = ()=> { Gonio.setScale(parseInt(sizeEl.value,10)/100); Gon
 gonioRotateEl.oninput = ()=> { Gonio.setUserRot(parseFloat(gonioRotateEl.value)||0); Gonio.refresh(); };
 
 /* NEW: CW/CCW handlers (each zeroes the other) */
+rotateCWEl.oninput=()=>{cwMode.checked=true;ccwMode.checked=false;};
+rotateCCWEl.oninput=()=>{ccwMode.checked=true;cwMode.checked=false;};
 rotateCWEl.oninput = ()=>{
   if (lockGonio) return;
+  if (!cwMode.checked) return;  
+
   const v = parseFloat(rotateCWEl.value)||0;
   rotateCCWEl.value = 0;
-  Gonio.setMovDegRel(v);             // positive relative rotation
+
+  // always count forward 0→360
+  Gonio.setMovDegRel(v);
   setAngleHUD(Gonio.angle, romString());
 };
+
 rotateCCWEl.oninput = ()=>{
   if (lockGonio) return;
+  if (!ccwMode.checked) return;
+
   const v = parseFloat(rotateCCWEl.value)||0;
   rotateCWEl.value = 0;
-  Gonio.setMovDegRel(-v);            // negative relative rotation
+
+  // also count forward 0→360
+  Gonio.setMovDegRel(v);
   setAngleHUD(Gonio.angle, romString());
 };
+
 
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
@@ -745,9 +767,7 @@ for (let d = 0; d < 360; d += 10){
   // inner numbers stay upright
   labelsFixed.setAttribute('transform', `rotate(${t})`);
   numsInWrap.setAttribute('transform', `rotate(${-t})`);
-
-  // outer numbers: do NOT rotate at all
-  // (no transform on numsOut)
+  numsOut.setAttribute('transform','rotate(0)');
 }
 
     function updateRulerUpright(){
@@ -823,7 +843,7 @@ for (let d = 0; d < 360; d += 10){
     e.stopPropagation(); e.preventDefault();
     const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p = pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    mov = toDegUp(p.x, p.y); // 0..360
+    mov = clamp360(toDegUp(p.x, p.y));
     render();
   }
   function endArm(){ draggingArm=false; }
@@ -867,7 +887,7 @@ for (let d = 0; d < 360; d += 10){
   function getPan(){ return { x: panX, y: panY }; }
 
   // Angle is from zeroRef to mov 
-  function currentAngle(){ const d=(clamp360(mov-zeroRef)+360)%360,f=(360-d)%360; return(!romActive&&f===360)?0:(f===0?360:f); }
+  function currentAngle(){const d=clamp360(mov-zeroRef);return d===0?360:d;}
 
   return {
     show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
