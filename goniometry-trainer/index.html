@@ -139,6 +139,8 @@
 
         <input type="range" min="0" max="360" step="1" value="0" id="rotateMove" style="display:none">
 
+        <label>Rotate Entire Goniometer (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="gonioSpin">
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
         <label>Gonio Y (px)</label>
@@ -251,6 +253,19 @@ const sizeEl = document.getElementById("gonioSize");
 const rotateMoveEl = document.getElementById("rotateMove"); // hidden legacy control
 const gonioXEl = document.getElementById("gonioX");
 const gonioYEl = document.getElementById("gonioY");
+
+const gonioSpinEl = document.getElementById("gonioSpin");
+gonioSpinEl.oninput = () => {
+  // Spin the entire goniometer, not the arms
+  const deg = parseFloat(gonioSpinEl.value) || 0;
+
+  // apply to the goniometer root
+  document.getElementById("rotWrap").setAttribute("transform", `rotate(${deg})`);
+
+  // maintain upright numbers/rulers
+  Gonio.refresh();
+};
+
 
 /* NEW: two straight-line controls */
 const rotateCWEl  = document.getElementById("rotateCW");
