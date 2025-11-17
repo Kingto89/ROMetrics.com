@@ -539,7 +539,6 @@ rotateCWEl.oninput = ()=>{
   if (lockGonio) return;
   const v = parseFloat(rotateCWEl.value)||0;
   rotateCCWEl.value = 0;
-  rotateMoveEl.value = v;            // keep legacy in sync (unused in UI)
   Gonio.setMovDegRel(v);             // positive relative rotation
   setAngleHUD(Gonio.angle, romString());
 };
@@ -547,7 +546,6 @@ rotateCCWEl.oninput = ()=>{
   if (lockGonio) return;
   const v = parseFloat(rotateCCWEl.value)||0;
   rotateCWEl.value = 0;
-  rotateMoveEl.value = 0;            // legacy stays at 0 when CCW is used
   Gonio.setMovDegRel(-v);            // negative relative rotation
   setAngleHUD(Gonio.angle, romString());
 };
