@@ -678,21 +678,24 @@ const Gonio = (() => {
   const rWhite = R   - 8;   // outer-number radius
   const rInner = Rin + 9;   // inner-number radius
 
-/* ---------- OUTER (0–80–0–80–0) ---------- */
+/* ---------- OUTER (0–80–0–80–0), FIXED TO DIAL ---------- */
 for (let d = 0; d < 360; d += 10){
-  const inner = innerFromD(d);
-  const outer = Math.abs(90 - inner);   // complement
+  // Static inner angle 0→180→0, NOT using landmarks / innerFromD
+  const phi = (d + 180) % 360;              // bottom (d=180) = 0°
+  const innerStatic = (phi <= 180) ? phi : 360 - phi;  // 0–180–0
 
-  if (outer % 20 !== 0 || outer > 80) continue;
+  const outer = Math.abs(90 - innerStatic); // complement of a FIXED 90°
 
-  // ❗ FIX: freeze outer-number angle exactly like inner dial
-  const a = (d - 75) * Math.PI / 180;
+  if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
 
+  // angle on the circle – fixed like inner labels
+  const a = (d - 90) * Math.PI / 180;
   const x = Math.cos(a) * rWhite;
   const y = Math.sin(a) * rWhite;
 
   text(numsOut, x, y, String(outer), "labelOuter");
 }
+
 
 
   /* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
