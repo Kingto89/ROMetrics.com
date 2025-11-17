@@ -540,7 +540,6 @@ rotateCWEl.oninput = ()=>{
   const v = parseFloat(rotateCWEl.value)||0;
   rotateCCWEl.value = 0;
   Gonio.setMovDegRel(v);             // positive relative rotation
-  total = Math.min(360, v);
   setAngleHUD(Gonio.angle, romString());
 };
 rotateCCWEl.oninput = ()=>{
@@ -548,7 +547,6 @@ rotateCCWEl.oninput = ()=>{
   const v = parseFloat(rotateCCWEl.value)||0;
   rotateCWEl.value = 0;
   Gonio.setMovDegRel(-v);            // negative relative rotation
-  total = Math.min(360, v);
   setAngleHUD(Gonio.angle, romString());
 };
 
@@ -737,7 +735,6 @@ for (let d = 0; d < 360; d += 10){
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
   let baseRot=0, userRot=0, scale=1;
   let zeroRef=0;
-  let total = 0;   // accumulated movement, 0–360
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
@@ -828,7 +825,6 @@ for (let d = 0; d < 360; d += 10){
     const p = pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     mov = toDegUp(p.x, p.y); // 0..360
     render();
-    total = Math.min(360, total + 1);
   }
   function endArm(){ draggingArm=false; }
 
@@ -871,7 +867,7 @@ for (let d = 0; d < 360; d += 10){
   function getPan(){ return { x: panX, y: panY }; }
 
   // Angle is from zeroRef to mov 
-  function currentAngle(){ return total >= 360 ? 360 : total; }
+  function currentAngle(){ return Math.min(360, clamp360(mov - zeroRef) || 360); }
 
   return {
     show, hide, setPose, setScale, setZoom, degFromScreenVec, _clampNow:clampNow,
