@@ -902,18 +902,19 @@ if (cfg.key === 'foot_invev_l') {
     CURRENT_ACTION = null;
   }
 
-  function syncActionUI(forceZero=false){
+function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){
       actionDeg.disabled = true;
       pairLabel.textContent = "Angle (°)";
       return;
     }
-    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+    pairLabel.textContent = "Angle (°)";
     actionDeg.min = "0";
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false;
-  }
+}
+
 
 regionSel.onchange = () => {
   const r = regionSel.value;
