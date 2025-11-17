@@ -1,3 +1,5 @@
+Gonio Train 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -179,6 +181,7 @@
       <circle id="scrMoving" r="6" fill="#22c55e" cx="-100" cy="-100" style="display:none"/>
     </g>
     <g id="viewport" transform="translate(0,0) scale(1)">
+      <g id="rotWrap" transform="rotate(0)">
         <g id="mirrorWrap" transform="scale(1,1)">
           <g id="instrument">
             <g id="head">
@@ -551,6 +554,10 @@ rotateCCWEl.oninput = ()=>{
   setAngleHUD(Gonio.angle, romString());
 };
 
+rotateGonioEl.oninput = ()=>{ 
+  rotateGonioEl.value = 0; 
+  // deactivated; goniometer dial no longer rotates
+};
 gonioXEl.oninput     = ()=>{ const y = Gonio.getPan().y; Gonio.setPan(parseFloat(gonioXEl.value), y); };
 gonioYEl.oninput     = ()=>{ const x = Gonio.getPan().x; Gonio.setPan(x, parseFloat(gonioYEl.value)); };
 
@@ -600,6 +607,7 @@ const Gonio = (() => {
   const host  = document.getElementById('gonioHost');
   const svg   = document.getElementById('gonioSvg');
   const viewport   = document.getElementById('viewport');
+  const rotWrap    = document.getElementById('rotWrap');
   const numsInWrap = document.getElementById('numsInWrap');
   const labelsFixed= document.getElementById('labelsFixed');
   const armA_ruler = document.getElementById('armA_ruler');
@@ -672,25 +680,22 @@ const Gonio = (() => {
   const rWhite = R   - 8;   // outer-number radius
   const rInner = Rin + 9;   // inner-number radius
 
-/* ---------- OUTER (0–80–0–80–0), FIXED TO DIAL ---------- */
-for (let d = 0; d < 360; d += 10){
-  // Static inner angle 0→180→0, NOT using landmarks / innerFromD
-  const phi = (d + 180) % 360;              // bottom (d=180) = 0°
-  const innerStatic = (phi <= 180) ? phi : 360 - phi;  // 0–180–0
+   /* ---------- OUTER (0–80–0–80–0) ---------- */
+  const OUTER_ANGLE_SHIFT = +20;   // <— rotate outer labels by 20°
 
-  const outer = Math.abs(90 - innerStatic); // complement of a FIXED 90°
+  for (let d = 0; d < 360; d += 10){
+    const inner = innerFromD(d);
+    const outer = Math.abs(90 - inner);       // complement
 
-  if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
+    if (outer % 20 !== 0 || outer > 80) continue; // only 0,20,40,60,80
 
-  // angle on the circle – fixed like inner labels
-  const a = (d - 90) * Math.PI / 180;
-  const x = Math.cos(a) * rWhite;
-  const y = Math.sin(a) * rWhite;
+    // apply 20° shift ONLY to outer label positions
+    const a = (d - 90 + OUTER_ANGLE_SHIFT) * Math.PI / 180;
+    const x = Math.cos(a) * rWhite;
+    const y = Math.sin(a) * rWhite;
 
-  text(numsOut, x, y, String(outer), "labelOuter");
-}
-
-
+    text(numsOut, x, y, String(outer), "labelOuter");
+  }
 
   /* INNER: 0 → 180 → 0, with 0 ONLY at the bottom
      (so inner 0,10,20,…,170,180,170,…,10)
@@ -736,30 +741,22 @@ for (let d = 0; d < 360; d += 10){
   })();
 
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
-  let baseRot=0, scale=1;
+  let baseRot=0, userRot=0, scale=1;
   let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
- function applyView(){
-  viewport.setAttribute('transform',
-    `translate(${panX},${panY}) scale(${zoom*scale})`
-  );
-}
-
-function applyLabelFix(){
-  labelsFixed.setAttribute('transform', 'rotate(0)');
-  numsInWrap.setAttribute('transform', 'rotate(0)');
-}
-
-function updateRulerUpright(){
-  const labels = document.querySelectorAll('.ruLbl');
-  labels.forEach(t=>{
-    const which = t.dataset.arm;
-    const base = (which === 'A' ? 0 : mov) + baseRot;
-    const x = +t.dataset.x, y = +t.dataset.y;
-    t.setAttribute('transform', `rotate(${-base} ${x} ${y})`);
-  });
-}
+  function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
+  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
+  function applyLabelFix(){ const t=-(baseRot+userRot); labelsFixed.setAttribute('transform',`rotate(${t})`); numsInWrap.setAttribute('transform',`rotate(${-t})`); }
+  function updateRulerUpright(){
+    const labels = document.querySelectorAll('.ruLbl');
+    labels.forEach(t=>{
+      const which=t.dataset.arm;
+      const base = (which==='A'? 0 : mov) + baseRot + userRot;
+      const x=+t.dataset.x, y=+t.dataset.y;
+      t.setAttribute('transform', `rotate(${-base} ${x} ${y})`);
+    });
+  }
 
   /* --- KEY FIX: allow full up/down pan (very loose clamp) --- */
   function clampPanToViewport(){
@@ -777,7 +774,7 @@ function updateRulerUpright(){
     document.getElementById('armB_grp').setAttribute('transform',`rotate(${mov})`);
     updateRulerUpright();
   }
-  clampPanToViewport(); applyView(); applyLabelFix(); render();
+  clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
 
   /* Pan by dragging anywhere on the instrument (except moving-arm handles) */
   const instrument = document.getElementById('instrument');
@@ -823,6 +820,7 @@ function updateRulerUpright(){
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
     const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const p = pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     mov = toDegUp(p.x, p.y); // 0..360
     render();
   }
@@ -843,7 +841,7 @@ function updateRulerUpright(){
   // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
   function setPose(cx,cy,baseDeg,movDeg){
     panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
-    clampPanToViewport(); applyView(); applyLabelFix(); render();
+    clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
   }
 
   function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
@@ -854,6 +852,11 @@ function updateRulerUpright(){
   function zeroHere(){ zeroRef = clamp360(mov); }
   function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
   function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
+  function setUserRot(deg){ 
+  userRot = 0;        // always zero
+  // do nothing else
+}
+  function getUserRot(){ return clamp360(userRot); }
   function getMovDegAbs(){ return clamp360(mov); }
 
   // pan getters/setters for sliders
@@ -868,7 +871,7 @@ function updateRulerUpright(){
     zeroHere, setMovDegRel, setMovDegAbs, setUserRot, getUserRot, getMovDegAbs,
     setPan, getPan,
     get angle(){ return currentAngle(); },
-    refresh: ()=>{ applyView(); applyLabelFix(); render(); }
+    refresh: ()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
   };
 })();
 window.Gonio = Gonio;
