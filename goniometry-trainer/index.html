@@ -662,9 +662,8 @@ const Gonio = (() => {
   // map tick-angle d (0=top, 90=right, 180=bottom, 270=left)
   // → inner goniometer degrees with 0 at BOTTOM, 180 at TOP
   const innerFromD = (d)=>{
-    const raw = (d + 180) % 360;      // put 0 at bottom
-    return (raw <= 180) ? raw : 360 - raw;  // 0 → 180 → 0
-  };
+  return (d + 180) % 360;  // full 0–360, NO mirroring
+};
 
   /* ---------- TICKS: band between inner & outer labels ---------- */
   const rBand = (R + Rin) * 0.5;      // middle between inner & outer rings
