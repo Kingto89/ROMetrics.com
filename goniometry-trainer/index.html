@@ -506,8 +506,8 @@ function setAngleHUD(angle, romStr=""){
   hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
 }
 let romActive = false;
-startROMBtn.onclick=()=>{Gonio.zeroHere();Gonio.setMovDegAbs(0);rotateCWEl.value=0;rotateCCWEl.value=0;romActive=true;setAngleHUD(0,"");log("ROM start @ 0°");};
-resetROMBtn.onclick=()=>{romActive=false;Gonio.zeroHere();Gonio.setMovDegAbs(0);rotateCWEl.value=0;rotateCCWEl.value=0;setAngleHUD(0,"");log("ROM reset → 0°");};
+startROMBtn.onclick=()=>{Gonio.zeroHere();Gonio.setMovDegRel(0);rotateCWEl.value=0;rotateCCWEl.value=0;romActive=true;setAngleHUD(0,"");log("ROM start @ 0°");};
+resetROMBtn.onclick=()=>{romActive=false;Gonio.zeroHere();Gonio.setMovDegRel(0);rotateCWEl.value=0;rotateCCWEl.value=0;setAngleHUD(0,"");log("ROM reset → 0°");};
 function romString(){ return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; }
 
 /* Pills */
@@ -567,7 +567,7 @@ rotateCCWEl.oninput = ()=>{
   rotateCWEl.value = 0;
 
   // also count forward 0→360
-  Gonio.setMovDegRel(v);
+  Gonio.setMovDegRel(-v);
   setAngleHUD(Gonio.angle, romString());
 };
 
