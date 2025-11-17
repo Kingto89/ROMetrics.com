@@ -130,9 +130,6 @@
 
         <label>Gonio Size (10–200%)</label>
         <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-        <label>Rotate Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="gonioSpin">
-
 
         <!-- NEW: two straight-line controls (CW/CCW). Old single slider kept hidden for compatibility. -->
         <label>Rotate Moving Arm — CW (°)</label>
@@ -608,7 +605,6 @@ const Gonio = (() => {
   const labelsFixed= document.getElementById('labelsFixed');
   const armA_ruler = document.getElementById('armA_ruler');
   const armB_ruler = document.getElementById('armB_ruler');
-  const mirrorWrap = document.getElementById('mirrorWrap');
 
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
   const clamp360=a=>(a%360+360)%360;
@@ -736,19 +732,14 @@ for (let d = 0; d < 360; d += 10){
       label(-26,tipY,'cm',-90); label(26,tipY,'in',90);
     }
   })();
-  
-  let spinOffset = 0;   
+
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2;
   let baseRot=0, userRot=0, scale=1;
   let zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
 
-  function applyView(){
-  viewport.setAttribute('transform',
-    `translate(${panX},${panY}) scale(${zoom*scale})`
-  );
-}
-
+  function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
+  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
   function applyLabelFix(){
   const t = -(baseRot + userRot);
 
@@ -851,25 +842,10 @@ for (let d = 0; d < 360; d += 10){
   function hide(){ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); }
 
   // baseDeg=stationary vector; movDeg=moving vector (absolute screen angles)
-  function setPose(cx, cy, baseDeg, movDeg) {
-  // keep stored spinOffset and userRot
-  panX = cx;
-  panY = cy;
-
-  // store base rotation **without destroying spinOffset**
-  baseRot = baseDeg;
-
-  // moving arm angle is always relative to base
-  mov = clamp360(movDeg - baseDeg);
-
-  // reapply transforms WITH spinOffset included
-  clampPanToViewport();
-  applyView();
-  applyRot();        // now includes + spinOffset
-  applyLabelFix();
-  render();
-}
-
+  function setPose(cx,cy,baseDeg,movDeg){
+    panX=cx; panY=cy; baseRot=baseDeg; mov=clamp360(movDeg-baseDeg);
+    clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
+  }
 
   function setScale(k){ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); }
   function setZoom(k){  zoom =clamp(k||1,0.07,10); clampPanToViewport(); applyView(); }
@@ -879,8 +855,9 @@ for (let d = 0; d < 360; d += 10){
   function zeroHere(){ zeroRef = clamp360(mov); }
   function setMovDegRel(deg){ mov = clamp360(zeroRef + deg); render(); }
   function setMovDegAbs(deg){ mov = clamp360(deg); render(); }
-  function setUserRot(deg){
-  // intentionally empty
+  function setUserRot(deg){ 
+  userRot = 0;        // always zero
+  // do nothing else
 }
   function getUserRot(){ return clamp360(userRot); }
   function getMovDegAbs(){ return clamp360(mov); }
@@ -897,19 +874,10 @@ for (let d = 0; d < 360; d += 10){
     zeroHere, setMovDegRel, setMovDegAbs, setUserRot, getUserRot, getMovDegAbs,
     setPan, getPan,
     get angle(){ return currentAngle(); },
-    refresh: ()=>{ applyView(); applyLabelFix(); render(); }
+    refresh: ()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
   };
 })();
 window.Gonio = Gonio;
-
-// ===================== GONIOMETER SPIN SLIDER (WORKING) =====================
-const gonioSpinEl = document.getElementById("gonioSpin");
-gonioSpinEl.oninput = () => {
-  spinOffset = parseFloat(gonioSpinEl.value) || 0;
-  applyRot();
-  Gonio.refresh();
-};
-
 
 /* ===================== NOTES LOADER (Markdown) ===================== */
 function mdToHtml(md){
