@@ -739,8 +739,16 @@ const Gonio = (() => {
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
   function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
-  function applyLabelFix(){ const t=-(baseRot+userRot); labelsFixed.setAttribute('transform',`rotate(${t})`); numsInWrap.setAttribute('transform',`rotate(${-t})`); }
-  function updateRulerUpright(){
+  function applyLabelFix(){
+  const t = -(baseRot + userRot);
+
+  labelsFixed.setAttribute('transform', `rotate(${t})`);
+  numsInWrap.setAttribute('transform', `rotate(${-t})`);
+
+  // ⭐ THIS ONE LINE IS THE FIX ⭐
+  document.getElementById("numsOut").setAttribute('transform', `rotate(${-t})`);
+}
+    function updateRulerUpright(){
     const labels = document.querySelectorAll('.ruLbl');
     labels.forEach(t=>{
       const which=t.dataset.arm;
