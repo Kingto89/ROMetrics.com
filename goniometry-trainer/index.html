@@ -474,7 +474,7 @@ function refreshScreenDots(){
     // reset all controllers to 0 on first reveal
     rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0;
     const p = Gonio.getPan(); gonioXEl.value = Math.round(p.x); gonioYEl.value = Math.round(p.y);
-    setAngleHUD(Gonio.angle, romString());
+    setAngleHUD(Gonio.getMovDegAbs(), romString());
     setGonioLock(false);
   } else {
     document.getElementById('instrument').style.display = 'none';
