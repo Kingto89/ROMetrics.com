@@ -442,7 +442,18 @@ function refreshScreenDots(){
   if(scr.fulcrum && scr.stationary && scr.moving){
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
-    const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+    const movPt  = svg.createSVGPoint();
+movPt.x = Ms.x;
+movPt.y = Ms.y;
+const movLocal = movPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+
+const fulPt  = svg.createSVGPoint();
+fulPt.x = Fs.x;
+fulPt.y = Fs.y;
+const fulLocal = fulPt.matrixTransform(rotWrap.getScreenCTM().inverse());
+
+const movDeg = Gonio.degFromScreenVec(movLocal.x - fulLocal.x, movLocal.y - fulLocal.y);
+
 
     const inst = document.getElementById('instrument');
     const firstReveal = inst.style.display !== 'block';
