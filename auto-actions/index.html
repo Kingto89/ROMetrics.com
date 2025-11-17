@@ -101,6 +101,8 @@ optgroup{color:#9fb0c9;font-style:normal}
         <select id="boneSel"></select>
         <div class="row">
           <div style="flex:1">
+            <label>Rotate Goniometer (°)</label>
+            <input type="range" id="goniRotate" min="0" max="360" step="1" value="0">
             <label>Rotate X (°)</label>
             <input type="range" min="-180" max="180" step="1" value="0" id="rx">
           </div>
@@ -157,9 +159,11 @@ const zeroAll = document.getElementById("zeroAll");
 
 const boneSel = document.getElementById("boneSel");
 const rx = document.getElementById("rx");
+const goniRotate = document.getElementById("goniRotate");
 const ry = document.getElementById("ry");
 const rz = document.getElementById("rz");
 const zeroBone = document.getElementById("zeroBone");
+let goniometer = null;
 
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
@@ -386,6 +390,11 @@ if (antiBox){
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   })();
+  /* ===== Goniometer Rotation Slider ===== */
+goniRotate.addEventListener("input", () => {
+  if (!goniometer) return;
+  goniometer.rotation.z = THREE.MathUtils.degToRad(goniRotate.value);
+});
 
   /* ===== Three setup ===== */
   const canvas = document.getElementById("c");
@@ -1245,6 +1254,7 @@ document.getElementById("autoMoveBtn").onclick = () => {
           if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
         });
         scene.add(model);
+        goniometer = scene.getObjectByName("goniometer");
         groundSnap();
         msg.textContent = "✅ Model loaded";
         populateBones();
