@@ -743,19 +743,14 @@ const Gonio = (() => {
   function applyLabelFix(){
   const t = -(baseRot + userRot);
 
+  // inner numbers stay upright
   labelsFixed.setAttribute('transform', `rotate(${t})`);
   numsInWrap.setAttribute('transform', `rotate(${-t})`);
 
-  // ⭐ THIS ONE LINE IS THE FIX ⭐
-  function applyLabelFix(){
-  const t = -(baseRot + userRot);
-
-  // inner numbers counter-rotate
-  labelsFixed.setAttribute('transform', `rotate(${t})`);
-  numsInWrap.setAttribute('transform', `rotate(${-t})`);
-
-  // outer numbers must NOT rotate. No transform.
+  // outer numbers: do NOT rotate at all
+  // (no transform on numsOut)
 }
+
     function updateRulerUpright(){
     const labels = document.querySelectorAll('.ruLbl');
     labels.forEach(t=>{
