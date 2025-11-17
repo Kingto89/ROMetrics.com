@@ -77,6 +77,26 @@ optgroup{color:#9fb0c9;font-style:normal}
 
       <label>Action</label>
       <select id="actionSel"></select>
+      <label>Region</label>
+<select id="gonioRegionSel">
+  <option value="cervical_spine">Cervical Spine</option>
+  <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
+  <option value="glenohumeral_joint">Glenohumeral Joint</option>
+  <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
+  <option value="wrist">Wrist</option>
+  <option value="hip">Hip</option>
+  <option value="knee">Knee</option>
+  <option value="talocrural_ankle">Talocrural (Ankle)</option>
+  <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
+</select>
+
+<label>Motion</label>
+<select id="gonioMotionSel"></select>
+
+<div class="row">
+  <button id="showGonioNote">📌 Show Gonio Placement</button>
+</div>
+
 
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
@@ -1539,6 +1559,45 @@ function regionFromKey(key){
   if (key.startsWith("foot_"))  return "transverse_tarsal_subtalar";
   return null;
 }
+/* ===== ACTIONS (for gonio placement lookup) ===== */
+const ACTIONS = [...UPPER, ...LOWER].map(cfg => {
+  // Normalized motion names (matches .md section headers)
+  let motion = "";
+
+  if (/^trunk_fe/.test(cfg.key)) motion = "Flexion / Extension";
+  else if (/^trunk_lat/.test(cfg.key)) motion = "Lateral Flexion";
+  else if (/^trunk_rot/.test(cfg.key)) motion = "Rotation";
+
+  else if (/^cerv_fe/.test(cfg.key)) motion = "Flexion / Extension";
+  else if (/^cerv_lat/.test(cfg.key)) motion = "Lateral Flexion";
+  else if (/^cerv_rot/.test(cfg.key)) motion = "Rotation";
+
+  else if (/^sh_fe_/.test(cfg.key)) motion = "Flexion / Extension";
+  else if (/^sh_aa_/.test(cfg.key)) motion = "Abduction / Adduction";
+  else if (/^sh_irer_/.test(cfg.key)) motion = "Internal / External Rotation";
+
+  else if (/^el_fe_/.test(cfg.key)) motion = "Flexion / Extension";
+
+  else if (/^wr_ps_/.test(cfg.key)) motion = "Pronation / Supination";
+  else if (/^wr_fe_/.test(cfg.key)) motion = "Flexion / Extension";
+  else if (/^wr_ru_/.test(cfg.key)) motion = "Radial / Ulnar Deviation";
+
+  else if (/^hip_fe_/.test(cfg.key)) motion = "Flexion / Extension";
+  else if (/^hip_aa_/.test(cfg.key)) motion = "Abduction / Adduction";
+  else if (/^hip_irer_/.test(cfg.key)) motion = "Internal / External Rotation";
+
+  else if (/^knee_fe_/.test(cfg.key)) motion = "Flexion / Extension";
+
+  else if (/^ankle_dfpf_/.test(cfg.key)) motion = "Dorsiflexion / Plantarflexion";
+
+  else if (/^foot_invev_/.test(cfg.key)) motion = "Inversion / Eversion";
+
+  return {
+    key: cfg.key,
+    motion,
+    region: regionFromKey(cfg.key)
+  };
+});
 
 function motionNameFromKey(key){
   const a = ACTIONS.find(x => x.key === key);
