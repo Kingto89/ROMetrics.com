@@ -359,6 +359,7 @@ controls.screenSpacePanning = false;
 controls.minDistance = 0.8;
 controls.maxDistance = 6;
 controls.target.set(0, 1.1, 0);
+loadModel();
 
 /* Lights + shadow */
 scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
@@ -2037,7 +2038,6 @@ log("Anatomic baseline applied on load.");
       (err) => { console.error(err); msg.textContent = "⚠️ Load error"; log(`Error: ${err?.message || err}`); }
     );
   }
-  loadModel();
     
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
