@@ -454,7 +454,18 @@ const Gonio = (() => {
     mov = clamp360(toDegUp(p.x, p.y));
     render();
   }
-  function endArm(){ draggingArm=false; }
+  function endArm(){ 
+    draggingArm=false; 
+    
+    // 1. Sync logic: Make the current position the new "Zero" for the sliders
+    zeroRef = mov; 
+
+    // 2. Reset the slider bars to 0 visualy so they start fresh
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+  }
 
   ['armB_handleKnob','armB_handleShaft','armB_grp','armB_knob'].forEach(id=>{
     const el=document.getElementById(id);
