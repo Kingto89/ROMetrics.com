@@ -2257,7 +2257,16 @@ const clock = new THREE.Clock();
   const host = document.getElementById('gonioHost');
   if (host && !host.classList.contains('hide')) {
      if(typeof Gonio !== 'undefined' && typeof setAngleHUD === 'function'){
-        setAngleHUD(Gonio.getMovDegAbs(), typeof romString === 'function' ? romString() : "");
+        
+        // 1. Get the raw 0-360 position of the arm
+        const raw = Gonio.getMovDegAbs();
+        
+        // 2. "Fold" it to 0-180 just for the display (matches physical ruler)
+        // If it's 350°, display 10°. If it's 190°, display 170°.
+        const visualAngle = (raw > 180) ? 360 - raw : raw;
+
+        // 3. Send 'visualAngle' to the HUD, but let 'romString' keep its own 360 logic
+        setAngleHUD(visualAngle, typeof romString === 'function' ? romString() : "");
      }
   }
 
