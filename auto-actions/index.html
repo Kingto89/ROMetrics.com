@@ -363,10 +363,11 @@ const Gonio = (() => {
     buildTipRuler(armB_ruler, -380, -1, 'B');
   })();
 
-  // 1. Variables (Added dragOffset)
+/* ==================== START OF FIX ==================== */
+  // 1. Variables: Added 'dragOffset' to remember where you grabbed relative to the arm
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2, baseRot=0, userRot=0, scale=1, zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
-  let dragOffset = 0; // <--- Prevents jumping
+  let dragOffset = 0; 
 
   const getCwMode = () => { const el = document.getElementById("cwMode"); return el ? el.checked : false; };
 
@@ -403,7 +404,7 @@ const Gonio = (() => {
   if(inst){
     inst.addEventListener('pointerdown', e=>{
       if (typeof lockGonio!=='undefined' && lockGonio) return;
-      // Prevent panning if clicking the arm handles
+      // Ignore if touching the moving arm parts (handled by startArmDrag)
       if (e.target.closest('#armB_handleKnob')||e.target.closest('#armB_handleShaft')||e.target.closest('#armB_knob')) return;
       e.preventDefault(); draggingPan=true; lastPanScreen={x:e.clientX, y:e.clientY};
       inst.setPointerCapture?.(e.pointerId);
@@ -427,23 +428,23 @@ const Gonio = (() => {
     clampPanToViewport(); applyView();
   }, {passive:false});
 
-  // 2. Start Drag: Calculate Offset (Finger vs Arm Angle)
+  // 2. Start Drag: CALCULATE OFFSET (Stops the jump)
   function startArmDrag(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     e.stopPropagation(); e.preventDefault();
     document.getElementById('armB_grp').setPointerCapture?.(e.pointerId);
     draggingArm=true;
-
-    // Get angle of finger
+    
+    // Get angle of the finger click
     const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     const fingerAngle = clamp360(toDegUp(p.x, p.y));
 
-    // Save difference so it doesn't jump
+    // Store the gap between finger and arm
     dragOffset = fingerAngle - mov;
   }
 
-  // 3. Move: Apply Offset
+  // 3. Move Arm: APPLY OFFSET
   function moveArm(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     if(!draggingArm) return;
@@ -453,11 +454,11 @@ const Gonio = (() => {
     const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     const fingerAngle = clamp360(toDegUp(p.x, p.y));
     
-    // Apply offset
+    // Move relative to the offset
     mov = clamp360(fingerAngle - dragOffset);
+    
     render();
   }
-
   function endArm(){ draggingArm=false; }
 
   ['armB_handleKnob','armB_handleShaft','armB_grp','armB_knob'].forEach(id=>{
