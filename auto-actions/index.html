@@ -20,7 +20,7 @@
 :root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
   .lockOn{background:#0b3a1f;border-color:#16a34a}
-  .hide { display: none !important; }
+   .hide{display:none}.lockOn{background:#0b3a1f;border-color:#16a34a}
     select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:#1e293b;border:1px solid #334155;color:#e2e8f0}
   .row{display:flex;gap:8px}.row>button{flex:1}
   .pill{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid #334155;border-radius:12px;padding:8px 6px;line-height:1}
@@ -282,6 +282,8 @@ optgroup{color:#9fb0c9;font-style:normal}
 
 
   <div id="msg">Loading…</div>
+  <div class="hud" id="hud">Angle: 0°</div>
+  <div class="toast" id="toast">Preset updated</div>
   <canvas id="c"></canvas>
 
   <script type="module">
