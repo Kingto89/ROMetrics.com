@@ -123,6 +123,56 @@ optgroup{color:#9fb0c9;font-style:normal}
     <button id="lockGonio">🔓 Gonio Arm: Unlocked</button>
   </div>
 
+    <!-- SVG overlay: screen-space dots + lines -->
+<div id="gonioHost" class="hide" aria-hidden="true">
+  <svg id="gonioSvg" aria-label="Universal goniometer">
+    <g id="screenDots">
+      <line id="scrLineA" class="scrLine" stroke="#ef4444" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+      <line id="scrLineB" class="scrLine" stroke="#22c55e" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+      <circle id="scrFulcrum" r="6" fill="#f59e0b" cx="-100" cy="-100" style="display:none"/>
+      <circle id="scrStationary" r="6" fill="#ef4444" cx="-100" cy="-100" style="display:none"/>
+      <circle id="scrMoving" r="6" fill="#22c55e" cx="-100" cy="-100" style="display:none"/>
+    </g>
+    <g id="viewport" transform="translate(0,0) scale(1)">
+      <g id="rotWrap" transform="rotate(0)">
+        <g id="mirrorWrap" transform="scale(1,1)">
+          <g id="instrument">
+            <g id="head">
+              <circle r="120" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
+              <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>
+              <g id="ticks"></g>
+              <g id="numsOut"></g>
+              <g id="labelsFixed">
+              <g id="numsInWrap"><g id="numsIn"></g></g>
+            </g>
+
+              <circle r="3.2" fill="#94a3b8"/>
+            </g>
+
+            <!-- Stationary (red) -->
+            <g id="armA_grp">
+              <rect x="-10" y="120" width="20" height="260" rx="10" stroke="#ef4444" fill="none" stroke-width="3" />
+              <line id="axisA" x1="0" y1="380" x2="0" y2="-116" stroke="#ef4444" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
+              <g id="armA_ruler"></g>
+              <circle id="armA_knob" cx="0" cy="380" r="10" fill="#ef4444"/>
+            </g>
+
+            <!-- Moving (green) -->
+            <g id="armB_grp">
+              <rect x="-10" y="-380" width="20" height="500" rx="10" stroke="#22c55e" fill="none" stroke-width="3"/>
+              <line id="axisB" x1="0" y1="-380" x2="0" y2="124" stroke="#22c55e" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
+              <g id="armB_ruler"></g>
+              <circle id="armB_knob" cx="0" cy="-380" r="10" fill="#22c55e"/>
+              <circle id="armB_handleKnob" cx="0" cy="-380" r="38" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+              <rect   id="armB_handleShaft" x="-20" y="-380" width="40" height="500" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </svg>
+</div>
+
   <details id="controllers">
     <summary>🎛️ Controllers</summary>
     <div class="group">
