@@ -283,6 +283,14 @@ optgroup{color:#9fb0c9;font-style:normal}
   <canvas id="c"></canvas>
 
   <script type="module">
+
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+  import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+    
   /* ===================== CONFIG / UI HOOKS ===================== */
 const msg = document.getElementById("msg");
 const hud = document.getElementById("hud");
@@ -875,12 +883,6 @@ function angleCCW(){
 })();
 window.Gonio = Gonio;
   
-  import * as THREE from "three";
-  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-  import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
-  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 /* ===== UI ===== */
 const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
 const showNote = document.getElementById("showNote");
