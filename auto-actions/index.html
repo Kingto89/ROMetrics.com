@@ -318,6 +318,56 @@ const ry = document.getElementById("ry");
 const rz = document.getElementById("rz");
 const zeroBone = document.getElementById("zeroBone");
 
+/* ===================== SCREEN-SPACE DOTS (no 3D raycast) ===================== */
+const scr = { fulcrum:null, stationary:null, moving:null };
+const svg = document.getElementById('gonioSvg');
+const scrFulcrum = document.getElementById('scrFulcrum');
+const scrStationary = document.getElementById('scrStationary');
+const scrMoving = document.getElementById('scrMoving');
+const scrLineA = document.getElementById('scrLineA');
+const scrLineB = document.getElementById('scrLineB');
+
+let target = null;
+function setDotEl(el, p){
+  if(!p){ el.style.display='none'; return; }
+  el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); el.style.display='block';
+}
+function setLineEl(el, a, b, onColor){
+  if(a && b){
+    el.setAttribute('x1', a.x); el.setAttribute('y1', a.y);
+    el.setAttribute('x2', b.x); el.setAttribute('y2', b.y);
+    el.style.display='block';
+    if(onColor) el.setAttribute('stroke', onColor);
+  } else el.style.display='none';
+}
+
+function refreshScreenDots(){
+  setDotEl(scrFulcrum,   scr.fulcrum);
+  setDotEl(scrStationary,scr.stationary);
+  setDotEl(scrMoving,    scr.moving);
+  setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
+  setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
+
+  const host = document.getElementById('gonioHost');
+  const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
+  if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
+  else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }    
+
+  if(scr.fulcrum && scr.stationary && scr.moving){
+    console.log("All 3 dots placed! (Waiting for Gonio engine)");
+    }
+}
+    //const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+   // const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+   // const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+
+   // const inst = document.getElementById('instrument');
+   // const firstReveal = inst.style.display !== 'block';
+   // inst.style.display = 'block';
+
+   // if (firstReveal) {
+    //  Gonio.setZoom(1);
+
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
   cervical_spine: "cervical_spine.md",
@@ -1770,6 +1820,44 @@ function toggleCollisionTuner(show) {
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
 
+function pickOnScreen(e){
+  if(!target) return;
+  const leftPanel = document.querySelector('.panel');
+  if(leftPanel && leftPanel.contains(e.target)) return;
+
+  const r = renderer.domElement.getBoundingClientRect();
+  const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
+  const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
+
+  scr[target] = { x, y };
+  console.log(`${target} pinned @ ${x|0},${y|0}`); ///added after
+
+  //const host = document.getElementById('gonioHost');
+  //host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
+ // log(`${target} pinned @ ${x|0},${y|0}`); //see is replaces above
+  target = null;
+  refreshScreenDots();
+}
+
+renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
+svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
+
+/* Pills */
+document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum");   };
+document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
+document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving");    };
+
+    /* Reset Measurement */
+const resetMeasurementBtn = document.getElementById("resetMeasurement");
+resetMeasurementBtn.onclick = ()=>{
+  scr.fulcrum = scr.stationary = scr.moving = null;
+  refreshScreenDots();
+ // Gonio.hide(); romActive = false;
+  //rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; 
+ // setAngleHUD(0,"");
+  log("Measurement reset");
+};
+    
   /* ===== Resize & render ===== */
   addEventListener("resize", () => {
     camera.aspect = innerWidth/innerHeight;
