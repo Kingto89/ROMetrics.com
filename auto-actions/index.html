@@ -82,7 +82,22 @@ optgroup{color:#9fb0c9;font-style:normal}
   /* Cursors */
   #instrument{cursor:move}
   #armB_handleKnob,#armB_handleShaft,#armB_knob{cursor:grab}
-  
+  /* --- NO JUMP SLIDERS --- */
+
+/* 1. Disable clicks on the slider track */
+input[type=range] {
+  pointer-events: none; 
+}
+
+/* 2. Re-enable clicks/drags ONLY on the thumb (handle) */
+input[type=range]::-webkit-slider-thumb {
+  pointer-events: auto;
+  cursor: grab;
+}
+input[type=range]::-moz-range-thumb {
+  pointer-events: auto;
+  cursor: grab;
+}
 </style>
 </head>
 <body>
@@ -363,12 +378,9 @@ const Gonio = (() => {
     buildTipRuler(armB_ruler, -380, -1, 'B');
   })();
 
-/* ==================== START OF FIX ==================== */
-  // 1. Variables: Added 'dragOffset' to remember where you grabbed relative to the arm
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2, baseRot=0, userRot=0, scale=1, zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
-  let dragOffset = 0; 
-
+  
   const getCwMode = () => { const el = document.getElementById("cwMode"); return el ? el.checked : false; };
 
   function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
@@ -396,7 +408,7 @@ const Gonio = (() => {
     if(b) b.setAttribute('transform',`rotate(${mov})`);
     updateRulerUpright();
   }
-   
+  
   clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
 
   /* Interactions */
@@ -404,7 +416,6 @@ const Gonio = (() => {
   if(inst){
     inst.addEventListener('pointerdown', e=>{
       if (typeof lockGonio!=='undefined' && lockGonio) return;
-      // Ignore if touching the moving arm parts (handled by startArmDrag)
       if (e.target.closest('#armB_handleKnob')||e.target.closest('#armB_handleShaft')||e.target.closest('#armB_knob')) return;
       e.preventDefault(); draggingPan=true; lastPanScreen={x:e.clientX, y:e.clientY};
       inst.setPointerCapture?.(e.pointerId);
@@ -428,35 +439,19 @@ const Gonio = (() => {
     clampPanToViewport(); applyView();
   }, {passive:false});
 
-  // 2. Start Drag: CALCULATE OFFSET (Stops the jump)
   function startArmDrag(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     e.stopPropagation(); e.preventDefault();
     document.getElementById('armB_grp').setPointerCapture?.(e.pointerId);
     draggingArm=true;
-    
-    // Get angle of the finger click
-    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
-    const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    const fingerAngle = clamp360(toDegUp(p.x, p.y));
-
-    // Store the gap between finger and arm
-    dragOffset = fingerAngle - mov;
   }
-
-  // 3. Move Arm: APPLY OFFSET
   function moveArm(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
-    
     const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    const fingerAngle = clamp360(toDegUp(p.x, p.y));
-    
-    // Move relative to the offset
-    mov = clamp360(fingerAngle - dragOffset);
-    
+    mov = clamp360(toDegUp(p.x, p.y));
     render();
   }
   function endArm(){ draggingArm=false; }
@@ -465,6 +460,7 @@ const Gonio = (() => {
     const el=document.getElementById(id);
     if(el){ el.addEventListener('pointerdown',startArmDrag); el.addEventListener('pointermove',moveArm); el.addEventListener('pointerup',endArm); el.addEventListener('pointercancel',endArm); }
   });
+
   return {
     show:()=>{ host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); if(inst) inst.style.display='block'; clampPanToViewport(); applyView(); },
     hide:()=>{ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); },
