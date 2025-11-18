@@ -283,6 +283,98 @@ optgroup{color:#9fb0c9;font-style:normal}
   <canvas id="c"></canvas>
 
   <script type="module">
+  /* ===================== CONFIG / UI HOOKS ===================== */
+const msg = document.getElementById("msg");
+const hud = document.getElementById("hud");
+const logEl = document.getElementById("log");
+const toast = document.getElementById("toast");
+
+const lock3DBtn = document.getElementById("lock3D");
+const lockGonioBtn = document.getElementById("lockGonio");
+
+const sizeEl = document.getElementById("gonioSize");
+const gonioRotateEl = document.getElementById("gonioRotate");
+const gonioXEl = document.getElementById("gonioX");
+const gonioYEl = document.getElementById("gonioY");
+
+/* NEW: two straight-line controls */
+const rotateCWEl  = document.getElementById("rotateCW");
+const rotateCCWEl = document.getElementById("rotateCCW");
+const cwMode  = document.getElementById("cwMode");
+const ccwMode = document.getElementById("ccwMode");
+cwMode.onchange = ()=>{ if(cwMode.checked){ ccwMode.checked=false; } };
+ccwMode.onchange = ()=>{ if(ccwMode.checked){ cwMode.checked=false; } };
+
+const regionSel = document.getElementById("regionSel");
+const motionSel = document.getElementById("motionSel");
+const note = document.getElementById("note");
+const noteTitle = document.getElementById("noteTitle");
+const noteBody = document.getElementById("noteBody");
+document.getElementById("noteClose").onclick = ()=> note.classList.add("hide");
+
+const resetROMBtn = document.getElementById("resetROM");
+const startROMBtn = document.getElementById("startROM");
+const resetMeasurementBtn = document.getElementById("resetMeasurement");
+
+const modelX = document.getElementById("modelX");
+const modelZ = document.getElementById("modelZ");
+const modelY = document.getElementById("modelY");
+const modelScale = document.getElementById("modelScale");
+const modelYaw = document.getElementById("modelYaw");
+const resetPose = document.getElementById("resetPose");
+
+const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+/* ===================== THREE SETUP ===================== */
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.domElement.style.touchAction = 'none';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(1.6, 1.6, 2.8);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.enablePan = true;
+controls.screenSpacePanning = false;
+controls.minDistance = 0.8;
+controls.maxDistance = 6;
+controls.target.set(0, 1.1, 0);
+
+/* Lights + shadow */
+scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
+const key = new THREE.DirectionalLight(0xffffff, 1.2);
+key.position.set(2.5, 4, 2.5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near = 0.1;
+key.shadow.camera.far = 15;
+key.shadow.camera.left = -4;
+key.shadow.camera.right = 4;
+key.shadow.camera.top = 4;
+key.shadow.camera.bottom = -4;
+scene.add(key);
+
+/* Ground plane */
+const groundGeo = new THREE.PlaneGeometry(20, 20);
+const groundMat = new THREE.ShadowMaterial({ opacity: 0.45 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = 0;
+ground.receiveShadow = true;
+scene.add(ground);
+    
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
