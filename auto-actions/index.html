@@ -2131,9 +2131,9 @@ function pickOnScreen(e){
   scr[target] = { x, y };
   console.log(`${target} pinned @ ${x|0},${y|0}`); ///added after
 
-  //const host = document.getElementById('gonioHost');
-  //host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
- // log(`${target} pinned @ ${x|0},${y|0}`); //see is replaces above
+  const host = document.getElementById('gonioHost');
+  host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
+  log(`${target} pinned @ ${x|0},${y|0}`); //see is replaces above
   target = null;
   refreshScreenDots();
 }
@@ -2151,9 +2151,9 @@ const resetMeasurementBtn = document.getElementById("resetMeasurement");
 resetMeasurementBtn.onclick = ()=>{
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
- // Gonio.hide(); romActive = false;
-  //rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; 
- // setAngleHUD(0,"");
+ Gonio.hide(); romActive = false;
+ rotateCWEl.value = 0; rotateCCWEl.value = 0; rotateMoveEl.value = 0; 
+ setAngleHUD(0,"");
   log("Measurement reset");
 };
     
