@@ -2280,13 +2280,157 @@ function pickOnScreen(e){
   refreshScreenDots();
 }
 
-renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
-svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
+/* ===================== 1. HUD & STATE ===================== */
+let romActive = false;
+const hudEl = document.getElementById("hud");
 
-/* Pills */
-document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum");   };
-document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
-document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving");    };
+function setAngleHUD(angle, romStr=""){
+  if(hudEl) hudEl.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
+}
+
+function romString(){ 
+  if(typeof Gonio === 'undefined') return "";
+  return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; 
+}
+
+/* ===================== 2. BUTTONS (Start, Reset, Clear) ===================== */
+const startB = document.getElementById("startROM");
+const resetB = document.getElementById("resetROM");
+const resetM = document.getElementById("resetMeasurement");
+const cwEl   = document.getElementById("rotateCW");
+const ccwEl  = document.getElementById("rotateCCW");
+
+// Helper to zero out the slider UI elements
+function zeroSliders(){
+  if(cwEl) cwEl.value = 0;
+  if(ccwEl) ccwEl.value = 0;
+}
+
+if(startB) startB.onclick = () => {
+   if(typeof Gonio === 'undefined') return;
+   Gonio.zeroHere();       // Set 0 reference
+   Gonio.setMovDegRel(0);  // Snap arm to 0
+   zeroSliders();
+   romActive = true;
+   setAngleHUD(0, "");     // Update text immediately
+   console.log("▶️ ROM Started");
+};
+
+if(resetB) resetB.onclick = () => {
+   if(typeof Gonio === 'undefined') return;
+   romActive = false;
+   Gonio.zeroHere();
+   Gonio.setMovDegRel(0);
+   zeroSliders();
+   setAngleHUD(Gonio.getMovDegAbs(), ""); // Update text immediately
+   console.log("↺ ROM Reset");
+};
+
+if(resetM) resetM.onclick = () => {
+   scr.fulcrum = scr.stationary = scr.moving = null;
+   target = null;
+   
+   refreshScreenDots(); // Hides the instrument
+   
+   if(typeof Gonio !== 'undefined') { 
+       Gonio.hide(); 
+       Gonio.zeroHere(); 
+       Gonio.setMovDegRel(0); 
+   }
+   
+   romActive = false;
+   zeroSliders();
+   setAngleHUD(0, "");
+   setGonioLock(false);
+   
+   // Reset position sliders if they exist
+   const gx = document.getElementById("gonioX");
+   const gy = document.getElementById("gonioY");
+   if(gx) gx.value = 0;
+   if(gy) gy.value = 0;
+   
+   console.log("🧹 Measurement Reset");
+};
+
+/* ===================== 3. PILLS (1-2-3) ===================== */
+document.getElementById("pickFulcrum").onclick    = () => { target = "fulcrum";    console.log("Place Fulcrum"); };
+document.getElementById("pickStationary").onclick = () => { target = "stationary"; console.log("Place Stationary"); };
+document.getElementById("pickMoving").onclick     = () => { target = "moving";     console.log("Place Moving"); };
+
+/* ===================== 4. LOCKS ===================== */
+let lock3D = false, lockGonio = false;
+
+function set3DLock(v){
+  lock3D = v;
+  if(typeof controls !== 'undefined') controls.enabled = !lock3D;
+  const btn = document.getElementById("lock3D");
+  if(btn){ btn.textContent = lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"; btn.classList.toggle('lockOn', lock3D); }
+}
+
+function setGonioLock(v){
+  lockGonio = v;
+  const inst = document.getElementById('instrument');
+  if(inst) inst.style.pointerEvents = lockGonio ? 'none' : 'auto'; 
+  const btn = document.getElementById("lockGonio");
+  if(btn){ btn.textContent = lockGonio ? "🔒 Gonio: Locked" : "🔓 Gonio: Unlocked"; btn.classList.toggle('lockOn', lockGonio); }
+}
+
+document.getElementById("lock3D").onclick = () => set3DLock(!lock3D);
+document.getElementById("lockGonio").onclick = () => setGonioLock(!lockGonio);
+
+/* ===================== 5. SLIDERS (The fix for moving values) ===================== */
+const sizeEl        = document.getElementById("gonioSize");
+const gonioRotateEl = document.getElementById("gonioRotate");
+const cwMode        = document.getElementById("cwMode");
+const ccwMode       = document.getElementById("ccwMode");
+const gonioXEl      = document.getElementById("gonioX");
+const gonioYEl      = document.getElementById("gonioY");
+
+// Toggle Checkboxes
+if(cwMode && ccwMode){
+  cwMode.onchange  = ()=>{ if(cwMode.checked)  ccwMode.checked=false; };
+  ccwMode.onchange = ()=>{ if(ccwMode.checked) cwMode.checked=false; };
+}
+
+// Size Slider
+if(sizeEl) sizeEl.oninput = () => { 
+    if(typeof Gonio !== 'undefined') { Gonio.setScale(parseInt(sizeEl.value, 10)/100); Gonio.refresh(); }
+};
+
+// Rotation Slider
+if(gonioRotateEl) gonioRotateEl.oninput = () => { 
+    if(typeof Gonio !== 'undefined') { Gonio.setUserRot(parseFloat(gonioRotateEl.value)||0); Gonio.refresh(); }
+};
+
+// Position Sliders
+if(gonioXEl) gonioXEl.oninput = () => { if(typeof Gonio!=='undefined') Gonio.setPan(parseFloat(gonioXEl.value), Gonio.getPan().y); };
+if(gonioYEl) gonioYEl.oninput = () => { if(typeof Gonio!=='undefined') Gonio.setPan(Gonio.getPan().x, parseFloat(gonioYEl.value)); };
+
+// CW Slider (Moves Arm + Updates Text)
+if(cwEl) cwEl.oninput = () => {
+  if(lockGonio || typeof Gonio === 'undefined') return;
+  if(cwMode) { cwMode.checked = true; if(ccwMode) ccwMode.checked=false; }
+  
+  const v = parseFloat(cwEl.value)||0;
+  if(ccwEl) ccwEl.value = 0;
+  
+  Gonio.setMovDegRel(v);
+  // Force update text
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
+};
+
+// CCW Slider (Moves Arm + Updates Text)
+if(ccwEl) ccwEl.oninput = () => {
+  if(lockGonio || typeof Gonio === 'undefined') return;
+  if(ccwMode) { ccwMode.checked = true; if(cwMode) cwMode.checked=false; }
+  
+  const v = parseFloat(ccwEl.value)||0;
+  if(cwEl) cwEl.value = 0;
+  
+  Gonio.setMovDegRel(-v);
+  // Force update text
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
+};
     
 /* Render loop */
 addEventListener("resize", () => {
