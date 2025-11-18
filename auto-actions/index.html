@@ -1736,10 +1736,12 @@ log("Anatomic baseline applied on load.");
 
 // 1. HUD Helpers
 let romActive = false;
+
 function setAngleHUD(angle, romStr=""){
   const h = document.getElementById("hud");
   if(h) h.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
 }
+
 function romString(){ 
   if(typeof Gonio === 'undefined') return "";
   return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; 
@@ -1747,38 +1749,53 @@ function romString(){
 
 // 2. Locks Logic
 let lock3D = false, lockGonio = false;
+
 function set3DLock(v){
   lock3D = v;
   if(typeof controls !== 'undefined') controls.enabled = !lock3D;
   const btn = document.getElementById("lock3D");
-  if(btn){ btn.textContent = lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"; btn.classList.toggle('lockOn', lock3D); }
+  if(btn){ 
+      btn.textContent = lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"; 
+      btn.classList.toggle('lockOn', lock3D); 
+  }
 }
+
 function setGonioLock(v){
   lockGonio = v;
   const inst = document.getElementById('instrument');
   if(inst) inst.style.pointerEvents = lockGonio ? 'none' : 'auto'; // Allow clicking through if locked
   const btn = document.getElementById("lockGonio");
-  if(btn){ btn.textContent = lockGonio ? "🔒 Gonio: Locked" : "🔓 Gonio: Unlocked"; btn.classList.toggle('lockOn', lockGonio); }
+  if(btn){ 
+      btn.textContent = lockGonio ? "🔒 Gonio: Locked" : "🔓 Gonio: Unlocked"; 
+      btn.classList.toggle('lockOn', lockGonio); 
+  }
 }
 
 // Bind Lock Buttons
-document.getElementById("lock3D").onclick = () => set3DLock(!lock3D);
-document.getElementById("lockGonio").onclick = () => setGonioLock(!lockGonio);
+const btnL3D = document.getElementById("lock3D");
+const btnLG = document.getElementById("lockGonio");
+if(btnL3D) btnL3D.onclick = () => set3DLock(!lock3D);
+if(btnLG) btnLG.onclick = () => setGonioLock(!lockGonio);
 
 // 3. ROM Control Buttons
 const startB = document.getElementById("startROM");
 const resetB = document.getElementById("resetROM");
 const resetM = document.getElementById("resetMeasurement");
 
+// Helper to reset sliders UI
+function resetSliders(){
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+}
+
 // Start ROM
 if(startB) startB.onclick = () => {
    if(typeof Gonio === 'undefined') return;
    Gonio.zeroHere();
    Gonio.setMovDegRel(0);
-   
-   // Reset UI sliders
-   if(rotateCWEl) rotateCWEl.value = 0;
-   if(rotateCCWEl) rotateCCWEl.value = 0;
+   resetSliders();
    
    romActive = true;
    setAngleHUD(0, "");
@@ -1791,9 +1808,7 @@ if(resetB) resetB.onclick = () => {
    romActive = false;
    Gonio.zeroHere();
    Gonio.setMovDegRel(0);
-   
-   if(rotateCWEl) rotateCWEl.value = 0;
-   if(rotateCCWEl) rotateCCWEl.value = 0;
+   resetSliders();
    
    setAngleHUD(Gonio.getMovDegAbs(), "");
    log("↺ ROM Reset");
@@ -1801,20 +1816,28 @@ if(resetB) resetB.onclick = () => {
 
 // Reset Entire Measurement
 if(resetM) resetM.onclick = () => {
-   // Clear dots
+   // Clear dots logic
    scr.fulcrum = scr.stationary = scr.moving = null;
    target = null;
-   refreshScreenDots(); // This hides dots + instrument
+   
+   // Visual cleanup
+   refreshScreenDots(); // This hides dots + instrument (due to logic inside it)
    
    // Reset Engine
-   if(typeof Gonio !== 'undefined') { Gonio.hide(); Gonio.zeroHere(); Gonio.setMovDegRel(0); }
+   if(typeof Gonio !== 'undefined') { 
+       Gonio.hide(); 
+       Gonio.zeroHere(); 
+       Gonio.setMovDegRel(0); 
+   }
    
    // Reset State
    romActive = false;
-   if(rotateCWEl) rotateCWEl.value = 0;
-   if(rotateCCWEl) rotateCCWEl.value = 0;
-   if(gonioXEl) gonioXEl.value = 0;
-   if(gonioYEl) gonioYEl.value = 0;
+   resetSliders();
+   
+   const gx = document.getElementById("gonioX");
+   const gy = document.getElementById("gonioY");
+   if(gx) gx.value = 0;
+   if(gy) gy.value = 0;
    
    setAngleHUD(0, "");
    setGonioLock(false);
