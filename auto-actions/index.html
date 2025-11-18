@@ -280,9 +280,6 @@ optgroup{color:#9fb0c9;font-style:normal}
 
 
   <div id="msg">Loading…</div>
-  <div class="hud" id="hud">Angle: 0°</div>
-  <div class="toast" id="toast">Preset updated</div>
-  <canvas id="c"></canvas>
 
   <script type="module">
   import * as THREE from "three";
@@ -1795,88 +1792,70 @@ const ccwMode       = document.getElementById("ccwMode");
 const gonioXEl      = document.getElementById("gonioX");
 const gonioYEl      = document.getElementById("gonioY");
 
-// 2. Exclusive Checkboxes (CW vs CCW)
+// Ensure lockGonio is defined
+if (typeof lockGonio === 'undefined') var lockGonio = false;
+
+// 2. Exclusive Checkboxes
 if(cwMode && ccwMode){
   cwMode.onchange  = ()=>{ if(cwMode.checked)  ccwMode.checked=false; };
   ccwMode.onchange = ()=>{ if(ccwMode.checked) cwMode.checked=false; };
 }
 
-// 3. Sliders Logic
+// 3. Sliders Logic (Restored Old Logic)
 
-// --- Size ---
-if(sizeEl){
-  sizeEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    Gonio.setScale(parseInt(sizeEl.value, 10) / 100); 
+/* Size */
+sizeEl.oninput = ()=> { 
+    Gonio.setScale(parseInt(sizeEl.value,10)/100); 
     Gonio.refresh(); 
-  };
-}
+};
 
-// --- Base Rotation ---
-if(gonioRotateEl){
-  gonioRotateEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    Gonio.setUserRot(parseFloat(gonioRotateEl.value) || 0); 
+/* Base Rotation */
+gonioRotateEl.oninput = ()=> { 
+    Gonio.setUserRot(parseFloat(gonioRotateEl.value)||0); 
     Gonio.refresh(); 
-  };
-}
+};
 
-// --- Rotate Moving Arm (CW) ---
-if(rotateCWEl){
-  rotateCWEl.oninput = () => {
-    if(typeof Gonio === 'undefined') return;
-    // Auto-check the box if user slides this
-    if(cwMode) { cwMode.checked = true; ccwMode.checked = false; }
-    
-    const v = parseFloat(rotateCWEl.value) || 0;
-    // Reset the other slider
-    if(rotateCCWEl) rotateCCWEl.value = 0;
+/* Rotate Moving Arm - CW */
+rotateCWEl.oninput = ()=>{
+  // Old logic checks
+  if (lockGonio) return;
+  if (!cwMode.checked) return;  
 
-    Gonio.setMovDegRel(v);
-    
-    // Update HUD
-    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
-       setAngleHUD(Gonio.getMovDegAbs(), romString());
-    }
-  };
-}
+  const v = parseFloat(rotateCWEl.value)||0;
+  if(rotateCCWEl) rotateCCWEl.value = 0;
 
-// --- Rotate Moving Arm (CCW) ---
-if(rotateCCWEl){
-  rotateCCWEl.oninput = () => {
-    if(typeof Gonio === 'undefined') return;
-    // Auto-check the box
-    if(ccwMode) { ccwMode.checked = true; cwMode.checked = false; }
+  // always count forward 0→360
+  Gonio.setMovDegRel(v);
+  
+  // Immediate HUD update (from old logic)
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
+};
 
-    const v = parseFloat(rotateCCWEl.value) || 0;
-    // Reset the other slider
-    if(rotateCWEl) rotateCWEl.value = 0;
+/* Rotate Moving Arm - CCW */
+rotateCCWEl.oninput = ()=>{
+  // Old logic checks
+  if (lockGonio) return;
+  if (!ccwMode.checked) return;
 
-    // Negative value for CCW relative movement
-    Gonio.setMovDegRel(-v);
+  const v = parseFloat(rotateCCWEl.value)||0;
+  if(rotateCWEl) rotateCWEl.value = 0;
 
-    // Update HUD
-    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
-       setAngleHUD(Gonio.getMovDegAbs(), romString());
-    }
-  };
-}
+  // also count forward 0→360
+  Gonio.setMovDegRel(-v);
+  
+  // Immediate HUD update (from old logic)
+  setAngleHUD(Gonio.getMovDegAbs(), romString());
+};
 
-// --- Position X / Y ---
-if(gonioXEl){
-  gonioXEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
+/* Position X / Y */
+gonioXEl.oninput = ()=>{ 
     const y = Gonio.getPan().y; 
     Gonio.setPan(parseFloat(gonioXEl.value), y); 
-  };
-}
-
-if(gonioYEl){
-  gonioYEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
+};
+gonioYEl.oninput = ()=>{ 
     const x = Gonio.getPan().x; 
     Gonio.setPan(x, parseFloat(gonioYEl.value)); 
-  };
+};
 }
 /* ===== Hidden Anatomic Tuner (dev-only, non-mirrored) ===== */
 let tunerEl = null, tunerVisible = false;
