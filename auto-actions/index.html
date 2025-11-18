@@ -2156,18 +2156,35 @@ resetMeasurementBtn.onclick = ()=>{
  setAngleHUD(0,"");
   log("Measurement reset");
 };
-    
-  /* ===== Resize & render ===== */
-  addEventListener("resize", () => {
-    camera.aspect = innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-  });
-  (function animate(){
-    controls.update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  })();
+/* ===== Integrated Resize & Render Loop ===== */
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+
+(function animate() {
+  // 1. Keep 3D Controls working (OrbitControls damping)
+  clock.getDelta();
+  controls.update(); 
+
+  // 2. New Logic: Update Angle HUD *only* if the Goniometer is visible
+  const host = document.getElementById('gonioHost');
+  if (host && !host.classList.contains('hide')) {
+    // Safety Check: Only run this if Gonio and HUD functions are actually loaded
+    if (typeof Gonio !== 'undefined' && typeof setAngleHUD === 'function' && typeof romString === 'function') {
+      setAngleHUD(Gonio.getMovDegAbs(), romString());
+    }
+  }
+
+  // 3. Render the Scene (Draws model, bones, and changes)
+  renderer.render(scene, camera);
+
+  // 4. Loop
+  requestAnimationFrame(animate);
+})();
   </script>
   <div id="notePopup" 
      style="display:none; position:fixed; right:16px; bottom:16px;
