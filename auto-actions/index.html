@@ -419,7 +419,8 @@ function refreshScreenDots(){
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
   if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
   else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }
-
+  
+  hud.classList.remove("hide");
   if(scr.fulcrum && scr.stationary && scr.moving){
     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
