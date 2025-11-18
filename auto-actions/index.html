@@ -353,11 +353,12 @@ function refreshScreenDots(){
   if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
   else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }    
 
+function refreshScreenDots(){
+  // ... code ...
   if(scr.fulcrum && scr.stationary && scr.moving){
     console.log("All 3 dots placed! (Waiting for Gonio engine)");
     }
 }
- /* <--- START COMMENT
    const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
    const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
    const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
