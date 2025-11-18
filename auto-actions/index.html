@@ -1151,10 +1151,6 @@ if (antiBox){
   const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
   camera.position.set(1.6, 1.6, 3.2);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.minDistance = 0.6; controls.maxDistance = 6;
-  controls.target.set(0,1.1,0);
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
   const key = new THREE.DirectionalLight(0xffffff, 1.2);
