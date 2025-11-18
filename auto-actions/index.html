@@ -95,81 +95,67 @@ optgroup{color:#9fb0c9;font-style:normal}
       <button id="showNote" class="mini">📌 Goniometer Placement</button>
       </div>
 
-        <div class="row">
-    <button class="pill orange" id="pickFulcrum">
-      <div class="top"><span class="dot orange"></span><span>1</span></div>
-      <div class="label">Fulcrum</div>
-    </button>
-    <button class="pill red" id="pickStationary">
-      <div class="top"><span class="dot red"></span><span>2</span></div>
-      <div class="label">Stationary</div>
-    </button>
-    <button class="pill green" id="pickMoving">
-      <div class="top"><span class="dot green"></span><span>3</span></div>
-      <div class="label">Moving</div>
-    </button>
-  </div>
+   <div class="row">
+  <button class="pill orange" id="pickFulcrum">
+    <div class="top"><span class="dot orange"></span><span>1</span></div>
+    <div class="label">Fulcrum</div>
+  </button>
+  <button class="pill red" id="pickStationary">
+    <div class="top"><span class="dot red"></span><span>2</span></div>
+    <div class="label">Stationary</div>
+  </button>
+  <button class="pill green" id="pickMoving">
+    <div class="top"><span class="dot green"></span><span>3</span></div>
+    <div class="label">Moving</div>
+  </button>
+</div>
 
-  <label>Range of Motion</label>
-  <div class="row">
-    <button id="startROM">▶️ Start ROM</button>
-    <button id="resetROM">↺ Reset ROM</button>
-    <button id="resetMeasurement" title="Clear dots + lines + goniometer">🧹 Reset Measurement</button>
-  </div>
+      <label>Range of Motion</label>
+<div class="row">
+  <button id="startROM">▶️ Start ROM</button>
+  <button id="resetROM">↺ Reset ROM</button>
+  <button id="resetMeasurement" title="Clear dots + lines + goniometer">🧹 Reset Measurement</button>
+</div>
 
-  <label>Interaction Locks</label>
-  <div class="row">
-    <button id="lock3D">🔓 3D: Unlocked</button>
-    <button id="lockGonio">🔓 Gonio Arm: Unlocked</button>
-  </div>
+<label>Interaction Locks</label>
+<div class="row">
+  <button id="lock3D">🔓 3D: Unlocked</button>
+  <button id="lockGonio">🔓 Gonio: Unlocked</button>
+</div>
 
-  <details id="controllers">
-    <summary>🎛️ Controllers</summary>
-    <div class="group">
-      <details id="ctrlGonio">
-        <summary>🧭 Goniometer</summary>
+  .pill{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:2px solid #334155;border-radius:12px;padding:8px 6px;line-height:1
+}
+.pill .top{display:flex;align-items:center;gap:6px;font-weight:700}
+.pill .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+.pill.orange{border-color:#f59e0b}.pill .dot.orange{background:#f59e0b}
+.pill.red{border-color:#ef4444}.pill .dot.red{background:#ef4444}
+.pill.green{border-color:#22c55e}.pill .dot.green{background:#22c55e}
+.pill .label{font-size:12px;color:#cbd5e1}
 
-        <label>Gonio Size (10–200%)</label>
-        <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-        <label>Rotate Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
+#lock3D.lockOn,#lockGonio.lockOn{
+  background:#0b3a1f;border-color:#16a34a
+}
 
-        <label>
-  Rotate Moving Arm — CW (°)
-  <input type="checkbox" id="cwMode" style="margin-left:8px; width:auto; vertical-align:middle">
-</label>
-<input type="range" min="0" max="360" step="1" value="0" id="rotateCW">
+document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum"); };
+document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
+document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving"); };
 
-<label>
-  Rotate Moving Arm — CCW (°)
-  <input type="checkbox" id="ccwMode" style="margin-left:8px; width:auto; vertical-align:middle">
-</label>
-<input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
+let lock3D=false, lockGonio=false;
+function set3DLock(v){ lock3D=v; controls.enabled=!lock3D;
+  lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked");
+  lock3DBtn.classList.toggle('lockOn', lock3D);
+}
+function setGonioLock(v){
+  lockGonio=v;
+  document.getElementById('instrument').style.pointerEvents = lockGonio ? 'none' : 'auto';
+  lockGonioBtn.textContent=(lockGonio? "🔒 Gonio: Locked":"🔓 Gonio: Unlocked");
+  lockGonioBtn.classList.toggle('lockOn', lockGonio);
+}
 
-        <label>Gonio X (px)</label>
-        <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
-        <label>Gonio Y (px)</label>
-        <input type="range" min="0" max="2000" step="1" value="0" id="gonioY">
-      </details>
-
-      <details id="ctrlModel">
-        <summary>🧍 Model</summary>
-        <label>Model X (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0" id="modelX">
-        <label>Model Z (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0.6" id="modelZ">
-        <label>Model Y (m) — up/down</label>
-        <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="modelY">
-        <label>Model Scale (%)</label>
-        <input type="range" min="60" max="160" step="1" value="100" id="modelScale">
-        <label>Model Yaw (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="modelYaw">
-        <div class="row" style="margin-top:6px">
-          <button id="resetPose">Reset Pose</button>
-        </div>
-      </details>
-    </div>
-  </details>
+lock3DBtn.onclick = ()=> set3DLock(!lock3D);
+lockGonioBtn.onclick = ()=> setGonioLock(!lockGonio);
 
      <details id="boneAdv">
     <summary>Bone (Advanced)</summary>
