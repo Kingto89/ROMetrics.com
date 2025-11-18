@@ -325,6 +325,8 @@ const scrMoving = document.getElementById('scrMoving');
 const scrLineA = document.getElementById('scrLineA');
 const scrLineB = document.getElementById('scrLineB');
 
+document.getElementById('instrument').style.display = 'none';  ////added to stop Gonio loading early during integration
+
 let target = null;
 function setDotEl(el, p){
   if(!p){ el.style.display='none'; return; }
