@@ -981,7 +981,7 @@ if (antiBox){
 
     const HINTS = cfg.hints || [];
     const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
-                      (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
+                      (/cerv_/.test(cfg.key)) ? [/^head$/, /^neck$/] : [];
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
 
     for (const cand of tryList){
