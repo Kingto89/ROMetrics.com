@@ -55,6 +55,20 @@ optgroup{color:#9fb0c9;font-style:normal}
 .rom-head{width:160px;color:#9fb0c9}
 .badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 #boneAdv { display:none !important; }
+  .pill{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:2px solid #334155;border-radius:12px;padding:8px 6px;line-height:1
+}
+.pill .top{display:flex;align-items:center;gap:6px;font-weight:700}
+.pill .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+.pill.orange{border-color:#f59e0b}.pill .dot.orange{background:#f59e0b}
+.pill.red{border-color:#ef4444}.pill .dot.red{background:#ef4444}
+.pill.green{border-color:#22c55e}.pill .dot.green{background:#22c55e}
+.pill .label{font-size:12px;color:#cbd5e1}
+
+#lock3D.lockOn,#lockGonio.lockOn{
+  background:#0b3a1f;border-color:#16a34a
+}
 </style>
 </head>
 <body>
@@ -123,39 +137,7 @@ optgroup{color:#9fb0c9;font-style:normal}
   <button id="lockGonio">🔓 Gonio: Unlocked</button>
 </div>
 
-  .pill{
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  border:2px solid #334155;border-radius:12px;padding:8px 6px;line-height:1
-}
-.pill .top{display:flex;align-items:center;gap:6px;font-weight:700}
-.pill .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
-.pill.orange{border-color:#f59e0b}.pill .dot.orange{background:#f59e0b}
-.pill.red{border-color:#ef4444}.pill .dot.red{background:#ef4444}
-.pill.green{border-color:#22c55e}.pill .dot.green{background:#22c55e}
-.pill .label{font-size:12px;color:#cbd5e1}
 
-#lock3D.lockOn,#lockGonio.lockOn{
-  background:#0b3a1f;border-color:#16a34a
-}
-
-document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum"); };
-document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
-document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving"); };
-
-let lock3D=false, lockGonio=false;
-function set3DLock(v){ lock3D=v; controls.enabled=!lock3D;
-  lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked");
-  lock3DBtn.classList.toggle('lockOn', lock3D);
-}
-function setGonioLock(v){
-  lockGonio=v;
-  document.getElementById('instrument').style.pointerEvents = lockGonio ? 'none' : 'auto';
-  lockGonioBtn.textContent=(lockGonio? "🔒 Gonio: Locked":"🔓 Gonio: Unlocked");
-  lockGonioBtn.classList.toggle('lockOn', lockGonio);
-}
-
-lock3DBtn.onclick = ()=> set3DLock(!lock3D);
-lockGonioBtn.onclick = ()=> setGonioLock(!lockGonio);
 
      <details id="boneAdv">
     <summary>Bone (Advanced)</summary>
@@ -1286,7 +1268,28 @@ document.getElementById("autoMoveBtn").onclick = () => {
     pairLabel.textContent = "Angle (°)";
     log("All motions zeroed → returned to anatomic baseline.");
   };
+    
+/JS Button Hooks/
 
+document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum"); };
+document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
+document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving"); };
+
+let lock3D=false, lockGonio=false;
+function set3DLock(v){ lock3D=v; controls.enabled=!lock3D;
+  lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked");
+  lock3DBtn.classList.toggle('lockOn', lock3D);
+}
+function setGonioLock(v){
+  lockGonio=v;
+  document.getElementById('instrument').style.pointerEvents = lockGonio ? 'none' : 'auto';
+  lockGonioBtn.textContent=(lockGonio? "🔒 Gonio: Locked":"🔓 Gonio: Unlocked");
+  lockGonioBtn.classList.toggle('lockOn', lockGonio);
+}
+
+lock3DBtn.onclick = ()=> set3DLock(!lock3D);
+lockGonioBtn.onclick = ()=> setGonioLock(!lockGonio);
+    
   /* ===== Model load (unchanged) ===== */
   function clearModel(){
     if (model) scene.remove(model);
