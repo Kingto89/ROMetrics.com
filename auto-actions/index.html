@@ -1277,8 +1277,11 @@ document.getElementById("pickMoving").onclick    = () => { target = "moving";   
 
 let lock3D=false, lockGonio=false;
 function set3DLock(v){ lock3D=v; controls.enabled=!lock3D;
-  lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked");
-  lock3DBtn.classList.toggle('lockOn', lock3D);
+const lock3DBtn = document.getElementById("lock3D");
+const lockGonioBtn = document.getElementById("lockGonio");
+
+lock3DBtn.textContent=(lock3D? "🔒 3D: Locked":"🔓 3D: Unlocked");
+ lock3DBtn.classList.toggle('lockOn', lock3D);
 }
 function setGonioLock(v){
   lockGonio=v;
