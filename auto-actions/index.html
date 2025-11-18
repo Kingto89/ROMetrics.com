@@ -1760,6 +1760,102 @@ if(resetB) resetB.onclick=()=>{ romActive=false; Gonio.zeroHere(); Gonio.setMovD
 // Re-bind UI logic for Locks
 document.getElementById("lock3D").onclick=()=>set3DLock(!lock3D);
 document.getElementById("lockGonio").onclick=()=>setGonioLock(!lockGonio);
+
+/* ===================== GONIOMETER UI CONTROLLERS ===================== */
+
+// 1. Grab Elements
+const sizeEl        = document.getElementById("gonioSize");
+const gonioRotateEl = document.getElementById("gonioRotate");
+const rotateCWEl    = document.getElementById("rotateCW");
+const rotateCCWEl   = document.getElementById("rotateCCW");
+const cwMode        = document.getElementById("cwMode");
+const ccwMode       = document.getElementById("ccwMode");
+const gonioXEl      = document.getElementById("gonioX");
+const gonioYEl      = document.getElementById("gonioY");
+
+// 2. Exclusive Checkboxes (CW vs CCW)
+if(cwMode && ccwMode){
+  cwMode.onchange  = ()=>{ if(cwMode.checked)  ccwMode.checked=false; };
+  ccwMode.onchange = ()=>{ if(ccwMode.checked) cwMode.checked=false; };
+}
+
+// 3. Sliders Logic
+
+// --- Size ---
+if(sizeEl){
+  sizeEl.oninput = () => { 
+    if(typeof Gonio === 'undefined') return;
+    Gonio.setScale(parseInt(sizeEl.value, 10) / 100); 
+    Gonio.refresh(); 
+  };
+}
+
+// --- Base Rotation ---
+if(gonioRotateEl){
+  gonioRotateEl.oninput = () => { 
+    if(typeof Gonio === 'undefined') return;
+    Gonio.setUserRot(parseFloat(gonioRotateEl.value) || 0); 
+    Gonio.refresh(); 
+  };
+}
+
+// --- Rotate Moving Arm (CW) ---
+if(rotateCWEl){
+  rotateCWEl.oninput = () => {
+    if(typeof Gonio === 'undefined') return;
+    // Auto-check the box if user slides this
+    if(cwMode) { cwMode.checked = true; ccwMode.checked = false; }
+    
+    const v = parseFloat(rotateCWEl.value) || 0;
+    // Reset the other slider
+    if(rotateCCWEl) rotateCCWEl.value = 0;
+
+    Gonio.setMovDegRel(v);
+    
+    // Update HUD
+    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
+       setAngleHUD(Gonio.getMovDegAbs(), romString());
+    }
+  };
+}
+
+// --- Rotate Moving Arm (CCW) ---
+if(rotateCCWEl){
+  rotateCCWEl.oninput = () => {
+    if(typeof Gonio === 'undefined') return;
+    // Auto-check the box
+    if(ccwMode) { ccwMode.checked = true; cwMode.checked = false; }
+
+    const v = parseFloat(rotateCCWEl.value) || 0;
+    // Reset the other slider
+    if(rotateCWEl) rotateCWEl.value = 0;
+
+    // Negative value for CCW relative movement
+    Gonio.setMovDegRel(-v);
+
+    // Update HUD
+    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
+       setAngleHUD(Gonio.getMovDegAbs(), romString());
+    }
+  };
+}
+
+// --- Position X / Y ---
+if(gonioXEl){
+  gonioXEl.oninput = () => { 
+    if(typeof Gonio === 'undefined') return;
+    const y = Gonio.getPan().y; 
+    Gonio.setPan(parseFloat(gonioXEl.value), y); 
+  };
+}
+
+if(gonioYEl){
+  gonioYEl.oninput = () => { 
+    if(typeof Gonio === 'undefined') return;
+    const x = Gonio.getPan().x; 
+    Gonio.setPan(x, parseFloat(gonioYEl.value)); 
+  };
+}
 /* ===== Hidden Anatomic Tuner (dev-only, non-mirrored) ===== */
 let tunerEl = null, tunerVisible = false;
 function ensureAnatomicTuner() {
