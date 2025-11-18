@@ -66,7 +66,7 @@ optgroup{color:#9fb0c9;font-style:normal}
 .badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 #boneAdv { display:none !important; }
   /* SVG */
-  #gonioHost{position:fixed; inset:0; z-index:30; pointer-events:none}
+  #gonioHost{position:fixed; inset:0; z-index:10; pointer-events:none}
   #gonioHost svg{width:100vw;height:100vh;background:transparent;pointer-events:auto}
   .tick{stroke:#64748b;stroke-width:.9}.tickBig{stroke-width:1.6}
   .labelOuter{fill:#e5e7eb;font-size:11px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
@@ -342,20 +342,33 @@ function setLineEl(el, a, b, onColor){
 }
 
 function refreshScreenDots(){
-  setDotEl(scrFulcrum,   scr.fulcrum);
-  setDotEl(scrStationary,scr.stationary);
-  setDotEl(scrMoving,    scr.moving);
+  // 1. Update positions of dots and lines
+  setDotEl(scrFulcrum,    scr.fulcrum);
+  setDotEl(scrStationary, scr.stationary);
+  setDotEl(scrMoving,     scr.moving);
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
-  setLineEl(scrLineB, scr.fulcrum, scr.moving,    '#22c55e');
+  setLineEl(scrLineB, scr.fulcrum, scr.moving,     '#22c55e');
 
+  // 2. FORCE RULER HIDDEN (Prevents crash until logic is added)
+  const inst = document.getElementById('instrument');
+  if(inst) inst.style.display = 'none';
+
+  // 3. Show/Hide the Container
   const host = document.getElementById('gonioHost');
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
-  if (anyPlaced) { host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); }
-  else           { host.classList.add('hide');    host.setAttribute('aria-hidden','true');  }    
+  
+  if (anyPlaced) { 
+    host.classList.remove('hide'); 
+    host.setAttribute('aria-hidden','false'); 
+  } else { 
+    host.classList.add('hide');    
+    host.setAttribute('aria-hidden','true');  
+  }    
 
+  // 4. Log message
   if(scr.fulcrum && scr.stationary && scr.moving){
-    console.log("All 3 dots placed! (Waiting for Gonio engine)");
-    }
+    console.log("All 3 dots placed!");
+  }
 }
     //const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
    // const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
