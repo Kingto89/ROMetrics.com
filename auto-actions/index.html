@@ -560,14 +560,17 @@ function setLineEl(el, a, b, onColor){
 }
 
 function refreshScreenDots(){
+  // 1. Update the colored dots/lines on screen
   setDotEl(scrFulcrum,    scr.fulcrum);
   setDotEl(scrStationary, scr.stationary);
   setDotEl(scrMoving,     scr.moving);
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,     '#22c55e');
 
+  // 2. Manage the container visibility
   const host = document.getElementById('gonioHost');
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
+  const allPlaced = !!(scr.fulcrum && scr.stationary && scr.moving);
 
   if (anyPlaced) { 
     host.classList.remove('hide'); 
@@ -576,96 +579,64 @@ function refreshScreenDots(){
     host.classList.add('hide');    
     host.setAttribute('aria-hidden','true');  
   }
-}
 
-// LAUNCH RULER if all 3 dots are placed
-  if(scr.fulcrum && scr.stationary && scr.moving){
-      
+  // 3. Auto-Placement Logic (Only runs if all 3 dots are placed)
+  if(allPlaced){
       const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+
+      // A. Calculate angles from Fulcrum to dots
+      if(typeof Gonio === 'undefined') return;
       
-      // 1. FORCE VISIBILITY NOW so layout math works
+      const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+      const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+
+      // B. Show the Instrument (Must be visible for layout math)
       const inst = document.getElementById('instrument');
       const wasHidden = (inst.style.display === 'none' || inst.style.display === '');
+      
       inst.style.display = 'block'; 
       Gonio.show(); 
 
-      // 2. Reset Scale only if this is the first time appearing
+      // C. Apply Pose: Center on Fulcrum, Rotate Body to Stationary, Rotate Arm to Moving
+      Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+
+      // D. Auto-scale ONLY if it was just opened (prevents resizing on every click)
       if (wasHidden) {
          Gonio.setZoom(1);
          const targetFrac = 0.18; 
          const dim = Math.min(window.innerWidth, window.innerHeight);
          const autoScale = Math.max(0.25, Math.min(0.9, (dim * targetFrac) / 140));
          Gonio.setScale(autoScale);
-         if(document.getElementById("gonioSize")) {
-            document.getElementById("gonioSize").value = Math.round(autoScale * 100);
-         }
+         
+         const sizeSl = document.getElementById("gonioSize");
+         if(sizeSl) sizeSl.value = Math.round(autoScale * 100);
       }
-      
-      // 3. Calculate Exact Alignment
-      // We do this AFTER showing it, so coordinate transforms are valid
-      const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
-      const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
 
-      // 4. Apply Pose & Zero
-      Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+      // E. Reset internal measurement to 0 relative to this pose
       Gonio.zeroHere(); 
       
-      // 5. Update UI inputs
+      // F. Sync UI coordinates
       const p = Gonio.getPan();
-      if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
-      if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
+      const gx = document.getElementById("gonioX");
+      const gy = document.getElementById("gonioY");
+      if(gx) gx.value = Math.round(p.x);
+      if(gy) gy.value = Math.round(p.y);
       
-      // 6. Reset slider knobs
-      if(document.getElementById("rotateCW")) document.getElementById("rotateCW").value = 0;
-      if(document.getElementById("rotateCCW")) document.getElementById("rotateCCW").value = 0;
+      // G. Reset slider knobs to 0 visually
+      const cw = document.getElementById("rotateCW");
+      const ccw = document.getElementById("rotateCCW");
+      if(cw) cw.value = 0;
+      if(ccw) ccw.value = 0;
 
       if(typeof setAngleHUD === 'function') setAngleHUD(0, "Start");
       if(typeof setGonioLock === 'function') setGonioLock(false);
 
   } else {
-      // Hide ruler if incomplete
+      // If not all dots are placed, ensure instrument is hidden
       const inst = document.getElementById('instrument');
       if(inst) inst.style.display = 'none';
   }
-         
-         // 2. Reset Scale/Zoom FIRST to ensure stable positioning
-         Gonio.setZoom(1);
-         const targetFrac = 0.18; // Auto-size to ~18% of screen
-         const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-         const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
-         Gonio.setScale(autoScale);
-         
-         // Sync the UI slider to this new scale
-         if(document.getElementById("gonioSize")) {
-            document.getElementById("gonioSize").value = Math.round(autoScale * 100);
-         }
-      }
-
-      Gonio.show();
-      
-      // 3. Apply Pose: Center on Fulcrum, Rotate Body to Stationary, Rotate Arm to Moving
-      Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-      
-      // 4. Zero the tool "here" so the reading starts at 0° relative to this shape
-      Gonio.zeroHere(); 
-      
-      // 5. Update UI inputs to match this new reality
-      const p = Gonio.getPan();
-      if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
-      if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
-      
-      // 6. Reset slider knobs to 0 visually
-      if(document.getElementById("rotateCW")) document.getElementById("rotateCW").value = 0;
-      if(document.getElementById("rotateCCW")) document.getElementById("rotateCCW").value = 0;
-
-      if(typeof setAngleHUD === 'function') setAngleHUD(0, "Start");
-      if(typeof setGonioLock === 'function') setGonioLock(false);
-
-  } else {
-      // Hide ruler if incomplete
-      const inst = document.getElementById('instrument');
-      if(inst) inst.style.display = 'none';
-  }
+}
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
   cervical_spine: "cervical_spine.md",
