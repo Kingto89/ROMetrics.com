@@ -534,14 +534,18 @@ function endArm(){
     getMovDegAbs:()=>clamp360(mov),
     setPan:(x,y)=>{ panX=x; panY=y; clampPanToViewport(); applyView(); },
     getPan:()=>{ return {x:panX,y:panY}; },
-    
+
 get angle(){ 
-    // FIX 2 (Final): Full 360 Range
-    // Calculates positive position relative to zeroRef (0 to 360)
-    // This allows ROM to read 270, 300, etc., without capping.
-    let delta = (mov - zeroRef) % 360;
-    if (delta < 0) delta += 360; // Handle wrapping so -10 becomes 350
-    return delta;
+    // 1. Calculate standard Clockwise distance from zero (0 to 360)
+    let delta = clamp360(mov - zeroRef);
+
+    // 2. If in CCW Mode, invert the math so it counts UP (1, 10, 90...)
+    // instead of DOWN (359, 350, 270...)
+    if (!getCwMode()) {
+        delta = (360 - delta) % 360;
+    }
+
+    return delta; 
 },
     setRomMode: (v) => { isRomMode = v; }, 
     // -------------------------
