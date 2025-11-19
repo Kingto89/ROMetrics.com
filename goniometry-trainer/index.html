@@ -1528,9 +1528,11 @@ regionSel.onchange = () => {
       x.key.startsWith("wr_ps_")
     );
   }
-  else if (r === "wrist") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("wr_")
+else if (r === "wrist") {
+    // LOGIC: Show items starting with "wr_" (Wrist) 
+    // BUT EXCLUDE items starting with "wr_ps_" (Pronation/Supination)
+    CURRENT = UPPER.filter(x => 
+      x.key.startsWith("wr_") && !x.key.startsWith("wr_ps_")
     );
   }
   else if (r === "hip") {
