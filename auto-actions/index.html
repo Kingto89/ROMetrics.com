@@ -508,9 +508,21 @@ function moveArm(e){
 
     render();
   }
-
 function endArm(){ 
     draggingArm=false; 
+    
+    // FIX 1: Only update the internal baseline if we are NOT in ROM mode.
+    // This prevents the ROM from resetting to 0 immediately when you let go.
+    if (typeof isRomMode !== 'undefined' && !isRomMode) {
+        zeroRef = mov; 
+    }
+    
+    // Reset slider visuals to 0 so they are ready to push from this new spot
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+}
     
     // FIX: ALWAYS update the internal baseline to the current position.
     zeroRef = mov; 
@@ -536,12 +548,18 @@ function endArm(){
     setPan:(x,y)=>{ panX=x; panY=y; clampPanToViewport(); applyView(); },
     getPan:()=>{ return {x:panX,y:panY}; },
     
-   // Find this inside the return object of const Gonio = (() => { ...
-    get angle(){ 
-        // UPDATED: Returns full 0-360 range without folding at 180
-        let a = getCwMode() ? clamp360(mov-zeroRef) : (360-clamp360(mov-zeroRef))%360;
-        return a; 
-    },
+get angle(){ 
+    // FIX 2: Robust Calculation
+    // Calculate difference between current position (mov) and start (zeroRef)
+    let delta = (mov - zeroRef);
+
+    // Normalize math to handle the 0/360 wrap-around correctly
+    // This ensures a reading of 10 deg doesn't become 350 deg just because you moved slightly back
+    delta = (delta + 540) % 360 - 180;
+
+    // Return the absolute value (always positive)
+    return Math.abs(delta); 
+},
     setRomMode: (v) => { isRomMode = v; }, 
     // -------------------------
 
