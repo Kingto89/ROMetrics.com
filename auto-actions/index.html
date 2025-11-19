@@ -494,9 +494,11 @@ function endArm(){
     setPan:(x,y)=>{ panX=x; panY=y; clampPanToViewport(); applyView(); },
     getPan:()=>{ return {x:panX,y:panY}; },
     
-   get angle(){ 
+   // Find this inside the return object of const Gonio = (() => { ...
+    get angle(){ 
+        // UPDATED: Returns full 0-360 range without folding at 180
         let a = getCwMode() ? clamp360(mov-zeroRef) : (360-clamp360(mov-zeroRef))%360;
-        return (a > 180) ? 360 - a : a; 
+        return a; 
     },
     setRomMode: (v) => { isRomMode = v; }, 
     // -------------------------
@@ -2305,11 +2307,12 @@ const clock = new THREE.Clock();
         // 1. Get the raw 0-360 position of the arm
         const raw = Gonio.getMovDegAbs();
         
-        // 2. "Fold" it to 0-180 just for the display (matches physical ruler)
-        // If it's 350°, display 10°. If it's 190°, display 170°.
-        const visualAngle = (raw > 180) ? 360 - raw : raw;
+        // 2. UPDATED: Use raw 0-360 directly. Do not fold at 180.
+        const visualAngle = raw;
 
-        // 3. Send 'visualAngle' to the HUD, but let 'romString' keep its own 360 logic
+        // 3. Send to HUD
+        // 'visualAngle' updates the "Angle: X" text
+        // 'romString()' updates the "ROM: Y" text (which uses the fixed Gonio.angle above)
         setAngleHUD(visualAngle, typeof romString === 'function' ? romString() : "");
      }
   }
