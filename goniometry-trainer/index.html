@@ -1609,10 +1609,10 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
       if (key === 'wr_ps_l' || key === 'wr_ps_r') {
         const side = key.endsWith('_l') ? 'l' : 'r';
         
-        // 1. Target LOWERARM bone: Flex Elbow to 90°
-        setPair(`el_fe_${side}`, 90);
+        // 1. Target LOWERARM bone: Flex Elbow to 45°
+        setPair(`el_fe_${side}`, 45);
 
-        // 2. Target HAND bone: Force to 85° (Start Position)
+        // 2. Target HAND bone: Force to 45° (Start Position)
         // Applying to BOTH Pronation and Supination so they start from the same point.
         setPair(key, 45); 
              
