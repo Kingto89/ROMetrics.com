@@ -687,7 +687,7 @@ async function loadNoteFile() {
     return;
   }
 
-  const filePath = `https://kingto89.github.io/ROMetrics.com/goniometry-trainer/goniometry-placement-guide/${NOTE_MAP[region]}`;
+  const filePath = `https://kingto89.github.io/ROMetrics.com/goniometer-trainer/goniometry-placement-guide/${NOTE_MAP[region]}`;
 
   try {
     const res = await fetch(filePath);
@@ -1258,8 +1258,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'el_fe_r',   pair:'Elbow R — Flex / Ext',               side:'r', plane:'sagittal',  neutral:0, min:-10,  max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
 
      // ===== Wrist — corrected direction for right side =====
-    {key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
-    {key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]}, // 🔁 flipped
+    {key:'wr_ps_l', pair:'DRU L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
+    {key:'wr_ps_r', pair:'DRU R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]}, // 🔁 flipped
 
     {key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
     {key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
@@ -1419,22 +1419,30 @@ if (cfg.key === 'foot_invev_l') {
     return out;
   }
 
-  function buildSeparatedCatalog(list){
+function buildSeparatedCatalog(list){
     const cat = {};
     const add = (grp, entries)=>{ if (!cat[grp]) cat[grp]=[]; cat[grp].push(...entries); };
+    
     list.forEach(cfg=>{
-    if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
-    else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
-    else if (false && /^clavicle_/.test(cfg.key)) add('Clavicle', dirEntriesFromPair(cfg)); // hidden
-    else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
-    else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
-    // Forearm group intentionally NOT added (removed from UI)
-    else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
-    else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
-    else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
-    else if (/^ankle_/.test(cfg.key)) add('Ankle', dirEntriesFromPair(cfg));
-    else if (/^foot_/.test(cfg.key)) add('Foot', dirEntriesFromPair(cfg));
-  });
+      if (/^trunk_/.test(cfg.key)) add('Trunk', dirEntriesFromPair(cfg));
+      else if (/^cerv_/.test(cfg.key)) add('Cervical', dirEntriesFromPair(cfg));
+      else if (false && /^clavicle_/.test(cfg.key)) add('Clavicle', dirEntriesFromPair(cfg)); 
+      else if (/^sh_/.test(cfg.key)) add('Shoulder', dirEntriesFromPair(cfg));
+      else if (/^el_/.test(cfg.key)) add('Elbow', dirEntriesFromPair(cfg));
+      
+      // === NEW LOGIC START ===
+      // Catch Pronation/Supination FIRST and give it the DRU Heading
+      else if (/^wr_ps_/.test(cfg.key)) add('Distal Radio Ulnar (DRU)', dirEntriesFromPair(cfg));
+      
+      // Catch remaining Wrist items (Flex/Ext, Dev) and give them the Wrist Heading
+      else if (/^wr_/.test(cfg.key)) add('Wrist', dirEntriesFromPair(cfg));
+      // === NEW LOGIC END ===
+
+      else if (/^hip_/.test(cfg.key)) add('Hip', dirEntriesFromPair(cfg));
+      else if (/^knee_/.test(cfg.key)) add('Knee', dirEntriesFromPair(cfg));
+      else if (/^ankle_/.test(cfg.key)) add('Ankle', dirEntriesFromPair(cfg));
+      else if (/^foot_/.test(cfg.key)) add('Foot', dirEntriesFromPair(cfg));
+    });
     return cat;
   }
 
