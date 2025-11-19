@@ -95,6 +95,12 @@ input[type=range]::-moz-range-thumb {
   pointer-events: auto;
   cursor: grab;
 }
+/* --- THICKER MOBILE SLIDERS (Compact) --- */
+input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 30px; margin: 10px 0; border: 0; padding: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 12px; background: #334155; border-radius: 6px; }
+input[type=range]::-moz-range-track { height: 12px; background: #334155; border-radius: 6px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; margin-top: -6px; height: 24px; width: 24px; background: #e2e8f0; border-radius: 50%; border: 2px solid #0f172a; cursor: grab; pointer-events: auto; }
+input[type=range]::-moz-range-thumb { border: none; height: 24px; width: 24px; background: #e2e8f0; border-radius: 50%; border: 2px solid #0f172a; cursor: grab; pointer-events: auto; }
 </style>
 </head>
 <body>
@@ -259,9 +265,6 @@ input[type=range]::-moz-range-thumb {
         <input type="range" min="60" max="160" step="1" value="100" id="modelScale">
         <label>Model Yaw (°)</label>
         <input type="range" min="0" max="360" step="1" value="0" id="modelYaw">
-        <div class="row" style="margin-top:6px">
-          <button id="resetPose">Reset Pose</button>
-        </div>
       </details>
     </div>
   </details>
@@ -652,6 +655,7 @@ function refreshScreenDots(){
      if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
      if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
      if(typeof setAngleHUD === 'function') setAngleHUD(Gonio.getMovDegAbs(), "");
+     set3DLock (true);
      if(typeof setGonioLock === 'function') setGonioLock(false);
 
   } else {
@@ -1829,16 +1833,6 @@ log("Anatomic baseline applied on load.");
     if(el) el.addEventListener("input", updateModelTransform);
   });
 
-  // 3. Wire Reset Button
-  const resetPoseBtn = document.getElementById("resetPose");
-  if(resetPoseBtn) resetPoseBtn.onclick = () => {
-    mdl.x.value = 0;
-    mdl.y.value = 0;
-    mdl.z.value = 0.6;
-    mdl.s.value = 100;
-    mdl.yaw.value = 0;
-    updateModelTransform();
-  };
   // -----------------------------
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
