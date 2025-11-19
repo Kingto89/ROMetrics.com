@@ -775,16 +775,18 @@ function capFor(action){
   const { key, sign } = action; // sign: +1 or -1
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
-       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
-    if (/^sh_fe_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (sign > 0) { // Flexion
-        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
-      } else {
-        // FIX: Return Abduction Max (170) for Up (+), Adduction Max (30) for Down (-)
-        return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
-      }
+// Shoulder Flex/Ext
+  if (/^sh_fe_/.test(key)) {
+    const isLeft = key.endsWith('_l');
+    if (sign > 0) { 
+      // Flexion
+      return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+    } else {
+      // ✅ FIX: Previously this was wrongly using Adduction limits. 
+      // Now correctly uses Extension limits (60).
+      return isLeft ? COLLIM.shExtLMax : COLLIM.shExtRMax;
     }
+  }
 
 // Shoulder Abd/Add — handle L normally; R corrected
 if (/^sh_aa_/.test(key)) {
