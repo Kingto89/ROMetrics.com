@@ -1602,28 +1602,43 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   setPair(`clavicle_${side.toUpperCase()}`, side==='r' ? -45 : 45); 
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
+// === FINAL UNIFIED WRIST/DRU SETUP (Inside actionSel.change listener) ===
+if (key.startsWith('wr_ps_') || key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
+    const side = key.endsWith('_l') ? 'l' : 'r';
+    // The key that controls forearm rotation (always wr_ps_l or wr_ps_r)
+    const rotationKey = `wr_ps_${side}`; 
+    
+    // 1. COMMON SETUP: Flex Elbow to 90°
+    setPair(`el_fe_${side}`, 90); 
 
-  // ... inside the if (v.startsWith("sep:")) block ...
-
-// === FINAL DRU LOGIC: Target Lowerarm (Elbow) & Hand (DRU) ===
-      if (key === 'wr_ps_l' || key === 'wr_ps_r') {
-        const side = key.endsWith('_l') ? 'l' : 'r';
+    // CASE A: Standard Wrist Motions (Flex/Ext & Dev)
+    if (key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
         
-        // 1. Target LOWERARM bone: Flex Elbow to 90°
-        setPair(`el_fe_${side}`, 90);
+        // TARGET POSITION: 45° Neutral/Thumb Up
+        // Left side needs +45. Right side needs -45 (to correct inversion).
+        const rotationAngle = (side === 'l') ? 45 : -45;
+        
+        // Apply Neutral rotation to the Forearm/DRU key to stabilize the hand
+        setPair(rotationKey, rotationAngle); 
+        
+        // Rebind the currently selected action's zero (wr_fe_ or wr_ru_)
+        freezeBindBaseFor(key, cfg);
+        log(`Setup ${side.toUpperCase()} WRIST: Elbow 90°, Forearm Neutral (${rotationAngle}°).`);
+    }
 
-        // 2. Target HAND bone: Force to NEUTRAL (Thumb Up/Sideways)
-        // We use 45° (midpoint between 0° and 85°) to match the clinical image.
-        setPair(key, 45); 
-             
-        // 3. Freeze this "Neutral/Thumb Up" position as the new Zero
-        const b = resolveBind(key, cfg);
-        if(b) {
-             b.qBind = b.bone.quaternion.clone();
-        }
-             
-        log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Neutral (45°/Thumb Up)`);
-      }
+    // CASE B: DRU Motions (Pronation/Supination)
+    else if (key.startsWith('wr_ps_')) {
+        
+        // TARGET POSITION: 0° Anatomic (This matches the "perfect right start" for DRU test)
+        const rotationAngle = 0; 
+        
+        // Apply 0° rotation to the DRU key and rebind its zero.
+        setPair(rotationKey, rotationAngle); 
+        freezeBindBaseFor(key, cfg);
+        log(`Setup ${side.toUpperCase()} DRU: Elbow 90°, Forearm Anatomic (0°).`);
+    }
+}
+
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
@@ -1636,24 +1651,6 @@ if (key==='hip_irer_l' || key==='hip_irer_r'){
     b.qBind = b.bone.quaternion.clone();  // <-- capture baseline AFTER posture
   }
   log(`Hip ${side.toUpperCase()} set to FE=95°, Knee ${side.toUpperCase()} to FE=90° for hip rotation setup.`);
-}
-// === SETUP FOR WRIST FLEX/EXT & RAD/ULNAR DEV ONLY (4 CONFIRMED MOTIONS) ===
-if (key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
-    const side = key.endsWith('_l') ? 'l' : 'r';
-
-    // 1. COMMON SETUP: Target LOWERARM bone: Flex Elbow to 90°
-    setPair(`el_fe_${side}`, 90);
-
-    // 2. FOREARM ROTATION: Set the HAND/FOREARM to Neutral (45°/Thumb Up) for stabilization.
-    // NOTE: This uses the DRU key (wr_ps_) to apply the needed rotation to the forearm.
-    setPair(`wr_ps_${side}`, 45); 
-
-    // 3. REBIND ZERO: Freeze the current position (which is 0° of Flex/Ext/Dev on a 45° forearm)
-    const b = resolveBind(key, cfg);
-    if(b) {
-         b.qBind = b.bone.quaternion.clone(); 
-    }
-    log(`Setup ${side.toUpperCase()}: Elbow 90°, Forearm Neutral (45°), ${CURRENT_ACTION.label} start.`);
 }
       syncActionUI(true);
       return;
