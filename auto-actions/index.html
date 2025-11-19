@@ -578,41 +578,58 @@ function refreshScreenDots(){
     host.setAttribute('aria-hidden','true');  
   }
 
-  // LAUNCH RULER if all 3 dots are placed
+// LAUNCH RULER if all 3 dots are placed
   if(scr.fulcrum && scr.stationary && scr.moving){
-     
-     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
-     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
-     const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+      
+      const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+      
+      // 1. Calculate exact angles from Fulcrum to dots
+      // We use Gonio.degFromScreenVec to ensure it matches the tool's coordinate system (0° = Down)
+      const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+      const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
 
-     const inst = document.getElementById('instrument');
-     if (inst.style.display === 'none' || inst.style.display === '') {
-        inst.style.display = 'block'; // 
-        Gonio.setZoom(1);
-        const targetFrac = 0.18;
-        const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-        const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
-        Gonio.setScale(autoScale);
-        if(document.getElementById("gonioSize")) document.getElementById("gonioSize").value = Math.round(autoScale * 100);
-     }
+      const inst = document.getElementById('instrument');
+      if (inst.style.display === 'none' || inst.style.display === '') {
+         inst.style.display = 'block';
+         
+         // 2. Reset Scale/Zoom FIRST to ensure stable positioning
+         Gonio.setZoom(1);
+         const targetFrac = 0.18; // Auto-size to ~18% of screen
+         const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
+         const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
+         Gonio.setScale(autoScale);
+         
+         // Sync the UI slider to this new scale
+         if(document.getElementById("gonioSize")) {
+            document.getElementById("gonioSize").value = Math.round(autoScale * 100);
+         }
+      }
 
-     Gonio.show();
-     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-     Gonio.zeroHere();
-     
-     // Update UI
-     const p = Gonio.getPan();
-     if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
-     if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
-     if(typeof setAngleHUD === 'function') setAngleHUD(Gonio.getMovDegAbs(), "");
-     if(typeof setGonioLock === 'function') setGonioLock(false);
+      Gonio.show();
+      
+      // 3. Apply Pose: Center on Fulcrum, Rotate Body to Stationary, Rotate Arm to Moving
+      Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+      
+      // 4. Zero the tool "here" so the reading starts at 0° relative to this shape
+      Gonio.zeroHere(); 
+      
+      // 5. Update UI inputs to match this new reality
+      const p = Gonio.getPan();
+      if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
+      if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
+      
+      // 6. Reset slider knobs to 0 visually
+      if(document.getElementById("rotateCW")) document.getElementById("rotateCW").value = 0;
+      if(document.getElementById("rotateCCW")) document.getElementById("rotateCCW").value = 0;
+
+      if(typeof setAngleHUD === 'function') setAngleHUD(0, "Start");
+      if(typeof setGonioLock === 'function') setGonioLock(false);
 
   } else {
-     // Hide ruler if incomplete
-     const inst = document.getElementById('instrument');
-     if(inst) inst.style.display = 'none';
+      // Hide ruler if incomplete
+      const inst = document.getElementById('instrument');
+      if(inst) inst.style.display = 'none';
   }
-}
 /* ===== Region → MD file map ===== */
 const NOTE_MAP = {
   cervical_spine: "cervical_spine.md",
