@@ -185,8 +185,8 @@ input[type=range]::-moz-range-thumb {
         <g id="mirrorWrap" transform="scale(1,1)">
           <g id="instrument">
             <g id="head">
-              <circle r="120" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
-              <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>
+            <circle r="120" fill="rgba(0,0,0,0)" stroke="#94a3b8" stroke-width="1.6" style="pointer-events:all"/>
+            <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>     
               <g id="ticks"></g>
               <g id="numsOut"></g>
               <g id="labelsFixed">
@@ -238,11 +238,11 @@ input[type=range]::-moz-range-thumb {
   <input type="checkbox" id="ccwMode" style="margin-left:8px; width:auto; vertical-align:middle">
 </label>
 <input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
-
+        
+         <label>Rotate Goniometer (°)</label>
+        <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
         <label>Gonio Size (10–200%)</label>
         <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-        <label>Rotate Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
 
         <label>Gonio X (px)</label>
         <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
