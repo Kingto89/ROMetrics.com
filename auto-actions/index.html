@@ -521,6 +521,19 @@ function endArm(){
     if(ccw) ccw.value = 0;
 }
     
+    // Only update the internal baseline if we are NOT in ROM mode.
+    // This prevents the ROM from resetting to 0 immediately when you let go.
+    if (typeof isRomMode !== 'undefined' && !isRomMode) {
+        zeroRef = mov; 
+    }
+    
+    // Reset slider visuals to 0
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+}
+    
     // FIX 1: Only update the internal baseline if we are NOT in ROM mode.
     // This prevents the ROM from resetting to 0 immediately when you let go.
     if (typeof isRomMode !== 'undefined' && !isRomMode) {
