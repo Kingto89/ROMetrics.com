@@ -2294,7 +2294,7 @@ addEventListener("resize", () => {
 });
 
 const clock = new THREE.Clock();
-
+    
 (function animate(){
   clock.getDelta();
   controls.update();
@@ -2307,12 +2307,13 @@ const clock = new THREE.Clock();
         // 1. Get the raw 0-360 position of the arm
         const raw = Gonio.getMovDegAbs();
         
-        // 2. UPDATED: Use raw 0-360 directly. Do not fold at 180.
-        const visualAngle = raw;
+        // 2. VISUAL ONLY: Fold at 180. 
+        // If raw is 270°, this makes it read 90° (360 - 270).
+        const visualAngle = (raw > 180) ? 360 - raw : raw;
 
-        // 3. Send to HUD
-        // 'visualAngle' updates the "Angle: X" text
-        // 'romString()' updates the "ROM: Y" text (which uses the fixed Gonio.angle above)
+        // 3. Update HUD
+        // visualAngle = Position on tool (0-180)
+        // romString() = Total travel (0-360)
         setAngleHUD(visualAngle, typeof romString === 'function' ? romString() : "");
      }
   }
