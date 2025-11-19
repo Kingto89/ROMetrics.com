@@ -465,17 +465,13 @@ function startArmDrag(e){
     render();
   }
 
-  function endArm(){ 
+function endArm(){ 
     draggingArm=false; 
+    
     // Update slider baseline ONLY if we are aligning (not testing ROM)
     if(!isRomMode){
         zeroRef = mov;
-        const cw = document.getElementById("rotateCW");
-        const ccw = document.getElementById("rotateCCW");
-        if(cw) cw.value = 0;
-        if(ccw) ccw.value = 0;
-    }
-  }
+        
         // Reset slider visuals to 0 so they are ready to push from the new spot
         const cw = document.getElementById("rotateCW");
         const ccw = document.getElementById("rotateCCW");
