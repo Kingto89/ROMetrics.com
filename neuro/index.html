@@ -3,9 +3,34 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ROMetrics — Dermatome & Myotome Viewer</title>
+<title>ROMetrics — Bone Overlay Viewer</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#0b1220; --panel:#0f172a; --line:#1f2937; --text:#e2e8f0; --accent:#38bdf8; }
+html,body{ margin:0;height:100%;overflow:hidden; background:var(--bg);color:var(--text); font-family:Inter,sans-serif; }
+canvas{ position:fixed;inset:0;width:100%;height:100%;display:block; outline:none; }
+
+/* UI Panel */
+#uiPanel{
+  position:fixed;right:20px;top:20px;width:320px;
+  background:var(--panel);border-radius:12px;padding:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.6); border:1px solid var(--line);
+  z-index: 10;
+}
+h2{margin:0 0 15px;font-size:16px;font-weight:700;color:#fff; letter-spacing:0.5px; text-transform:uppercase;}
+label{font-weight:600;margin-top:15px;display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;color:var(--accent); letter-spacing:1px;}
+select,input[type=range]{
+  width:100%;padding:8px;border-radius:6px;
+  background:#1e293b;color:#fff;border:1px solid var(--line);
+  font-size:13px; outline:none;
+}
+#infoBox{
+  margin-top:20px;padding:12px;border-radius:6px;
+  background:rgba(0,0,0,0.3);color:#cbd5e1;font-size:13px;
+  min-height:40px;line-height:1.4; border-left: 3px solid var(--accent);
+}
+</style>
 
 <script type="importmap">
 {
@@ -15,51 +40,26 @@
   }
 }
 </script>
-
-<style>
-:root{ --bg:#0b1220; --panel:#0f172a; --line:#1f2937; --text:#e2e8f0; }
-html,body{ margin:0;height:100%;overflow:hidden; background:var(--bg);color:var(--text); font-family:Inter,sans-serif; }
-canvas{ position:fixed;inset:0;width:100%;height:100%;display:block; }
-
-/* UI Panel */
-#uiPanel{
-  position:fixed;right:20px;top:20px;width:320px;
-  background:var(--panel);border-radius:16px;padding:16px;
-  box-shadow:0 8px 30px rgba(0,0,0,.5);
-  max-height:90vh;overflow-y:auto;
-}
-#uiPanel h2{margin:0 0 12px;font-size:18px;font-weight:700;color:#fff}
-label{font-weight:600;margin-top:14px;display:block;margin-bottom:4px;font-size:12px;text-transform:uppercase;color:var(--muted)}
-select,input[type=range]{
-  width:100%;padding:8px;border-radius:8px;
-  background:#fff;color:#000;border:1px solid var(--line);
-}
-#infoBox{
-  margin-top:15px;padding:12px;border-radius:8px;
-  background:#1e293b;color:#fff;font-size:14px;
-  min-height:60px;white-space:pre-line;border:1px solid var(--line);
-}
-</style>
 </head>
 
 <body>
 <canvas id="c"></canvas>
 
 <div id="uiPanel">
-  <h2>Dermatome Map</h2>
+  <h2>Clinical Map Overlay</h2>
 
-  <label for="modeSel">Overlay Mode</label>
+  <label>Overlay Mode</label>
   <select id="modeSel">
-    <option value="none">None (Model Only)</option>
-    <option value="derm">Dermatomes</option>
-    <option value="myo">Myotomes</option>
+    <option value="none">Model Only</option>
+    <option value="derm">Dermatomes (Sensory)</option>
+    <option value="myo">Myotomes (Motor)</option>
   </select>
 
-  <label for="opacitySel">Intensity</label>
+  <label>Opacity</label>
   <input id="opacitySel" type="range" min="0" max="1" step="0.05" value="0.8" />
 
-  <label>Selected Region</label>
-  <div id="infoBox">Hover or click a region...</div>
+  <label>Status</label>
+  <div id="infoBox">Initializing...</div>
 </div>
 
 <script type="module">
@@ -70,39 +70,64 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 
 /* -----------------------------------------------------------
-   SETUP
+   1. MAPPING LOGIC (Fuzzy Match)
+----------------------------------------------------------- */
+// We map keywords found in bone names to clinical levels
+const BONE_KEYWORDS = [
+    { keys: ["head"], level: "C2" },
+    { keys: ["neck"], level: "C3" },
+    { keys: ["shoulder", "clavicle"], level: "C4" },
+    { keys: ["arm", "humerus"], level: "C5" }, // Upper Arm
+    { keys: ["forearm", "radius", "ulna"], level: "C6" }, 
+    { keys: ["hand", "wrist", "palm"], level: "C7" },
+    { keys: ["thumb", "index"], level: "C6" },
+    { keys: ["middle"], level: "C7" },
+    { keys: ["pinky", "ring"], level: "C8" },
+    { keys: ["spine2", "chest", "upperchest"], level: "T4" },
+    { keys: ["spine1", "abdomen"], level: "T10" },
+    { keys: ["spine", "hips", "pelvis"], level: "L1" },
+    { keys: ["upleg", "thigh", "femur"], level: "L2" },
+    { keys: ["leg", "calf", "shin", "tibia"], level: "L4" },
+    { keys: ["foot", "ankle"], level: "L5" },
+    { keys: ["toe", "ball"], level: "S1" }
+];
+
+const COLORS = {
+    "C2":0xff0000, "C3":0xff4400, "C4":0xff8800, "C5":0xffcc00,
+    "C6":0xffff00, "C7":0xccff00, "C8":0x88ff00, "T1":0x44ff00,
+    "T4":0x00ff44, "T10":0x00ff88, 
+    "L1":0x00ffff, "L2":0x00ccff, "L3":0x0088ff, "L4":0x0044ff, 
+    "L5":0x0000ff, "S1":0x8800ff
+};
+
+/* -----------------------------------------------------------
+   2. SCENE SETUP
 ----------------------------------------------------------- */
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Important: Use standard sRGB encoding for correct colors
+renderer.outputColorSpace = THREE.SRGBColorSpace; 
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b1220);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(0, 1.0, 3.5); // Reset camera position
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 1, 3);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.9, 0);
 controls.enablePan = false;
-controls.update();
+controls.enableDamping = true; 
 
-// Lights
-const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 2.5);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 3);
 scene.add(hemi);
-const dir = new THREE.DirectionalLight(0xffffff, 1.5);
-dir.position.set(2, 2, 5);
+const dir = new THREE.DirectionalLight(0xffffff, 2);
+dir.position.set(5, 10, 7);
 scene.add(dir);
 
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
 /* -----------------------------------------------------------
-   LOADER & MODEL LOGIC
+   3. LOADING
 ----------------------------------------------------------- */
 const loader = new GLTFLoader();
 const draco = new DRACOLoader();
@@ -117,185 +142,182 @@ function pickModelUrl(){
   const u = new URL(location.href);
   const q = u.searchParams.get("model");
   if(q && /^https?:\/\//i.test(q)) return q;
-  return "../assets/Roma_ROMetrics.glb";
+  return "../assets/Roma_ROMetrics.glb"; // Default
 }
-const MODEL_URL = pickModelUrl();
 
-/* STATE */
 let bodyMesh = null;
-const regionMeshes = {};
-const regionInfo = {};
+let regionMeshes = {};
+const uiInfo = document.getElementById('infoBox');
 
-/* COLORS */
-const COLOR_MAP = {
-  "C2": 0xff0000, "C3": 0xff4400, "C4": 0xff8800, 
-  "C5": 0xffcc00, "C6": 0xffff00, "C7": 0xccff00,
-  "C8": 0x88ff00, "T1": 0x44ff00, "T2": 0x00ff00,
-  "L1": 0x00ffff, "L2": 0x00ccff, "L3": 0x0088ff,
-  "L4": 0x0044ff, "L5": 0x0000ff, "S1": 0x8800ff
-};
-
-loader.load(MODEL_URL, (gltf) => {
+loader.load(pickModelUrl(), (gltf) => {
     const model = gltf.scene;
     scene.add(model);
-
-    // --- AUTO-SCALE & CENTER ---
-    // This ensures the height logic (C2, T1, etc.) works regardless of model size
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-
-    // Normalize height to ~1.7m (average human height)
-    const scaleFactor = 1.7 / size.y;
-    model.scale.setScalar(scaleFactor);
     
-    // Re-center model at (0,0,0)
-    model.position.x -= center.x * scaleFactor;
-    model.position.y -= box.min.y * scaleFactor; // Feet on floor
-    model.position.z -= center.z * scaleFactor;
+    // Auto-fit Camera
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    controls.target.copy(center);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    camera.position.copy(center);
+    camera.position.z += maxDim * 2.0; 
+    camera.position.y += maxDim * 0.2;
+    controls.update();
 
-    // Force update so points generate in correct place
-    model.updateMatrixWorld(true);
-
-    // Find the main body mesh (SkinnedMesh or Mesh)
-    model.traverse((c) => {
-      if ((c.isMesh || c.isSkinnedMesh) && !bodyMesh) {
-        // Heuristic: Ignore small accessories, grab the biggest mesh usually
-        if (c.geometry && c.geometry.attributes.position.count > 1000) {
-          bodyMesh = c;
+    // Find Skinned Mesh
+    model.traverse(c => {
+        if(c.isSkinnedMesh && c.skeleton){
+            // Prefer the mesh with the most vertices (usually the body)
+            if(!bodyMesh || c.geometry.attributes.position.count > bodyMesh.geometry.attributes.position.count){
+                bodyMesh = c;
+            }
         }
-      }
     });
 
-    if (bodyMesh) {
-      console.log("Generating Dermatomes on:", bodyMesh.name);
-      generateRegions();
+    if(bodyMesh){
+        uiInfo.textContent = `Model Loaded. \nDetected Body: ${bodyMesh.name}`;
+        generateMaps();
     } else {
-      document.getElementById('infoBox').textContent = "Error: Could not find body mesh.";
+        uiInfo.textContent = "Error: No rigged body found.";
     }
 });
 
 /* -----------------------------------------------------------
-   GENERATOR
+   4. GENERATION LOGIC
 ----------------------------------------------------------- */
-function generateRegions() {
-  const posAttr = bodyMesh.geometry.attributes.position;
-  const tempPos = new THREE.Vector3();
-  const worldPos = [];
+function generateMaps(){
+    const geom = bodyMesh.geometry;
+    const pos = geom.attributes.position;
+    const skinIdx = geom.attributes.skinIndex;
+    const skinWt = geom.attributes.skinWeight;
+    const bones = bodyMesh.skeleton.bones;
 
-  // 1. Cache World Positions
-  for(let i=0; i<posAttr.count; i++){
-    tempPos.fromBufferAttribute(posAttr, i);
-    tempPos.applyMatrix4(bodyMesh.matrixWorld); // Convert to world space
-    worldPos.push(tempPos.clone());
-  }
-
-  function makeRegion(id, color, indices){
-    if(!indices.length) return;
-    const geom = new THREE.BufferGeometry();
-    const verts = [];
-    indices.forEach(i => {
-      verts.push(worldPos[i].x, worldPos[i].y, worldPos[i].z);
-    });
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    // Prepare buckets
+    const buckets = {}; // Key: "C5-L", Value: [index1, index2...]
     
-    const mat = new THREE.PointsMaterial({
-      color: color,
-      size: 0.02,          // Larger dots
-      sizeAttenuation: true,
-      transparent: true,
-      opacity: parseFloat(document.getElementById('opacitySel').value),
-      depthTest: false,    // IMPORTANT: Renders ON TOP of skin
-      depthWrite: false
-    });
+    const tempPos = new THREE.Vector3();
 
-    const mesh = new THREE.Points(geom, mat);
-    mesh.userData.id = id;
-    mesh.visible = false;
-    mesh.renderOrder = 1; // Force on top
-    
-    regionMeshes[id] = mesh;
-    scene.add(mesh);
-  }
+    for(let i=0; i<pos.count; i++){
+        // Get World Position for Left/Right check
+        tempPos.fromBufferAttribute(pos, i);
+        tempPos.applyMatrix4(bodyMesh.matrixWorld);
+        const isLeft = tempPos.x > 0; // Assuming standard T-pose facing +Z
 
-  // 2. Logic for Dermatomes (Based on Normalized Height 0.0 - 1.7)
-  const levels = [
-    {l:"C2", min:1.60, max:1.75}, {l:"C3", min:1.52, max:1.60}, 
-    {l:"C4", min:1.45, max:1.52}, {l:"C5", min:1.35, max:1.45},
-    {l:"T4", min:1.15, max:1.25}, {l:"T10",min:0.95, max:1.05},
-    {l:"L3", min:0.50, max:0.70}, {l:"S1", min:0.00, max:0.20}
-  ];
+        // Find Dominant Bone
+        let maxW = 0; 
+        let boneId = 0;
+        for(let k=0; k<4; k++){
+            const w = skinWt.getComponent(i,k);
+            if(w > maxW){ maxW = w; boneId = skinIdx.getComponent(i,k); }
+        }
+        
+        const boneName = bones[boneId].name.toLowerCase();
+        
+        // Fuzzy Match Name -> Level
+        let level = null;
+        for(const entry of BONE_KEYWORDS){
+            if(entry.keys.some(k => boneName.includes(k))){
+                level = entry.level;
+                break;
+            }
+        }
 
-  // Simple banding generation
-  levels.forEach(def => {
-    const indices = [];
-    for(let i=0; i<worldPos.length; i++){
-      const y = worldPos[i].y;
-      if(y >= def.min && y < def.max) indices.push(i);
+        if(level){
+            const regionId = `${level}-${isLeft?'L':'R'}`;
+            if(!buckets[regionId]) buckets[regionId] = [];
+            buckets[regionId].push(i);
+        }
+    }
+
+    // Create Point Clouds
+    const worldPos = [];
+    for(let i=0; i<pos.count; i++){
+        tempPos.fromBufferAttribute(pos, i);
+        tempPos.applyMatrix4(bodyMesh.matrixWorld);
+        worldPos.push(tempPos.clone());
+    }
+
+    for(const [id, indices] of Object.entries(buckets)){
+        const level = id.split('-')[0];
+        const color = COLORS[level] || 0xffffff;
+
+        const geometry = new THREE.BufferGeometry();
+        const verts = [];
+        indices.forEach(idx => {
+            const p = worldPos[idx];
+            verts.push(p.x, p.y, p.z);
+        });
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: color,
+            size: 0.015,          // Dot size
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0.8,
+            depthTest: false,     // <--- THIS ENSURES VISIBILITY OVER SKIN
+            depthWrite: false     // Prevents self-occlusion artifacts
+        });
+
+        const mesh = new THREE.Points(geometry, material);
+        mesh.userData.id = id;
+        mesh.renderOrder = 999;   // <--- THIS DRAWS IT LAST (ON TOP)
+        mesh.visible = false;
+        
+        scene.add(mesh);
+        regionMeshes[id] = mesh;
     }
     
-    // Create Left/Right Split
-    const leftIdx = indices.filter(i => worldPos[i].x < 0);
-    const rightIdx = indices.filter(i => worldPos[i].x >= 0);
-
-    regionInfo[`${def.l}-L`] = `${def.l} Dermatome (Left)`;
-    regionInfo[`${def.l}-R`] = `${def.l} Dermatome (Right)`;
-    
-    const baseCol = COLOR_MAP[def.l] || 0xffffff;
-    
-    makeRegion(`${def.l}-L`, baseCol, leftIdx);
-    makeRegion(`${def.l}-R`, baseCol, rightIdx);
-  });
-  
-  // Myotome Test (Arm strips)
-  const myoIdx = [];
-  for(let i=0; i<worldPos.length; i++){
-      // Rough arm isolation
-      if(worldPos[i].y > 1.0 && Math.abs(worldPos[i].x) > 0.25) myoIdx.push(i);
-  }
-  regionInfo['Arm-Myo'] = "Upper Extremity Myotomes (General)";
-  makeRegion('Arm-Myo', 0xff00ff, myoIdx);
-
-  updateVis();
+    uiInfo.textContent = "Maps Generated. \nSelect a mode above.";
 }
 
 /* -----------------------------------------------------------
-   UI LOGIC
+   5. INTERACTION
 ----------------------------------------------------------- */
 const modeSel = document.getElementById('modeSel');
 const opacitySel = document.getElementById('opacitySel');
 
-function updateVis(){
-  const mode = modeSel.value;
-  const op = parseFloat(opacitySel.value);
+function update(){
+    const mode = modeSel.value;
+    const op = opacitySel.value;
 
-  for(const key in regionMeshes){
-    const mesh = regionMeshes[key];
-    mesh.material.opacity = op;
-    
-    if(mode === 'none') {
-      mesh.visible = false;
-    } else if(mode === 'derm') {
-      // Show if it is NOT 'Myo'
-      mesh.visible = !key.includes('Myo');
-    } else if(mode === 'myo') {
-      mesh.visible = key.includes('Myo');
+    for(const [id, mesh] of Object.entries(regionMeshes)){
+        mesh.material.opacity = op;
+        
+        if(mode === 'none'){
+            mesh.visible = false;
+        } 
+        else if(mode === 'derm'){
+            // Dermatomes: Show everything mapped
+            mesh.visible = true; 
+        }
+        else if(mode === 'myo'){
+            // Myotomes: Hide thoracic/sensory-only areas
+            // Simple filter for demo:
+            if(id.startsWith("T") || id.startsWith("S")) mesh.visible = false;
+            else mesh.visible = true;
+        }
     }
-  }
 }
 
-modeSel.addEventListener('change', updateVis);
-opacitySel.addEventListener('input', updateVis);
+modeSel.addEventListener('change', update);
+opacitySel.addEventListener('input', update);
 
 /* -----------------------------------------------------------
-   RENDER
+   6. LOOP
 ----------------------------------------------------------- */
 function animate(){
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
 }
 animate();
 
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
 </script>
 </body>
 </html>
