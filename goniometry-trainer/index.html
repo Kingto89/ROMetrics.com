@@ -1637,21 +1637,23 @@ if (key==='hip_irer_l' || key==='hip_irer_r'){
   }
   log(`Hip ${side.toUpperCase()} set to FE=95°, Knee ${side.toUpperCase()} to FE=90° for hip rotation setup.`);
 }
-
-// === WRIST FLEX/EXT & RAD/ULNAR DEV SETUP (Inside actionSel.change listener) ===
+// === SETUP FOR WRIST FLEX/EXT & RAD/ULNAR DEV ONLY (4 CONFIRMED MOTIONS) ===
 if (key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
     const side = key.endsWith('_l') ? 'l' : 'r';
 
     // 1. COMMON SETUP: Target LOWERARM bone: Flex Elbow to 90°
     setPair(`el_fe_${side}`, 90);
 
-    // 2. REBIND ZERO: Freeze the current 0° rotation/deviation as the start point
+    // 2. FOREARM ROTATION: Set the HAND/FOREARM to Neutral (45°/Thumb Up) for stabilization.
+    // NOTE: This uses the DRU key (wr_ps_) to apply the needed rotation to the forearm.
+    setPair(`wr_ps_${side}`, 45); 
+
+    // 3. REBIND ZERO: Freeze the current position (which is 0° of Flex/Ext/Dev on a 45° forearm)
     const b = resolveBind(key, cfg);
     if(b) {
-        b.qBind = b.bone.quaternion.clone();
+         b.qBind = b.bone.quaternion.clone(); 
     }
-    // Fix: Removed the trailing unmatched parenthesis that caused the crash.
-    log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Anatomic (0° Rotation/Deviation)`); 
+    log(`Setup ${side.toUpperCase()}: Elbow 90°, Forearm Neutral (45°), ${CURRENT_ACTION.label} start.`);
 }
       syncActionUI(true);
       return;
