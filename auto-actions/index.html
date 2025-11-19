@@ -380,6 +380,8 @@ const Gonio = (() => {
 
   let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2, baseRot=0, userRot=0, scale=1, zeroRef=0;
   let draggingArm=false, draggingPan=false, lastPanScreen=null;
+  let dragOffset = 0;    // Essential for smooth dragging (no snapping to finger)
+  let isRomMode = false; // Essential for sliders (prevents jumping back to 0)
   
   const getCwMode = () => { const el = document.getElementById("cwMode"); return el ? el.checked : false; };
 
