@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -560,17 +561,14 @@ function setLineEl(el, a, b, onColor){
 }
 
 function refreshScreenDots(){
-  // 1. Update the colored dots/lines on screen
   setDotEl(scrFulcrum,    scr.fulcrum);
   setDotEl(scrStationary, scr.stationary);
   setDotEl(scrMoving,     scr.moving);
   setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
   setLineEl(scrLineB, scr.fulcrum, scr.moving,     '#22c55e');
 
-  // 2. Manage the container visibility
   const host = document.getElementById('gonioHost');
   const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
-  const allPlaced = !!(scr.fulcrum && scr.stationary && scr.moving);
 
   if (anyPlaced) { 
     host.classList.remove('hide'); 
@@ -580,61 +578,39 @@ function refreshScreenDots(){
     host.setAttribute('aria-hidden','true');  
   }
 
-  // 3. Auto-Placement Logic (Only runs if all 3 dots are placed)
-  if(allPlaced){
-      const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+  // LAUNCH RULER if all 3 dots are placed
+  if(scr.fulcrum && scr.stationary && scr.moving){
+     
+     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
+     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
+     const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
 
-      // A. Calculate angles from Fulcrum to dots
-      if(typeof Gonio === 'undefined') return;
-      
-      const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
-      const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
+     const inst = document.getElementById('instrument');
+     if (inst.style.display === 'none' || inst.style.display === '') {
+        inst.style.display = 'block'; // 
+        Gonio.setZoom(1);
+        const targetFrac = 0.18;
+        const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
+        const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
+        Gonio.setScale(autoScale);
+        if(document.getElementById("gonioSize")) document.getElementById("gonioSize").value = Math.round(autoScale * 100);
+     }
 
-      // B. Show the Instrument (Must be visible for layout math)
-      const inst = document.getElementById('instrument');
-      const wasHidden = (inst.style.display === 'none' || inst.style.display === '');
-      
-      inst.style.display = 'block'; 
-      Gonio.show(); 
-
-      // C. Apply Pose: Center on Fulcrum, Rotate Body to Stationary, Rotate Arm to Moving
-      Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-
-      // D. Auto-scale ONLY if it was just opened (prevents resizing on every click)
-      if (wasHidden) {
-         Gonio.setZoom(1);
-         const targetFrac = 0.18; 
-         const dim = Math.min(window.innerWidth, window.innerHeight);
-         const autoScale = Math.max(0.25, Math.min(0.9, (dim * targetFrac) / 140));
-         Gonio.setScale(autoScale);
-         
-         const sizeSl = document.getElementById("gonioSize");
-         if(sizeSl) sizeSl.value = Math.round(autoScale * 100);
-      }
-
-      // E. Reset internal measurement to 0 relative to this pose
-      Gonio.zeroHere(); 
-      
-      // F. Sync UI coordinates
-      const p = Gonio.getPan();
-      const gx = document.getElementById("gonioX");
-      const gy = document.getElementById("gonioY");
-      if(gx) gx.value = Math.round(p.x);
-      if(gy) gy.value = Math.round(p.y);
-      
-      // G. Reset slider knobs to 0 visually
-      const cw = document.getElementById("rotateCW");
-      const ccw = document.getElementById("rotateCCW");
-      if(cw) cw.value = 0;
-      if(ccw) ccw.value = 0;
-
-      if(typeof setAngleHUD === 'function') setAngleHUD(0, "Start");
-      if(typeof setGonioLock === 'function') setGonioLock(false);
+     Gonio.show();
+     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
+     Gonio.zeroHere();
+     
+     // Update UI
+     const p = Gonio.getPan();
+     if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
+     if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
+     if(typeof setAngleHUD === 'function') setAngleHUD(Gonio.getMovDegAbs(), "");
+     if(typeof setGonioLock === 'function') setGonioLock(false);
 
   } else {
-      // If not all dots are placed, ensure instrument is hidden
-      const inst = document.getElementById('instrument');
-      if(inst) inst.style.display = 'none';
+     // Hide ruler if incomplete
+     const inst = document.getElementById('instrument');
+     if(inst) inst.style.display = 'none';
   }
 }
 /* ===== Region → MD file map ===== */
