@@ -1825,11 +1825,9 @@ log("Anatomic baseline applied on load.");
   }
 
 /* --- HUD & Helpers --- */
-let lock3D = false;    // <--- ADD THIS
-let lockGonio = false; // <--- ADD THIS
+let lock3D = false;    
+let lockGonio = false; 
 
-function setAngleHUD(angle, romStr=""){
-  // ... (rest of code remains the same)
 function setAngleHUD(angle, romStr=""){
   const hud = document.getElementById("hud");
   // Fix: Ensure we display the ROM string if it exists
@@ -1838,7 +1836,7 @@ function setAngleHUD(angle, romStr=""){
 
 function romString(){ 
   // Fix: Calculate ROM based on the romActive flag
-  return romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; 
+  return typeof romActive !== 'undefined' && romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; 
 }
 
 function setGonioLock(v){
