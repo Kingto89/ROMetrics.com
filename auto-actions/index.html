@@ -469,20 +469,60 @@ function startArmDrag(e){
     dragOffset = fingerAngle - mov; 
   }
 
-  function moveArm(e){
+function moveArm(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
+
+    // 1. Capture old position to determine direction
+    const oldMov = mov;
+
+    // 2. Calculate new position
     const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
     const fingerAngle = clamp360(toDegUp(p.x, p.y));
-    // Apply offset
     mov = clamp360(fingerAngle - dragOffset); 
+    
+    // 3. Auto-Detect Direction (Fixes ROM counting 360-1)
+    // If dragging CW (decreasing), we switch to "CCW Mode" (Inverted math) so it counts up.
+    // If dragging CCW (increasing), we switch to "CW Mode" (Standard math).
+    if (typeof isRomMode !== 'undefined' && isRomMode) {
+         let delta = mov - oldMov;
+         // Handle wrap-around math (e.g. 359 -> 1 is +2, not -358)
+         if(delta > 180) delta -= 360;
+         if(delta < -180) delta += 360;
+
+         // Only switch if moving significantly (prevents jitter)
+         if(Math.abs(delta) > 0.5) {
+             const cw = document.getElementById("cwMode");
+             const ccw = document.getElementById("ccwMode");
+             if(cw && ccw) {
+                 if(delta > 0) { // Increasing Angle -> Standard Mode
+                     cw.checked = true; ccw.checked = false;
+                 } else { // Decreasing Angle -> Inverted Mode
+                     ccw.checked = true; cw.checked = false;
+                 }
+             }
+         }
+    }
+
     render();
   }
 
 function endArm(){ 
     draggingArm=false; 
+    
+    // FIX: ALWAYS update the internal baseline to the current position.
+    // This forces the system to "memorize" where you dragged the arm,
+    // so the sliders will start from HERE instead of jumping back.
+    zeroRef = mov; 
+    
+    // Reset slider visuals to 0 so they are ready to push from this new spot
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+  }
     
     // Update slider baseline ONLY if we are aligning (not testing ROM)
     if(!isRomMode){
