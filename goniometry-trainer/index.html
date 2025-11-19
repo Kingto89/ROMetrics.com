@@ -1602,6 +1602,29 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   setPair(`clavicle_${side.toUpperCase()}`, side==='r' ? -45 : 45); 
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
+// ... inside actionSel.change event ...
+
+      // === NEW: DRU Setup (Elbow 90 + Pronated Start for Supination) ===
+      if (key === 'wr_ps_l' || key === 'wr_ps_r') {
+        const side = key.endsWith('_l') ? 'l' : 'r';
+        
+        // 1. Flex Elbow to 90° (Standard position for testing DRU)
+        setPair(`el_fe_${side}`, 90);
+
+        // 2. If testing SUPINATION, start the hand in PRONATION (Palm Down)
+        if (CURRENT_ACTION.label.includes("Supination")) {
+             // Rotate forearm to ~80° Pronation so we have room to Supinate
+             // (Using 80 instead of 90 to avoid gimbal lock/visual glitches)
+             setPair(`fa_ps_${side}`, 80); 
+             
+             // CRITICAL: Re-bind the "Zero" point to this new Pronated position
+             // This ensures the slider starts at 0° = Palm Down
+             const b = resolveBind(key, cfg);
+             if(b) b.qBind = b.bone.quaternion.clone();
+        }
+        
+        log(`Setup ${side.toUpperCase()} for DRU: Elbow 90°` + (CURRENT_ACTION.label.includes("Supination") ? ", Start Pronated" : ""));
+      }
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
