@@ -792,9 +792,9 @@ if (/^sh_aa_/.test(key)) {
     // Left: + = Abduction, − = Adduction (normal)
     return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
   } else {
-    // ✅ Right side corrected: + = Abduction, − = Adduction
-    return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
-  }
+        // FIX: Use Abduction Limit (170) for Abduction (+), and Adduction Limit (30) for Adduction (-)
+        return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
+      }
 }
 
     // Shoulder IR/ER caps
