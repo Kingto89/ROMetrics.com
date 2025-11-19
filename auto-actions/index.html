@@ -536,16 +536,12 @@ function endArm(){
     getPan:()=>{ return {x:panX,y:panY}; },
     
 get angle(){ 
-    // FIX 2: Robust Calculation
-    // Calculate difference between current position (mov) and start (zeroRef)
-    let delta = (mov - zeroRef);
-
-    // Normalize math to handle the 0/360 wrap-around correctly
-    // This ensures a reading of 10 deg doesn't become 350 deg just because you moved slightly back
-    delta = (delta + 540) % 360 - 180;
-
-    // Return the absolute value (always positive)
-    return Math.abs(delta); 
+    // FIX 2 (Final): Full 360 Range
+    // Calculates positive position relative to zeroRef (0 to 360)
+    // This allows ROM to read 270, 300, etc., without capping.
+    let delta = (mov - zeroRef) % 360;
+    if (delta < 0) delta += 360; // Handle wrapping so -10 becomes 350
+    return delta;
 },
     setRomMode: (v) => { isRomMode = v; }, 
     // -------------------------
