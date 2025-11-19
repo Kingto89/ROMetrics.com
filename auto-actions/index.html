@@ -441,40 +441,50 @@ const Gonio = (() => {
     clampPanToViewport(); applyView();
   }, {passive:false});
 
-  function startArmDrag(e){
+function startArmDrag(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     e.stopPropagation(); e.preventDefault();
     document.getElementById('armB_grp').setPointerCapture?.(e.pointerId);
     draggingArm=true;
+    // Calculate offset so arm doesn't snap to finger
+    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
+    const fingerAngle = clamp360(toDegUp(p.x, p.y));
+    dragOffset = fingerAngle - mov; 
   }
+
   function moveArm(e){
     if (typeof lockGonio!=='undefined' && lockGonio) return;
     if(!draggingArm) return;
     e.stopPropagation(); e.preventDefault();
     const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    mov = clamp360(toDegUp(p.x, p.y));
+    const fingerAngle = clamp360(toDegUp(p.x, p.y));
+    // Apply offset
+    mov = clamp360(fingerAngle - dragOffset); 
     render();
   }
+
   function endArm(){ 
     draggingArm=false; 
-    
-    // 1. Sync logic: Make the current position the new "Zero" for the sliders
-    zeroRef = mov; 
-
-    // 2. Reset the slider bars to 0 visualy so they start fresh
-    const cw = document.getElementById("rotateCW");
-    const ccw = document.getElementById("rotateCCW");
-    if(cw) cw.value = 0;
-    if(ccw) ccw.value = 0;
+    // Update slider baseline ONLY if we are aligning (not testing ROM)
+    if(!isRomMode){
+        zeroRef = mov;
+        const cw = document.getElementById("rotateCW");
+        const ccw = document.getElementById("rotateCCW");
+        if(cw) cw.value = 0;
+        if(ccw) ccw.value = 0;
+    }
+  }
+        // Reset slider visuals to 0 so they are ready to push from the new spot
+        const cw = document.getElementById("rotateCW");
+        const ccw = document.getElementById("rotateCCW");
+        if(cw) cw.value = 0;
+        if(ccw) ccw.value = 0;
+    }
   }
 
-  ['armB_handleKnob','armB_handleShaft','armB_grp','armB_knob'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ el.addEventListener('pointerdown',startArmDrag); el.addEventListener('pointermove',moveArm); el.addEventListener('pointerup',endArm); el.addEventListener('pointercancel',endArm); }
-  });
-
-  return {
+ return {
     show:()=>{ host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); if(inst) inst.style.display='block'; clampPanToViewport(); applyView(); },
     hide:()=>{ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); },
     setPose:(cx,cy,base,m)=>{ panX=cx; panY=cy; baseRot=base; mov=clamp360(m-base); clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render(); },
@@ -487,10 +497,17 @@ const Gonio = (() => {
     getMovDegAbs:()=>clamp360(mov),
     setPan:(x,y)=>{ panX=x; panY=y; clampPanToViewport(); applyView(); },
     getPan:()=>{ return {x:panX,y:panY}; },
-    get angle(){ return getCwMode() ? clamp360(mov-zeroRef) : (360-clamp360(mov-zeroRef))%360; },
+    
+   get angle(){ 
+        let a = getCwMode() ? clamp360(mov-zeroRef) : (360-clamp360(mov-zeroRef))%360;
+        return (a > 180) ? 360 - a : a; 
+    },
+    setRomMode: (v) => { isRomMode = v; }, 
+    // -------------------------
+
     refresh:()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
   };
-})();
+})(); // End of Gonio Module
 window.Gonio = Gonio;
 
     
@@ -1797,15 +1814,21 @@ const startB = document.getElementById("startROM"), resetB = document.getElement
 if(startB) startB.onclick=()=>{ 
     Gonio.zeroHere(); 
     Gonio.setMovDegRel(0); 
-    romActive=true;     // Flag ON
+    
+    romActive=true;         // Turn ON Text
+    Gonio.setRomMode(true); // LOCK BASELINE (Prevents jumping)
+    
     setAngleHUD(0,""); 
     log("ROM start @ 0°"); 
 };
 
 if(resetB) resetB.onclick=()=>{ 
-    romActive=false;    // Flag OFF
+    romActive=false;         // Turn OFF Text
+    Gonio.setRomMode(false); // UNLOCK BASELINE (Allows alignment)
+    
     Gonio.zeroHere(); 
     Gonio.setMovDegRel(0); 
+    
     setAngleHUD(0,""); 
     log("ROM reset → 0°"); 
 };
@@ -2228,15 +2251,18 @@ resetMeasurementBtn.onclick = ()=>{
   // 1. Clear dots
   scr.fulcrum = scr.stationary = scr.moving = null;
   refreshScreenDots();
-  
-  // 2. Hide Gonio and Reset Variables
-  if(typeof Gonio !== 'undefined') Gonio.hide();
+   
+  // 2. Hide Gonio, Unlock Mode, Reset Variables
+  if(typeof Gonio !== 'undefined') {
+      Gonio.hide();
+      Gonio.setRomMode(false); // <--- UNLOCK MODE HERE
+  }
   romActive = false;
 
   // 3. Reset Sliders
   if(rotateCWEl) rotateCWEl.value = 0;
   if(rotateCCWEl) rotateCCWEl.value = 0;
-  
+   
   // 4. Reset HUD
   setAngleHUD(0,"");
   log("Measurement reset");
