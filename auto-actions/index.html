@@ -1853,6 +1853,20 @@ if(cwMode && ccwMode){
 
 // 3. Sliders Logic
 
+// --- HELPER: Update Baseline on Touch ---
+// This ensures that when you grab a slider, the arm's CURRENT position
+// becomes the new "0" for that slider, preventing jumps.
+const handleSliderTouch = () => {
+  // Only update baseline if NOT in ROM mode (Alignment mode)
+  if (typeof romActive !== 'undefined' && !romActive && typeof Gonio !== 'undefined') {
+    Gonio.zeroHere();       // 1. Commit current arm position as new "ZeroRef"
+    
+    // 2. Reset sliders visually to 0 so the new drag calculates relative to HERE
+    if(rotateCWEl)  rotateCWEl.value = 0; 
+    if(rotateCCWEl) rotateCCWEl.value = 0;
+  }
+};
+
 // --- Size ---
 if(sizeEl){
   sizeEl.oninput = () => { 
@@ -1873,6 +1887,9 @@ if(gonioRotateEl){
 
 // --- Rotate Moving Arm (CW) ---
 if(rotateCWEl){
+  // ADDED: Update baseline immediately when user touches slider
+  rotateCWEl.addEventListener('pointerdown', handleSliderTouch);
+
   rotateCWEl.oninput = () => {
     if(typeof Gonio === 'undefined') return;
     // Auto-check the box if user slides this
@@ -1893,6 +1910,9 @@ if(rotateCWEl){
 
 // --- Rotate Moving Arm (CCW) ---
 if(rotateCCWEl){
+  // ADDED: Update baseline immediately when user touches slider
+  rotateCCWEl.addEventListener('pointerdown', handleSliderTouch);
+
   rotateCCWEl.oninput = () => {
     if(typeof Gonio === 'undefined') return;
     // Auto-check the box
