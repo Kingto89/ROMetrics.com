@@ -1609,22 +1609,21 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
       if (key === 'wr_ps_l' || key === 'wr_ps_r') {
         const side = key.endsWith('_l') ? 'l' : 'r';
         
-        // 1. Target LOWERARM bone: Flex Elbow to 45°
-        setPair(`el_fe_${side}`, 45);
+        // 1. Target LOWERARM bone: Flex Elbow to 90°
+        setPair(`el_fe_${side}`, 90);
 
-        // 2. Target HAND bone: Force to 45° (Start Position)
-        // Applying to BOTH Pronation and Supination so they start from the same point.
+        // 2. Target HAND bone: Force to NEUTRAL (Thumb Up/Sideways)
+        // We use 45° (midpoint between 0° and 85°) to match the clinical image.
         setPair(key, 45); 
              
-        // 3. Freeze this position as the new Zero
+        // 3. Freeze this "Neutral/Thumb Up" position as the new Zero
         const b = resolveBind(key, cfg);
         if(b) {
              b.qBind = b.bone.quaternion.clone();
         }
              
-        log(`Setup ${side.toUpperCase()}: Elbow 45°, Hand Set to 45° (Start Position)`);
+        log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Neutral (45°/Thumb Up)`);
       }
-      
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
   const side = key.endsWith('_l') ? 'l' : 'r';
