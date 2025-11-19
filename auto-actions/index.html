@@ -413,21 +413,25 @@ const Gonio = (() => {
 
   /* Interactions */
   const inst = document.getElementById('instrument');
-  /* --- NEW: Wire up the Green Arm Handles --- */
+
+/* --- NEW: Wire up the Green Arm Handles --- */
   ['armB_handleKnob', 'armB_handleShaft', 'armB_knob'].forEach(id => {
       const el = document.getElementById(id);
       if(el) {
-          // Ensure it's clickable
           el.style.pointerEvents = "all"; 
           el.style.cursor = "grab";
-          // Start rotating when touched
+          // THIS LINE FIXES THE JUMP: Prevents scrolling while dragging the arm
+          el.style.touchAction = "none"; 
           el.addEventListener('pointerdown', startArmDrag);
       }
   });
 
-  // Listen globally for the "Spin" gesture so your finger can circle wide
+  // Listen globally for the "Spin" gesture
   window.addEventListener('pointermove', moveArm);
   window.addEventListener('pointerup', endArm);
+  // THESE LINES FIX THE JUMP: Stop dragging if touch is interrupted
+  window.addEventListener('pointercancel', endArm);
+  window.addEventListener('blur', endArm);
   /* ------------------------------------------ */
   if(inst){
     inst.addEventListener('pointerdown', e=>{
