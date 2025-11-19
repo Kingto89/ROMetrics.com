@@ -3,43 +3,48 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ROMetrics — Clinical Anatomy Viewer</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<title>ROMetrics — Advanced Clinical Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* --- MODERN DARK UI --- */
-:root{ --bg:#0f172a; --panel:rgba(15, 23, 42, 0.95); --accent:#38bdf8; --text:#f1f5f9; --muted:#94a3b8; --border:#334155; }
+:root{ --bg:#0f172a; --panel:rgba(15, 23, 42, 0.96); --accent:#38bdf8; --text:#f1f5f9; --border:#334155; }
 html,body{ margin:0;height:100%;overflow:hidden; background:var(--bg);color:var(--text); font-family:'Inter',sans-serif; }
 canvas{ position:fixed;inset:0;width:100%;height:100%; outline:none; }
 
 /* Floating Panel */
 #uiPanel{
-  position:fixed; right:20px; top:20px; width:340px;
+  position:fixed; right:20px; top:20px; width:360px;
   background:var(--panel); border:1px solid var(--border);
   border-radius:12px; padding:20px;
   box-shadow:0 10px 40px rgba(0,0,0,0.6);
-  backdrop-filter: blur(10px);
   max-height:90vh; overflow-y:auto;
-  transition: transform 0.2s ease;
+  backdrop-filter: blur(10px);
+  scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg);
 }
 
-h2 { margin:0 0 10px; font-size:18px; color:#fff; letter-spacing:-0.5px; }
-h3 { margin:15px 0 5px; font-size:14px; color:var(--accent); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); padding-bottom:5px; }
+h2 { margin:0 0 5px; font-size:18px; color:#fff; letter-spacing:-0.5px; }
+.sub-head { font-size:11px; color:var(--accent); margin-bottom:15px; display:block; opacity:0.8; }
 
-/* Form Elements */
+/* Controls */
+label { font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px; }
 select, input[type=range] {
-  width:100%; padding:10px; border-radius:8px; margin-bottom:10px;
-  background:#1e293b; color:#fff; border:1px solid var(--border); font-size:14px; outline:none;
+  width:100%; padding:10px; border-radius:6px; margin-bottom:15px;
+  background:#1e293b; color:#fff; border:1px solid var(--border); font-size:13px; outline:none;
 }
-label { font-size:12px; font-weight:600; color:var(--muted); display:block; margin-bottom:6px; text-transform:uppercase; }
+input[type=range] { padding:0; height:4px; appearance:none; background:var(--border); }
+input[type=range]::-webkit-slider-thumb { appearance:none; width:16px; height:16px; background:var(--accent); border-radius:50%; cursor:pointer; }
 
-/* Data Display Area */
-#dataDisplay {
-  margin-top:15px; font-size:14px; line-height:1.6;
-}
-.data-row { margin-bottom:8px; }
-.data-label { color:var(--muted); font-size:12px; display:block; }
-.data-val { color:#fff; font-weight:500; }
-.highlight { color:var(--accent); font-weight:700; }
+/* Data Box */
+#dataDisplay { margin-top:10px; }
+.info-card { background:rgba(255,255,255,0.03); border-radius:8px; padding:15px; border:1px solid var(--border); }
+.level-tag { font-size:24px; font-weight:800; letter-spacing:-1px; margin-bottom:5px; display:block; }
+.section-title { font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; margin-top:12px; display:block; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:2px; margin-bottom:4px; }
+.data-text { font-size:13px; line-height:1.5; color:#cbd5e1; }
+.muscle-list { margin:0; padding-left:16px; font-size:13px; color:#cbd5e1; }
+.muscle-list li { margin-bottom:4px; }
+
+/* Legend */
+.legend-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:11px; }
+.color-dot { width:10px; height:10px; border-radius:50%; }
 </style>
 
 <script type="importmap">
@@ -52,20 +57,21 @@ label { font-size:12px; font-weight:600; color:var(--muted); display:block; marg
 
 <div id="uiPanel">
   <h2>Clinical Examiner</h2>
+  <span class="sub-head">Cleveland Clinic Ref. Data Integrated</span>
   
-  <label>Visualization Mode</label>
+  <label>Map Layer</label>
   <select id="modeSel">
-    <option value="derm">Dermatomes (Sensory Map)</option>
-    <option value="myo">Myotomes (Motor Map)</option>
-    <option value="none">Model Only</option>
+    <option value="derm">Dermatomes (Sensory)</option>
+    <option value="myo">Myotomes (Motor)</option>
+    <option value="none">None (Model Only)</option>
   </select>
 
-  <label>Overlay Opacity</label>
+  <label>Layer Opacity</label>
   <input id="opacitySel" type="range" min="0" max="1" step="0.05" value="0.85" />
 
   <div id="dataDisplay">
-    <div style="padding:20px; text-align:center; color:#64748b; border:2px dashed #334155; border-radius:8px;">
-      Hover or Click a colored region on the body to view clinical data.
+    <div style="padding:30px 10px; text-align:center; color:#64748b; border:2px dashed #334155; border-radius:8px; font-size:13px;">
+      Click a region on the model to view detailed innervation, anatomy, and function data.
     </div>
   </div>
 </div>
@@ -78,47 +84,146 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 
 /* ------------------------------------------------------------------
-   1. CLINICAL DATABASE (Colors + Anatomy)
+   1. COMPREHENSIVE CLINICAL DATABASE
+   Source: Cleveland Clinic & Standard Anatomy Texts
 ------------------------------------------------------------------ */
 const DB = {
-  "C2": { color:0xff0000, muscle:"Sternocleidomastoid", action:"Neck Flexion/Rotation", origin:"Sternum/Clavicle", insert:"Mastoid Process" },
-  "C3": { color:0xff2a00, muscle:"Trapezius (Upper)", action:"Neck Lateral Flexion", origin:"Occipital Bone/C7", insert:"Clavicle" },
-  "C4": { color:0xff5500, muscle:"Levator Scapulae", action:"Shoulder Elevation", origin:"C1-C4 Transverse Processes", insert:"Scapula (Superior)" },
-  "C5": { color:0xff8000, muscle:"Deltoid / Biceps", action:"Shoulder Abduction / Elbow Flexion", origin:"Clavicle/Acromion", insert:"Deltoid Tuberosity" },
-  "C6": { color:0xffaa00, muscle:"Wrist Extensors (ECRL/B)", action:"Wrist Extension", origin:"Lateral Epicondyle", insert:"Metacarpals 2-3" },
-  "C7": { color:0xffff00, muscle:"Triceps", action:"Elbow Extension", origin:"Humerus/Scapula", insert:"Olecranon Process" },
-  "C8": { color:0xaaff00, muscle:"Finger Flexors (FDP)", action:"Finger Flexion", origin:"Ulna", insert:"Distal Phalanxes" },
-  "T1": { color:0x55ff00, muscle:"Interossei", action:"Finger Abduction/Adduction", origin:"Metacarpals", insert:"Proximal Phalanx" },
-  "T4": { color:0x00ff00, muscle:"Intercostals", action:"Thoracic Expansion", origin:"Ribs 1-11", insert:"Ribs 2-12" },
-  "T10":{ color:0x00ff80, muscle:"Abdominals", action:"Trunk Flexion", origin:"Pubic Crest", insert:"Xiphoid Process/Ribs" },
-  "L1": { color:0x00ffff, muscle:"Iliopsoas (Minor)", action:"Hip Flexion", origin:"T12-L5 Vertebrae", insert:"Lesser Trochanter" },
-  "L2": { color:0x00aaff, muscle:"Iliopsoas", action:"Hip Flexion", origin:"Iliac Fossa/Lumbar Spine", insert:"Lesser Trochanter" },
-  "L3": { color:0x0055ff, muscle:"Quadriceps", action:"Knee Extension", origin:"Femur/Ilium", insert:"Tibial Tuberosity" },
-  "L4": { color:0x0000ff, muscle:"Tibialis Anterior", action:"Ankle Dorsiflexion", origin:"Lateral Tibia", insert:"Medial Cuneiform" },
-  "L5": { color:0x5500ff, muscle:"Extensor Hallucis Longus", action:"Great Toe Extension", origin:"Fibula", insert:"Distal Phalanx (Big Toe)" },
-  "S1": { color:0xaa00ff, muscle:"Gastrocnemius/Soleus", action:"Ankle Plantarflexion", origin:"Femoral Condyles", insert:"Calcaneus (Achilles)" },
-  "S2": { color:0xff00ff, muscle:"Hamstrings", action:"Knee Flexion", origin:"Ischial Tuberosity", insert:"Tibia/Fibula" }
+  // --- CERVICAL ---
+  "C2": { 
+    color:0xff0000, 
+    area:"Back of head, Upper neck, Jaw (under ear)",
+    muscles:["Sternocleidomastoid (partial)", "Trapezius (Upper)", "Longus Colli"],
+    action:"Neck flexion, extension, and rotation.",
+    note:"C1 usually has no dermatome."
+  },
+  "C3": { 
+    color:0xff2a00, 
+    area:"Lower neck, Upper chest (clavicle area), Upper back",
+    muscles:["Trapezius", "Levator Scapulae", "Scalenes"],
+    action:"Neck lateral flexion; Scapular elevation."
+  },
+  "C4": { 
+    color:0xff5500, 
+    area:"Shoulders (AC joint), Upper Scapula, Lower neck",
+    muscles:["Levator Scapulae", "Trapezius", "Rhomboids", "Diaphragm (C3-C5)"],
+    action:"Shoulder elevation; Respiration (Diaphragm)."
+  },
+  "C5": { 
+    color:0xff8000, 
+    area:"Deltoid patch (Lateral upper arm), Anterior shoulder",
+    muscles:["Deltoid (Axillary N.)", "Supraspinatus", "Infraspinatus", "Biceps Brachii"],
+    action:"Shoulder Abduction (Deltoid); External Rotation; Elbow Flexion."
+  },
+  "C6": { 
+    color:0xffaa00, 
+    area:"Lateral forearm, Thumb, Index finger (Radial side)",
+    muscles:["Extensor Carpi Radialis Longus/Brevis", "Brachioradialis", "Biceps Brachii", "Supinator"],
+    action:"Wrist Extension; Elbow Flexion; Supination."
+  },
+  "C7": { 
+    color:0xffff00, 
+    area:"Middle finger, Palm center, Posterior arm",
+    muscles:["Triceps Brachii", "Flexor Carpi Radialis", "Pectoralis Major (Clavicular)", "Extensor Digitorum"],
+    action:"Elbow Extension (Triceps); Wrist Flexion; Finger Extension."
+  },
+  "C8": { 
+    color:0xaaff00, 
+    area:"Ring & Pinky fingers, Medial forearm/wrist",
+    muscles:["Flexor Digitorum Profundus/Superficialis", "Flexor Carpi Ulnaris", "Thumb Flexors"],
+    action:"Finger Flexion (Grip); Thumb Flexion."
+  },
+
+  // --- THORACIC ---
+  "T1": { 
+    color:0x55ff00, 
+    area:"Medial arm (upper), Axilla (armpit)",
+    muscles:["Dorsal Interossei", "Palmar Interossei", "Abductor Digiti Minimi"],
+    action:"Finger Abduction/Adduction (Fine motor)."
+  },
+  "T2": { color:0x00ff00, area:"Upper chest, Axilla, Upper back" },
+  "T4": { color:0x00ff40, area:"Nipple line, Chest wall, Mid-scapula", muscles:["Intercostals"], action:"Thoracic expansion." },
+  "T10":{ color:0x00ff80, area:"Umbilicus (Belly button), Mid-back", muscles:["Abdominal Obliques", "Rectus Abdominis"], action:"Trunk Flexion/Rotation; Core stability." },
+  "T12":{ color:0x00ffbf, area:"Suprapubic region, Iliac crest", muscles:["Quadratus Lumborum", "Lower Abdominals"], action:"Pelvic stabilization." },
+
+  // --- LUMBAR ---
+  "L1": { 
+    color:0x00ffff, 
+    area:"Inguinal region (Groin), Upper hips",
+    muscles:["Iliopsoas (Minor)", "Quadratus Lumborum"],
+    action:"Weak Hip Flexion."
+  },
+  "L2": { 
+    color:0x00aaff, 
+    area:"Anterior thigh (Upper), Mid-back",
+    muscles:["Iliopsoas (Hip Flexor)", "Sartorius", "Pectineus", "Adductor Longus/Brevis", "Gracilis"],
+    action:"Hip Flexion; Hip Adduction."
+  },
+  "L3": { 
+    color:0x0055ff, 
+    area:"Middle Thigh (Anterior), Knee (inner)",
+    muscles:["Quadriceps Femoris", "Adductor Magnus", "Obturator Externus"],
+    action:"Knee Extension (Quads); Hip Adduction."
+  },
+  "L4": { 
+    color:0x0000ff, 
+    area:"Kneecap (Patella), Medial lower leg (Shin), Medial Malleolus (Ankle)",
+    muscles:["Tibialis Anterior", "Tensor Fasciae Latae", "Quadriceps"],
+    action:"Ankle Dorsiflexion (Heel walk); Knee Extension."
+  },
+  "L5": { 
+    color:0x5500ff, 
+    area:"Lateral lower leg, Dorsum of foot, Big Toe (Hallux)",
+    muscles:["Extensor Hallucis Longus", "Extensor Digitorum Longus", "Gluteus Medius", "Tibialis Posterior"],
+    action:"Great Toe Extension; Ankle Eversion; Hip Abduction."
+  },
+
+  // --- SACRAL ---
+  "S1": { 
+    color:0xaa00ff, 
+    area:"Lateral foot, 4th/5th Toes, Sole of foot, Calf, Hamstrings",
+    muscles:["Gastrocnemius/Soleus", "Gluteus Maximus", "Peroneus Longus/Brevis", "Hamstrings"],
+    action:"Ankle Plantarflexion (Toe walk); Hip Extension."
+  },
+  "S2": { 
+    color:0xff00ff, 
+    area:"Posterior Thigh strip, Popliteal fossa (Back of knee)",
+    muscles:["Hamstrings", "Gastrocnemius", "Flexor Digitorum Accessorius"],
+    action:"Knee Flexion; Toe Flexion."
+  },
+  "S3": { 
+    color:0xff0088, 
+    area:"Ischial tuberosity (Buttockock sit bones), Groin",
+    muscles:["Pelvic Floor Muscles", "External Anal Sphincter"],
+    action:"Bladder/Bowel Control."
+  }
 };
 
-// Mapping Bone Keywords to Levels (Fuzzy Match)
+// MAPPING: Bone Name Keywords -> Clinical Level
+// We add 'face' to distinguish front/back for Hips
 const BONE_MAP = [
-    { k:["head"], v:"C2" }, { k:["neck"], v:"C3" },
+    // HEAD & NECK
+    { k:["head","jaw"], v:"C2" },
+    { k:["neck"], v:"C3" },
+    // UPPER EXTREMITY
     { k:["shoulder","clavicle"], v:"C4" },
     { k:["arm","humerus"], v:"C5" },
-    { k:["forearm","radius","ulna","thumb","index"], v:"C6" }, // C6 Thumb side
-    { k:["middle","hand","wrist"], v:"C7" },
+    { k:["forearm","radius","ulna"], v:"C6" }, // General Forearm
+    { k:["thumb","index"], v:"C6" },           // Specific Fingers
+    { k:["middle"], v:"C7" },
     { k:["pinky","ring"], v:"C8" },
-    { k:["spine2","chest"], v:"T4" },
-    { k:["spine1","abdomen"], v:"T10" },
-    { k:["hips","pelvis","spine"], v:"L1" },
-    { k:["upleg","thigh","femur"], v:"L2" },
-    { k:["leg","calf","shin"], v:"L4" }, // L3/L4 mix
-    { k:["foot","ankle"], v:"L5" },
-    { k:["toe","ball"], v:"S1" }
+    // TORSO (Approximations based on standard rigs)
+    { k:["spine2","chest"], v:"T4" }, 
+    { k:["spine1","abdomen"], v:"T10" }, 
+    { k:["spine","pelvis"], v:"L1" }, // Lower spine
+    // LOWER EXTREMITY - HIP LOGIC HANDLED IN LOOP
+    { k:["upleg","thigh","femur"], v:"L2" }, // L2/L3 split usually
+    { k:["leg","shin","calf"], v:"L4" },      // L4/L5 split usually
+    { k:["foot","ankle"], v:"L5" },           // Dorsum
+    { k:["toe","ball"], v:"S1" }              // Lateral/Plantar
 ];
 
 /* ------------------------------------------------------------------
-   2. SCENE & RENDERER
+   2. SCENE SETUP
 ------------------------------------------------------------------ */
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
@@ -127,7 +232,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0f172a); // Dark Blue-Grey
+scene.background = new THREE.Color(0x0f172a); 
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
 camera.position.set(0, 1.2, 3);
@@ -137,23 +242,22 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.enablePan = false;
 
-// Lights
 const amb = new THREE.AmbientLight(0xffffff, 1);
 scene.add(amb);
-const dir = new THREE.DirectionalLight(0xffffff, 2);
+const dir = new THREE.DirectionalLight(0xffffff, 2.5);
 dir.position.set(5, 10, 7);
 scene.add(dir);
 
 /* ------------------------------------------------------------------
-   3. LOAD MODEL & GENERATE
+   3. LOAD & GENERATE MAPS
 ------------------------------------------------------------------ */
 const loader = new GLTFLoader();
 const draco = new DRACOLoader();
 draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
 loader.setDRACOLoader(draco);
 
-let regionMeshes = {}; // Store the point clouds
-let originalColors = {}; // Store colors for hover reset
+let regionMeshes = {}; 
+let originalColors = {};
 
 function getModelURL(){
   const u = new URL(location.href);
@@ -165,27 +269,34 @@ loader.load(getModelURL(), (gltf) => {
     const model = gltf.scene;
     scene.add(model);
 
-    // Fit Camera
+    // Auto-Fit Camera
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    
     controls.target.copy(center);
     camera.position.copy(center);
-    camera.position.z += maxDim * 2.0;
+    camera.position.z += maxDim * 2.2;
     controls.update();
 
-    // Find Body
+    // Find Skinned Mesh
     let body = null;
     model.traverse(c => {
-        if(c.isSkinnedMesh && c.skeleton){
-            if(!body || c.geometry.attributes.position.count > body.geometry.attributes.position.count) body = c;
+        if(c.isSkinnedMesh && c.skeleton && !body){
+            // Simple check: Body usually has the most vertices
+            if(c.geometry.attributes.position.count > 2000) body = c;
         }
     });
 
-    if(body) generateMaps(body);
-    else document.getElementById('dataDisplay').innerHTML = "Error: No rigged mesh found.";
+    if(body) {
+        generateMaps(body);
+        document.getElementById('dataDisplay').innerHTML = `
+            <div style="padding:15px; text-align:center; color:#fff; background:rgba(56, 189, 248, 0.1); border:1px solid #38bdf8; border-radius:8px;">
+                <strong>System Ready</strong><br><span style="font-size:11px">Model: ${body.name} loaded.</span>
+            </div>`;
+    } else {
+        document.getElementById('dataDisplay').textContent = "Error: No rigged body mesh found in file.";
+    }
 });
 
 function generateMaps(mesh){
@@ -193,18 +304,17 @@ function generateMaps(mesh){
     const skinIdx = mesh.geometry.attributes.skinIndex;
     const skinWt = mesh.geometry.attributes.skinWeight;
     const bones = mesh.skeleton.bones;
-
-    const buckets = {}; // "C5-Left" -> [indices]
-
+    const buckets = {}; 
     const tempPos = new THREE.Vector3();
 
     for(let i=0; i<pos.count; i++){
-        // Get World Pos for Side Calculation
+        // Get World Position to distinguish Front vs Back (Anterior/Posterior)
         tempPos.fromBufferAttribute(pos, i);
         tempPos.applyMatrix4(mesh.matrixWorld);
-        const isRight = tempPos.x < 0; // Assuming standard T-Pose
+        const isRight = tempPos.x < 0;
+        const isFront = tempPos.z > 0; // Roughly, assuming T-Pose facing +Z
         
-        // Find Bone
+        // Find Dominant Bone
         let maxW=0, bId=0;
         for(let k=0; k<4; k++){
             const w = skinWt.getComponent(i,k);
@@ -212,11 +322,26 @@ function generateMaps(mesh){
         }
         const bName = bones[bId].name.toLowerCase();
 
-        // Map Bone to Level
+        // --- MAPPING LOGIC ---
         let level = null;
-        for(const m of BONE_MAP){
-            if(m.k.some(kw => bName.includes(kw))){ level = m.v; break; }
+        
+        // 1. Special Case: Hips/Pelvis (Split Front/Back)
+        if(bName.includes("hip") || bName.includes("pelvis")){
+            level = isFront ? "L1" : "S3"; // Groin vs Buttocks
         }
+        // 2. Special Case: Thighs (Split Front/Back)
+        else if(bName.includes("upleg") || bName.includes("thigh")){
+            level = isFront ? "L2" : "S1"; // Quads vs Hamstrings
+        }
+        // 3. Standard Mapping
+        else {
+            for(const m of BONE_MAP){
+                if(m.k.some(kw => bName.includes(kw))){ level = m.v; break; }
+            }
+        }
+
+        // 4. Refinements (Height based tweaks for Spine)
+        if(level === "T10" && tempPos.y > 1.1) level = "T4"; // Upper spine correction
 
         if(level){
             const key = `${level}-${isRight?'R':'L'}`;
@@ -225,8 +350,8 @@ function generateMaps(mesh){
         }
     }
 
-    // Build Point Clouds
-    const worldPosArr = []; // Cache all world positions once
+    // Create Point Clouds
+    const worldPosArr = [];
     for(let i=0; i<pos.count; i++){
         tempPos.fromBufferAttribute(pos, i);
         tempPos.applyMatrix4(mesh.matrixWorld);
@@ -235,7 +360,8 @@ function generateMaps(mesh){
 
     for(const [key, indices] of Object.entries(buckets)){
         const level = key.split('-')[0];
-        const data = DB[level] || { color: 0xffffff };
+        const data = DB[level];
+        if(!data) continue; // Skip unmapped
 
         const geo = new THREE.BufferGeometry();
         const verts = [];
@@ -248,16 +374,16 @@ function generateMaps(mesh){
         const mat = new THREE.PointsMaterial({
             color: data.color,
             size: 0.015,
-            sizeAttenuation: true,
             transparent: true,
             opacity: 0.85,
-            depthTest: false, // Always visible on top
-            depthWrite: false
+            depthTest: false,
+            depthWrite: false,
+            sizeAttenuation: true
         });
 
         const points = new THREE.Points(geo, mat);
-        points.userData = { id: key, level: level, ...data };
         points.renderOrder = 999;
+        points.userData = { id: key, level: level, ...data };
         
         scene.add(points);
         regionMeshes[key] = points;
@@ -266,124 +392,110 @@ function generateMaps(mesh){
 }
 
 /* ------------------------------------------------------------------
-   4. INTERACTION (RAYCASTER)
+   4. UI & INTERACTION
 ------------------------------------------------------------------ */
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.05; // Make dots easier to click
+raycaster.params.Points.threshold = 0.05; 
 const mouse = new THREE.Vector2();
 const ui = document.getElementById('dataDisplay');
+let hoveredObj = null;
 
-let hoveredObject = null;
-
-function updateMouse(e){
+function onMove(e){
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-}
-
-function checkIntersects(){
-    const visibleMeshes = Object.values(regionMeshes).filter(m => m.visible);
-    if(!visibleMeshes.length) return;
-
+    
+    // Hover Logic
+    const visible = Object.values(regionMeshes).filter(m=>m.visible);
     raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(visibleMeshes, false);
+    const hits = raycaster.intersectObjects(visible, false);
 
     if(hits.length > 0){
         const hit = hits[0].object;
-        
-        // Hover Effect
-        if(hoveredObject !== hit){
-            // Reset previous
-            if(hoveredObject) hoveredObject.material.color.setHex(originalColors[hoveredObject.userData.id]);
-            
-            // Highlight new
-            hoveredObject = hit;
-            hoveredObject.material.color.setHex(0xffffff); // Flash white
+        if(hoveredObj !== hit){
+            if(hoveredObj) hoveredObj.material.color.setHex(originalColors[hoveredObj.userData.id]);
+            hoveredObj = hit;
+            hoveredObj.material.color.setHex(0xffffff); 
             document.body.style.cursor = "pointer";
         }
-        return hit;
     } else {
-        if(hoveredObject){
-            hoveredObject.material.color.setHex(originalColors[hoveredObject.userData.id]);
-            hoveredObject = null;
+        if(hoveredObj){
+            hoveredObj.material.color.setHex(originalColors[hoveredObj.userData.id]);
+            hoveredObj = null;
             document.body.style.cursor = "default";
         }
-        return null;
     }
 }
 
-window.addEventListener('mousemove', (e) => {
-    updateMouse(e);
-    checkIntersects(); // Handle hover glow
-});
-
-window.addEventListener('click', () => {
-    const hit = checkIntersects();
-    if(hit){
-        updatePanel(hit.userData);
+function onClick(){
+    if(hoveredObj){
+        updatePanel(hoveredObj.userData);
     }
-});
+}
 
 function updatePanel(data){
     const mode = document.getElementById('modeSel').value;
-    const isDerm = (mode === 'derm');
-    const side = data.id.includes('-R') ? "Right" : "Left";
+    const side = data.id.includes("-R") ? "Right" : "Left";
+    const hex = '#'+data.color.toString(16).padStart(6,'0');
 
-    let html = `
-        <div class="data-row"><span class="data-label">LEVEL</span> <span class="data-val highlight" style="font-size:20px; color:${'#'+data.color.toString(16)}">${data.level} (${side})</span></div>
+    let content = `
+        <div class="info-card">
+            <span class="level-tag" style="color:${hex}">${data.level} <span style="font-size:14px;opacity:0.7">(${side})</span></span>
     `;
 
-    if(isDerm){
-        // Dermatome View
-        html += `
-            <div class="data-row"><span class="data-label">TYPE</span> <span class="data-val">Sensory Dermatome</span></div>
-            <div class="data-row"><span class="data-label">INNERVATION AREA</span> <span class="data-val">Skin supplied by spinal nerve ${data.level}.</span></div>
+    if(mode === 'derm'){
+        content += `
+            <span class="section-title">Sensory Distribution</span>
+            <div class="data-text">${data.area}</div>
+            <div style="margin-top:8px; font-size:11px; color:#94a3b8">
+                <em>Source: Cleveland Clinic Ref.</em>
+            </div>
         `;
-    } else {
-        // Myotome View
-        html += `
-            <div class="data-row"><span class="data-label">PRIMARY MUSCLE</span> <span class="data-val highlight">${data.muscle}</span></div>
-            <div class="data-row"><span class="data-label">ACTION</span> <span class="data-val">${data.action}</span></div>
-            <hr style="border:0; border-top:1px solid #334155; margin:10px 0;">
-            <div class="data-row"><span class="data-label">ORIGIN</span> <span class="data-val">${data.origin}</span></div>
-            <div class="data-row"><span class="data-label">INSERTION</span> <span class="data-val">${data.insert}</span></div>
-        `;
+    } else if(mode === 'myo'){
+        if(data.muscles){
+            content += `
+                <span class="section-title">Key Muscles (Motor)</span>
+                <ul class="muscle-list">
+                    ${data.muscles.map(m => `<li>${m}</li>`).join('')}
+                </ul>
+                <span class="section-title">Primary Action</span>
+                <div class="data-text" style="color:#fff;font-weight:500">${data.action}</div>
+            `;
+        } else {
+            content += `<div class="data-text" style="margin-top:10px">Primarily sensory at this level.</div>`;
+        }
     }
-    
-    ui.innerHTML = html;
+    content += `</div>`;
+    ui.innerHTML = content;
 }
 
-/* ------------------------------------------------------------------
-   5. UI CONTROLS
------------------------------------------------------------------- */
+window.addEventListener('mousemove', onMove);
+window.addEventListener('click', onClick);
+
+// Vis Control
 const modeSel = document.getElementById('modeSel');
 const opSel = document.getElementById('opacitySel');
 
 function updateVis(){
     const mode = modeSel.value;
     const op = parseFloat(opSel.value);
-
+    
     for(const m of Object.values(regionMeshes)){
         m.material.opacity = op;
-        if(mode === 'none') m.visible = false;
-        else if(mode === 'derm') m.visible = true; 
-        else if(mode === 'myo') {
-             // Hide T-spine for myotomes generally as they are mostly sensory on trunk
-             const l = m.userData.level;
-             if(l.startsWith('T') && l !== 'T1') m.visible = false;
-             else m.visible = true;
+        if(mode === 'none'){
+            m.visible = false;
+        } else if(mode === 'derm'){
+            m.visible = true; 
+        } else if(mode === 'myo'){
+            // Filter out pure sensory levels for cleaner view
+            if(m.userData.muscles) m.visible = true;
+            else m.visible = false;
         }
     }
 }
 
-modeSel.addEventListener('change', () => {
-    updateVis();
-    ui.innerHTML = '<div style="padding:10px; color:#64748b; text-align:center">Select a region...</div>';
-});
+modeSel.addEventListener('change', updateVis);
 opSel.addEventListener('input', updateVis);
 
-/* ------------------------------------------------------------------
-   6. ANIMATION LOOP
------------------------------------------------------------------- */
 function animate(){
     requestAnimationFrame(animate);
     controls.update();
@@ -391,7 +503,7 @@ function animate(){
 }
 animate();
 
-window.addEventListener('resize', () => {
+window.addEventListener('resize', ()=>{
     camera.aspect = innerWidth/innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth,innerHeight);
