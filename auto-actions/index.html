@@ -767,6 +767,7 @@ const COLLIM = {
     } catch(e){}
   }
 };
+localStorage.removeItem('rometrics_collim'); // <--- ADD THIS LINE HERE
 COLLIM.load();
 
 function capFor(action){
@@ -780,8 +781,9 @@ function capFor(action){
       const isLeft = key.endsWith('_l');
       if (sign > 0) { // Flexion
         return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
-      } else {        // Extension
-        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      } else {
+        // FIX: Return Abduction Max (170) for Up (+), Adduction Max (30) for Down (-)
+        return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
       }
     }
 
