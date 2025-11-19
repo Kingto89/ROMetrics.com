@@ -513,8 +513,6 @@ function endArm(){
     draggingArm=false; 
     
     // FIX: ALWAYS update the internal baseline to the current position.
-    // This forces the system to "memorize" where you dragged the arm,
-    // so the sliders will start from HERE instead of jumping back.
     zeroRef = mov; 
     
     // Reset slider visuals to 0 so they are ready to push from this new spot
@@ -522,18 +520,6 @@ function endArm(){
     const ccw = document.getElementById("rotateCCW");
     if(cw) cw.value = 0;
     if(ccw) ccw.value = 0;
-  }
-    
-    // Update slider baseline ONLY if we are aligning (not testing ROM)
-    if(!isRomMode){
-        zeroRef = mov;
-        
-        // Reset slider visuals to 0 so they are ready to push from the new spot
-        const cw = document.getElementById("rotateCW");
-        const ccw = document.getElementById("rotateCCW");
-        if(cw) cw.value = 0;
-        if(ccw) ccw.value = 0;
-    }
   }
 
  return {
