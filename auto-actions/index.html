@@ -1747,7 +1747,52 @@ log("Anatomic baseline applied on load.");
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
   [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
+/* ===== Advanced controls wiring ===== */
+  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
+  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
 
+  // --- PASTE THIS BLOCK BELOW ---
+  
+  // 1. Model Controller Logic
+  const mdl = { 
+    x: document.getElementById("modelX"),
+    y: document.getElementById("modelY"),
+    z: document.getElementById("modelZ"),
+    s: document.getElementById("modelScale"),
+    yaw: document.getElementById("modelYaw")
+  };
+
+  function updateModelTransform(){
+    if(!model) return;
+    // Apply Position (X, Y, Z)
+    model.position.set(
+      parseFloat(mdl.x.value) || 0,
+      parseFloat(mdl.y.value) || 0,
+      parseFloat(mdl.z.value) || 0
+    );
+    // Apply Scale
+    const s = (parseFloat(mdl.s.value) || 100) / 100;
+    model.scale.set(s, s, s);
+    // Apply Yaw
+    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(mdl.yaw.value) || 0);
+  }
+
+  // 2. Attach Listeners
+  Object.values(mdl).forEach(el => {
+    if(el) el.addEventListener("input", updateModelTransform);
+  });
+
+  // 3. Wire Reset Button
+  const resetPoseBtn = document.getElementById("resetPose");
+  if(resetPoseBtn) resetPoseBtn.onclick = () => {
+    mdl.x.value = 0;
+    mdl.y.value = 0;
+    mdl.z.value = 0.6;
+    mdl.s.value = 100;
+    mdl.yaw.value = 0;
+    updateModelTransform();
+  };
+  // -----------------------------
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
@@ -1780,6 +1825,11 @@ log("Anatomic baseline applied on load.");
   }
 
 /* --- HUD & Helpers --- */
+let lock3D = false;    // <--- ADD THIS
+let lockGonio = false; // <--- ADD THIS
+
+function setAngleHUD(angle, romStr=""){
+  // ... (rest of code remains the same)
 function setAngleHUD(angle, romStr=""){
   const hud = document.getElementById("hud");
   // Fix: Ensure we display the ROM string if it exists
