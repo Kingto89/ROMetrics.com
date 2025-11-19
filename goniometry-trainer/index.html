@@ -1602,35 +1602,27 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   setPair(`clavicle_${side.toUpperCase()}`, side==='r' ? -45 : 45); 
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
+// ... inside the if (v.startsWith("sep:")) block ...
+
       // === FINAL DRU LOGIC: Target Lowerarm (Elbow) & Hand (DRU) ===
       if (key === 'wr_ps_l' || key === 'wr_ps_r') {
         const side = key.endsWith('_l') ? 'l' : 'r';
         
         // 1. Target LOWERARM bone: Flex Elbow to 90°
-        // This moves 'lowerarm_L' or 'lowerarm_R'
         setPair(`el_fe_${side}`, 90);
 
-        // 2. Check if we are testing SUPINATION
-        if (CURRENT_ACTION.label.includes("Supination")) {
+        // 2. Target HAND bone: Force to NEUTRAL (Thumb Up) for BOTH actions
+        // Your rig starts Supinated (0). Neutral is approx 80° of rotation.
+        // The image shows Neutral (Thumb Up), so we start here.
+        setPair(key, 80); 
              
-             // 3. Target HAND bone: Force it to Pronation (Palm Down)
-             // We use 'key' (wr_ps) because you said that controls the Hand rig
-             // +85 degrees = Full Pronation (Palm Down)
-             setPair(key, 85); 
-             
-             // 4. Freeze this "Palm Down" position as the new Zero
-             const b = resolveBind(key, cfg);
-             if(b) {
-                 b.qBind = b.bone.quaternion.clone();
-             }
-             
-             log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Forced Down (Pronated)`);
-        } 
-        else {
-             // If testing Pronation, we leave the hand Anatomic (Palm Up)
-             // just ensuring the Elbow is bent.
-             log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Standard (Supinated)`);
+        // 3. Freeze this "Neutral/Thumb Up" position as the new Zero
+        const b = resolveBind(key, cfg);
+        if(b) {
+             b.qBind = b.bone.quaternion.clone();
         }
+             
+        log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Neutral (Thumb Up)`);
       }
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
