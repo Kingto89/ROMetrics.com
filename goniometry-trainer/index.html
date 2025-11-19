@@ -1528,11 +1528,19 @@ regionSel.onchange = () => {
       x.key.startsWith("wr_ps_")
     );
   }
-else if (r === "wrist") {
-    // LOGIC: Show items starting with "wr_" (Wrist) 
-    // BUT EXCLUDE items starting with "wr_ps_" (Pronation/Supination)
-    CURRENT = UPPER.filter(x => 
-      x.key.startsWith("wr_") && !x.key.startsWith("wr_ps_")
+// === SETUP FOR WRIST FLEX/EXT & RAD/ULNAR DEV ONLY (4 CONFIRMED MOTIONS) ===
+      if (key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
+        const side = key.endsWith('_l') ? 'l' : 'r';
+
+        // 1. COMMON SETUP: Target LOWERARM bone: Flex Elbow to 90°
+        setPair(`el_fe_${side}`, 90);
+
+        // 2. REBIND ZERO: Freeze the current 0° rotation/deviation as the start point
+        const b = resolveBind(key, cfg);
+        if(b) {
+             b.qBind = b.bone.quaternion.clone(); 
+        }
+        log(`Setup ${side.toUpperCase()}: Elbow 90°, Hand Anatomic (0° Rotation/Deviation)`)
     );
   }
   else if (r === "hip") {
