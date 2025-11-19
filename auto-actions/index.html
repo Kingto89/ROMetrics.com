@@ -41,9 +41,6 @@ label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
 select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
 .row{display:flex;gap:8px}.row>button{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
-.{display:flex;gap:8px}
-. button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
-. button.on{background:#1f2c43;color:#fff;border-color:#47618e}
 details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
 summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
@@ -510,6 +507,19 @@ function moveArm(e){
   }
 function endArm(){ 
     draggingArm=false; 
+    
+    // Only update the internal baseline if we are NOT in ROM mode.
+    // This prevents the ROM from resetting to 0 immediately when you let go.
+    if (typeof isRomMode !== 'undefined' && !isRomMode) {
+        zeroRef = mov; 
+    }
+    
+    // Reset slider visuals to 0
+    const cw = document.getElementById("rotateCW");
+    const ccw = document.getElementById("rotateCCW");
+    if(cw) cw.value = 0;
+    if(ccw) ccw.value = 0;
+}
     
     // FIX 1: Only update the internal baseline if we are NOT in ROM mode.
     // This prevents the ROM from resetting to 0 immediately when you let go.
