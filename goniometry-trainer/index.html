@@ -785,6 +785,20 @@ function capFor(action){
   COLLIM.load();  // ✅ refresh saved limits before applying
   if(!COLLIM.enabled || !action) return null; // no cap
   const { key, sign } = action; // sign: +1 or -1
+  
+  /* --- START OF FIX: Custom Hip Flexion Limit (Sitting) --- */
+  const region = regionSel.value;
+  const position = positionSel.value;
+  const actionLabel = actionSel.options[actionSel.selectedIndex]?.textContent || '';
+  
+  if (region === 'hip' && 
+      position === 'sitting' && 
+      key.startsWith('hip_fe_') && 
+      sign > 0 && 
+      actionLabel.includes('Flexion')) {
+            log(`Custom Collision: Hip Flexion in Sitting: 50°`);
+            return 50; // Apply the unique collision limit of 50°
+  }
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
 // Shoulder Flex/Ext
