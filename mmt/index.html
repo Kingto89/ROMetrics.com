@@ -15,16 +15,16 @@
 </script>
 
 <style>
-/* --- NEW MMT COLOR SCHEME --- */
+/* --- NEW MMT COLOR SCHEME: Teal & Charcoal (Clinical Contrast) --- */
 :root{
-    --bg:#f8fafc;        /* Light Background (Sky Blue/White) */
+    --bg:#f1f5f9;        /* Light Gray Background */
     --panel:#ffffff;     /* White Panel */
-    --line:#e2e8f0;      /* Light Gray Border */
-    --ctrl:#f1f5f9;      /* Lighter Control BG */
-    --text:#0f172a;      /* Dark Text */
+    --line:#cbd5e1;      /* Cool Gray Border */
+    --ctrl:#e2e8f0;      /* Lighter Control BG */
+    --text:#0f172a;      /* Dark Charcoal Text */
     --muted:#64748b;     /* Muted Gray Text */
-    --primary-blue: #06b6d4; /* Teal Blue for emphasis */
-    --secondary-yellow: #fde047; /* Soft Yellow for test */
+    --primary-teal: #0d9488; /* Deep Teal for emphasis */
+    --secondary-yellow: #facc15; /* Bright Yellow for test */
 }
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 .panel{position:fixed;left:25px;top:12px;width:360px;max-height:90vh;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
@@ -40,28 +40,15 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 /* MMT Specific Styles */
-.mmt-pill {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    border: 2px solid var(--line);
-    border-radius: 12px;
-    padding: 8px 6px;
-    line-height: 1;
-    flex: 1;
-    cursor: pointer;
-    transition: all 0.2s;
-}
 .mmt-pill.active {
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 8px rgba(13, 148, 136, 0.6);
 }
-/* Hand Placement Visuals (Stabilizer = Blue, Test = Yellow) */
-.place-btn.stabilize { border-color: var(--primary-blue); color: var(--primary-blue); }
-.place-btn.stabilize.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
-.place-btn.test { border-color: var(--secondary-yellow); color: var(--secondary-yellow); }
-.place-btn.test.active { background: #d97706; color: white; border-color: #d97706; }
+/* Hand Placement Visuals (Stabilizer = Teal, Test = Yellow) */
+.place-btn.stabilize { border-color: var(--primary-teal); color: var(--primary-teal); }
+.place-btn.stabilize.active { background: var(--primary-teal); color: white; border-color: var(--primary-teal); }
+.place-btn.test { border-color: var(--secondary-yellow); color: #b45309; }
+.place-btn.test.active { background: #b45309; color: white; border-color: #b45309; } /* Darker Orange/Brown for contrast */
 .place-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* The new progressive resistance button */
@@ -71,8 +58,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     font-weight: 700;
     overflow: hidden;
     transition: background-color 0.2s;
-    touch-action: none; /* Prevents scroll on mobile */
-    background: var(--ctrl); /* Base color */
+    touch-action: none; 
+    background: var(--ctrl); 
 }
 #resistanceFill {
     position: absolute;
@@ -80,7 +67,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     left: 0;
     width: 0;
     height: 100%;
-    background-color: var(--secondary-yellow); /* Yellow fill */
+    background-color: var(--secondary-yellow); 
     transition: width 0.1s linear;
     z-index: 1;
 }
@@ -88,15 +75,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     position: relative;
     z-index: 2;
     color: var(--text);
-    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3); /* Ensure contrast on fill */
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3); 
 }
-/* Hide the instructional text when not being tested */
 #instructionText {
     font-size: 12px;
     color: var(--muted);
     text-align: center;
     margin: 4px 0 12px 0;
-    display: none; /* Hidden by default */
+    display: none; 
 }
 </style>
 </head>
@@ -217,7 +203,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
    
-/* ===================== NEW MMT CONFIGURATION ===================== */
+/* ===================== MMT CONFIGURATION ===================== */
 
 // MMT Test Definitions (Simplified and Linked to Bone Keys)
 const MMT_TESTS = {
@@ -258,7 +244,6 @@ const MMT_TESTS = {
 };
 
 let CURRENT_MMT = null;
-let CURRENT_GRADING_MODE = null; // '3-5' or '0-2'
 let resistanceTimer = null;
 let resistanceStartTime = 0;
 const RESISTANCE_FILL_TIME = 2000; // 2 seconds for full fill
@@ -266,16 +251,15 @@ const RESISTANCE_FILL_TIME = 2000; // 2 seconds for full fill
 /* ===================== NEW HANDS PLACEMENT LOGIC ===================== */
 
 const MMT_HANDS = {
-    stabilize: { x: -100, y: -100, placed: false, color: '#06b6d4', element: null }, // Blue (Teal)
-    test:      { x: -100, y: -100, placed: false, color: '#fde047', element: null }  // Yellow
+    stabilize: { x: -100, y: -100, placed: false, color: '#0d9488', element: null }, // Teal
+    test:      { x: -100, y: -100, placed: false, color: '#facc15', element: null }  // Yellow
 };
-let activeHandTarget = null; // 'stabilize' or 'test'
+let activeHandTarget = null; 
 
 // Element selectors for the new SVG layer
 const handSvg = document.getElementById('handSvg');
 const handDotsGrp = document.getElementById('handDots');
 
-// Helper to create or update an SVG dot for a hand
 function updateHandDot(handKey) {
     const hand = MMT_HANDS[handKey];
     if (!hand.element) {
@@ -283,7 +267,7 @@ function updateHandDot(handKey) {
         hand.element = document.createElementNS(NS, 'circle');
         hand.element.setAttribute('r', '8');
         hand.element.setAttribute('stroke', hand.color);
-        hand.element.setAttribute('stroke-width', '3'); // Thicker ring
+        hand.element.setAttribute('stroke-width', '3'); 
         hand.element.setAttribute('fill', 'rgba(0,0,0,0.5)');
         handDotsGrp.appendChild(hand.element);
     }
@@ -295,11 +279,9 @@ function updateHandDot(handKey) {
     } else {
         hand.element.style.display = 'none';
     }
-    // Toggle the SVG container visibility
     document.getElementById('handHost').classList.toggle('hide', !MMT_HANDS.stabilize.placed && !MMT_HANDS.test.placed);
 }
 
-// Function to handle the screen click for placing hands
 function placeHand(e) {
     if (!activeHandTarget) return;
 
@@ -310,12 +292,11 @@ function placeHand(e) {
     hand.placed = true;
 
     updateHandDot(activeHandTarget);
-    log(`${activeHandTarget} hand placed @ ${hand.x | 0}, ${hand.y | 0}`);
+    log(`${activeHandTarget} hand pinned @ ${hand.x | 0}, ${hand.y | 0}`);
     
-    // Deactivate current placement mode
     document.getElementById(`place${activeHandTarget.charAt(0).toUpperCase() + activeHandTarget.slice(1)}`).classList.remove('active');
     activeHandTarget = null;
-    handSvg.style.pointerEvents = 'none'; // Lock SVG interaction
+    handSvg.style.pointerEvents = 'none'; 
 }
 
 
@@ -324,25 +305,22 @@ function placeHand(e) {
 const logEl = document.getElementById("log");
 const log = (t) => { logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 const canvas = document.getElementById("c");
-const panel = document.getElementById("panel");
 const actionSel = document.getElementById("actionSel");
 const startTestBtn = document.getElementById("startTestBtn");
 const testButton = document.getElementById("testButton");
 const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
-const instructionText = document.getElementById("instructionText"); // NEW
+const instructionText = document.getElementById("instructionText");
 const placeStabilizeBtn = document.getElementById("placeStabilize");
 const placeTestBtn = document.getElementById("placeTest");
 const grade35 = document.getElementById("grade35");
 const grade02 = document.getElementById("grade02");
 
-// Re-used model and bone logic setup (simplified)
 let model = null, skeleton = null;
 const initialBoneRot = new Map();
 const JOINT_BIND = new Map();
 let controls = null;
 
-// The core movement configuration from the Goniometry index (required to use setPair/applyPairAngle)
 const ALL_ACTIONS = [
     { key: 'sh_fe_l', plane: 'sagittal', hints: [/upperarm|humerus/i] },
     { key: 'sh_aa_l', plane: 'frontal', hints: [/upperarm|humerus/i] },
@@ -355,12 +333,10 @@ const ALL_ACTIONS = [
     { key: 'knee_fe_l', plane: 'sagittal', hints: [/calf|tibia/i] },
     { key: 'ankle_dfpf_l', plane: 'sagittal', hints: [/ankle|foot/i] },
     { key: 'cerv_lat', plane: 'frontal', hints: [/^neck$|cspine|head/i] },
-    // Simplified R side for symmetry if needed, but MMT focuses on one side
     { key: 'sh_fe_r', plane: 'sagittal', hints: [/upperarm|humerus/i] },
 ];
 const cfgFromKey = (k) => ALL_ACTIONS.find(x => x.key === k) || null;
 
-// Re-used functions for bone finding, axis mapping, and rotation (from original index)
 const EXCLUDE = /(pelvis|root|scapula)/i;
 function sideRegex(side) {
     if (!side) return [/.*/];
@@ -387,7 +363,6 @@ function findBoneBy(cfg) {
 }
 
 function axisFor(profile, key, defAxis) {
-    // Simplified axis mapping (from original index)
     const map = {
         sh_fe_l: 'x', sh_aa_l: 'z', sh_irer_l: 'y',
         el_fe_l: 'x', wr_fe_l: 'x', hip_fe_l: 'x', hip_aa_l: 'z',
@@ -400,10 +375,9 @@ function resolveBind(key, cfg) {
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
     let bone = findBoneBy({ ...cfg, key });
 
-    if (key === 'cerv_lat') { // Special case: bind to neck/head
+    if (key === 'cerv_lat') { 
         bone = findBoneBy({ side: '', hints: [/^head$/, /^neck$/] });
     } else if (!bone) {
-        // Log removed to reduce clutter when selecting complex items
         return null;
     }
 
@@ -424,14 +398,13 @@ function applyPairAngle(key, cfg, deg) {
     let axis = rawAxis || 'x';
     let flip = 1;
 
-    // Standard side-flipping logic from original index (Hip Abduction)
     if (key === 'hip_aa_r' || key === 'sh_aa_r') flip = -1;
 
     let x = 0, y = 0, z = 0;
     const r = flip * rad;
     if (axis === 'x') x = r;
     if (axis === 'y') y = r;
-    if (axis === 'z') z = r; // FIXED: r was missing for z
+    if (axis === 'z') z = r; 
 
     const e = new THREE.Euler(x, y, z, "XYZ");
     const qDelta = new THREE.Quaternion().setFromEuler(e);
@@ -449,7 +422,7 @@ function resetAllBonesToInitial() {
         const q0 = initialBoneRot.get(b);
         if (q0) b.quaternion.copy(q0);
     });
-    JOINT_BIND.clear(); // Clear cached binds
+    JOINT_BIND.clear(); 
 }
 
 function set3DLock(v) {
@@ -459,21 +432,20 @@ function set3DLock(v) {
     if (btn) { btn.textContent = (lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"); btn.classList.toggle('lockOn', lock3D); }
 }
 
-const ANAT = { addL: 0, psL: 0, wpsL: 0 }; // Simplified anatomic baseline
+const ANAT = { addL: 0, psL: 0, wpsL: 0 }; 
 function applyAnatomicBaseline() {
-    // Only resets for the tested joints are crucial.
     setPair('sh_aa_l', ANAT.addL);
 }
 
-/* ===================== NEW MMT LOGIC ===================== */
 
-// MMT Position Presets (Simplified from original index)
+/* ===================== MMT LOGIC ===================== */
+
 const PI_HALF = Math.PI / 2;
 function updateModelPose(pose) {
     if (!model) return;
     resetAllBonesToInitial();
     model.rotation.set(0, 0, 0, 'XYZ');
-    model.position.set(0, 0, 0.6); // Default Z
+    model.position.set(0, 0, 0.6); 
 
     if (pose === "supine") {
         model.rotation.x = -PI_HALF;
@@ -481,15 +453,13 @@ function updateModelPose(pose) {
         model.rotation.x = -PI_HALF;
         model.rotation.y = Math.PI;
     } else if (pose === "sitting") {
-        // Set sitting posture
         setPair('hip_fe_l', 90);
         setPair('hip_fe_r', 90);
-        setPair('knee_fe_l', -90); // -90 means 90 degrees flexion in our rig
+        setPair('knee_fe_l', -90); 
         setPair('knee_fe_r', -90);
         model.position.y = -0.4;
     }
     
-    // Update camera target for better view of test
     if (CURRENT_MMT && CURRENT_MMT.pose.cam) {
         controls.target.set(CURRENT_MMT.pose.cam[0], CURRENT_MMT.pose.cam[1], CURRENT_MMT.pose.cam[2]);
         controls.update();
@@ -499,30 +469,25 @@ function updateModelPose(pose) {
     }
 }
 
-// Function to move the model to the start test position (Grade 3/4/5)
 function startTestMovement(testCfg) {
     if (!testCfg || !testCfg.actionKey) return;
 
-    // 1. Apply the test position pose
     const { name: poseName } = testCfg.pose;
     updateModelPose(poseName);
 
-    // 2. Move the bone to the MMT start position (Grade 3 position)
     const { actionKey, move } = testCfg;
     setPair(actionKey, move);
     log(`Model moved to Grade 3 position (${move}°).`);
 }
 
-// Event handler for the Test/Resistance Button (Grade 4 & 5)
 function handleResistanceButtonDown(e) {
     if (testButton.disabled) return;
     e.preventDefault();
     resistanceStartTime = performance.now();
     testButton.classList.add('active');
     resistanceText.textContent = 'Applying Resistance...';
-    instructionText.style.display = 'block'; // Show instructions
+    instructionText.style.display = 'block'; 
 
-    // Start filling the resistance bar
     resistanceTimer = setInterval(() => {
         const elapsed = performance.now() - resistanceStartTime;
         const progress = Math.min(1, elapsed / RESISTANCE_FILL_TIME);
@@ -547,27 +512,25 @@ function handleResistanceButtonUp() {
     resistanceTimer = null;
 
     testButton.classList.remove('active');
-    resistanceFill.style.width = '0'; // Reset fill bar
+    resistanceFill.style.width = '0'; 
     resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
-    instructionText.style.display = 'none'; // Hide instructions
+    instructionText.style.display = 'none'; 
 
     log(`Test complete. Final Grade recorded: ${grade35.value}`);
 }
 
-// Global listeners for the resistance button
 testButton.addEventListener('pointerdown', handleResistanceButtonDown);
 testButton.addEventListener('pointerup', handleResistanceButtonUp);
 testButton.addEventListener('pointercancel', handleResistanceButtonUp);
-testButton.addEventListener('contextmenu', e => e.preventDefault()); // Prevent right-click menu
+testButton.addEventListener('contextmenu', e => e.preventDefault()); 
+
 
 /* ===================== UI WIRING ===================== */
 
-// Region/Action Selection
 actionSel.onchange = () => {
     const muscle = actionSel.value;
     CURRENT_MMT = MMT_TESTS[muscle];
 
-    // Reset button states
     testButton.disabled = true;
     placeStabilizeBtn.disabled = true;
     placeTestBtn.disabled = true;
@@ -581,71 +544,61 @@ actionSel.onchange = () => {
     resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
 
 
-    // Reset model to standing/anatomic
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     updateModelPose('standing');
     log(`Selected MMT: ${muscle}`);
 };
 
-// Start Test Button
 startTestBtn.onclick = () => {
     if (!CURRENT_MMT) {
         log("Please select a muscle test first.");
         return;
     }
-    // Start the test movement (assumes Grade 3 position)
     startTestMovement(CURRENT_MMT);
 
-    // Enable placement and resistance buttons
     testButton.disabled = false;
     placeStabilizeBtn.disabled = false;
     placeTestBtn.disabled = false;
     log("Test position established. Grade 3 assumed. Hand placement buttons enabled.");
 };
 
-// Stabilize Arm Placement
 placeStabilizeBtn.onclick = () => {
     if (!CURRENT_MMT) return;
     activeHandTarget = 'stabilize';
     placeStabilizeBtn.classList.add('active');
     placeTestBtn.classList.remove('active');
-    handSvg.style.pointerEvents = 'auto'; // Enable pointer events for placement
+    handSvg.style.pointerEvents = 'auto'; 
     log("Stabilize arm selection active. Click on screen to place.");
 };
 
-// Test Arm Placement
 placeTestBtn.onclick = () => {
     if (!CURRENT_MMT) return;
     activeHandTarget = 'test';
     placeTestBtn.classList.add('active');
     placeStabilizeBtn.classList.remove('active');
-    handSvg.style.pointerEvents = 'auto'; // Enable pointer events for placement
+    handSvg.style.pointerEvents = 'auto'; 
     log("Test arm selection active. Click on screen to place.");
 };
 
-// Global click handler for placing hands
 canvas.addEventListener('pointerdown', placeHand, { passive: false });
 handSvg.addEventListener('pointerdown', placeHand, { passive: false });
 
-// Grade 0-2 and 3-5 dropdowns (only one is active at a time)
 grade35.onchange = () => {
-    grade02.value = '0'; // Deactivate 0-2
+    grade02.value = '0'; 
     log(`Recorded Grade: ${grade35.value}`);
 };
 grade02.onchange = () => {
-    grade35.value = '3'; // Deactivate 3-5 by setting to 3 baseline
+    grade35.value = '3'; 
     log(`Recorded Grade: ${grade02.value}`);
 };
 
-// Zero All Button
 document.getElementById("zeroAll").onclick = () => {
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     updateModelPose('standing');
     actionSel.value = "";
     log("All motions zeroed → returned to anatomic baseline.");
-    // Reset MMT specific items
     testButton.disabled = true;
     placeStabilizeBtn.disabled = true;
     placeTestBtn.disabled = true;
@@ -655,7 +608,7 @@ document.getElementById("zeroAll").onclick = () => {
     instructionText.style.display = 'none';
 };
 
-/* ===================== THREE.js / RENDER SETUP (From Original Index) ===================== */
+/* ===================== THREE.js / RENDER SETUP ===================== */
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(devicePixelRatio);
@@ -666,7 +619,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf8fafc); // MATCH NEW BG
+scene.background = new THREE.Color(0xf1f5f9); // MATCH NEW BG
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
 camera.position.set(1.6, 1.6, 3.2);
@@ -700,10 +653,18 @@ function groundSnap() {
     if (isFinite(minY)) model.position.y -= minY;
 }
 
-let MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
+// 🐛 FIXED: The model path logic must be outside loadModel and correctly set the global variable
+function pickModelUrl(){
+    const u = new URL(location.href);
+    const q = u.searchParams.get("model");
+    if (q && /^https?:\/\//i.test(q)) return q;
+    if (q && q.trim()) return new URL(q, location.href).href;
+    return "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
+}
+let MODEL_URL = pickModelUrl();
 
 function loadModel() {
-    log("Loading model...");
+    log(`Loading model from: ${MODEL_URL}`);
     loader.load(
         MODEL_URL,
         (gltf) => {
@@ -716,13 +677,11 @@ function loadModel() {
             groundSnap();
             document.getElementById("msg").textContent = "✅ Model loaded";
 
-            // Initialize rotation baselines
             skeleton.bones.forEach(b => {
                 initialBoneRot.set(b, b.quaternion.clone());
             });
             log("Model baselines set.");
 
-            // Apply initial pose (standing/anatomic)
             applyAnatomicBaseline();
         },
         (xhr) => {
