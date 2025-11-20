@@ -1300,7 +1300,7 @@ function updateModelPose(pose) {
 
     const PI_HALF = Math.PI / 2;
 
-    // --- 1. GLOBAL RESET ---
+    // --- 1. GLOBAL RESET (Ensures previous bone bends are cleared) ---
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     
@@ -1308,19 +1308,18 @@ function updateModelPose(pose) {
     model.rotation.set(0, 0, 0, 'XYZ');  
     model.position.set(0, 0, 0.6); // Reset Z to default 0.6
 
-    // --- 2. POSE LOGIC ---
+    // --- 2. POSE LOGIC (Your working logic, plus Sitting) ---
     if (pose === "standing") {
         // Position remains at default (0, 0, 0.6)
-    } 
-    else if (pose === "supine") {
-        model.rotation.x = -PI_HALF;  
+    } else if (pose === "supine") {
+        // Lay back 90 degrees (back on floor)
+        model.rotation.x = -PI_HALF; 
         model.rotation.y = 0;
-    } 
-    else if (pose === "prone") {
+    } else if (pose === "prone") {
+        // Lay back 90 degrees AND rotate 180 degrees yaw (face down)
         model.rotation.x = -PI_HALF;
         model.rotation.y = Math.PI;
-    } 
-    else if (pose === "sitting") { // Corrected placement
+    } else if (pose === "sitting") { 
         // Flex Hips and Knees to 90 degrees on both legs
         setPair('hip_fe_l', 90);
         setPair('hip_fe_r', 90);
