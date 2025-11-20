@@ -210,8 +210,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 // MMT Test Definitions (Simplified and Linked to Bone Keys)
 const MMT_TESTS = {
-
-    "Serratus_Anterior": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
+    "Serratus_Anterior": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 150, stab: [0, 0, 0], test: [0, 0, 0] },
     "Upper_Trapezius": { actionKey: 'cerv_lat', plane: 'frontal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: '', max: 45, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
     "Middle_Trapezius": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
     "Rhomboids": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
@@ -477,14 +476,43 @@ function updateModelPose(poseName, camArray=null) {
     // Re-snap to ground after pose changes to avoid sinking/clipping
     groundSnap();
 }
-
 function startTestMovement(testCfg) {
-    if (!testCfg || !testCfg.actionKey) return;
-    updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
+    if (!testCfg || !testCfg.actionKey) return;
+    
+    // Reset pose based on the standard configuration for the test
+    updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
 
-    const { actionKey, move } = testCfg;
-    setPair(actionKey, move);
-    log(`Model moved to Grade 3 position (${move}°).`);
+    const { actionKey, move } = testCfg;
+    let customSetupApplied = false;
+
+    // --- 1. HANDLE CUSTOM SETUP LOGIC (Add new fixes here) ---
+    // If the test requires specific movements for multiple limbs or special baselines,
+    // define them here.
+    
+    // Custom Fix 1: Serratus Anterior (Bilateral 150° Shoulder Flexion)
+    if (actionKey === 'sh_fe_l' && move === 150) {
+        // Move the right arm to the same 150° flexion position
+        setPair('sh_fe_r', 150);
+        log("Model moved both arms to 150° Flexion (Serratus Anterior setup).");
+        customSetupApplied = true;
+    }
+    
+    // // Future Custom Fix 2: Example for Glute Medius
+    // if (actionKey === 'hip_aa_l' && move === 20) {
+    //     // e.g., lift both legs for a special posture
+    //     setPair('hip_aa_r', 10);
+    //     log("Model lifted both legs for Glute Medius setup.");
+    //     customSetupApplied = true;
+    // }
+
+    // --- 2. APPLY PRIMARY MOVEMENT ---
+    // This runs the primary motion defined in MMT_TESTS (e.g., sh_fe_l: 150)
+    setPair(actionKey, move); 
+    
+    // --- 3. LOG RESULT ---
+    if (!customSetupApplied) {
+        log(`Model moved to Grade 3 position (${move}°).`);
+    }
 }
 
 function handleResistanceButtonDown(e) {
