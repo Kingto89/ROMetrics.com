@@ -859,83 +859,81 @@ if (/^el_fe_/.test(key)) {
 if(/^hip_fe_/.test(key)){
   if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
 }
+// === START REPLACEMENT BLOCK (Starting around Line 906) ===
 // Hip Flexion/Extension (with Sitting Adjustment)
 if(/^hip_fe_/.test(key)){
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax) : // Flexion Limit
-        (isLeft ? COLLIM.hipExtLMax : COLLIM.hipExtRMax); // Extension Limit
-
-    let adjustment = 0;
-    if (pose === 'sitting') {
-        const adj = POS_COLLIM_ADJUSTMENTS.sitting;
-        
-        // Check for Hip Flexion (-50)
-        if (sign > 0 && adj.hip_fe_adj) {
-            adjustment = adj.hip_fe_adj; // Apply -50
-        }
-    }
-    
-    return Math.max(0, universalCap + adjustment);
-} 
-
-// Hip Abduction / Adduction (Standard Logic)
-else if (/^hip_aa_/.test(key)) {
-    if (isLeft) {
-        // Left: + = Abduction, − = Adduction
-        return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
-    } else {
-        // Right: + = Adduction, − = Abduction
-        return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
-    }
-} 
-
-// Hip Internal / External Rotation (with Sitting Adjustment)
-else if (/^hip_irer_/.test(key)) {
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.hipERLMax : COLLIM.hipERRMax) : // External Rotation (ER)
-        (isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax); // Internal Rotation (IR)
-
-    let adjustment = 0;
-    if (pose === 'sitting' && sign > 0 && POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj) {
-        // Check for External Rotation (ER) only
-        adjustment = POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj; // Apply -10
-    }
-    return Math.max(0, universalCap + adjustment);
-}
-
-} else if(/^knee_fe_/.test(key)){
+    const pose = positionSel.value || 'standing';
     let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax) : // Flexion
-        (isLeft ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax); // Extension
+        (isLeft ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax) : 
+        (isLeft ? COLLIM.hipExtLMax : COLLIM.hipExtRMax); 
 
     let adjustment = 0;
     if (pose === 'sitting') {
         const adj = POS_COLLIM_ADJUSTMENTS.sitting;
-        
-        // Check for Knee Extension (sign < 0)
-        if (sign < 0 && adj.knee_ext_adj) {
-            adjustment = adj.knee_ext_adj; // +30
+        // Check for Hip Flexion (-50)
+        if (sign > 0 && adj.hip_fe_adj) {
+            adjustment = adj.hip_fe_adj; 
         }
-        // Note: Knee Flexion (sign > 0) has no specific sitting cap here, so adjustment remains 0.
     }
-    
+    return Math.max(0, universalCap + adjustment);
+} 
+
+// Hip Abduction / Adduction (Standard Logic)
+else if (/^hip_aa_/.test(key)) {
+    if (isLeft) {
+        return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
+    } else {
+        return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
+    }
+} 
+
+// Hip Internal / External Rotation (with Sitting Adjustment)
+else if (/^hip_irer_/.test(key)) {
+    const pose = positionSel.value || 'standing';
+    let universalCap = (sign > 0) ? 
+        (isLeft ? COLLIM.hipERLMax : COLLIM.hipERRMax) : 
+        (isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax); 
+
+    let adjustment = 0;
+    if (pose === 'sitting' && sign > 0 && POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj) {
+        // Check for External Rotation (ER) only
+        adjustment = POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj; // Apply -10
+    }
     return Math.max(0, universalCap + adjustment);
 }
 
-} else if (/^ankle_dfpf_/.test(key)){
-    let universalCap = (sign > 0) ? 
+// Knee Flexion/Extension (with Sitting Adjustment)
+else if(/^knee_fe_/.test(key)){
+    const pose = positionSel.value || 'standing';
+    let universalCap = (sign > 0) ? 
+        (isLeft ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax) : 
+        (isLeft ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax); 
+
+    let adjustment = 0;
+    if (pose === 'sitting') {
+        const adj = POS_COLLIM_ADJUSTMENTS.sitting;
+        // Check for Knee Extension (sign < 0)
+        if (sign < 0 && adj.knee_ext_adj) {
+            adjustment = adj.knee_ext_adj; // Apply +30
+        }
+    }
+    return Math.max(0, universalCap + adjustment);
+}
+
+// Ankle PF/DF (with Supine Adjustment)
+else if (/^ankle_dfpf_/.test(key)){
+    const pose = positionSel.value || 'standing';
+    let universalCap = (sign > 0) ? 
         (isLeft ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax) : // Dorsiflexion
         (isLeft ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax); // Plantarflexion
 
-    let adjustment = 0;
-    if (pose === 'supine' && POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj) {
-        adjustment = POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj; // +10
-    }
-    
+    let adjustment = 0;
+    if (pose === 'supine' && POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj) {
+        adjustment = POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj; // Apply +10
+    }
     return Math.max(0, universalCap + adjustment);
 }
+// === END REPLACEMENT BLOCK ===
 
 // Foot Inversion / Eversion
 if(/^foot_invev_/.test(key)){
