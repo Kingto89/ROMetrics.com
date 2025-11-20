@@ -1758,31 +1758,44 @@ actionDeg.addEventListener("input", ()=> {
   // Signed degrees for the chosen direction
   let signed = CURRENT_ACTION.sign * val;
 
-  // === DYNAMIC COUPLING: HIP FLEXION to KNEE FLEXION ===
-// This block must run even if the angle is capped (e.g., in sitting position)
-if (CURRENT_ACTION.key.startsWith('hip_fe_') && CURRENT_ACTION.sign > 0) {
+// === DYNAMIC COUPLING: HIP FLEXION to KNEE FLEXION (Only for Non-Sitting) ===
+if (CURRENT_ACTION.key.startsWith('hip_fe_') && CURRENT_ACTION.sign > 0 && positionSel.value !== 'sitting') {
     const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
     const HIP_COUPLING_START = 90; // Start coupling after 90 degrees of hip flex
-    
+    
     // Calculate the amount the hip has traveled past the 90 degree threshold
     let coupledFlexion = Math.max(0, signed - HIP_COUPLING_START);
-    
+    
     // Scale the excess hip movement (max 30°) to full knee flexion (max 90°). Ratio is 3:1.
-    let kneeFlexion = coupledFlexion * 5; 
+    let kneeFlexion = coupledFlexion * 5; 
 
     // Clamp the knee angle to ensure it doesn't exceed 150 degrees (max physical limit)
     kneeFlexion = Math.min(150, Math.max(0, kneeFlexion));
 
     // Apply the coupled knee flexion (using a NEGATIVE value as required by the knee_fe key)
-    setPair(`knee_fe_${side}`, -kneeFlexion); 
-    
+    setPair(`knee_fe_${side}`, -kneeFlexion); 
+    
     // Only log if coupling is actually happening
     if(coupledFlexion > 0) log(`Dynamic Knee Flexion: ${Math.round(kneeFlexion)}°`);
-    
+    
 }
+ // ----------------------------------------------------------------------
+ // === NEW: SITTING POSE ISOLATION (Keep Knee at 90) ===
+if (CURRENT_ACTION.key.startsWith('hip_fe_') && CURRENT_ACTION.sign > 0 && positionSel.value === 'sitting') {
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
 
-  // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
-// ... (rest of the actionDeg.addEventListener remains here) ...
+    // 1. Apply the user's angle to the Hip Flexion (e.g., 0° to 50°)
+    // This ensures the Hip movement is reflected.
+    applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+    
+    // 2. OVERRIDE KNEE MOVEMENT: Force the knee back to 90 degrees flexion
+    // This keeps the knee fixed at the starting posture, preventing movement.
+    setPair(`knee_fe_${side}`, -90); // Note: -90 for knee_fe key means 90 degrees of flexion
+
+    log(`Isolated Hip Flexion ${signed}° in Sitting. Knee held at 90°.`);
+    return; // IMPORTANT: Exit the function to prevent the generic path from running.
+}
+ // ----------------------------------------------------------------------
 
   // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
   if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
