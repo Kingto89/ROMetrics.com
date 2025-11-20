@@ -3,501 +3,214 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MMT Trainer</title>
+<title>MMT Trainer — Side Notes</title>
 
 <script type="importmap">
 {
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
 }
 </script>
 
 <style>
-/* --- MMT COLOR SCHEME: Teal & Charcoal --- */
 :root{
-    --bg:#f1f5f9;        /* Light Gray Background */
-    --panel:#ffffff;     /* White Panel */
-    --line:#cbd5e1;      /* Cool Gray Border */
-    --ctrl:#e2e8f0;      /* Lighter Control BG */
-    --text:#0f172a;      /* Dark Charcoal Text */
-    --muted:#64748b;     /* Muted Gray Text */
-    --primary-teal: #0d9488; /* Deep Teal for emphasis */
-    --secondary-yellow: #facc15; /* Bright Yellow for test */
+  --bg:#f1f5f9; --panel:#ffffff; --line:#cbd5e1; --ctrl:#e2e8f0;
+  --text:#0f172a; --muted:#64748b; --primary:#0d9488; --accent:#facc15;
 }
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
-.panel{position:fixed;left:25px;top:12px;width:360px;max-height:90vh;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+.panel{position:fixed;left:25px;top:12px;width:380px;max-height:92vh;z-index:100;background:var(--panel);
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:var(--ctrl);border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
 .content{padding:12px;overflow:auto}
 label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
 select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid var(--line);color:var(--text)}
-.row{display:flex;gap:8px}.row>button{flex:1}
+.row{display:flex;gap:8px}.row>button,.row>select{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid var(--line)}
-#log{background:var(--ctrl);border:1px solid var(--line);min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap;color:var(--text)}
+.lockOn{background:#0b3a1f;border-color:#16a34a;color:#fff}
 #msg{position:fixed;bottom:10px;left:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;color:var(--text)}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#log{display:none;background:var(--ctrl);border:1px solid var(--line);min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap;color:var(--text)}
 
+/* Resistance button */
+#testButton{position:relative;padding:12px 10px;font-weight:700;overflow:hidden;touch-action:none;background:var(--ctrl)}
+#resistanceFill{position:absolute;top:0;left:0;width:0;height:100%;background-color:var(--accent);transition:width .1s linear;z-index:1}
+#resistanceText{position:relative;z-index:2}
+#instructionText{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 12px 0;display:none}
+
+/* Right-side note panel (smaller) */
+#notePanel{position:fixed;top:16px;right:16px;width:min(420px,46vw);max-height:70vh;display:none;z-index:140;
+  background:#e2e8f0; /* light slate */
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  display:flex;flex-direction:column;overflow:hidden}
+.note-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#dbe4ee;border-bottom:1px solid var(--line)}
+.note-head h3{margin:0;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-tabs{display:flex;gap:8px}
+.note-tabs button{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.note-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-body{padding:12px;overflow:auto;background:#fff}
+.note-close{border-radius:8px;border:1px solid var(--line);padding:6px 10px;background:#fff}
+@media (max-width: 720px){
+  #notePanel{right:8px;left:8px;width:auto;max-height:60vh}
+}
 .hide{display:none !important;}
-.lockOn{background:#0b3a1f;border-color:#16a34a}
-
-/* MMT Specific Styles */
-.mmt-pill.active {
-    border-color: var(--primary-teal);
-    box-shadow: 0 0 8px rgba(13, 148, 136, 0.6);
-}
-/* Hand Placement Visuals (Stabilizer = Teal, Test = Yellow) */
-.place-btn.stabilize { border-color: var(--primary-teal); color: var(--primary-teal); }
-.place-btn.stabilize.active { background: var(--primary-teal); color: white; border-color: var(--primary-teal); }
-.place-btn.test { border-color: var(--secondary-yellow); color: #b45309; }
-.place-btn.test.active { background: #b45309; color: white; border-color: #b45309; }
-.place-btn:disabled { opacity: 0.5; cursor: default; }
-
-/* The new progressive resistance button */
-#testButton {
-    position: relative;
-    padding: 12px 10px;
-    font-weight: 700;
-    overflow: hidden;
-    transition: background-color 0.2s;
-    touch-action: none; 
-    background: var(--ctrl); 
-}
-#resistanceFill {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background-color: var(--secondary-yellow); 
-    transition: width 0.1s linear;
-    z-index: 1;
-}
-#resistanceText {
-    position: relative;
-    z-index: 2;
-    color: var(--text);
-    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3); 
-}
-#instructionText {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-    margin: 4px 0 12px 0;
-    display: none; 
-}
-
-/* --- New: MMT Guide Modal Styles --- */
-#mmtGuideModal {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 200; /* Above all other elements */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-#mmtGuideContent {
-    background: var(--panel);
-    border-radius: 12px;
-    padding: 25px;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    position: relative;
-    animation: fadeIn 0.3s ease-out;
-}
-#mmtGuideContent h3 {
-    color: var(--primary-teal);
-    margin-top: 0;
-    border-bottom: 2px solid var(--line);
-    padding-bottom: 10px;
-}
-#mmtGuideContent p {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 15px;
-}
-#mmtGuideClose {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: var(--ctrl);
-    border: 1px solid var(--line);
-    color: var(--text);
-    padding: 4px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-/* New style for the MMT Guide button to match the mini style */
-#mmtGuideBtn {
-    background: var(--primary-teal);
-    color: white;
-    font-weight: 600;
-}
-#mmtGuideBtn:disabled {
-    background: var(--ctrl);
-    color: var(--muted);
-    opacity: 0.8;
-    cursor: default;
-}
 </style>
 </head>
 <body>
 
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
-    <div class="content">
+<div class="panel" id="panel">
+  <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
+  <div class="content">
 
-        <label>MMT Test & Muscle</label>
-        <select id="actionSel">
-            <option value="">(Select a test to begin…)</option>
-            <optgroup label="Scapula">
-              <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
-              <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
-              <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
-              <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
-              <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
-            </optgroup>
-            <optgroup label="Shoulder">
-              <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
-              <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
-              <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
-              <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
-              <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
-            </optgroup>
-            <optgroup label="Elbow">
-              <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
-              <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
-              <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
-              <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
-            </optgroup>
-            <optgroup label="Wrist">
-              <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
-              <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
-              <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
-              <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
-              <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
-            </optgroup>
-            <optgroup label="Hip">
-              <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
-              <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
-              <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
-              <option value="Hip_ER">Hip External Rotation</option>
-              <option value="Hip_IR">Hip Internal Rotation</option>
-            </optgroup>
-            <optgroup label="Knee">
-              <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
-              <option value="Quadriceps">Knee Extension (Quadriceps)</option>
-            </optgroup>
-            <optgroup label="Ankle & Foot">
-              <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
-              <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
-            </optgroup>
-        </select>
+    <label>MMT Test & Muscle</label>
+    <select id="actionSel">
+      <option value="">(Select a test to begin…)</option>
 
-        <div class="row" style="margin-top:10px;">
-                    <button id="mmtGuideBtn" class="mini" disabled>📚 MMT Guide</button>
-          <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
-        </div>
+      <optgroup label="Scapula">
+        <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
+        <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
+        <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
+        <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
+        <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
+      </optgroup>
 
-       <label>Test Grade Selection</label>
-<div class="row">
-    <select id="grade-main" name="grade-main">
-        <option value="3">Grade 3 - 5 (Full ROM / Resistance: none, Mod, Max)</option>
-        <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
-        <option value="1">Grade 1 (Trace Contraction)</option>
-        <option value="0">Grade 0 (No Contraction)</option>
-    </select>
-    <select id="GradingExceptions" name="GradingExceptions">
-        <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
-        <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
-        <option value="3">Grade 3 (Full ROM / No Resistance)</option>
-        <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
-        <option value="1">Grade 1 (Trace Contraction)</option>
-    </select>
+      <optgroup label="Shoulder">
+        <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
+        <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
+        <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
+        <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
+        <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
+      </optgroup>
+
+      <optgroup label="Elbow">
+        <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
+        <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
+        <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
+        <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
+      </optgroup>
+
+      <optgroup label="Wrist">
+        <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
+        <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
+        <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
+        <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
+        <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
+      </optgroup>
+
+      <optgroup label="Hip">
+        <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
+        <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
+        <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
+        <option value="Hip_ER">Hip External Rotation</option>
+        <option value="Hip_IR">Hip Internal Rotation</option>
+      </optgroup>
+
+      <optgroup label="Knee">
+        <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
+        <option value="Quadriceps">Knee Extension (Quadriceps)</option>
+      </optgroup>
+
+      <optgroup label="Ankle & Foot">
+        <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
+        <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
+      </optgroup>
+    </select>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
+      <button id="showMMT" class="mini">📌 MMT Placement</button>
+    </div>
+
+    <label>Test Grade Selection</label>
+    <div class="row">
+      <select id="grade-main" name="grade-main">
+        <option value="3">Grade 3 - 5 (Full ROM / Resistance: none, Mod, Max)</option>
+        <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+        <option value="1">Grade 1 (Trace Contraction)</option>
+        <option value="0">Grade 0 (No Contraction)</option>
+      </select>
+      <select id="GradingExceptions" name="GradingExceptions">
+        <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
+        <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
+        <option value="3">Grade 3 (Full ROM / No Resistance)</option>
+        <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+        <option value="1">Grade 1 (Trace Contraction)</option>
+      </select>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="testButton" disabled>
+        <div id="resistanceFill"></div>
+        <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
+      </button>
+    </div>
+    <p id="instructionText">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
+
+    <label>Model Control</label>
+    <div class="row">
+      <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
+      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+    </div>
+
+    <pre id="log"></pre>
+  </div>
 </div>
-        
-                <div class="row" style="margin-top:10px;">
-          <button id="testButton" disabled>
-            <div id="resistanceFill"></div>
-            <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
-          </button>
-        </div>
-        <p id="instructionText">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
 
-        <label>Hands/Arm Placement (After Start Test)</label>
-        <div class="row">
-          <button id="placeStabilize" class="mini place-btn stabilize" disabled>📍 Stabilize Arm</button>
-          <button id="placeTest" class="mini place-btn test" disabled>✋ Test Arm</button>
-        </div>
-        <p style="font-size:12px;color:var(--muted);text-align:center;margin:4px 0 8px 0;">Click to place virtual MMT hands/arms.</p>
-        
+<div id="msg">Loading…</div>
+<canvas id="c"></canvas>
 
-      <label style="margin-top:12px;">Model Control</label>
-      <div class="row">
-        <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
-        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-      </div>
+<!-- Right-side notes panel -->
+<div id="notePanel" class="hide">
+  <div class="note-head">
+    <h3 id="noteTitle">MMT Instructions</h3>
+    <div class="note-tabs">
+      <button id="tabHigh" class="active">Grades 3–5</button>
+      <button id="tabLow">Grades 0–2</button>
+    </div>
+    <button class="note-close" id="closeNote">Close ✕</button>
+  </div>
+  <div class="note-body" id="noteBody">Loading…</div>
+</div>
 
+<!-- Absolute override as requested -->
+<script>
+  window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
+</script>
 
-      <label style="display:none">Event Log</label>
-      <pre id="log" style="display:none"></pre>
-    </div>
-  </div>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-  <div id="msg">Loading…</div>
-  <canvas id="c"></canvas>
-  
-    <div id="mmtGuideModal" class="hide">
-    <div id="mmtGuideContent">
-      <button id="mmtGuideClose">❌ Close</button>
-      <h3 id="guideTitle">MMT Test Instructions</h3>
-      <div id="guideText"></div>
-    </div>
-  </div>
-
-    <script>
-    window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
-  </script>
-
-  <script type="module">
-  import * as THREE from "three";
-  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-  import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
-  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
-   
-/* ===================== MMT CONFIGURATION ===================== */
-
-// Surface runtime JS errors to the UI
+/* ==== Error surfacing ==== */
 window.addEventListener('error', (e) => {
-  const m = document.getElementById("msg");
-  if (m) m.textContent = `⚠️ ${e.message}`;
-  const l = document.getElementById("log");
-  if (l) { l.textContent += `Error: ${e.message}\\n`; l.scrollTop = l.scrollHeight; }
+  const m = document.getElementById("msg");
+  if (m) m.textContent = `⚠️ ${e.message}`;
 });
 
-// MMT Test Definitions (Simplified and Linked to Bone Keys)
-const MMT_TESTS = {
-    "Serratus_Anterior": { name: "Scapular Abduction & Upward Rotation", muscle: "Serratus Anterior", actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting', cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Upper_Trapezius": { name: "Scapular Elevation", muscle: "Upper Trapezius, Levator Scapulae", actionKey: 'cerv_lat', plane: 'frontal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: '', max: 45, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Middle_Trapezius": { name: "Scapular Adduction / Retraction", muscle: "Middle Trapezius", actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Rhomboids": { name: "Scapular Adduction + Downward Rotation", muscle: "Rhomboids", actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Latissimus_Dorsi": { name: "Shoulder Depression/Extension Pattern", muscle: "Latissimus Dorsi", actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-
-    "Anterior_Deltoid": { name: "Shoulder Flexion", muscle: "Anterior Deltoid, Coracobrachialis", actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Posterior_Deltoid": { name: "Shoulder Extension", muscle: "Posterior Deltoid, Lat, Teres Major", actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Middle_Deltoid": { name: "Shoulder Abduction", muscle: "Middle Deltoid, Supraspinatus", actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting', cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Infraspinatus": { name: "Shoulder External Rotation", muscle: "Infraspinatus, Teres Minor", actionKey: 'sh_irer_l', plane: 'transverse', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Subscapularis": { name: "Shoulder Internal Rotation", muscle: "Subscapularis, Teres Major, Pec Major, Lat", actionKey: 'sh_irer_l', plane: 'transverse', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 70, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Biceps_Brachii": { name: "Elbow Flexion — Biceps Brachii (supinated)", muscle: "Biceps Brachii", actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Brachialis": { name: "Elbow Flexion — Brachialis (pronated)", muscle: "Brachialis", actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Brachioradialis": { name: "Elbow Flexion — Brachioradialis (neutral)", muscle: "Brachioradialis", actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Triceps_Brachii": { name: "Elbow Extension", muscle: "Triceps Brachii", actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 10, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "ECRL": { name: "Wrist Extension — ECRL", muscle: "Extensor Carpi Radialis Longus (ECRL)", actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "ECRB": { name: "Wrist Extension — ECRB", muscle: "Extensor Carpi Radialis Brevis (ECRB)", actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "ECU": { name: "Wrist Extension — ECU", muscle: "Extensor Carpi Ulnaris (ECU)", actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "FCR": { name: "Wrist Flexion — FCR", muscle: "Flexor Carpi Radialis (FCR)", actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "FCU": { name: "Wrist Flexion — FCU", muscle: "Flexor Carpi Ulnaris (FCU)", actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Iliopsoas": { name: "Hip Flexion", muscle: "Iliopsoas", actionKey: 'hip_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 120, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Glute_Max": { name: "Hip Extension", muscle: "Glute Max, Hamstrings", actionKey: 'hip_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 30, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Glute_Med": { name: "Hip Abduction", muscle: "Glute Med, Glute Min", actionKey: 'hip_aa_l', plane: 'frontal', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Hip_ER": { name: "Hip External Rotation", muscle: "Hip External Rotators", actionKey: 'hip_irer_l', plane: 'transverse', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Hip_IR": { name: "Hip Internal Rotation", muscle: "Hip Internal Rotators", actionKey: 'hip_irer_l', plane: 'transverse', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Hamstrings": { name: "Knee Flexion", muscle: "Hamstrings", actionKey: 'knee_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Quadriceps": { name: "Knee Extension", muscle: "Quadriceps", actionKey: 'knee_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 55, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Tibialis_Anterior": { name: "Dorsiflexion + Inversion", muscle: "Tibialis Anterior", actionKey: 'ankle_dfpf_l', plane: 'sagittal', pose: { name: 'sitting', cam: [3, 0.5, 3] }, side: 'l', max: 20, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Gastrocnemius": { name: "Plantar Flexion", muscle: "Gastrocnemius, Soleus", actionKey: 'ankle_dfpf_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 0.5, 3] }, side: 'l', max: 50, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-};
-
-let CURRENT_MMT = null;
-let resistanceTimer = null;
-let resistanceStartTime = 0;
-const RESISTANCE_FILL_TIME = 2000;
-
-/* ===================== HANDS (SVG dots) ===================== */
-const MMT_HANDS = {
-    stabilize: { x: -100, y: -100, placed: false, color: '#0d9488', element: null },
-    test:      { x: -100, y: -100, placed: false, color: '#facc15', element: null }
-};
-let activeHandTarget = null;
-const handSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-handSvg.setAttribute("id","handSvg");
-handSvg.setAttribute("style","position:fixed;inset:0;width:100vw;height:100vh;background:transparent;pointer-events:none;z-index:10");
-const handDotsGrp = document.createElementNS("http://www.w3.org/2000/svg","g");
-handDotsGrp.setAttribute("id","handDots");
-handSvg.appendChild(handDotsGrp);
-document.body.appendChild(handSvg);
-
-function updateHandDot(handKey) {
-  const hand = MMT_HANDS[handKey];
-  if (!hand.element) {
-    const NS = "http://www.w3.org/2000/svg";
-    hand.element = document.createElementNS(NS, 'circle');
-    hand.element.setAttribute('r', '8');
-    hand.element.setAttribute('stroke', hand.color);
-    hand.element.setAttribute('stroke-width', '3');
-    hand.element.setAttribute('fill', 'rgba(0,0,0,0.5)');
-    handDotsGrp.appendChild(hand.element);
-  }
-  hand.element.style.display = hand.placed ? 'block' : 'none';
-  if (hand.placed) { hand.element.setAttribute('cx', hand.x); hand.element.setAttribute('cy', hand.y); }
-}
-
-function placeHand(e) {
-  if (!activeHandTarget) return;
-  const rect = handSvg.getBoundingClientRect();
-  const hand = MMT_HANDS[activeHandTarget];
-  hand.x = e.clientX - rect.left;
-  hand.y = e.clientY - rect.top;
-  hand.placed = true;
-  updateHandDot(activeHandTarget);
-  document.getElementById(`place${activeHandTarget.charAt(0).toUpperCase()+activeHandTarget.slice(1)}`)?.classList.remove('active');
-  activeHandTarget = null;
-  handSvg.style.pointerEvents = 'none';
-}
-
-/* ===================== UI WIRING ===================== */
+/* ==== UI refs ==== */
+const canvas = document.getElementById("c");
 const logEl = document.getElementById("log");
 const log = (t) => { logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
-const canvas = document.getElementById("c");
+
 const actionSel = document.getElementById("actionSel");
 const startTestBtn = document.getElementById("startTestBtn");
-const mmtGuideBtn = document.getElementById("mmtGuideBtn"); // NEW
+const showMMT = document.getElementById("showMMT");
+
 const testButton = document.getElementById("testButton");
 const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
 const instructionText = document.getElementById("instructionText");
-const placeStabilizeBtn = document.getElementById("placeStabilize");
-const placeTestBtn = document.getElementById("placeTest");
-const grade35 = document.getElementById("grade-main");
-const grade02 = document.getElementById("GradingExceptions");
-const mmtGuideModal = document.getElementById("mmtGuideModal"); // NEW
-const mmtGuideContent = document.getElementById("mmtGuideContent"); // NEW
-const mmtGuideClose = document.getElementById("mmtGuideClose"); // NEW
-const guideTitle = document.getElementById("guideTitle"); // NEW
-const guideText = document.getElementById("guideText"); // NEW
+const gradeMain = document.getElementById("grade-main");
 
-// NEW: MMT Guide Button Logic
-function getGuideContent(testID, testName, muscleName) {
-    // This is where you would load the content from the .md files.
-    // Since JS in a single HTML file can't read local files (like your mmt/rometrics_mmt_*.md),
-    // this uses placeholder text that is dynamically generated.
-    // To actually use your MD files, you'd need a server or a more complex setup.
-    // The structure below simulates what the content would look like.
-    
-    let content = "";
-    let grade02Text = `
-        <h4>Grades 0 - 2 (Gravity Eliminated / Trace)</h4>
-        <ul>
-            <li><strong>Position:</strong> Patient is moved into a gravity-eliminated position.</li>
-            <li><strong>Test:</strong> Ask the patient to move through the full available range of motion.</li>
-            <li><strong>Grade 2 (Poor):</strong> Patient completes full ROM in the gravity-eliminated plane.</li>
-            <li><strong>Grade 1 (Trace):</strong> No visible movement, but a palpable or observable trace of contraction in the muscle or tendon.</li>
-            <li><strong>Grade 0 (Zero):</strong> No contraction observed or palpated.</li>
-        </ul>
-    `;
-    let grade35Text = `
-        <h4>Grades 3 - 5 (Against Gravity / Resistance)</h4>
-        <ul>
-            <li><strong>Position:</strong> Patient is positioned against gravity (e.g., sitting for shoulder abduction).</li>
-            <li><strong>Grade 3 (Fair):</strong> Patient completes full available Range of Motion (ROM) against gravity, but cannot tolerate any added resistance.</li>
-            <li><strong>Grade 4 (Good):</strong> Patient completes full ROM against gravity and can tolerate moderate resistance before breaking the hold.</li>
-            <li><strong>Grade 5 (Normal):</strong> Patient completes full ROM against gravity and can tolerate maximal resistance before breaking the hold.</li>
-        </ul>
-    `;
-    
-    // General template for a specific test
-    content += `
-        <h3>${testName} (${muscleName})</h3>
-        <p><strong>Purpose:</strong> To assess the functional strength of the ${muscleName} muscle group.</p>
-        <hr>
-        ${grade35Text}
-        ${grade02Text}
-        <p style="margin-top:20px; font-size:12px; color:var(--muted);"><em>Specific Stabilization and Test Force application points are shown on the model when the "Start Test" button is pressed.</em></p>
-    `;
-    
-    return content;
-}
-
-mmtGuideBtn.addEventListener("click", ()=>{
-    if (!CURRENT_MMT) return;
-    
-    const selectedOption = actionSel.options[actionSel.selectedIndex];
-    const testID = actionSel.value;
-    const testName = selectedOption.text.split('(')[0].trim();
-    const muscleName = selectedOption.text.match(/\(([^)]+)\)/)?.[1] || "Muscle Group";
-
-    guideTitle.textContent = `${testName} MMT Guide`;
-    guideText.innerHTML = getGuideContent(testID, testName, muscleName);
-
-    mmtGuideModal.classList.remove('hide');
-    log(`Opened MMT Guide for: ${testID}`);
-});
-
-mmtGuideModal.addEventListener("click", (e)=>{
-    // Close when clicking the close button or the backdrop
-    if (e.target === mmtGuideModal || e.target === mmtGuideClose) {
-        mmtGuideModal.classList.add('hide');
-        log("Closed MMT Guide.");
-    }
-});
-
-// Update MMT Guide button on test selection
-actionSel.addEventListener("change", () => {
-    const testID = actionSel.value;
-    CURRENT_MMT = MMT_TESTS[testID] || null;
-    
-    const isTestSelected = testID !== "";
-    mmtGuideBtn.disabled = !isTestSelected; // Enable/Disable guide button
-    
-    // Rest of your change logic (resetting buttons, etc.) goes here
-    if (CURRENT_MMT) {
-        log(`Test selected: ${testID}`);
-    } else {
-        mmtGuideBtn.disabled = true;
-        log("Test selection cleared.");
-    }
-});
-// Trigger the initial check/setup
-actionSel.dispatchEvent(new Event('change'));
-
-placeStabilizeBtn.addEventListener("click", ()=>{
-  if (!CURRENT_MMT) return;
-  activeHandTarget = 'stabilize';
-  placeStabilizeBtn.classList.add('active');
-  placeTestBtn.classList.remove('active');
-  handSvg.style.pointerEvents = 'auto';
-  log("Stabilize arm selection active. Click to place.");
-});
-placeTestBtn.addEventListener("click", ()=>{
-  if (!CURRENT_MMT) return;
-  activeHandTarget = 'test';
-  placeTestBtn.classList.add('active');
-  placeStabilizeBtn.classList.remove('active');
-  handSvg.style.pointerEvents = 'auto';
-  log("Test arm selection active. Click to place.");
-});
-canvas.addEventListener('pointerdown', placeHand, { passive:false });
-handSvg.addEventListener('pointerdown', placeHand, { passive:false });
-
-/* ===================== THREE SETUP ===================== */
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+/* ==== THREE setup ==== */
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -508,132 +221,277 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf1f5f9);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
-camera.position.set(1.6, 1.6, 3.2);
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.minDistance = 0.6; controls.maxDistance = 6;
-controls.target.set(0, 1.1, 0);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.minDistance=.6; controls.maxDistance=6;
+controls.target.set(0,1.1,0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
 const key = new THREE.DirectionalLight(0xffffff, 1.2);
-key.position.set(2.5, 4, 2.5);
+key.position.set(2.5,4,2.5);
 key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-key.shadow.camera.near = 0.1; key.shadow.camera.far = 15;
-key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near=0.1; key.shadow.camera.far=15;
+key.shadow.camera.left=-4; key.shadow.camera.right=4;
+key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
 scene.add(key);
 
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.45 }));
-ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity:.45 }));
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
 
-/* ===================== LOADER ===================== */
+/* ==== Loader ==== */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
 const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
-const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
+const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
 
-let model = null, skeleton = null;
+let model=null, skeleton=null;
 const initialBoneRot = new Map();
-const JOINT_BIND = new Map();
 
 function groundSnap() {
-  if (!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  if (isFinite(minY)) model.position.y -= minY;
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  if (isFinite(minY)) model.position.y -= minY;
 }
 
-// force absolute override first, then fallbacks
 const MODEL_CANDIDATES = [
-  window.ROMETRICS_MODEL_URL,  // hard override
-  "assets/Roma_ROMetrics.glb",
-  new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
+  window.ROMETRICS_MODEL_URL,
+  "assets/Roma_ROMetrics.glb",
+  new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
 ].filter(Boolean);
 
 function tryNextModelUrl(index, onDone){
-    if(index >= MODEL_CANDIDATES.length){
-        onDone(new Error("All model URL fallbacks failed."));
-        return;
-    }
-    const MODEL_URL = MODEL_CANDIDATES[index];
-    log(`Loading model from: ${MODEL_URL}`);
-    loader.load(
-        MODEL_URL,
-        (gltf) => { onDone(null, gltf); },
-        (xhr) => {
-            const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)) : null;
-            document.getElementById("msg").textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
-        },
-        () => { tryNextModelUrl(index+1, onDone); }
-    );
+  if(index >= MODEL_CANDIDATES.length){
+    onDone(new Error("All model URL fallbacks failed."));
+    return;
+  }
+  const url = MODEL_CANDIDATES[index];
+  log("Loading model from: " + url);
+  loader.load(
+    url,
+    (gltf)=> onDone(null, gltf),
+    (xhr)=>{
+      const pct = xhr.lengthComputable ? Math.min(100, Math.round(100*xhr.loaded/xhr.total)) : null;
+      document.getElementById("msg").textContent = pct!==null ? `Loading ${pct}%` : "Loading…";
+    },
+    ()=> tryNextModelUrl(index+1, onDone)
+  );
 }
 
-function loadModel() {
-    tryNextModelUrl(0, (err, gltf) => {
-        if (err) {
-            document.getElementById("msg").textContent = `⚠️ Load error: ${err.message}`;
-            log(`Error: Failed to load GLB model from all fallbacks.`);
-            return;
-        }
-        model = gltf.scene;
-        model.traverse(o => {
-            if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
-            if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-        });
-        scene.add(model);
-        groundSnap();
-        document.getElementById("msg").textContent = "✅ Model loaded";
+function loadModel(){
+  tryNextModelUrl(0, (err, gltf)=>{
+    if (err){
+      document.getElementById("msg").textContent = `⚠️ Load error: ${err.message}`;
+      log("All fallbacks failed.");
+      return;
+    }
+    model = gltf.scene;
+    model.traverse(o=>{
+      if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+      if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+    });
+    scene.add(model);
+    groundSnap();
+    document.getElementById("msg").textContent = "✅ Model loaded";
 
-        if (skeleton){
-            skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-            log("Model baselines set.");
-        } else {
-            log("Warning: No skeleton detected.");
-        }
-
-        applyAnatomicBaseline();
-        controls.target.set(0,1.1,0);
-        camera.position.set(1.6,1.6,3.2);
-        controls.update();
-    });
+    if (skeleton){
+      skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+    }
+  });
 }
 loadModel();
 
-document.getElementById("lock3D").onclick = () => {
-  const enabled = controls.enabled;
-  controls.enabled = !enabled;
-  const btn = document.getElementById("lock3D");
-  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
-  btn.classList.toggle('lockOn', !controls.enabled);
-};
+/* ==== Resistance fill (restored) ==== */
+let resistanceTimer = null;
+let resistanceStartTime = 0;
+const RESISTANCE_FILL_TIME = 2000;
 
-/* ===================== POSE / ACTIONS (minimal to keep this focused on load) ===================== */
-function resetAllBonesToInitial() {
-  if (!skeleton) return;
-  skeleton.bones.forEach(b => {
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-  });
-  JOINT_BIND.clear();
+function handleResistanceButtonDown(e){
+  if (testButton.disabled) return;
+  e.preventDefault();
+  resistanceStartTime = performance.now();
+  instructionText.style.display = 'block';
+  testButton.classList.add('active');
+
+  resistanceTimer = setInterval(()=>{
+    const elapsed = performance.now() - resistanceStartTime;
+    const progress = Math.min(1, elapsed / RESISTANCE_FILL_TIME);
+    resistanceFill.style.width = `${progress*100}%`;
+
+    if (progress >= 1){
+      resistanceText.textContent = 'Grade 5: Maximum Resistance';
+      gradeMain.value = '5';
+    } else if (progress >= 0.5){
+      resistanceText.textContent = 'Grade 4: Moderate Resistance';
+      gradeMain.value = '4';
+    } else {
+      resistanceText.textContent = 'Applying Resistance...';
+    }
+  }, 100);
 }
-function setPair(){}
-function applyAnatomicBaseline(){}
-function updateModelPose(){}
-function startTestMovement(){}
 
-addEventListener("resize", () => {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+function handleResistanceButtonUp(){
+  if (!resistanceTimer) return;
+  clearInterval(resistanceTimer);
+  resistanceTimer = null;
+  testButton.classList.remove('active');
+  resistanceFill.style.width = '0';
+  resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
+  instructionText.style.display = 'none';
+}
+
+testButton.addEventListener('pointerdown', handleResistanceButtonDown);
+testButton.addEventListener('pointerup', handleResistanceButtonUp);
+testButton.addEventListener('pointercancel', handleResistanceButtonUp);
+testButton.addEventListener('contextmenu', e=>e.preventDefault());
+
+/* ==== Basic enablement ==== */
+actionSel.addEventListener('change', ()=>{
+  testButton.disabled = actionSel.value === "";
 });
 
-(function animate() {
-    controls.update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
+document.getElementById("lock3D").onclick = () => {
+  controls.enabled = !controls.enabled;
+  const btn = document.getElementById("lock3D");
+  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
+  btn.classList.toggle('lockOn', !controls.enabled);
+};
+
+document.getElementById("zeroAll").onclick = () => {
+  if (!skeleton) return;
+  skeleton.bones.forEach(b=>{
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+};
+
+/* ==== Side panel + Markdown loading ==== */
+const notePanel = document.getElementById('notePanel');
+const noteTitle = document.getElementById('noteTitle');
+const noteBody  = document.getElementById('noteBody');
+const tabHigh   = document.getElementById('tabHigh'); // 3–5
+const tabLow    = document.getElementById('tabLow');  // 0–2
+const closeNote = document.getElementById('closeNote');
+
+// GitHub RAW URLs for the two docs
+const MD_HIGH = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_threetofive.md";
+const MD_LOW  = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_zerototwo.md";
+
+// Map select values to readable headings to find in MD
+const TEST_TO_HEADING = {
+  Serratus_Anterior: "Scapular Abduction & Upward Rotation",
+  Upper_Trapezius: "Scapular Elevation",
+  Middle_Trapezius: "Scapular Adduction / Retraction",
+  Rhomboids: "Scapular Adduction + Downward Rotation",
+  Latissimus_Dorsi: "Latissimus Dorsi",
+  Anterior_Deltoid: "Shoulder Flexion",
+  Posterior_Deltoid: "Shoulder Extension",
+  Middle_Deltoid: "Shoulder Abduction",
+  Infraspinatus: "Shoulder External Rotation",
+  Subscapularis: "Shoulder Internal Rotation",
+  Biceps_Brachii: "Elbow Flexion — Biceps Brachii",
+  Brachialis: "Elbow Flexion — Brachialis",
+  Brachioradialis: "Elbow Flexion — Brachioradialis",
+  Triceps_Brachii: "Elbow Extension",
+  ECRL: "Wrist Extension — ECRL",
+  ECRB: "Wrist Extension — ECRB",
+  ECU: "Wrist Extension — ECU",
+  FCR: "Wrist Flexion — Flexor Carpi Radialis",
+  FCU: "Wrist Flexion — Flexor Carpi Ulnaris",
+  Iliopsoas: "Hip Flexion",
+  Glute_Max: "Hip Extension",
+  Glute_Med: "Hip Abduction",
+  Hip_ER: "Hip External Rotation",
+  Hip_IR: "Hip Internal Rotation",
+  Hamstrings: "Knee Flexion",
+  Quadriceps: "Knee Extension",
+  Tibialis_Anterior: "Foot Dorsiflexion + Inversion",
+  Gastrocnemius: "Ankle Plantar Flexion"
+};
+
+function mdToHtml(md){
+  // Tiny converter for headings/lists/bold/paragraphs
+  return md
+    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+    .replace(/^\* (.*)$/gm, "<li>$1</li>")
+    .replace(/^- (.*)$/gm, "<li>$1</li>")
+    .replace(/(\n<li>.*<\/li>)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/^([^<\n].*)$/gm, "<p>$1</p>");
+}
+
+// Extract section starting with matching "## Heading" until next "##"
+function extractSection(md, queryHeading){
+  const lines = md.split(/\r?\n/);
+  let start = -1;
+  for (let i=0;i<lines.length;i++){
+    if (lines[i].startsWith("## ") && lines[i].toLowerCase().includes(queryHeading.toLowerCase())){
+      start = i; break;
+    }
+  }
+  if (start === -1){
+    return md; // fallback: show whole doc if not found
+  }
+  let end = lines.length;
+  for (let j=start+1;j<lines.length;j++){
+    if (lines[j].startsWith("## ")){ end = j; break; }
+  }
+  return lines.slice(start, end).join("\n");
+}
+
+async function loadNoteFile(which){
+  const muscleKey = actionSel.value;
+  if (!muscleKey){
+    noteBody.innerHTML = "<p>Select a test first.</p>";
+    return;
+  }
+  const heading = TEST_TO_HEADING[muscleKey] || muscleKey.replaceAll("_"," ");
+  noteTitle.textContent = heading + " — MMT Instructions";
+  const url = (which === 'high') ? MD_HIGH : MD_LOW;
+  noteBody.innerHTML = "Loading…";
+  try{
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const section = extractSection(text, heading);
+    noteBody.innerHTML = mdToHtml(section);
+  }catch(e){
+    noteBody.textContent = "Failed to load instructions.";
+  }
+}
+
+function openNote(which='high'){
+  tabHigh.classList.toggle('active', which==='high');
+  tabLow.classList.toggle('active', which!=='high');
+  notePanel.classList.remove('hide');
+  notePanel.style.display = "flex";
+  loadNoteFile(which);
+}
+
+showMMT.addEventListener('click', ()=> openNote('high'));
+tabHigh.addEventListener('click', ()=> openNote('high'));
+tabLow.addEventListener('click', ()=> openNote('low'));
+closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
+
+/* ==== Loop & resize ==== */
+addEventListener("resize", ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+(function loop(){
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
 })();
-  </script>
+</script>
 </body>
 </html>
