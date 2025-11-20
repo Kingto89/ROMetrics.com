@@ -1677,7 +1677,7 @@ if (CURRENT_ACTION.key.startsWith('hip_fe_') && CURRENT_ACTION.sign > 0) {
     let coupledFlexion = Math.max(0, signed - HIP_COUPLING_START);
     
     // Scale the excess hip movement (max 30°) to full knee flexion (max 90°). Ratio is 3:1.
-    let kneeFlexion = coupledFlexion * 3; 
+    let kneeFlexion = coupledFlexion * 5; 
 
     // Clamp the knee angle to ensure it doesn't exceed 150 degrees (max physical limit)
     kneeFlexion = Math.min(150, Math.max(0, kneeFlexion));
