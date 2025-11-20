@@ -1333,12 +1333,11 @@ function updateModelPose(pose) {
     controls.update();
     log(`Model set to ${pose.toUpperCase()} position.`);
 }
-  positionSel.onchange = () => {
-  updateModelPose(positionSel.value);
+positionSel.onchange = () => {
+    updateModelPose(positionSel.value);
     
-    // When pose changes, reset the action selection and slider
-    actionSel.value = "";
-    syncActionUI(true);
+    // The selection is NOT cleared, allowing the Action menu to remain active.
+    syncActionUI(true); 
 };
   let CURRENT = UPPER;
 
@@ -1626,7 +1625,6 @@ positionSel.onchange = () => {
     updateModelPose(positionSel.value);
     
     // When pose changes, reset the action selection and slider
-    actionSel.value = "";
     syncActionUI(true);
 };
   // === Anatomic preset (preloaded) ===
@@ -1645,11 +1643,24 @@ function applyAnatomicBaseline(){
   log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
 }
 
-  // Always return to anatomic when changing actions; then freeze bind
-  actionSel.addEventListener("change", ()=>{
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
-    CURRENT_ACTION = null;
+// Always return to anatomic when changing actions; then freeze bind
+  actionSel.addEventListener("change", ()=>{
+    
+    // 1. Full Reset (This clears the model's sitting bones)
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    
+    // === RESTORE SITTING POSE IF ACTIVE ===
+    if (positionSel.value === 'sitting') {
+        // Apply Hip and Knee Flexion again to maintain the sitting posture
+        setPair('hip_fe_l', 90);
+        setPair('hip_fe_r', 90);
+        setPair('knee_fe_l', -90);
+        setPair('knee_fe_r', -90);
+        log(`Restoring Sitting Pose for action start.`);
+    }
+    CURRENT_ACTION = null;
+    // ... the rest of the function continues from here ...
     const v = actionSel.value || "";
     if (v.startsWith("sep:")){
       const [, key, signStr, maxStr] = v.split(":");
