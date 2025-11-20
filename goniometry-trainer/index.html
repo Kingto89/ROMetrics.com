@@ -828,6 +828,15 @@ if (regionSel.value === 'knee' &&
         log(`Custom Collision: Knee Flexion in Sitting: 35°`);
         return 35; // Apply the unique collision limit of 35°
 }
+/* --- START OF YOUR REQUESTED FIX: Thoracic/Lumbar Trunk Flexion (Sitting) --- */
+  if (region === 'thoracic_lumbar_spine' && 
+      position === 'sitting' && 
+      key === 'trunk_fe' &&
+      sign > 0 &&
+      actionLabel.includes('Flexion')) {
+          log(`Custom Collision: T/L Spine Flexion in Sitting: 30°`);
+          return 30; // Enforce the 30 degree limit
+  }  
 /* --- END OF NEW FIX --- */
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
