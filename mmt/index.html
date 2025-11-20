@@ -7,10 +7,10 @@
 
 <script type="importmap">
 {
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
 }
 </script>
 
@@ -84,163 +84,164 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     margin: 4px 0 12px 0;
     display: none; 
 }
+
+/* Utility */
+.hide { display: none !important; }
+.lockOn { background:#0b3a1f; border-color:#16a34a; color:#fff; }
 </style>
 </head>
 <body>
 
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
-    <div class="content">
+  <div class="panel" id="panel">
+    <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
+    <div class="content">
 
-        <label>MMT Test & Muscle</label>
-        <select id="actionSel">
-            <option value="">(Select a test to begin…)</option>
-            <optgroup label="Scapula">
-              <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
-              <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
-              <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
-              <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
-              <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
-            </optgroup>
-            <optgroup label="Shoulder">
-              <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
-              <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
-              <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
-              <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
-              <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
-            </optgroup>
-            <optgroup label="Elbow">
-              <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
-              <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
-              <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
-              <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
-            </optgroup>
-            <optgroup label="Wrist">
-              <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
-              <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
-              <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
-              <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
-              <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
-            </optgroup>
-            <optgroup label="Hip">
-              <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
-              <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
-              <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
-              <option value="Hip_ER">Hip External Rotation</option>
-              <option value="Hip_IR">Hip Internal Rotation</option>
-            </optgroup>
-            <optgroup label="Knee">
-              <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
-              <option value="Quadriceps">Knee Extension (Quadriceps)</option>
-            </optgroup>
-            <optgroup label="Ankle & Foot">
-              <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
-              <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
-            </optgroup>
-        </select>
+        <label>MMT Test & Muscle</label>
+        <select id="actionSel">
+            <option value="">(Select a test to begin…)</option>
+            <optgroup label="Scapula">
+              <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
+              <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
+              <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
+              <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
+              <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
+            </optgroup>
+            <optgroup label="Shoulder">
+              <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
+              <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
+              <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
+              <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
+              <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
+            </optgroup>
+            <optgroup label="Elbow">
+              <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
+              <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
+              <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
+              <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
+            </optgroup>
+            <optgroup label="Wrist">
+              <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
+              <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
+              <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
+              <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
+              <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
+            </optgroup>
+            <optgroup label="Hip">
+              <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
+              <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
+              <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
+              <option value="Hip_ER">Hip External Rotation</option>
+              <option value="Hip_IR">Hip Internal Rotation</option>
+            </optgroup>
+            <optgroup label="Knee">
+              <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
+              <option value="Quadriceps">Knee Extension (Quadriceps)</option>
+            </optgroup>
+            <optgroup label="Ankle & Foot">
+              <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
+              <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
+            </optgroup>
+        </select>
 
-        <div class="row" style="margin-top:10px;">
-          <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
-        </div>
+        <div class="row" style="margin-top:10px;">
+          <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
+        </div>
 
-        <label>Test Grade Selection</label>
-        <div class="row">
-          <select id="grade35">
-            <option value="3">Grade 3 (Full ROM / No Resistance)</option>
-            <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
-            <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
-          </select>
-          <select id="grade02">
-            <option value="0">Grade 0 (No Contraction)</option>
-            <option value="1">Grade 1 (Trace Contraction)</option>
-            <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
-          </select>
-        </div>
-        
-                <div class="row" style="margin-top:10px;">
-          <button id="testButton" disabled>
-            <div id="resistanceFill"></div>
-            <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
-          </button>
-        </div>
-        <p id="instructionText">Hold for 1s ($\text{Grade 4}$), Hold for 2s ($\text{Grade 5}$).</p>
+        <label>Test Grade Selection</label>
+        <div class="row">
+          <select id="grade35">
+            <option value="3">Grade 3 (Full ROM / No Resistance)</option>
+            <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
+            <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
+          </select>
+          <select id="grade02">
+            <option value="0">Grade 0 (No Contraction)</option>
+            <option value="1">Grade 1 (Trace Contraction)</option>
+            <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+          </select>
+        </div>
+        
+        <div class="row" style="margin-top:10px;">
+          <button id="testButton" disabled>
+            <div id="resistanceFill"></div>
+            <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
+          </button>
+        </div>
+        <p id="instructionText">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
 
-        <label>Hands/Arm Placement (After Start Test)</label>
-        <div class="row">
-          <button id="placeStabilize" class="mini place-btn stabilize" disabled>📍 Stabilize Arm</button>
-          <button id="placeTest" class="mini place-btn test" disabled>✋ Test Arm</button>
-        </div>
+        <label>Hands/Arm Placement (After Start Test)</label>
+        <div class="row">
+          <button id="placeStabilize" class="mini place-btn stabilize" disabled>📍 Stabilize Arm</button>
+          <button id="placeTest" class="mini place-btn test" disabled>✋ Test Arm</button>
+        </div>
         <p style="font-size:12px;color:var(--muted);text-align:center;margin:4px 0 8px 0;">Click to place virtual MMT hands/arms.</p>
-        
+        
+      <label style="margin-top:12px;">Model Control</label>
+      <div class="row">
+        <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
+        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+      </div>
 
-      <label style="margin-top:12px;">Model Control</label>
-      <div class="row">
-        <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
-        <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-      </div>
+      <label style="display:none">Event Log</label>
+      <pre id="log" style="display:none"></pre>
+    </div>
+  </div>
 
+  <div id="msg">Loading…</div>
+  <canvas id="c"></canvas>
 
-      <label style="display:none">Event Log</label>
-      <pre id="log" style="display:none"></pre>
-    </div>
-  </div>
+  <div id="handHost" class="hide" aria-hidden="true" style="position:fixed; inset:0; z-index:10; pointer-events:none">
+    <svg id="handSvg" style="width:100vw;height:100vh;background:transparent;pointer-events:none">
+      <g id="handDots"></g>
+    </svg>
+  </div>
 
-  <div id="msg">Loading…</div>
-  <canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-    <div id="handHost" class="hide" aria-hidden="true" style="position:fixed; inset:0; z-index:10; pointer-events:none">
-    <svg id="handSvg" style="width:100vw;height:100vh;background:transparent;pointer-events:none">
-      <g id="handDots"></g>
-    </svg>
-  </div>
-
-
-  <script type="module">
-  import * as THREE from "three";
-  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-  import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
-  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
-   
 /* ===================== MMT CONFIGURATION ===================== */
 
 // MMT Test Definitions (Simplified and Linked to Bone Keys)
 const MMT_TESTS = {
-    "Serratus_Anterior": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting', cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Upper_Trapezius": { actionKey: 'cerv_lat', plane: 'frontal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: '', max: 45, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Middle_Trapezius": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Rhomboids": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Latissimus_Dorsi": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
+    "Serratus_Anterior": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting', cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90 },
+    "Upper_Trapezius":   { actionKey: 'cerv_lat', plane: 'frontal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: '', max: 45, move: 30 },
+    "Middle_Trapezius":  { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90 },
+    "Rhomboids":         { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90 },
+    "Latissimus_Dorsi":  { actionKey: 'sh_fe_l', plane: 'sagittal',pose: { name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30 },
 
-    "Anterior_Deltoid": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Posterior_Deltoid": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Middle_Deltoid": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting', cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Infraspinatus": { actionKey: 'sh_irer_l', plane: 'transverse', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Subscapularis": { actionKey: 'sh_irer_l', plane: 'transverse', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 70, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Biceps_Brachii": { actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Brachialis": { actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Brachioradialis": { actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Triceps_Brachii": { actionKey: 'el_fe_l', plane: 'sagittal', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 10, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "ECRL": { actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "ECRB": { actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "ECU": { actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "FCR": { actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    "FCU": { actionKey: 'wr_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Iliopsoas": { actionKey: 'hip_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 120, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Glute_Max": { actionKey: 'hip_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 30, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Glute_Med": { actionKey: 'hip_aa_l', plane: 'frontal', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Hip_ER": { actionKey: 'hip_irer_l', plane: 'transverse', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Hip_IR": { actionKey: 'hip_irer_l', plane: 'transverse', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Hamstrings": { actionKey: 'knee_fe_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 150, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Quadriceps": { actionKey: 'knee_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.5, 3] }, side: 'l', max: 55, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    
-    "Tibialis_Anterior": { actionKey: 'ankle_dfpf_l', plane: 'sagittal', pose: { name: 'sitting', cam: [3, 0.5, 3] }, side: 'l', max: 20, move: 10, stab: [0, 0, 0], test: [0, 0, 0] },
-    "Gastrocnemius": { actionKey: 'ankle_dfpf_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 0.5, 3] }, side: 'l', max: 50, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
+    "Anterior_Deltoid":  { actionKey: 'sh_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 90 },
+    "Posterior_Deltoid": { actionKey: 'sh_fe_l', plane: 'sagittal',pose: { name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 60, move: 30 },
+    "Middle_Deltoid":    { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'sitting',cam: [3, 1.5, 3] }, side: 'l', max: 180, move: 90 },
+    "Infraspinatus":     { actionKey: 'sh_irer_l',plane: 'transverse',pose:{ name: 'prone', cam:[3, 1.5, 3]}, side:'l', max: 90, move: 90 },
+    "Subscapularis":     { actionKey: 'sh_irer_l',plane: 'transverse',pose:{ name: 'supine',cam:[3, 1.5, 3]}, side:'l', max: 70, move: 90 },
+    
+    "Biceps_Brachii":    { actionKey: 'el_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90 },
+    "Brachialis":        { actionKey: 'el_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90 },
+    "Brachioradialis":   { actionKey: 'el_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 150, move: 90 },
+    "Triceps_Brachii":   { actionKey: 'el_fe_l', plane: 'sagittal',pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 10,  move: 10 },
+    
+    "ECRL":              { actionKey: 'wr_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30 },
+    "ECRB":              { actionKey: 'wr_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30 },
+    "ECU":               { actionKey: 'wr_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 80, move: 30 },
+    "FCR":               { actionKey: 'wr_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30 },
+    "FCU":               { actionKey: 'wr_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.8, 1.8] }, side: 'l', max: 70, move: 30 },
+    
+    "Iliopsoas":         { actionKey: 'hip_fe_l', plane: 'sagittal',pose: { name: 'sitting',cam: [2.5, 1.5, 3] }, side: 'l', max: 120,move: 90 },
+    "Glute_Max":         { actionKey: 'hip_fe_l', plane: 'sagittal',pose: { name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 30, move: 10 },
+    "Glute_Med":         { actionKey: 'hip_aa_l', plane: 'frontal', pose: { name: 'supine', cam: [3, 1.5, 3] }, side: 'l', max: 45, move: 20 },
+    "Hip_ER":            { actionKey: 'hip_irer_l',plane: 'transverse',pose:{ name: 'sitting',cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20 },
+    "Hip_IR":            { actionKey: 'hip_irer_l',plane: 'transverse',pose:{ name: 'sitting',cam: [2.5, 1.5, 3] }, side: 'l', max: 45, move: 20 },
+    
+    "Hamstrings":        { actionKey: 'knee_fe_l',plane: 'sagittal', pose:{ name: 'prone',  cam: [3, 1.5, 3] }, side: 'l', max: 150,move: 90 },
+    "Quadriceps":        { actionKey: 'knee_fe_l',plane: 'sagittal', pose:{ name: 'sitting',cam: [2.5, 1.5, 3] }, side: 'l', max: 55, move: 10 },
+    
+    "Tibialis_Anterior": { actionKey: 'ankle_dfpf_l',plane:'sagittal',pose:{ name: 'sitting',cam: [3, 0.5, 3] }, side: 'l', max: 20, move: 10 },
+    "Gastrocnemius":     { actionKey: 'ankle_dfpf_l',plane:'sagittal',pose:{ name: 'prone',  cam: [3, 0.5, 3] }, side: 'l', max: 50, move: 20 }
 };
 
 let CURRENT_MMT = null;
@@ -322,18 +323,18 @@ const JOINT_BIND = new Map();
 let controls = null;
 
 const ALL_ACTIONS = [
-    { key: 'sh_fe_l', plane: 'sagittal', hints: [/upperarm|humerus/i] },
-    { key: 'sh_aa_l', plane: 'frontal', hints: [/upperarm|humerus/i] },
-    { key: 'sh_irer_l', plane: 'transverse', hints: [/upperarm_L/i] },
-    { key: 'el_fe_l', plane: 'sagittal', hints: [/lowerarm|forearm/i] },
-    { key: 'wr_fe_l', plane: 'sagittal', hints: [/wrist|hand/i] },
-    { key: 'hip_fe_l', plane: 'sagittal', hints: [/thigh|femur/i] },
-    { key: 'hip_aa_l', plane: 'frontal', hints: [/thigh|femur/i] },
-    { key: 'hip_irer_l', plane: 'transverse', hints: [/thigh|femur/i] },
-    { key: 'knee_fe_l', plane: 'sagittal', hints: [/calf|tibia/i] },
-    { key: 'ankle_dfpf_l', plane: 'sagittal', hints: [/ankle|foot/i] },
-    { key: 'cerv_lat', plane: 'frontal', hints: [/^neck$|cspine|head/i] },
-    { key: 'sh_fe_r', plane: 'sagittal', hints: [/upperarm|humerus/i] },
+    { key: 'sh_fe_l',   plane: 'sagittal',  hints: [/upperarm|humerus/i] },
+    { key: 'sh_aa_l',   plane: 'frontal',   hints: [/upperarm|humerus/i] },
+    { key: 'sh_irer_l', plane: 'transverse',hints: [/upperarm|humerus|upperarm_l|upperarm\.l/i] },
+    { key: 'el_fe_l',   plane: 'sagittal',  hints: [/lowerarm|forearm/i] },
+    { key: 'wr_fe_l',   plane: 'sagittal',  hints: [/wrist|hand/i] },
+    { key: 'hip_fe_l',  plane: 'sagittal',  hints: [/thigh|femur/i] },
+    { key: 'hip_aa_l',  plane: 'frontal',   hints: [/thigh|femur/i] },
+    { key: 'hip_irer_l',plane: 'transverse',hints: [/thigh|femur/i] },
+    { key: 'knee_fe_l', plane: 'sagittal',  hints: [/calf|tibia|shin/i] },
+    { key: 'ankle_dfpf_l',plane:'sagittal', hints: [/ankle|foot/i] },
+    { key: 'cerv_lat',  plane: 'frontal',   hints: [/^head$|^neck$|cspine/i] },
+    { key: 'sh_fe_r',   plane: 'sagittal',  hints: [/upperarm|humerus/i] }
 ];
 const cfgFromKey = (k) => ALL_ACTIONS.find(x => x.key === k) || null;
 
@@ -349,8 +350,9 @@ function findBoneBy(cfg) {
     if (!skeleton) return null;
     const names = skeleton.bones.map(b => b.name.toLowerCase());
     const sideREs = sideRegex(cfg.side);
-    const HINTS = cfg.hints || [];
-    const tryList = HINTS;
+    // Pull hints from ALL_ACTIONS if not provided.
+    const cfgHints = cfg.hints && cfg.hints.length ? cfg.hints : (cfgFromKey(cfg.key)?.hints || []);
+    const tryList = cfgHints;
 
     for (const cand of tryList) {
         for (let i = 0; i < names.length; i++) {
@@ -358,6 +360,12 @@ function findBoneBy(cfg) {
             if (cfg.side && !sideREs.some(r => r.test(names[i]))) continue;
             if (cand.test(names[i])) return skeleton.bones[i];
         }
+    }
+    // Fallback: first bone that matches side filter and not excluded.
+    for (let i = 0; i < names.length; i++) {
+        if (EXCLUDE.test(names[i])) continue;
+        if (cfg.side && !sideREs.some(r => r.test(names[i]))) continue;
+        return skeleton.bones[i];
     }
     return null;
 }
@@ -373,10 +381,12 @@ function axisFor(profile, key, defAxis) {
 
 function resolveBind(key, cfg) {
     if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-    let bone = findBoneBy({ ...cfg, key });
+    // Ensure hints exist before search
+    const enrichedCfg = { ...cfg, key, hints: (cfg.hints && cfg.hints.length ? cfg.hints : (cfgFromKey(key)?.hints || [])) };
+    let bone = findBoneBy(enrichedCfg);
 
     if (key === 'cerv_lat') { 
-        bone = findBoneBy({ side: '', hints: [/^head$/, /^neck$/] });
+        bone = findBoneBy({ side: '', key, hints: [/^head$|^neck$/] });
     } else if (!bone) {
         return null;
     }
@@ -412,8 +422,8 @@ function applyPairAngle(key, cfg, deg) {
 }
 
 function setPair(key, deg) {
-    const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key, cfg, deg);
+    const cfg = cfgFromKey(key) || { plane: 'sagittal', side: 'l' };
+    applyPairAngle(key, cfg, deg);
 }
 
 function resetAllBonesToInitial() {
@@ -425,11 +435,11 @@ function resetAllBonesToInitial() {
     JOINT_BIND.clear(); 
 }
 
-function set3DLock(v) {
-    let lock3D = v;
-    if (controls) controls.enabled = !lock3D;
+function set3DLock(forceLock) {
+    const lock = !!forceLock;
+    if (controls) controls.enabled = !lock;
     const btn = document.getElementById("lock3D");
-    if (btn) { btn.textContent = (lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"); btn.classList.toggle('lockOn', lock3D); }
+    if (btn) { btn.textContent = (lock ? "🔒 3D: Locked" : "🔓 3D: Unlocked"); btn.classList.toggle('lockOn', lock); }
 }
 
 const ANAT = { addL: 0, psL: 0, wpsL: 0 }; 
@@ -543,7 +553,6 @@ actionSel.onchange = () => {
     resistanceFill.style.width = '0';
     resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
 
-
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     updateModelPose('standing');
@@ -641,58 +650,75 @@ scene.add(key);
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.45 }));
 ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
+// Robust GLTF loader with fallbacks
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
-const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
-const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
+const draco = new DRACOLoader();
+draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
+loader.setDRACOLoader(draco);
+const ktx2 = new KTX2Loader();
+ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/");
+ktx2.detectSupport(renderer);
+loader.setKTX2Loader(ktx2);
 
+// Try multiple model paths to avoid CORS/404 issues
+const MODEL_CANDIDATES = [
+  "./assets/Roma_ROMetrics.glb",
+  "/ROMetrics/assets/Roma_ROMetrics.glb",
+  "/assets/Roma_ROMetrics.glb",
+  "https://kingto89.github.io/ROMetrics/assets/Roma_ROMetrics.glb",
+  "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb"
+];
+
+let modelLoaded = false;
+function tryLoadNext(i=0){
+  if (i >= MODEL_CANDIDATES.length) {
+    const m = "⚠️ Load error: Could not find GLB at any known path.";
+    document.getElementById("msg").textContent = m;
+    log(m);
+    return;
+  }
+  const url = MODEL_CANDIDATES[i];
+  log(`Loading model from: ${url}`);
+  loader.load(url, (gltf)=>{
+      if (modelLoaded) return;
+      modelLoaded = true;
+      const obj = gltf.scene || gltf.scenes?.[0];
+      model = obj;
+      model.traverse(o => {
+          if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+          if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+      });
+      scene.add(model);
+      groundSnap();
+      document.getElementById("msg").textContent = "✅ Model loaded";
+
+      if (skeleton) {
+        skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+        log("Model baselines set.");
+      } else {
+        log("⚠️ No skeleton found; motions will be limited.");
+      }
+
+      applyAnatomicBaseline();
+  }, (xhr)=>{
+      const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)) : null;
+      document.getElementById("msg").textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
+  }, (err)=>{
+      console.error(err);
+      log(`Load failed from ${url}. Trying next…`);
+      tryLoadNext(i+1);
+  });
+}
 function groundSnap() {
     if (!model) return;
     const box = new THREE.Box3().setFromObject(model);
     const minY = box.min.y;
     if (isFinite(minY)) model.position.y -= minY;
 }
+tryLoadNext();
 
-// 🐛 FIXED: MODEL_URL is set to the correct absolute path.
-let MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
-
-function loadModel() {
-    log(`Loading model from: ${MODEL_URL}`);
-    loader.load(
-        MODEL_URL,
-        (gltf) => {
-            model = gltf.scene;
-            model.traverse(o => {
-                if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
-                if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-            });
-            scene.add(model);
-            groundSnap();
-            document.getElementById("msg").textContent = "✅ Model loaded";
-
-            skeleton.bones.forEach(b => {
-                initialBoneRot.set(b, b.quaternion.clone());
-            });
-            log("Model baselines set.");
-
-            applyAnatomicBaseline();
-        },
-        (xhr) => {
-            const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)) : null;
-            document.getElementById("msg").textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
-        },
-        (err) => { 
-            // 🐛 Display the actual error that is blocking the load.
-            const errorMsg = err?.message || 'Unknown network/file error.';
-            console.error(err); 
-            document.getElementById("msg").textContent = `⚠️ Load error: ${errorMsg}`; 
-            log(`Error: Failed to load GLB model. This might be a browser CORS restriction.`); 
-        }
-    );
-}
-loadModel();
-
-document.getElementById("lock3D").onclick = () => set3DLock(!controls.enabled);
+document.getElementById("lock3D").onclick = () => set3DLock(!controls || controls.enabled);
 
 addEventListener("resize", () => {
     camera.aspect = innerWidth / innerHeight;
@@ -705,10 +731,9 @@ const clock = new THREE.Clock();
 (function animate() {
     clock.getDelta();
     controls.update();
-
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
 })();
-  </script>
+</script>
 </body>
 </html>
