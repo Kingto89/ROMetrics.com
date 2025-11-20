@@ -118,19 +118,31 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; background: #e2
         </label>
       </div>
 
-     <label>Body Region</label>
-<select id="regionSel">
-    <option value="">(Select region…)</option>
-    <option value="cervical_spine">Cervical Spine</option>
-    <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
-    <option value="glenohumeral_joint">Glenohumeral Joint</option>
-    <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
-    <option value="wrist">Wrist</option>
-    <option value="hip">Hip</option>
-    <option value="knee">Knee</option>
-    <option value="talocrural_ankle">Talocrural (Ankle)</option>
-    <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
-</select>
+<div class="row" style="gap:15px">
+    <div style="flex:1;">
+        <label>Body Region</label>
+        <select id="regionSel">
+            <option value="">(Select region…)</option>
+            <option value="cervical_spine">Cervical Spine</option>
+            <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
+            <option value="glenohumeral_joint">Glenohumeral Joint</option>
+            <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
+            <option value="wrist">Wrist</option>
+            <option value="hip">Hip</option>
+            <option value="knee">Knee</option>
+            <option value="talocrural_ankle">Talocrural (Ankle)</option>
+            <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
+        </select>
+    </div>
+    <div style="flex:1;">
+        <label>Position</label>
+        <select id="positionSel">
+            <option value="standing">Standing (Default)</option>
+            <option value="supine">Supine (Face Up)</option>
+            <option value="prone">Prone (Face Down)</option>
+        </select>
+    </div>
+</div>
 
 
       <label>Action</label>
@@ -561,7 +573,8 @@ window.Gonio = Gonio;
 
     
 /* ===== UI ===== */
-const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
+const regionSel = document.getElementById("regionSel");  
+const positionSel = document.getElementById("positionSel");
 const showNote = document.getElementById("showNote");
 const notePopup = document.getElementById("notePopup");
 const closeNote = document.getElementById("closeNote");
@@ -1281,6 +1294,35 @@ function freezeBindBaseFor(key, cfg) {
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
   ];
 
+    // Function to rotate the model to the selected pose
+function updateModelPose(pose) {
+    if (!model) return; // Ensures model is loaded
+
+    // PI/2 radians = 90 degrees
+    const PI_HALF = Math.PI / 2;
+
+    if (pose === "standing") {
+        model.rotation.set(0, 0, 0, 'XYZ'); // Reset all rotations
+    } else if (pose === "supine") {
+        // Lay back 90 degrees (back on floor)
+        model.rotation.x = -PI_HALF; 
+        model.rotation.y = 0;
+    } else if (pose === "prone") {
+        // Lay back 90 degrees AND rotate 180 degrees yaw (to face down)
+        model.rotation.x = -PI_HALF;
+        model.rotation.y = Math.PI;
+    }
+    controls.update();
+    log(`Model set to ${pose.toUpperCase()} position.`);
+}
+
+positionSel.onchange = () => {
+    updateModelPose(positionSel.value);
+    
+    // When pose changes, reset the action selection and slider
+    actionSel.value = "";
+    syncActionUI(true);
+};
   let CURRENT = UPPER;
 
   function dirEntriesFromPair(cfg){
