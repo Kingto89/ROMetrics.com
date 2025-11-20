@@ -653,12 +653,9 @@ function groundSnap() {
     if (isFinite(minY)) model.position.y -= minY;
 }
 
-// 🐛 FIXED: The model path logic must be outside loadModel and correctly set the global variable
+// 🐛 FIXED: The model path logic is now set to the correct absolute URL for external loading.
 function pickModelUrl(){
-    const u = new URL(location.href);
-    const q = u.searchParams.get("model");
-    if (q && /^https?:\/\//i.test(q)) return q;
-    if (q && q.trim()) return new URL(q, location.href).href;
+    // Use the absolute, working path as the default.
     return "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
 }
 let MODEL_URL = pickModelUrl();
