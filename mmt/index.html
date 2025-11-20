@@ -446,40 +446,6 @@ function applyAnatomicBaseline() {
 const PI_HALF = Math.PI / 2;
 function updateModelPose(poseName, camArray=null) {
     if (!model) return;
-    resetAllBonesToInitial();
-    model.visible = true;
-    model.scale.set(1,1,1);
-    model.rotation.set(0, 0, 0, 'XYZ');
-    model.position.set(0, 0, 0.6); 
-
-    if (poseName === "supine") {
-        model.rotation.x = -PI_HALF;
-    } else if (poseName === "prone") {
-        model.rotation.x = -PI_HALF;
-        model.rotation.y = Math.PI;
-    } else if (poseName === "sitting") {
-        setPair('hip_fe_l', 90);
-        setPair('hip_fe_r', 90);
-        setPair('knee_fe_l', -90); 
-        setPair('knee_fe_r', -90);
-        model.position.y = -0.4;
-    }
-    
-    // ✅ Proper camera handling: move the CAMERA (not the target) if provided
-    if (Array.isArray(camArray) && camArray.length === 3) {
-        camera.position.set(camArray[0], camArray[1], camArray[2]);
-    }
-    // Keep looking at the model
-    controls.target.set(0, 1.1, 0);
-    controls.update();
-
-    // Re-snap to ground after pose changes to avoid sinking/clipping
-    groundSnap();
-}
-
-const PI_HALF = Math.PI / 2;
-function updateModelPose(poseName, camArray=null) {
-    if (!model) return;
     resetAllBonesToInitial(); 
     model.visible = true;
     model.scale.set(1,1,1);
