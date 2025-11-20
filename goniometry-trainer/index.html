@@ -808,6 +808,16 @@ if (region === 'knee' &&
         log(`Custom Collision: Knee Extension in Sitting: 55°`);
         return 55; // Apply the unique collision limit of 55°
 }
+/* --- START OF NEW FIX: Custom Knee Flexion Limit (Sitting) --- */
+// Check if region=Knee, position=Sitting, key=Knee Flexion, and sign=Negative (Flexion direction)
+if (regionSel.value === 'knee' && 
+    positionSel.value === 'sitting' && 
+    key.startsWith('knee_fe_') && 
+    sign < 0) {
+        log(`Custom Collision: Knee Flexion in Sitting: 25°`);
+        return 25; // Apply the unique collision limit of 25°
+}
+/* --- END OF NEW FIX --- */
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
 // Shoulder Flex/Ext
