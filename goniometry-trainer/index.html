@@ -799,6 +799,17 @@ function capFor(action){
             log(`Custom Collision: Hip Flexion in Sitting: 30°`);
             return 30; // Apply the unique collision limit of 30°
   }
+/* --- START OF NEW FIX: Custom Hip External Rotation Limit (Sitting) --- */
+// Check if region=Hip, position=Sitting, key=Hip Internal/External Rotation, and sign=Negative (External Rotation direction)
+if (regionSel.value === 'hip' && 
+    positionSel.value === 'sitting' && 
+    key.startsWith('hip_irer_') && 
+    sign < 0 && 
+    actionLabel.includes('External Rotation')) {
+        log(`Custom Collision: Hip External Rotation in Sitting: 30°`);
+        return 30; // Apply the unique collision limit of 30°
+}
+/* --- END OF NEW FIX --- */  
   /* --- START OF NEW FIX: Custom Knee Extension Limit (Sitting) --- */
 // Check if region=Knee, position=Sitting, key=Knee Extension, and sign=Positive (Extension direction)
 if (region === 'knee' && 
