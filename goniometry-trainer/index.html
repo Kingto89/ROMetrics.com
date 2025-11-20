@@ -140,6 +140,7 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; background: #e2
             <option value="standing">Standing (Default)</option>
             <option value="supine">Supine (Face Up)</option>
             <option value="prone">Prone (Face Down)</option>
+            <option value="sitting">Sitting</option>
         </select>
     </div>
 </div>
@@ -1294,35 +1295,43 @@ function freezeBindBaseFor(key, cfg) {
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
   ];
 
-    // Function to rotate the model to the selected pose
+// Function to rotate the model to the selected pose
 function updateModelPose(pose) {
     if (!model) return; // Ensures model is loaded
 
-    // PI/2 radians = 90 degrees
     const PI_HALF = Math.PI / 2;
 
+    // Reset Model Rotation (Common for Standing and Sitting)
+    model.rotation.set(0, 0, 0, 'XYZ');
+    // Reset Global Position and Bone Pose
+    model.position.set(0, 0, 0.6); // Reset Z to default 0.6 (from initial setup)
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+
     if (pose === "standing") {
-        model.rotation.set(0, 0, 0, 'XYZ'); // Reset all rotations
+        // Position remains at default (0, 0, 0.6)
     } else if (pose === "supine") {
         // Lay back 90 degrees (back on floor)
         model.rotation.x = -PI_HALF; 
         model.rotation.y = 0;
     } else if (pose === "prone") {
-        // Lay back 90 degrees AND rotate 180 degrees yaw (to face down)
+        // Lay back 90 degrees AND rotate 180 degrees yaw (face down)
         model.rotation.x = -PI_HALF;
         model.rotation.y = Math.PI;
+    } else if (pose === "sitting") { // <--- NEW SITTING LOGIC
+        // Flex Hips and Knees to 90 degrees on both legs
+        setPair('hip_fe_l', 90);
+        setPair('hip_fe_r', 90);
+        setPair('knee_fe_l', -90);
+        setPair('knee_fe_r', -90);
+        
+        // Move model down to sit on the ground plane
+        model.position.y = -0.4; 
     }
+    
     controls.update();
     log(`Model set to ${pose.toUpperCase()} position.`);
 }
-
-positionSel.onchange = () => {
-    updateModelPose(positionSel.value);
-    
-    // When pose changes, reset the action selection and slider
-    actionSel.value = "";
-    syncActionUI(true);
-};
   let CURRENT = UPPER;
 
   function dirEntriesFromPair(cfg){
