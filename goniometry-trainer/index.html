@@ -680,29 +680,27 @@ const NOTE_MAP = {
 
 /* ===== Load placement note ===== */
 async function loadNoteFile() {
-  const region = regionSel.value;
+  const region = regionSel.value;
 
-  if (!region || !NOTE_MAP[region]) {
-    noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
-    return;
-  }
+  if (!region || !NOTE_MAP[region]) {
+    noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
+    return;
+  }
+  // FIX: Corrected directory order and mixed-up names based on your GitHub link.
+  const filePath = `https://kingto89.github.io/ROMetrics.com/goniometry-trainer/goniometer-placement-guide/${NOTE_MAP[region]}`;
 
-  const filePath = `https://kingto89.github.io/ROMetrics.com/goniometer-trainer/goniometry-placement-guide/${NOTE_MAP[region]}`;
+  try {
+    const res = await fetch(filePath);
+    if (!res.ok) throw new Error("Missing file");
+    const md = await res.text();
 
-  try {
-    const res = await fetch(filePath);
-    if (!res.ok) throw new Error("Missing file");
-    const md = await res.text();
+    const converter = new showdown.Converter({ tables: true });
+    noteContent.innerHTML = converter.makeHtml(md);
 
-    const converter = new showdown.Converter({ tables: true });
-    noteContent.innerHTML = converter.makeHtml(md);
-
-  } catch (e) {
-    noteContent.innerHTML = "<i>Could not load placement notes.</i>";
-  }
+  } catch (e) {
+    noteContent.innerHTML = "<i>Could not load placement notes.</i>";
+  }
 }
-
-
 /* ===== Events ===== */
 showNote.onclick = () => {
   loadNoteFile();
