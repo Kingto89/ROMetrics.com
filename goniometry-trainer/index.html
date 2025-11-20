@@ -1602,7 +1602,8 @@ if (key==='sh_irer_l' || key==='sh_irer_r'){
   setPair(`clavicle_${side.toUpperCase()}`, side==='r' ? -45 : 45); 
   log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
 }
-// === FINALIZED WRIST & DRU POSTURE SETUP (Lines 1490 onwards) ===
+
+// === FINALIZED WRIST & DRU POSTURE SETUP (Fixing wr_fe_ Inversion) ===
 if (key.startsWith('wr_ps_') || key.startsWith('wr_fe_') || key.startsWith('wr_ru_')) {
     const side = key.endsWith('_l') ? 'l' : 'r';
     // This key (wr_ps_) is always used to apply the forearm rotation.
@@ -1614,15 +1615,15 @@ if (key.startsWith('wr_ps_') || key.startsWith('wr_fe_') || key.startsWith('wr_r
 
     // 2. DETERMINE REQUIRED FOREARM ROTATION
     if (key.startsWith('wr_ps_')) {
-        // RULE 1: DRU (P/S) must start at 0° Anatomic on both sides.
+        // DRU (P/S): Confirmed correct, both sides require 0° Anatomic start.
         rotationAngle = 0; 
         
     } else if (key.startsWith('wr_fe_')) {
-        // RULE 2: Flex/Ext must start at +45° Neutral on both sides (Mirroring Left).
-        rotationAngle = 45;
+        // FLEX/EXT: FIX APPLIED HERE. Must use inversion to mirror the correct Left side.
+        rotationAngle = (side === 'l') ? 45 : -45;
 
     } else if (key.startsWith('wr_ru_')) {
-        // RULE 3: Rad/Ulnar Dev must follow the current inversion logic (Left: +45, Right: -45).
+        // RAD/ULNAR DEV: Confirmed correct, this logic is preserved.
         rotationAngle = (side === 'l') ? 45 : -45;
     }
 
@@ -1633,7 +1634,7 @@ if (key.startsWith('wr_ps_') || key.startsWith('wr_fe_') || key.startsWith('wr_r
     // Rebind the zero for the currently selected action (wr_fe, wr_ru, or wr_ps)
     freezeBindBaseFor(key, cfg);
     log(`Setup ${side.toUpperCase()} ${CURRENT_ACTION.label}: Elbow 90°, Forearm Start (${rotationAngle}°).`);
-}        
+}      
 
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
