@@ -476,6 +476,7 @@ function updateModelPose(poseName, camArray=null) {
     // Re-snap to ground after pose changes to avoid sinking/clipping
     groundSnap();
 }
+
 function startTestMovement(testCfg) {
     if (!testCfg || !testCfg.actionKey) return;
     
@@ -487,7 +488,7 @@ function startTestMovement(testCfg) {
 
     // --- 1. HANDLE CUSTOM SETUP LOGIC (Add new fixes here) ---
     
-    // Custom Fix 1: Serratus Anterior (Bilateral 130° Shoulder Flexion)
+    // Custom Fix 1: Serratus Anterior (Bilateral 130° Shoulder Flexion, Seated)
     if (actionKey === 'sh_fe_l' && move === 130) {
         // Move the right arm to the same 130° flexion position
         setPair('sh_fe_r', 130);
@@ -503,7 +504,7 @@ function startTestMovement(testCfg) {
     if (!customSetupApplied) {
         log(`Model moved to Grade 3 position (${move}°).`);
     }
-}
+}    
 
 function handleResistanceButtonDown(e) {
     if (testButton.disabled) return;
