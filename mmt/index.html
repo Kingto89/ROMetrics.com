@@ -210,7 +210,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 // MMT Test Definitions (Simplified and Linked to Bone Keys)
 const MMT_TESTS = {
-    "Serratus_Anterior": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 130, stab: [0, 0, 0], test: [0, 0, 0] },
+    "Serratus_Anterior": { actionKey: 'sh_fe_l', plane: 'sagittal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: 'l', max: 180, move: 140, stab: [0, 0, 0], test: [0, 0, 0] },
     "Upper_Trapezius": { actionKey: 'cerv_lat', plane: 'frontal', pose: { name: 'sitting', cam: [2.5, 1.8, 1.8] }, side: '', max: 45, move: 30, stab: [0, 0, 0], test: [0, 0, 0] },
     "Middle_Trapezius": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
     "Rhomboids": { actionKey: 'sh_aa_l', plane: 'frontal', pose: { name: 'prone', cam: [3, 1.5, 3] }, side: 'l', max: 90, move: 90, stab: [0, 0, 0], test: [0, 0, 0] },
@@ -480,31 +480,30 @@ function updateModelPose(poseName, camArray=null) {
 function startTestMovement(testCfg) {
     if (!testCfg || !testCfg.actionKey) return;
     
-    // Reset pose based on the standard configuration for the test
+    // Step 1: Apply the base pose first (this handles sitting hip/knee flexion)
     updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
 
     const { actionKey, move } = testCfg;
     let customSetupApplied = false;
 
-    // --- 1. HANDLE CUSTOM SETUP LOGIC (Add new fixes here) ---
+    // --- 2. HANDLE CUSTOM SETUP LOGIC (Ensures arm position is set correctly on top of base pose) ---
     
-    // Custom Fix 1: Serratus Anterior (Bilateral 130° Shoulder Flexion, Seated)
-    if (actionKey === 'sh_fe_l' && move === 130) {
-        // Move the right arm to the same 130° flexion position
-        setPair('sh_fe_r', 130);
-        log("Model moved both arms to 130° Flexion (Serratus Anterior setup).");
+    // Custom Fix 1: Serratus Anterior (Bilateral 140° Shoulder Flexion, Seated)
+    if (actionKey === 'sh_fe_l' && move === 140) {
+        // Move the right arm to the same 140° flexion position
+        setPair('sh_fe_r', 140);
+        log("Model moved both arms to 140° Flexion (Serratus Anterior setup).");
         customSetupApplied = true;
     }
 
-    // --- 2. APPLY PRIMARY MOVEMENT ---
-    // This runs the primary motion defined in MMT_TESTS (e.g., sh_fe_l: 130)
+    // --- 3. APPLY PRIMARY MOVEMENT (Will re-apply 140 to sh_fe_l but ensures it is set) ---
     setPair(actionKey, move); 
     
-    // --- 3. LOG RESULT ---
+    // --- 4. LOG RESULT ---
     if (!customSetupApplied) {
         log(`Model moved to Grade 3 position (${move}°).`);
     }
-}    
+}
 
 function handleResistanceButtonDown(e) {
     if (testButton.disabled) return;
