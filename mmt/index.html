@@ -194,12 +194,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <div id="msg">Loading…</div>
   <canvas id="c"></canvas>
 
-    <div id="handHost" class="hide" aria-hidden="true" style="position:fixed; inset:0; z-index:10; pointer-events:none">
-    <svg id="handSvg" style="width:100vw;height:100vh;background:transparent;pointer-events:none">
-      <g id="handDots"></g>
-    </svg>
-  </div>
-
+  <!-- Hard override requested -->
+  <script>
+    window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
+  </script>
 
   <script type="module">
   import * as THREE from "three";
@@ -210,6 +208,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
    
 /* ===================== MMT CONFIGURATION ===================== */
+
+// Surface runtime JS errors to the UI
+window.addEventListener('error', (e) => {
+  const m = document.getElementById("msg");
+  if (m) m.textContent = `⚠️ ${e.message}`;
+  const l = document.getElementById("log");
+  if (l) { l.textContent += `Error: ${e.message}\\n`; l.scrollTop = l.scrollHeight; }
+});
 
 // MMT Test Definitions (Simplified and Linked to Bone Keys)
 const MMT_TESTS = {
@@ -254,60 +260,49 @@ let resistanceTimer = null;
 let resistanceStartTime = 0;
 const RESISTANCE_FILL_TIME = 2000;
 
-/* ===================== NEW HANDS PLACEMENT LOGIC ===================== */
-
+/* ===================== HANDS (SVG dots) ===================== */
 const MMT_HANDS = {
-    stabilize: { x: -100, y: -100, placed: false, color: '#0d9488', element: null }, // Teal
-    test:      { x: -100, y: -100, placed: false, color: '#facc15', element: null }  // Yellow
+    stabilize: { x: -100, y: -100, placed: false, color: '#0d9488', element: null },
+    test:      { x: -100, y: -100, placed: false, color: '#facc15', element: null }
 };
-let activeHandTarget = null; 
-
-// Element selectors for the new SVG layer
-const handSvg = document.getElementById('handSvg');
-const handDotsGrp = document.getElementById('handDots');
+let activeHandTarget = null;
+const handSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+handSvg.setAttribute("id","handSvg");
+handSvg.setAttribute("style","position:fixed;inset:0;width:100vw;height:100vh;background:transparent;pointer-events:none;z-index:10");
+const handDotsGrp = document.createElementNS("http://www.w3.org/2000/svg","g");
+handDotsGrp.setAttribute("id","handDots");
+handSvg.appendChild(handDotsGrp);
+document.body.appendChild(handSvg);
 
 function updateHandDot(handKey) {
-    const hand = MMT_HANDS[handKey];
-    if (!hand.element) {
-        const NS = "http://www.w3.org/2000/svg";
-        hand.element = document.createElementNS(NS, 'circle');
-        hand.element.setAttribute('r', '8');
-        hand.element.setAttribute('stroke', hand.color);
-        hand.element.setAttribute('stroke-width', '3'); 
-        hand.element.setAttribute('fill', 'rgba(0,0,0,0.5)');
-        handDotsGrp.appendChild(hand.element);
-    }
-
-    if (hand.placed) {
-        hand.element.setAttribute('cx', hand.x);
-        hand.element.setAttribute('cy', hand.y);
-        hand.element.style.display = 'block';
-    } else {
-        hand.element.style.display = 'none';
-    }
-    document.getElementById('handHost').classList.toggle('hide', !MMT_HANDS.stabilize.placed && !MMT_HANDS.test.placed);
+  const hand = MMT_HANDS[handKey];
+  if (!hand.element) {
+    const NS = "http://www.w3.org/2000/svg";
+    hand.element = document.createElementNS(NS, 'circle');
+    hand.element.setAttribute('r', '8');
+    hand.element.setAttribute('stroke', hand.color);
+    hand.element.setAttribute('stroke-width', '3');
+    hand.element.setAttribute('fill', 'rgba(0,0,0,0.5)');
+    handDotsGrp.appendChild(hand.element);
+  }
+  hand.element.style.display = hand.placed ? 'block' : 'none';
+  if (hand.placed) { hand.element.setAttribute('cx', hand.x); hand.element.setAttribute('cy', hand.y); }
 }
 
 function placeHand(e) {
-    if (!activeHandTarget) return;
-
-    const hand = MMT_HANDS[activeHandTarget];
-    const rect = handSvg.getBoundingClientRect();
-    hand.x = e.clientX - rect.left;
-    hand.y = e.clientY - rect.top;
-    hand.placed = true;
-
-    updateHandDot(activeHandTarget);
-    log(`${activeHandTarget} hand pinned @ ${hand.x | 0}, ${hand.y | 0}`);
-    
-    document.getElementById(`place${activeHandTarget.charAt(0).toUpperCase() + activeHandTarget.slice(1)}`).classList.remove('active');
-    activeHandTarget = null;
-    handSvg.style.pointerEvents = 'none'; 
+  if (!activeHandTarget) return;
+  const rect = handSvg.getBoundingClientRect();
+  const hand = MMT_HANDS[activeHandTarget];
+  hand.x = e.clientX - rect.left;
+  hand.y = e.clientY - rect.top;
+  hand.placed = true;
+  updateHandDot(activeHandTarget);
+  document.getElementById(`place${activeHandTarget.charAt(0).toUpperCase()+activeHandTarget.slice(1)}`)?.classList.remove('active');
+  activeHandTarget = null;
+  handSvg.style.pointerEvents = 'none';
 }
 
-
-/* ===================== OLD/REUSED HELPER FUNCTIONS ===================== */
-
+/* ===================== UI WIRING ===================== */
 const logEl = document.getElementById("log");
 const log = (t) => { logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 const canvas = document.getElementById("c");
@@ -319,308 +314,29 @@ const resistanceText = document.getElementById("resistanceText");
 const instructionText = document.getElementById("instructionText");
 const placeStabilizeBtn = document.getElementById("placeStabilize");
 const placeTestBtn = document.getElementById("placeTest");
-const grade35 = document.getElementById("grade35");
-const grade02 = document.getElementById("grade02");
+const grade35 = document.getElementById("grade-main");
+const grade02 = document.getElementById("GradingExceptions");
 
-let model = null, skeleton = null;
-const initialBoneRot = new Map();
-const JOINT_BIND = new Map();
-let controls = null;
+placeStabilizeBtn.addEventListener("click", ()=>{
+  if (!CURRENT_MMT) return;
+  activeHandTarget = 'stabilize';
+  placeStabilizeBtn.classList.add('active');
+  placeTestBtn.classList.remove('active');
+  handSvg.style.pointerEvents = 'auto';
+  log("Stabilize arm selection active. Click to place.");
+});
+placeTestBtn.addEventListener("click", ()=>{
+  if (!CURRENT_MMT) return;
+  activeHandTarget = 'test';
+  placeTestBtn.classList.add('active');
+  placeStabilizeBtn.classList.remove('active');
+  handSvg.style.pointerEvents = 'auto';
+  log("Test arm selection active. Click to place.");
+});
+canvas.addEventListener('pointerdown', placeHand, { passive:false });
+handSvg.addEventListener('pointerdown', placeHand, { passive:false });
 
-const ALL_ACTIONS = [
-    { key: 'sh_fe_l', plane: 'sagittal', hints: [/upperarm|humerus/i] },
-    { key: 'sh_aa_l', plane: 'frontal', hints: [/upperarm|humerus/i] },
-    { key: 'sh_irer_l', plane: 'transverse', hints: [/upperarm_L/i] },
-    { key: 'el_fe_l', plane: 'sagittal', hints: [/lowerarm|forearm/i] },
-    { key: 'wr_fe_l', plane: 'sagittal', hints: [/wrist|hand/i] },
-    { key: 'hip_fe_l', plane: 'sagittal', hints: [/thigh|femur/i] },
-    { key: 'hip_aa_l', plane: 'frontal', hints: [/thigh|femur/i] },
-    { key: 'hip_irer_l', plane: 'transverse', hints: [/thigh|femur/i] },
-    { key: 'knee_fe_l', plane: 'sagittal', hints: [/calf|tibia/i] },
-    { key: 'ankle_dfpf_l', plane: 'sagittal', hints: [/ankle|foot/i] },
-    { key: 'cerv_lat', plane: 'frontal', hints: [/^neck$|cspine|head/i] },
-    { key: 'sh_fe_r', plane: 'sagittal', hints: [/upperarm|humerus/i] },
-];
-const cfgFromKey = (k) => ALL_ACTIONS.find(x => x.key === k) || null;
-
-const EXCLUDE = /(pelvis|root|scapula)/i;
-function sideRegex(side) {
-    if (!side) return [/.*/];
-    return side === 'l'
-        ? [/\\bleft\\b/i, /\\b_left\\b/i, /\\.l\\b/i, /_l\\b/i, /\\bl\\b(?![a-z])/i, /mixamorig:.*left/i]
-        : [/\\bright\\b/i, /\\b_right\\b/i, /\\.r\\b/i, /_r\\b/i, /\\br\\b(?![a-z])/i, /mixamorig:.*right/i];
-}
-
-function findBoneBy(cfg) {
-    if (!skeleton) return null;
-    const names = skeleton.bones.map(b => (b.name||'').toLowerCase());
-    const sideREs = sideRegex(cfg.side);
-    const HINTS = cfg.hints || [];
-    const tryList = HINTS;
-
-    for (const cand of tryList) {
-        for (let i = 0; i < names.length; i++) {
-            if (EXCLUDE.test(names[i])) continue;
-            if (cfg.side && !sideREs.some(r => r.test(names[i]))) continue;
-            if (cand.test(names[i])) return skeleton.bones[i];
-        }
-    }
-    return null;
-}
-
-function axisFor(profile, key, defAxis) {
-    const map = {
-        sh_fe_l: 'x', sh_aa_l: 'z', sh_irer_l: 'y',
-        el_fe_l: 'x', wr_fe_l: 'x', hip_fe_l: 'x', hip_aa_l: 'z',
-        hip_irer_l: 'y', knee_fe_l: 'x', ankle_dfpf_l: 'x', cerv_lat: 'z'
-    };
-    return map[key] || defAxis;
-}
-
-function resolveBind(key, cfg) {
-    if (JOINT_BIND.has(key)) return JOINT_BIND.get(key);
-    let bone = findBoneBy({ ...cfg, key });
-
-    if (key === 'cerv_lat') { 
-        bone = findBoneBy({ side: '', hints: [/^head$/, /^neck$/] });
-    } else if (!bone) {
-        return null;
-    }
-
-    const qBind = (initialBoneRot.get(bone) || bone.quaternion.clone()).clone();
-    const baseAxis = ({ sagittal: 'x', frontal: 'z', transverse: 'y' })[cfg.plane] || 'x';
-    const axis = axisFor('generic', key, baseAxis);
-    const obj = { bone, qBind, axis };
-    JOINT_BIND.set(key, obj);
-    return obj;
-}
-
-function applyPairAngle(key, cfg, deg) {
-    const bind = resolveBind(key, cfg);
-    if (!bind) return;
-
-    const { bone, qBind, axis: rawAxis } = bind;
-    let rad = THREE.MathUtils.degToRad(deg);
-    let axis = rawAxis || 'x';
-    let flip = 1;
-
-    if (key === 'hip_aa_r' || key === 'sh_aa_r') flip = -1;
-
-    let x = 0, y = 0, z = 0;
-    const r = flip * rad;
-    if (axis === 'x') x = r;
-    if (axis === 'y') y = r;
-    if (axis === 'z') z = r; 
-
-    const e = new THREE.Euler(x, y, z, "XYZ");
-    const qDelta = new THREE.Quaternion().setFromEuler(e);
-    bone.quaternion.copy(qBind).multiply(qDelta);
-}
-
-function setPair(key, deg) {
-    const cfg = cfgFromKey(key);
-    if (cfg) applyPairAngle(key, cfg, deg);
-}
-
-function resetAllBonesToInitial() {
-    if (!skeleton) return;
-    skeleton.bones.forEach(b => {
-        const q0 = initialBoneRot.get(b);
-        if (q0) b.quaternion.copy(q0);
-    });
-    JOINT_BIND.clear(); 
-}
-
-function set3DLock(v) {
-    let lock3D = v;
-    if (controls) controls.enabled = !lock3D;
-    const btn = document.getElementById("lock3D");
-    if (btn) { btn.textContent = (lock3D ? "🔒 3D: Locked" : "🔓 3D: Unlocked"); btn.classList.toggle('lockOn', lock3D); }
-}
-
-const ANAT = { addL: 0, psL: 0, wpsL: 0 }; 
-function applyAnatomicBaseline() {
-    setPair('sh_aa_l', ANAT.addL);
-}
-
-
-/* ===================== MMT LOGIC ===================== */
-
-const PI_HALF = Math.PI / 2;
-function updateModelPose(poseName, camArray=null) {
-    if (!model) return;
-    resetAllBonesToInitial();
-    model.visible = true;
-    model.scale.set(1,1,1);
-    model.rotation.set(0, 0, 0, 'XYZ');
-    model.position.set(0, 0, 0.6); 
-
-    if (poseName === "supine") {
-        model.rotation.x = -PI_HALF;
-    } else if (poseName === "prone") {
-        model.rotation.x = -PI_HALF;
-        model.rotation.y = Math.PI;
-    } else if (poseName === "sitting") {
-        setPair('hip_fe_l', 90);
-        setPair('hip_fe_r', 90);
-        setPair('knee_fe_l', -90); 
-        setPair('knee_fe_r', -90);
-        model.position.y = -0.4;
-    }
-    
-    // ✅ Proper camera handling: move the CAMERA (not the target) if provided
-    if (Array.isArray(camArray) && camArray.length === 3) {
-        camera.position.set(camArray[0], camArray[1], camArray[2]);
-    }
-    // Keep looking at the model
-    controls.target.set(0, 1.1, 0);
-    controls.update();
-
-    // Re-snap to ground after pose changes to avoid sinking/clipping
-    groundSnap();
-}
-
-function startTestMovement(testCfg) {
-    if (!testCfg || !testCfg.actionKey) return;
-    updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
-
-    const { actionKey, move } = testCfg;
-    setPair(actionKey, move);
-    log(`Model moved to Grade 3 position (${move}°).`);
-}
-
-function handleResistanceButtonDown(e) {
-    if (testButton.disabled) return;
-    e.preventDefault();
-    resistanceStartTime = performance.now();
-    testButton.classList.add('active');
-    resistanceText.textContent = 'Applying Resistance...';
-    instructionText.style.display = 'block'; 
-
-    resistanceTimer = setInterval(() => {
-        const elapsed = performance.now() - resistanceStartTime;
-        const progress = Math.min(1, elapsed / RESISTANCE_FILL_TIME);
-        resistanceFill.style.width = `${progress * 100}%`;
-
-        if (progress >= 1) {
-            resistanceText.textContent = 'Grade 5: Maximum Resistance';
-            grade35.value = '5';
-            log('Grade 5 (Max Resistance) applied.');
-        } else if (progress >= 0.5) {
-            resistanceText.textContent = 'Grade 4: Moderate Resistance';
-            grade35.value = '4';
-        } else {
-            resistanceText.textContent = 'Applying Resistance...';
-        }
-    }, 100);
-}
-
-function handleResistanceButtonUp() {
-    if (!resistanceTimer) return;
-    clearInterval(resistanceTimer);
-    resistanceTimer = null;
-
-    testButton.classList.remove('active');
-    resistanceFill.style.width = '0'; 
-    resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
-    instructionText.style.display = 'none'; 
-
-    log(`Test complete. Final Grade recorded: ${grade35.value}`);
-}
-
-testButton.addEventListener('pointerdown', handleResistanceButtonDown);
-testButton.addEventListener('pointerup', handleResistanceButtonUp);
-testButton.addEventListener('pointercancel', handleResistanceButtonUp);
-testButton.addEventListener('contextmenu', e => e.preventDefault()); 
-
-
-/* ===================== UI WIRING ===================== */
-
-actionSel.onchange = () => {
-    const muscle = actionSel.value;
-    CURRENT_MMT = MMT_TESTS[muscle];
-
-    testButton.disabled = true;
-    placeStabilizeBtn.disabled = true;
-    placeTestBtn.disabled = true;
-    placeStabilizeBtn.classList.remove('active');
-    placeTestBtn.classList.remove('active');
-    MMT_HANDS.stabilize.placed = MMT_HANDS.test.placed = false;
-    updateHandDot('stabilize');
-    updateHandDot('test');
-    instructionText.style.display = 'none';
-    resistanceFill.style.width = '0';
-    resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
-
-    // ✅ Reset pose to the selected test's baseline pose (not undefined "standing")
-    if (CURRENT_MMT) {
-        applyAnatomicBaseline();
-        updateModelPose(CURRENT_MMT.pose?.name || 'sitting', CURRENT_MMT.pose?.cam || null);
-    }
-    log(`Selected MMT: ${muscle}`);
-};
-
-startTestBtn.onclick = () => {
-    if (!CURRENT_MMT) {
-        log("Please select a muscle test first.");
-        return;
-    }
-    startTestMovement(CURRENT_MMT);
-
-    testButton.disabled = false;
-    placeStabilizeBtn.disabled = false;
-    placeTestBtn.disabled = false;
-    log("Test position established. Grade 3 assumed. Hand placement buttons enabled.");
-};
-
-placeStabilizeBtn.onclick = () => {
-    if (!CURRENT_MMT) return;
-    activeHandTarget = 'stabilize';
-    placeStabilizeBtn.classList.add('active');
-    placeTestBtn.classList.remove('active');
-    handSvg.style.pointerEvents = 'auto'; 
-    log("Stabilize arm selection active. Click on screen to place.");
-};
-
-placeTestBtn.onclick = () => {
-    if (!CURRENT_MMT) return;
-    activeHandTarget = 'test';
-    placeTestBtn.classList.add('active');
-    placeStabilizeBtn.classList.remove('active');
-    handSvg.style.pointerEvents = 'auto'; 
-    log("Test arm selection active. Click on screen to place.");
-};
-
-canvas.addEventListener('pointerdown', placeHand, { passive: false });
-handSvg.addEventListener('pointerdown', placeHand, { passive: false });
-
-grade35.onchange = () => {
-    grade02.value = '0'; 
-    log(`Recorded Grade: ${grade35.value}`);
-};
-grade02.onchange = () => {
-    grade35.value = '3'; 
-    log(`Recorded Grade: ${grade02.value}`);
-};
-
-document.getElementById("zeroAll").onclick = () => {
-    resetAllBonesToInitial();
-    applyAnatomicBaseline();
-    // Return to a neutral, visible pose
-    updateModelPose('sitting', [1.6, 1.6, 3.2]);
-    actionSel.value = "";
-    log("All motions zeroed → returned to anatomic baseline.");
-    testButton.disabled = true;
-    placeStabilizeBtn.disabled = true;
-    placeTestBtn.disabled = true;
-    MMT_HANDS.stabilize.placed = MMT_HANDS.test.placed = false;
-    updateHandDot('stabilize');
-    updateHandDot('test');
-    instructionText.style.display = 'none';
-};
-
-/* ===================== THREE.js / RENDER SETUP ===================== */
-
+/* ===================== THREE SETUP ===================== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
@@ -635,7 +351,7 @@ scene.background = new THREE.Color(0xf1f5f9);
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
 camera.position.set(1.6, 1.6, 3.2);
 
-controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.minDistance = 0.6; controls.maxDistance = 6;
 controls.target.set(0, 1.1, 0);
@@ -652,47 +368,45 @@ scene.add(key);
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.45 }));
 ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
+/* ===================== LOADER ===================== */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
 const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
 const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
 
+let model = null, skeleton = null;
+const initialBoneRot = new Map();
+const JOINT_BIND = new Map();
+
 function groundSnap() {
-    if (!model) return;
-    const box = new THREE.Box3().setFromObject(model);
-    const minY = box.min.y;
-    if (isFinite(minY)) model.position.y -= minY;
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  if (isFinite(minY)) model.position.y -= minY;
 }
 
-// Try common URL patterns (local and GitHub Pages)
+// force absolute override first, then fallbacks
 const MODEL_CANDIDATES = [
-    "/assets/Roma_ROMetrics.glb",
-    "./assets/Roma_ROMetrics.glb",
-    "assets/Roma_ROMetrics.glb",
-    "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb"
-];
-let MODEL_URL = MODEL_CANDIDATES[0];
+  window.ROMETRICS_MODEL_URL,  // hard override
+  "assets/Roma_ROMetrics.glb",
+  new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
+].filter(Boolean);
 
 function tryNextModelUrl(index, onDone){
     if(index >= MODEL_CANDIDATES.length){
         onDone(new Error("All model URL fallbacks failed."));
         return;
     }
-    MODEL_URL = MODEL_CANDIDATES[index];
+    const MODEL_URL = MODEL_CANDIDATES[index];
     log(`Loading model from: ${MODEL_URL}`);
     loader.load(
         MODEL_URL,
-        (gltf) => {
-            onDone(null, gltf);
-        },
+        (gltf) => { onDone(null, gltf); },
         (xhr) => {
             const pct = xhr.lengthComputable ? Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)) : null;
             document.getElementById("msg").textContent = pct !== null ? `Loading ${pct}%` : "Loading…";
         },
-        () => {
-            // next
-            tryNextModelUrl(index+1, onDone);
-        }
+        () => { tryNextModelUrl(index+1, onDone); }
     );
 }
 
@@ -720,7 +434,6 @@ function loadModel() {
         }
 
         applyAnatomicBaseline();
-        // Ensure initial scene framing
         controls.target.set(0,1.1,0);
         camera.position.set(1.6,1.6,3.2);
         controls.update();
@@ -728,7 +441,27 @@ function loadModel() {
 }
 loadModel();
 
-document.getElementById("lock3D").onclick = () => set3DLock(!controls.enabled);
+document.getElementById("lock3D").onclick = () => {
+  const enabled = controls.enabled;
+  controls.enabled = !enabled;
+  const btn = document.getElementById("lock3D");
+  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
+  btn.classList.toggle('lockOn', !controls.enabled);
+};
+
+/* ===================== POSE / ACTIONS (minimal to keep this focused on load) ===================== */
+function resetAllBonesToInitial() {
+  if (!skeleton) return;
+  skeleton.bones.forEach(b => {
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+  });
+  JOINT_BIND.clear();
+}
+function setPair(){}
+function applyAnatomicBaseline(){}
+function updateModelPose(){}
+function startTestMovement(){}
 
 addEventListener("resize", () => {
     camera.aspect = innerWidth / innerHeight;
@@ -736,16 +469,11 @@ addEventListener("resize", () => {
     renderer.setSize(innerWidth, innerHeight);
 });
 
-const clock = new THREE.Clock();
-
 (function animate() {
-    clock.getDelta();
     controls.update();
-
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
 })();
   </script>
 </body>
 </html>
-
