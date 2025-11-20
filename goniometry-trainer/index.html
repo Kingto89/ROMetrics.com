@@ -799,6 +799,15 @@ function capFor(action){
             log(`Custom Collision: Hip Flexion in Sitting: 30°`);
             return 30; // Apply the unique collision limit of 30°
   }
+  /* --- START OF NEW FIX: Custom Knee Extension Limit (Sitting) --- */
+// Check if region=Knee, position=Sitting, key=Knee Extension, and sign=Positive (Extension direction)
+if (region === 'knee' && 
+    position === 'sitting' && 
+    key.startsWith('knee_fe_') && 
+    sign > 0) {
+        log(`Custom Collision: Knee Extension in Sitting: 55°`);
+        return 55; // Apply the unique collision limit of 55°
+}
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
 // Shoulder Flex/Ext
@@ -876,8 +885,8 @@ if (/^hip_irer_/.test(key)) {
 
 // Knee Flexion / Extension (only flexion capped)
 if(/^knee_fe_/.test(key)){
-  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
-  if(sign < 0) return null; // no cap on extension
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax; // Flexion (sign -1, caps at 150)
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax;  // Extension (sign +1, caps at 5)
 }
 
 // Ankle PF / DF
