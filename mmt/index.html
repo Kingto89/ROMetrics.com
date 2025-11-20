@@ -246,31 +246,25 @@ const MMT_TESTS = {
     "Gastrocnemius": { actionKey: 'ankle_dfpf_l', plane: 'sagittal', pose: { name: 'prone', cam: [3, 0.5, 3] }, side: 'l', max: 50, move: 20, stab: [0, 0, 0], test: [0, 0, 0] },
 };
 
+/* ===================== NEW POSE CONFIGURATION ===================== */
+
 const POSE_INDEX = {
-    // The previously requested sitting pose (Hip Flex 90, Knee Flex 90)
+    // The simple sitting pose: Both legs Hip Flex 90 and Knee Flex 90
     sitting: {
         hip_fe_l: 90, 
         hip_fe_r: 90, 
-        knee_fe_l: -90, // Flexion
-        knee_fe_r: -90, // Flexion
+        knee_fe_l: -90, // Flexion is negative
+        knee_fe_r: -90, // Flexion is negative
     },
     
-    // Anatomic/Standing Pose (All joints zeroed - used implicitly by resetAllBonesToInitial)
-    // Defined here for explicit reference, but often empty as 'zeroAll' handles the reset.
-    standing: {
-        // You can add explicit zero values here if needed, 
-        // but typically all angles are 0 in the initial state.
-    },
+    // Anatomic/Standing Pose
+    standing: {},
     
-    // Supine Pose: Joints remain at neutral/anatomic zero, but the model orientation changes.
-    supine: {
-        // No explicit joint settings needed here as the pose is achieved by model rotation.
-    },
+    // Supine Pose
+    supine: {},
     
-    // Prone Pose: Joints remain at neutral/anatomic zero, but the model orientation changes.
-    prone: {
-        // No explicit joint settings needed here as the pose is achieved by model rotation.
-    },
+    // Prone Pose
+    prone: {},
 };
 
 let CURRENT_MMT = null;
