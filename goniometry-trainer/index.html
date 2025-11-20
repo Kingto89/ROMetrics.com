@@ -727,23 +727,6 @@ closeNote.onclick = () => {
 
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
-// NEW: Map storing collision limit adjustments based on Position and Action.
-// The value is the offset (positive to increase limit, negative to decrease limit).
-const POS_COLLIM_ADJUSTMENTS = {
-    'sitting': {
-        // Hip Flexion (sign > 0)
-        'hip_fe_adj': 50,
-        // Hip External Rotation (sign > 0 for ER)
-        'hip_er_adj': 35,
-        // Knee Extension (sign < 0 for extension in typical rig limits)
-        'knee_ext_adj': 30,
-    },
-    'supine': {
-        // Ankle PF/DF (Applies to both directions)
-        'ankle_pfdf_adj': 30, 
-    }
-};
-
 const COLLIM = {
   enabled: false,
   // ===== Existing upper body =====
@@ -859,81 +842,35 @@ if (/^el_fe_/.test(key)) {
 if(/^hip_fe_/.test(key)){
   if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
 }
-// === START REPLACEMENT BLOCK (Starting around Line 906) ===
-// Hip Flexion/Extension (with Sitting Adjustment)
-if(/^hip_fe_/.test(key)){
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax) : 
-        (isLeft ? COLLIM.hipExtLMax : COLLIM.hipExtRMax); 
-
-    let adjustment = 0;
-    if (pose === 'sitting') {
-        const adj = POS_COLLIM_ADJUSTMENTS.sitting;
-        // Check for Hip Flexion (-50)
-        if (sign > 0 && adj.hip_fe_adj) {
-            adjustment = adj.hip_fe_adj; 
-        }
-    }
-    return Math.max(0, universalCap + adjustment);
-} 
-
-// Hip Abduction / Adduction (Standard Logic)
-else if (/^hip_aa_/.test(key)) {
-    if (isLeft) {
-        return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
-    } else {
-        return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
-    }
-} 
-
-// Hip Internal / External Rotation (with Sitting Adjustment)
-else if (/^hip_irer_/.test(key)) {
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.hipERLMax : COLLIM.hipERRMax) : 
-        (isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax); 
-
-    let adjustment = 0;
-    if (pose === 'sitting' && sign > 0 && POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj) {
-        // Check for External Rotation (ER) only
-        adjustment = POS_COLLIM_ADJUSTMENTS.sitting.hip_er_adj; // Apply -10
-    }
-    return Math.max(0, universalCap + adjustment);
+// Hip Abduction / Adduction
+if (/^hip_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
+  } else {
+    // Right: + = Adduction, − = Abduction
+    return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
+  }
+}
+// Hip Internal / External Rotation
+if (/^hip_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  // symmetric cap for both directions (you can split later if needed)
+  return isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax;
 }
 
-// Knee Flexion/Extension (with Sitting Adjustment)
-else if(/^knee_fe_/.test(key)){
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax) : 
-        (isLeft ? COLLIM.kneeExtLMax : COLLIM.kneeExtRMax); 
-
-    let adjustment = 0;
-    if (pose === 'sitting') {
-        const adj = POS_COLLIM_ADJUSTMENTS.sitting;
-        // Check for Knee Extension (sign < 0)
-        if (sign < 0 && adj.knee_ext_adj) {
-            adjustment = adj.knee_ext_adj; // Apply +30
-        }
-    }
-    return Math.max(0, universalCap + adjustment);
+// Knee Flexion / Extension (only flexion capped)
+if(/^knee_fe_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
+  if(sign < 0) return null; // no cap on extension
 }
 
-// Ankle PF/DF (with Supine Adjustment)
-else if (/^ankle_dfpf_/.test(key)){
-    const pose = positionSel.value || 'standing';
-    let universalCap = (sign > 0) ? 
-        (isLeft ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax) : // Dorsiflexion
-        (isLeft ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax); // Plantarflexion
-
-    let adjustment = 0;
-    if (pose === 'supine' && POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj) {
-        adjustment = POS_COLLIM_ADJUSTMENTS.supine.ankle_pfdf_adj; // Apply +10
-    }
-    return Math.max(0, universalCap + adjustment);
+// Ankle PF / DF
+if(/^ankle_dfpf_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax;
 }
-// === END REPLACEMENT BLOCK ===
 
 // Foot Inversion / Eversion
 if(/^foot_invev_/.test(key)){
@@ -1350,8 +1287,8 @@ function freezeBindBaseFor(key, cfg) {
     {key:'hip_aa_r', pair:'Hip R — Add / Abd', side:'r', plane:'frontal', neutral:0, min:-30, max:45, hints:[/thigh|femur/i]},
     {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
     {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45,  max:45,  hints:[/thigh|femur/i]},
-    {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
-    {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-55, max:150, hints:[/calf|tibia|fibula|shin/i]},
+    {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-55, max:150, hints:[/calf|tibia|fibula|shin/i]},
     {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal',  neutral:0, min:-20,  max:50,  hints:[/ankle|foot|talus|tarsal/i]},
     {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
