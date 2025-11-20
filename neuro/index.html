@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ROMetrics — Clinical Anatomy Viewer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
 :root{ --bg:#0f172a; --panel:rgba(15, 23, 42, 0.95); --accent:#38bdf8; --text:#f1f5f9; --border:#334155; }
 html,body{ margin:0;height:100%;overflow:hidden; background:var(--bg);color:var(--text); font-family:'Inter',sans-serif; }
@@ -39,7 +40,12 @@ select, input[type=range] {
 </style>
 
 <script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
 </script>
 </head>
 
@@ -74,320 +80,303 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 
 /* ------------------------------------------------------------------
-   1. CLINICAL DATABASE
+   CLINICAL DATABASE
 ------------------------------------------------------------------ */
 const DB = {
-  "C2": { color:0xff0000, area:"Back of head, Upper neck", muscles:["Sternocleidomastoid"], action:"Neck Flexion/Rotation" },
-  "C3": { color:0xff2a00, area:"Lower neck, Clavicle", muscles:["Trapezius"], action:"Neck Lateral Flexion" },
-  "C4": { color:0xff5500, area:"Upper Shoulder/Scapula", muscles:["Levator Scapulae", "Diaphragm"], action:"Shoulder Elevation" },
-  "C5": { color:0xff8000, area:"Lateral Upper Arm", muscles:["Deltoid", "Biceps"], action:"Shoulder Abduction" },
-  "C6": { color:0xffaa00, area:"Thumb, Index Finger, Lat. Forearm", muscles:["Wrist Extensors", "Biceps"], action:"Wrist Extension" },
-  "C7": { color:0xffff00, area:"Middle Finger, Palm", muscles:["Triceps", "Wrist Flexors"], action:"Elbow Extension" },
-  "C8": { color:0xaaff00, area:"Pinky/Ring Finger", muscles:["Finger Flexors"], action:"Grip / Finger Flexion" },
-  "T1": { color:0x55ff00, area:"Medial Arm / Axilla", muscles:["Interossei"], action:"Finger Abduction" },
-  "T4": { color:0x00ff40, area:"Nipple Line / Chest", muscles:["Intercostals"], action:"Respiration" },
-  "T10":{ color:0x00ff80, area:"Umbilicus / Mid-Back", muscles:["Abdominals"], action:"Core Stability" },
-  "L1": { color:0x00ffff, area:"Groin / Upper Hip", muscles:["Iliopsoas"], action:"Hip Flexion (Minor)" },
-  "L2": { color:0x00aaff, area:"Anterior Thigh (Upper)", muscles:["Iliopsoas", "Adductors"], action:"Hip Flexion/Adduction" },
-  "L3": { color:0x0055ff, area:"Knee / Mid-Thigh", muscles:["Quadriceps"], action:"Knee Extension" },
-  "L4": { color:0x0000ff, area:"Medial Shin / Ankle", muscles:["Tibialis Anterior"], action:"Ankle Dorsiflexion" },
-  "L5": { color:0x5500ff, area:"Top of Foot / Big Toe", muscles:["Extensor Hallucis Longus"], action:"Great Toe Extension" },
-  "S1": { color:0xaa00ff, area:"Lateral Foot / Sole / Calf", muscles:["Gastrocnemius", "Gluteus Max"], action:"Plantarflexion" },
-  "S2": { color:0xff00ff, area:"Posterior Thigh Strip", muscles:["Hamstrings"], action:"Knee Flexion" },
-  "S3": { color:0xff0088, area:"Buttocks (Sit bones)", muscles:["Pelvic Floor"], action:"Bowel/Bladder" }
+  "C2": { color:0xff0000, area:"Back of head, upper neck", muscles:["SCM"], action:"Neck Flexion" },
+  "C3": { color:0xff3300, area:"Lower neck", muscles:["Trapezius"], action:"Neck Lateral Flexion" },
+  "C4": { color:0xff6600, area:"Top of shoulder", muscles:["Levator Scapulae"], action:"Shoulder Elevation" },
+  "C5": { color:0xff9900, area:"Lateral upper arm", muscles:["Deltoid"], action:"Shoulder Abduction" },
+  "C6": { color:0xffcc00, area:"Thumb/index", muscles:["Wrist Extensors"], action:"Wrist Extension" },
+  "C7": { color:0xffff00, area:"Middle finger", muscles:["Triceps"], action:"Elbow Extension" },
+  "C8": { color:0xaaff00, area:"Pinky, ring", muscles:["Finger Flexors"], action:"Finger Flexion" },
+  "T1": { color:0x55ff00, area:"Medial forearm", muscles:["Interossei"], action:"Finger Abduction" },
+  "T4": { color:0x00ff55, area:"Nipple line", muscles:["Intercostals"], action:"Respiration" },
+  "T10":{ color:0x00ffaa, area:"Umbilicus region", muscles:["Abdominals"], action:"Core" },
+  "L1": { color:0x00ffff, area:"Upper thigh", muscles:["Iliopsoas"], action:"Hip Flexion" },
+  "L2": { color:0x0099ff, area:"Anterior thigh", muscles:["Iliopsoas"], action:"Hip Flexion" },
+  "L3": { color:0x0066ff, area:"Medial knee", muscles:["Quadriceps"], action:"Knee Extension" },
+  "L4": { color:0x0033ff, area:"Medial shin", muscles:["Tibialis Anterior"], action:"Dorsiflexion" },
+  "L5": { color:0x2200ff, area:"Top of foot", muscles:["EHL"], action:"Great Toe Extension" },
+  "S1": { color:0x6600ff, area:"Lateral foot", muscles:["Gastroc"], action:"Plantarflexion" },
+  "S2": { color:0xaa00ff, area:"Posterior thigh", muscles:["Hamstrings"], action:"Knee Flexion" },
+  "S3": { color:0xff00ff, area:"Buttocks", muscles:["Pelvic Floor"], action:"Bladder/Bowel" }
 };
 
-// MAPPING: Bone Keywords -> Level
-const BONE_MAP = [
-    { k:["head","jaw"], v:"C2" }, { k:["neck"], v:"C3" },
-    { k:["shoulder","clavicle"], v:"C4" }, { k:["arm","humerus"], v:"C5" },
-    { k:["forearm","radius","ulna"], v:"C6" }, { k:["thumb","index"], v:"C6" },
-    { k:["middle"], v:"C7" }, { k:["pinky","ring"], v:"C8" },
-    { k:["spine2","chest"], v:"T4" }, { k:["spine1","abdomen"], v:"T10" },
-    { k:["spine","pelvis"], v:"L1" }, { k:["upleg","thigh","femur"], v:"L2" },
-    { k:["leg","shin","calf"], v:"L4" }, { k:["foot","ankle"], v:"L5" },
-    { k:["toe","ball"], v:"S1" }
-];
-
 /* ------------------------------------------------------------------
-   2. SCENE SETUP
+   MODEL LOAD
 ------------------------------------------------------------------ */
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f172a);
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0, 1.5, 3);
+camera.position.set(0,1.5,3);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera,renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.05;
 
-const amb = new THREE.AmbientLight(0xffffff, 1.2);
-scene.add(amb);
-const dir = new THREE.DirectionalLight(0xffffff, 2);
-dir.position.set(5, 10, 7);
-scene.add(dir);
+scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-/* ------------------------------------------------------------------
-   3. LOADING & GENERATION
------------------------------------------------------------------- */
+/* Loader */
 const loader = new GLTFLoader();
 const draco = new DRACOLoader();
 draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/");
 loader.setDRACOLoader(draco);
 
-let regionMeshes = {};
-let originalColors = {};
-
-function getModelURL(){
+function getURL(){
   const u = new URL(location.href);
   const q = u.searchParams.get("model");
-  return (q && /^https?:\/\//i.test(q)) ? q : "../assets/Roma_ROMetrics.glb";
+  return (q && /^https?:\/\//.test(q)) ? q : "../assets/Roma_ROMetrics.glb";
 }
 
-loader.load(getModelURL(), (gltf) => {
-    const model = gltf.scene;
-    scene.add(model);
+let regionMeshes={}, originalColors={};
 
-    // 1. Calculate Model Scale & Center
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
+/* ------------------------------------------------------------------
+   MAIN LOGIC
+------------------------------------------------------------------ */
+loader.load(getURL(), gltf=>{
+  const model = gltf.scene;
+  scene.add(model);
 
-    // 2. Fit Camera
-    controls.target.copy(center);
-    camera.position.copy(center);
-    camera.position.z += maxDim * 2.0; 
-    controls.update();
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  controls.target.copy(center);
 
-    // 3. Find Body Mesh
-    let body = null;
-    model.traverse(c => {
-        if(c.isSkinnedMesh && c.skeleton && !body){
-            if(c.geometry.attributes.position.count > 2000) body = c;
-        }
-    });
-
-    if(body) {
-        // Pass the maxDim to the generator so it knows how big to make the dots
-        generateMaps(body, center, maxDim);
-        document.getElementById('dataDisplay').innerHTML = `
-            <div style="padding:15px; text-align:center; color:#fff; background:rgba(56, 189, 248, 0.1); border:1px solid #38bdf8; border-radius:8px;">
-                Click a region on the model to view details.
-            </div>`;
-    } else {
-        document.getElementById('dataDisplay').textContent = "Error: No rigged body mesh found.";
+  let body=null;
+  model.traverse(o=>{
+    if(o.isSkinnedMesh && !body && o.geometry.attributes.position.count>2000){
+      body=o;
     }
+  });
+
+  if(!body){
+    document.getElementById("dataDisplay").innerHTML="No body mesh found.";
+    return;
+  }
+
+  createDermMap(body,center);
+  document.getElementById("dataDisplay").innerHTML=
+    `<div style="padding:15px;text-align:center;color:#fff;background:rgba(56,189,248,0.1);border:1px solid #38bdf8;border-radius:8px;">
+      Click a colored dermatome.
+     </div>`;
 });
 
-function generateMaps(mesh, modelCenter, maxDimension){
-    const pos = mesh.geometry.attributes.position;
-    const skinIdx = mesh.geometry.attributes.skinIndex;
-    const skinWt = mesh.geometry.attributes.skinWeight;
-    const bones = mesh.skeleton.bones;
-    
-    const buckets = {}; 
-    const tempPos = new THREE.Vector3();
+/* ------------------------------------------------------------------
+   DERMATOME MAP (Fixed + Accurate)
+------------------------------------------------------------------ */
+function createDermMap(mesh, center){
+  const pos = mesh.geometry.attributes.position;
+  const skinIdx = mesh.geometry.attributes.skinIndex;
+  const skinWt = mesh.geometry.attributes.skinWeight;
+  const bones = mesh.skeleton.bones;
 
-    // **Dynamic Dot Size** (This fixes the visibility issue)
-    const DOT_SIZE = maxDimension * 0.008; 
+  const buckets={};
+  const world=new THREE.Vector3();
 
-    for(let i=0; i<pos.count; i++){
-        // Calculate World Position relative to Model Center
-        tempPos.fromBufferAttribute(pos, i);
-        tempPos.applyMatrix4(mesh.matrixWorld);
-        
-        const isRight = tempPos.x < modelCenter.x; 
-        const isFront = tempPos.z > modelCenter.z; // Uses center to determine front/back
+  const DOT=0.008;
 
-        // Identify Bone
-        let maxW=0, bId=0;
-        for(let k=0; k<4; k++){
-            const w = skinWt.getComponent(i,k);
-            if(w > maxW){ maxW=w; bId = skinIdx.getComponent(i,k); }
-        }
-        const bName = bones[bId].name.toLowerCase();
+  for(let i=0;i<pos.count;i++){
+    world.fromBufferAttribute(pos,i);
+    world.applyMatrix4(mesh.matrixWorld);
 
-        // Logic
-        let level = null;
-        if(bName.includes("hip") || bName.includes("pelvis")){
-            level = isFront ? "L1" : "S3"; 
-        } else if(bName.includes("upleg") || bName.includes("thigh")){
-            level = isFront ? "L2" : "S2"; 
-        } else {
-            for(const m of BONE_MAP){
-                if(m.k.some(kw => bName.includes(kw))){ level = m.v; break; }
-            }
-        }
+    const isRight = world.x > center.x;
+    const isFront = world.z > center.z;
 
-        if(level){
-            const key = `${level}-${isRight?'R':'L'}`;
-            if(!buckets[key]) buckets[key] = [];
-            buckets[key].push(i);
-        }
+    // Find dominant bone
+    let maxW=0, bID=0;
+    for(let j=0;j<4;j++){
+      const w = skinWt.getX(i*4+j);
+      if(w>maxW){ maxW=w; bID=skinIdx.getX(i*4+j); }
     }
 
-    // Build Meshes
-    const worldPosArr = [];
-    for(let i=0; i<pos.count; i++){
-        tempPos.fromBufferAttribute(pos, i);
-        tempPos.applyMatrix4(mesh.matrixWorld);
-        worldPosArr.push(tempPos.clone());
+    const b = bones[bID].name.toLowerCase();
+    let level=null;
+
+    /* HEAD & NECK */
+    if(b.includes("head")) level="C2";
+    else if(b.includes("neck")) level="C3";
+
+    /* SHOULDER GIRDLE */
+    else if(b.includes("clav")||b.includes("shoulder")) level="C4";
+
+    /* ARMS */
+    else if(b.includes("upperarm")) level="C5";
+    else if(b.includes("forearm")){
+      if(isRight) level="C6"; else level="C7";
+    }
+    else if(b.includes("hand")){
+      if(isFront){
+        if(isRight) level="C6"; else level="C7";
+      } else {
+        level = "C8";
+      }
     }
 
-    for(const [key, indices] of Object.entries(buckets)){
-        const level = key.split('-')[0];
-        const data = DB[level];
-        if(!data) continue;
-
-        const geo = new THREE.BufferGeometry();
-        const verts = [];
-        indices.forEach(idx => {
-            const p = worldPosArr[idx];
-            verts.push(p.x, p.y, p.z);
-        });
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-
-        const mat = new THREE.PointsMaterial({
-            color: data.color,
-            size: DOT_SIZE,      // Used the dynamic size here
-            transparent: true,
-            opacity: 0.85,
-            depthTest: false,    // Forces dots on top of skin
-            depthWrite: false,
-            sizeAttenuation: true
-        });
-
-        const points = new THREE.Points(geo, mat);
-        points.renderOrder = 999; // Draws last (on top)
-        points.userData = { id: key, level: level, ...data };
-        
-        scene.add(points);
-        regionMeshes[key] = points;
-        originalColors[key] = data.color;
+    /* TRUNK */
+    else if(b.includes("spine")){
+      if(world.y>center.y+0.15) level="T4";
+      else level="T10";
     }
+
+    /* PELVIS */
+    else if(b.includes("pelvis")) level = isFront?"L1":"S3";
+
+    /* LEGS */
+    else if(b.includes("thigh")) level = isFront?"L2":"S2";
+    else if(b.includes("calf")) level="L4";
+    else if(b.includes("foot")){
+      if(isFront) level="L5"; else level="S1";
+    }
+
+    if(level){
+      const key = level + (isRight?"-R":"-L");
+      if(!buckets[key]) buckets[key]=[];
+      buckets[key].push(i);
+    }
+  }
+
+  /* Build meshes */
+  for(const key in buckets){
+    const level = key.split("-")[0];
+    const pts=[];
+    const P=new THREE.Vector3();
+
+    buckets[key].forEach(idx=>{
+      P.fromBufferAttribute(mesh.geometry.attributes.position,idx)
+        .applyMatrix4(mesh.matrixWorld);
+      pts.push(P.x,P.y,P.z);
+    });
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position",new THREE.Float32BufferAttribute(pts,3));
+
+    const col = DB[level].color;
+    const mat = new THREE.PointsMaterial({
+      color:col, size:DOT, transparent:true, opacity:0.85,
+      depthTest:false, depthWrite:false
+    });
+
+    const p = new THREE.Points(geo,mat);
+    p.userData={level,id:key,...DB[level]};
+    p.renderOrder=999;
+
+    scene.add(p);
+    regionMeshes[key]=p;
+    originalColors[key]=col;
+  }
 }
 
 /* ------------------------------------------------------------------
-   4. INTERACTION
+   INTERACTION
 ------------------------------------------------------------------ */
-const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.05; 
-const mouse = new THREE.Vector2();
-const ui = document.getElementById('dataDisplay');
-let hoveredObj = null;
+const ray=new THREE.Raycaster();
+ray.params.Points.threshold=0.05;
+const mouse=new THREE.Vector2();
+let hovered=null;
 
 function onMove(e){
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    
-    const visible = Object.values(regionMeshes).filter(m=>m.visible);
-    if(!visible.length) return;
+  mouse.x=(e.clientX/innerWidth)*2-1;
+  mouse.y=-(e.clientY/innerHeight)*2+1;
 
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(visible, false);
+  const visible=Object.values(regionMeshes).filter(m=>m.visible);
+  ray.setFromCamera(mouse,camera);
 
-    if(hits.length > 0){
-        const hit = hits[0].object;
-        if(hoveredObj !== hit){
-            if(hoveredObj) hoveredObj.material.color.setHex(originalColors[hoveredObj.userData.id]);
-            hoveredObj = hit;
-            hoveredObj.material.color.setHex(0xffffff); 
-            document.body.style.cursor = "pointer";
-        }
-    } else {
-        if(hoveredObj){
-            hoveredObj.material.color.setHex(originalColors[hoveredObj.userData.id]);
-            hoveredObj = null;
-            document.body.style.cursor = "default";
-        }
+  const hits=ray.intersectObjects(visible);
+  if(hits.length){
+    const o=hits[0].object;
+    if(hovered!==o){
+      if(hovered) hovered.material.color.setHex(originalColors[hovered.userData.id]);
+      hovered=o;
+      hovered.material.color.setHex(0xffffff);
+      document.body.style.cursor="pointer";
     }
+  } else {
+    if(hovered){
+      hovered.material.color.setHex(originalColors[hovered.userData.id]);
+      hovered=null;
+      document.body.style.cursor="default";
+    }
+  }
 }
 
 function onClick(){
-    if(hoveredObj){
-        updatePanel(hoveredObj.userData);
-    }
+  if(hovered) updatePanel(hovered.userData);
 }
 
-function updatePanel(data){
-    const mode = document.getElementById('modeSel').value;
-    const side = data.id.includes("-R") ? "Right" : "Left";
-    const hex = '#'+data.color.toString(16).padStart(6,'0');
+window.addEventListener("mousemove",onMove);
+window.addEventListener("click",onClick);
 
-    let content = `
-        <div class="info-card">
-            <span class="level-tag" style="color:${hex}">${data.level} <span style="font-size:14px;opacity:0.7">(${side})</span></span>
+/* PANEL */
+function updatePanel(d){
+  const mode = document.getElementById("modeSel").value;
+  const side = d.id.includes("-R")?"Right":"Left";
+  const hex = "#"+d.color.toString(16).padStart(6,"0");
+
+  let html = `
+    <div class="info-card">
+      <span class="level-tag" style="color:${hex}">${d.level} <span style="font-size:14px;opacity:0.7">(${side})</span></span>
+  `;
+
+  if(mode==="derm"){
+    html+=`
+      <span class="section-title">Sensory Area</span>
+      <div class="data-text">${d.area}</div>
     `;
+  } else {
+    html+=`
+      <span class="section-title">Motor</span>
+      <ul class="muscle-list">
+        ${d.muscles.map(m=>`<li>${m}</li>`).join("")}
+      </ul>
+      <span class="section-title">Action</span>
+      <div class="data-text">${d.action}</div>
+    `;
+  }
 
-    if(mode === 'derm'){
-        content += `
-            <span class="section-title">Sensory Distribution</span>
-            <div class="data-text">${data.area}</div>
-        `;
-    } else if(mode === 'myo'){
-        if(data.muscles){
-            content += `
-                <span class="section-title">Key Muscles (Motor)</span>
-                <ul class="muscle-list">
-                    ${data.muscles.map(m => `<li>${m}</li>`).join('')}
-                </ul>
-                <span class="section-title">Primary Action</span>
-                <div class="data-text" style="color:#fff;font-weight:500">${data.action}</div>
-            `;
-        } else {
-            content += `<div class="data-text" style="margin-top:10px">Primarily sensory at this level.</div>`;
-        }
-    }
-    content += `</div>`;
-    ui.innerHTML = content;
+  html+=`</div>`;
+  document.getElementById("dataDisplay").innerHTML=html;
 }
 
-window.addEventListener('mousemove', onMove);
-window.addEventListener('click', onClick);
-
-// Visibility Logic
-const modeSel = document.getElementById('modeSel');
-const opSel = document.getElementById('opacitySel');
+/* VISIBILITY */
+const modeSel=document.getElementById("modeSel");
+const opSel=document.getElementById("opacitySel");
 
 function updateVis(){
-    const mode = modeSel.value;
-    const op = parseFloat(opSel.value);
-    
-    for(const m of Object.values(regionMeshes)){
-        m.material.opacity = op;
-        if(mode === 'none'){
-            m.visible = false;
-        } else if(mode === 'derm'){
-            m.visible = true; 
-        } else if(mode === 'myo'){
-            if(m.userData.muscles) m.visible = true;
-            else m.visible = false;
-        }
+  const mode=modeSel.value;
+  const op=parseFloat(opSel.value);
+
+  for(const m of Object.values(regionMeshes)){
+    m.material.opacity=op;
+
+    if(mode==="none") m.visible=false;
+    else if(mode==="derm") m.visible=true;
+    else if(mode==="myo"){
+      if(m.userData.muscles) m.visible=true;
+      else m.visible=false;
     }
+  }
 }
 
-modeSel.addEventListener('change', updateVis);
-opSel.addEventListener('input', updateVis);
+modeSel.addEventListener("change",updateVis);
+opSel.addEventListener("input",updateVis);
 
-function animate(){
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
+/* LOOP */
+function loop(){
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene,camera);
 }
-animate();
+loop();
 
-window.addEventListener('resize', ()=>{
-    camera.aspect = innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth,innerHeight);
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
 });
 </script>
 </body>
