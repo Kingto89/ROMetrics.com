@@ -1632,7 +1632,18 @@ if (key.startsWith('wr_ps_') || key.startsWith('wr_fe_') || key.startsWith('wr_r
     // Rebind the zero for the currently selected action (wr_fe, wr_ru, or wr_ps)
     freezeBindBaseFor(key, cfg);
     log(`Setup ${side.toUpperCase()} ${CURRENT_ACTION.label}: Elbow 90°, Forearm Start (${rotationAngle}°).`);
-}      
+} 
+// === HIP FLEXION PRE-POSE FIX (Knee Flexion) ===
+// This setup is required for Hip Flexion to achieve full ROM by reducing hamstring tension.
+if (key.startsWith('hip_fe_') && CURRENT_ACTION.sign > 0) { 
+    const side = key.endsWith('_l') ? 'l' : 'r';
+    
+    // Set Knee Flexion (knee_fe_) to 90 degrees 
+    setPair(`knee_fe_${side}`, 90); 
+
+    // Note: The hip joint still starts at 0° relative to the slider.
+    log(`Hip Flexion Setup: Knee ${side.toUpperCase()} flexed to 90°.`);
+}
 
 // Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
 if (key==='hip_irer_l' || key==='hip_irer_r'){
