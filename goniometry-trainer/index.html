@@ -796,8 +796,8 @@ function capFor(action){
       key.startsWith('hip_fe_') && 
       sign > 0 && 
       actionLabel.includes('Flexion')) {
-            log(`Custom Collision: Hip Flexion in Sitting: 40°`);
-            return 40; // Apply the unique collision limit of 40°
+            log(`Custom Collision: Hip Flexion in Sitting: 30°`);
+            return 30; // Apply the unique collision limit of 30°
   }
     // Cervical rotation L/R
     if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
