@@ -446,7 +446,7 @@ function applyAnatomicBaseline() {
 const PI_HALF = Math.PI / 2;
 function updateModelPose(poseName, camArray=null) {
     if (!model) return;
-    resetAllBonesToInitial(); 
+    resetAllBonesToInitial();
     model.visible = true;
     model.scale.set(1,1,1);
     model.rotation.set(0, 0, 0, 'XYZ');
@@ -457,18 +457,15 @@ function updateModelPose(poseName, camArray=null) {
     } else if (poseName === "prone") {
         model.rotation.x = -PI_HALF;
         model.rotation.y = Math.PI;
-    } else if (poseName === "sitting") { 
-        // Force Flex Hips (90) and Knees (90) on both legs
+    } else if (poseName === "sitting") {
         setPair('hip_fe_l', 90);
         setPair('hip_fe_r', 90);
-        setPair('knee_fe_l', -90); // -90 for knee_fe means 90 degrees of flexion
+        setPair('knee_fe_l', -90); 
         setPair('knee_fe_r', -90);
-        
-        // Move model down to sit on the ground plane
-        model.position.y = -0.4; 
+        model.position.y = -0.4;
     }
     
-    // Proper camera handling: move the CAMERA (not the target) if provided
+    // ✅ Proper camera handling: move the CAMERA (not the target) if provided
     if (Array.isArray(camArray) && camArray.length === 3) {
         camera.position.set(camArray[0], camArray[1], camArray[2]);
     }
@@ -478,8 +475,34 @@ function updateModelPose(poseName, camArray=null) {
 
     // Re-snap to ground after pose changes to avoid sinking/clipping
     groundSnap();
-    log(`Model set to ${poseName.toUpperCase()} position.`);
 }
+
+function startTestMovement(testCfg) {
+    if (!testCfg || !testCfg.actionKey) return;
+    
+    // Step 1: Apply the base pose first (this handles sitting hip/knee flexion)
+    updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
+
+    const { actionKey, move } = testCfg;
+    let customSetupApplied = false;
+
+    // --- 2. HANDLE CUSTOM SETUP LOGIC (Ensures arm position is set correctly on top of base pose) ---
+    
+    // Custom Fix 1: Serratus Anterior (Bilateral 140° Shoulder Flexion, Seated)
+    if (actionKey === 'sh_fe_l' && move === 140) {
+        // Move the right arm to the same 140° flexion position
+        setPair('sh_fe_r', 140);
+        log("Model moved both arms to 140° Flexion (Serratus Anterior setup).");
+        customSetupApplied = true;
+    }
+
+    // --- 3. APPLY PRIMARY MOVEMENT (Will re-apply 140 to sh_fe_l but ensures it is set) ---
+    setPair(actionKey, move); 
+    
+    // --- 4. LOG RESULT ---
+    if (!customSetupApplied) {
+        log(`Model moved to Grade 3 position (${move}°).`);
+    }
 }
 
 function handleResistanceButtonDown(e) {
@@ -558,33 +581,13 @@ startTestBtn.onclick = () => {
         log("Please select a muscle test first.");
         return;
     }
-function startTestMovement(testCfg) {
-    if (!testCfg || !testCfg.actionKey) return;
-    
-    // Step 1: Apply the base pose first (this handles sitting hip/knee flexion)
-    updateModelPose(testCfg.pose?.name || 'sitting', testCfg.pose?.cam || null);
+    startTestMovement(CURRENT_MMT);
 
-    const { actionKey, move } = testCfg;
-    let customSetupApplied = false;
-
-    // --- 2. HANDLE CUSTOM SETUP LOGIC (Ensures arm position is set correctly on top of base pose) ---
-    
-    // Custom Fix 1: Serratus Anterior (Bilateral 140° Shoulder Flexion, Seated)
-    if (actionKey === 'sh_fe_l' && move === 140) {
-        // Move the right arm to the same 140° flexion position
-        setPair('sh_fe_r', 140);
-        log("Model moved both arms to 140° Flexion (Serratus Anterior setup).");
-        customSetupApplied = true;
-    }
-
-    // --- 3. APPLY PRIMARY MOVEMENT (Will re-apply 140 to sh_fe_l but ensures it is set) ---
-    setPair(actionKey, move); 
-    
-    // --- 4. LOG RESULT ---
-    if (!customSetupApplied) {
-        log(`Model moved to Grade 3 position (${move}°).`);
-    }
-}
+    testButton.disabled = false;
+    placeStabilizeBtn.disabled = false;
+    placeTestBtn.disabled = false;
+    log("Test position established. Grade 3 assumed. Hand placement buttons enabled.");
+};
 
 placeStabilizeBtn.onclick = () => {
     if (!CURRENT_MMT) return;
