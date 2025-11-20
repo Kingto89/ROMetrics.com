@@ -1645,10 +1645,16 @@ else if (r === "wrist") {
 };
 
 positionSel.onchange = () => {
-    updateModelPose(positionSel.value);
-    
-    // When pose changes, reset the action selection and slider
-    syncActionUI(true);
+    updateModelPose(positionSel.value);
+    
+    // This resets the slider visually but preserves the selected menu item.
+    syncActionUI(true);
+    
+    // === FIX: Re-trigger change event to set the joint baseline from the NEW pose ===
+    // We check 'actionSel.value' to ensure the menu content is preserved when changing poses.
+    if (actionSel.value) { 
+        actionSel.dispatchEvent(new Event('change'));
+    }
 };
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
