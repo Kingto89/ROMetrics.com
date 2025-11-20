@@ -15,18 +15,28 @@
 </script>
 
 <style>
-:root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
+/* --- NEW MMT COLOR SCHEME --- */
+:root{
+    --bg:#f8fafc;        /* Light Background (Sky Blue/White) */
+    --panel:#ffffff;     /* White Panel */
+    --line:#e2e8f0;      /* Light Gray Border */
+    --ctrl:#f1f5f9;      /* Lighter Control BG */
+    --text:#0f172a;      /* Dark Text */
+    --muted:#64748b;     /* Muted Gray Text */
+    --primary-blue: #06b6d4; /* Teal Blue for emphasis */
+    --secondary-yellow: #fde047; /* Soft Yellow for test */
+}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
-.panel{position:fixed;left:25px;top:12px;width:360px;max-height:90vh;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
-.dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
-.dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
+.panel{position:fixed;left:25px;top:12px;width:360px;max-height:90vh;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
+.dragbar{cursor:move;background:var(--ctrl);border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
 .content{padding:12px;overflow:auto}
 label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
-select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
+select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid var(--line);color:var(--text)}
 .row{display:flex;gap:8px}.row>button{flex:1}
-.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
-#log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
-#msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
+.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid var(--line)}
+#log{background:var(--ctrl);border:1px solid var(--line);min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap;color:var(--text)}
+#msg{position:fixed;bottom:10px;left:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;color:var(--text)}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 /* MMT Specific Styles */
@@ -35,7 +45,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    border: 2px solid #334155;
+    border: 2px solid var(--line);
     border-radius: 12px;
     padding: 8px 6px;
     line-height: 1;
@@ -44,14 +54,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     transition: all 0.2s;
 }
 .mmt-pill.active {
-    border-color: #3b82f6;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
 }
 /* Hand Placement Visuals (Stabilizer = Blue, Test = Yellow) */
-.place-btn.stabilize { border-color: #3b82f6; color: #3b82f6; }
-.place-btn.stabilize.active { background: #1e3a8a; color: white; border-color: #3b82f6; }
-.place-btn.test { border-color: #facc15; color: #facc15; }
-.place-btn.test.active { background: #854d0e; color: white; border-color: #facc15; }
+.place-btn.stabilize { border-color: var(--primary-blue); color: var(--primary-blue); }
+.place-btn.stabilize.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+.place-btn.test { border-color: var(--secondary-yellow); color: var(--secondary-yellow); }
+.place-btn.test.active { background: #d97706; color: white; border-color: #d97706; }
 .place-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* The new progressive resistance button */
@@ -62,6 +72,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     overflow: hidden;
     transition: background-color 0.2s;
     touch-action: none; /* Prevents scroll on mobile */
+    background: var(--ctrl); /* Base color */
 }
 #resistanceFill {
     position: absolute;
@@ -69,7 +80,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     left: 0;
     width: 0;
     height: 100%;
-    background-color: #facc15; /* Yellow fill */
+    background-color: var(--secondary-yellow); /* Yellow fill */
     transition: width 0.1s linear;
     z-index: 1;
 }
@@ -77,7 +88,15 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     position: relative;
     z-index: 2;
     color: var(--text);
-    text-shadow: 0 0 3px #000;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3); /* Ensure contrast on fill */
+}
+/* Hide the instructional text when not being tested */
+#instructionText {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin: 4px 0 12px 0;
+    display: none; /* Hidden by default */
 }
 </style>
 </head>
@@ -135,7 +154,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
         </select>
 
         <div class="row" style="margin-top:10px;">
-          <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3)</button>
+          <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
         </div>
 
         <label>Test Grade Selection</label>
@@ -158,15 +177,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
             <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
           </button>
         </div>
-        <p style="font-size:12px;color:#9fb0c9;text-align:center;margin:4px 0 12px 0;">Hold for 1s ($\text{Grade 4}$), Hold for 2s ($\text{Grade 5}$).</p>
-
+        <p id="instructionText">Hold for 1s ($\text{Grade 4}$), Hold for 2s ($\text{Grade 5}$).</p>
 
         <label>Hands/Arm Placement (After Start Test)</label>
         <div class="row">
           <button id="placeStabilize" class="mini place-btn stabilize" disabled>📍 Stabilize Arm</button>
           <button id="placeTest" class="mini place-btn test" disabled>✋ Test Arm</button>
         </div>
-        <p style="font-size:12px;color:#9fb0c9;text-align:center;margin:4px 0 8px 0;">Click to place virtual MMT hands/arms.</p>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin:4px 0 8px 0;">Click to place virtual MMT hands/arms.</p>
         
 
       <label style="margin-top:12px;">Model Control</label>
@@ -248,8 +266,8 @@ const RESISTANCE_FILL_TIME = 2000; // 2 seconds for full fill
 /* ===================== NEW HANDS PLACEMENT LOGIC ===================== */
 
 const MMT_HANDS = {
-    stabilize: { x: -100, y: -100, placed: false, color: '#3b82f6', element: null }, // Blue
-    test:      { x: -100, y: -100, placed: false, color: '#facc15', element: null }  // Yellow
+    stabilize: { x: -100, y: -100, placed: false, color: '#06b6d4', element: null }, // Blue (Teal)
+    test:      { x: -100, y: -100, placed: false, color: '#fde047', element: null }  // Yellow
 };
 let activeHandTarget = null; // 'stabilize' or 'test'
 
@@ -265,7 +283,7 @@ function updateHandDot(handKey) {
         hand.element = document.createElementNS(NS, 'circle');
         hand.element.setAttribute('r', '8');
         hand.element.setAttribute('stroke', hand.color);
-        hand.element.setAttribute('stroke-width', '2');
+        hand.element.setAttribute('stroke-width', '3'); // Thicker ring
         hand.element.setAttribute('fill', 'rgba(0,0,0,0.5)');
         handDotsGrp.appendChild(hand.element);
     }
@@ -277,6 +295,8 @@ function updateHandDot(handKey) {
     } else {
         hand.element.style.display = 'none';
     }
+    // Toggle the SVG container visibility
+    document.getElementById('handHost').classList.toggle('hide', !MMT_HANDS.stabilize.placed && !MMT_HANDS.test.placed);
 }
 
 // Function to handle the screen click for placing hands
@@ -310,6 +330,7 @@ const startTestBtn = document.getElementById("startTestBtn");
 const testButton = document.getElementById("testButton");
 const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
+const instructionText = document.getElementById("instructionText"); // NEW
 const placeStabilizeBtn = document.getElementById("placeStabilize");
 const placeTestBtn = document.getElementById("placeTest");
 const grade35 = document.getElementById("grade35");
@@ -382,7 +403,7 @@ function resolveBind(key, cfg) {
     if (key === 'cerv_lat') { // Special case: bind to neck/head
         bone = findBoneBy({ side: '', hints: [/^head$/, /^neck$/] });
     } else if (!bone) {
-        log(`No bind for ${key}`);
+        // Log removed to reduce clutter when selecting complex items
         return null;
     }
 
@@ -410,7 +431,7 @@ function applyPairAngle(key, cfg, deg) {
     const r = flip * rad;
     if (axis === 'x') x = r;
     if (axis === 'y') y = r;
-    if (axis === 'z') z = z;
+    if (axis === 'z') z = r; // FIXED: r was missing for z
 
     const e = new THREE.Euler(x, y, z, "XYZ");
     const qDelta = new THREE.Quaternion().setFromEuler(e);
@@ -428,9 +449,7 @@ function resetAllBonesToInitial() {
         const q0 = initialBoneRot.get(b);
         if (q0) b.quaternion.copy(q0);
     });
-    JOINT_BIND.forEach(obj => {
-        if (obj?.bone) obj.qBind = obj.bone.quaternion.clone();
-    });
+    JOINT_BIND.clear(); // Clear cached binds
 }
 
 function set3DLock(v) {
@@ -444,7 +463,6 @@ const ANAT = { addL: 0, psL: 0, wpsL: 0 }; // Simplified anatomic baseline
 function applyAnatomicBaseline() {
     // Only resets for the tested joints are crucial.
     setPair('sh_aa_l', ANAT.addL);
-    log(`Anatomic baseline applied.`);
 }
 
 /* ===================== NEW MMT LOGIC ===================== */
@@ -463,13 +481,22 @@ function updateModelPose(pose) {
         model.rotation.x = -PI_HALF;
         model.rotation.y = Math.PI;
     } else if (pose === "sitting") {
+        // Set sitting posture
         setPair('hip_fe_l', 90);
         setPair('hip_fe_r', 90);
-        setPair('knee_fe_l', -90);
+        setPair('knee_fe_l', -90); // -90 means 90 degrees flexion in our rig
         setPair('knee_fe_r', -90);
         model.position.y = -0.4;
     }
-    controls.update();
+    
+    // Update camera target for better view of test
+    if (CURRENT_MMT && CURRENT_MMT.pose.cam) {
+        controls.target.set(CURRENT_MMT.pose.cam[0], CURRENT_MMT.pose.cam[1], CURRENT_MMT.pose.cam[2]);
+        controls.update();
+    } else {
+        controls.target.set(0, 1.1, 0);
+        controls.update();
+    }
 }
 
 // Function to move the model to the start test position (Grade 3/4/5)
@@ -477,7 +504,7 @@ function startTestMovement(testCfg) {
     if (!testCfg || !testCfg.actionKey) return;
 
     // 1. Apply the test position pose
-    const { name: poseName, cam: camPos } = testCfg.pose;
+    const { name: poseName } = testCfg.pose;
     updateModelPose(poseName);
 
     // 2. Move the bone to the MMT start position (Grade 3 position)
@@ -493,6 +520,7 @@ function handleResistanceButtonDown(e) {
     resistanceStartTime = performance.now();
     testButton.classList.add('active');
     resistanceText.textContent = 'Applying Resistance...';
+    instructionText.style.display = 'block'; // Show instructions
 
     // Start filling the resistance bar
     resistanceTimer = setInterval(() => {
@@ -503,6 +531,7 @@ function handleResistanceButtonDown(e) {
         if (progress >= 1) {
             resistanceText.textContent = 'Grade 5: Maximum Resistance';
             grade35.value = '5';
+            log('Grade 5 (Max Resistance) applied.');
         } else if (progress >= 0.5) {
             resistanceText.textContent = 'Grade 4: Moderate Resistance';
             grade35.value = '4';
@@ -520,9 +549,9 @@ function handleResistanceButtonUp() {
     testButton.classList.remove('active');
     resistanceFill.style.width = '0'; // Reset fill bar
     resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
+    instructionText.style.display = 'none'; // Hide instructions
 
-    // The score is already set in the progress check, just log it.
-    log(`Test complete. Grade recorded: ${grade35.value}`);
+    log(`Test complete. Final Grade recorded: ${grade35.value}`);
 }
 
 // Global listeners for the resistance button
@@ -547,8 +576,12 @@ actionSel.onchange = () => {
     MMT_HANDS.stabilize.placed = MMT_HANDS.test.placed = false;
     updateHandDot('stabilize');
     updateHandDot('test');
+    instructionText.style.display = 'none';
+    resistanceFill.style.width = '0';
+    resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
 
-    // Reset model and log
+
+    // Reset model to standing/anatomic
     resetAllBonesToInitial();
     applyAnatomicBaseline();
     updateModelPose('standing');
@@ -568,7 +601,7 @@ startTestBtn.onclick = () => {
     testButton.disabled = false;
     placeStabilizeBtn.disabled = false;
     placeTestBtn.disabled = false;
-    log("Test position established. Grade 3 assumed.");
+    log("Test position established. Grade 3 assumed. Hand placement buttons enabled.");
 };
 
 // Stabilize Arm Placement
@@ -619,6 +652,7 @@ document.getElementById("zeroAll").onclick = () => {
     MMT_HANDS.stabilize.placed = MMT_HANDS.test.placed = false;
     updateHandDot('stabilize');
     updateHandDot('test');
+    instructionText.style.display = 'none';
 };
 
 /* ===================== THREE.js / RENDER SETUP (From Original Index) ===================== */
@@ -632,7 +666,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b1220);
+scene.background = new THREE.Color(0xf8fafc); // MATCH NEW BG
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
 camera.position.set(1.6, 1.6, 3.2);
@@ -688,7 +722,7 @@ function loadModel() {
             });
             log("Model baselines set.");
 
-            // Apply initial pose (standing)
+            // Apply initial pose (standing/anatomic)
             applyAnatomicBaseline();
         },
         (xhr) => {
