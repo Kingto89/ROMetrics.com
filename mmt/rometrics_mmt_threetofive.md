@@ -1,5 +1,159 @@
 # Manual Muscle Testing (MMT) — Scapula
 
+## Capital Extension
+
+### Muscles Tested
+
+* Rectus capitis posterior major/minor, Longissimus capitis, Obliquus capitis (sup./inf.), Splenius/ Semispinalis/ Spinalis capitis (synergistic group)
+
+### Position
+
+* Prone, **head off end of table**, arms at sides.
+
+### Therapist
+
+* Stand at head; one hand **resists over occiput**, other **guards under forehead** to support if needed. Apply resistance directly opposite to head tilt (avoid pushing neck into flexion).
+
+### Action
+
+* “Tilts chin up” to **extend the head on the atlas** (cervical spine not extended).
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds test position against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Completes available range **without** resistance.
+
+---
+
+## Cervical Extension
+
+### Muscles Tested
+
+* Longissimus/ Semispinalis/ Iliocostalis/ Splenius cervicis; upper trapezius assists (group action).
+
+### Position
+
+* **Prone, head off end of table** (standard setup for extension testing).
+
+### Therapist
+
+* Stand at head; apply resistance on **parietal–occipital** area **downward/forward**; support under head as needed for safety.
+
+### Action
+
+* **Extends the cervical spine** through available range.
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds test position against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Full cervical extension **against gravity** without resistance.
+
+---
+
+## Capital Flexion (Chin Tuck)
+
+### Muscles Tested
+
+* Longus capitis, Rectus capitis anterior, Anterior scalene (capital flexor group).
+
+### Position
+
+* **Supine**, head supported on table.
+
+### Therapist
+
+* Stand at head; **two fingers** give resistance under the **mandible** (flexion line) while the other hand **stabilizes the chest**/sternum.
+
+### Action
+
+* **Chin tuck** (“nod yes”)—**capital** flexion without lifting the head.
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds chin tuck against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Completes chin tuck **through full range** without resistance.
+
+---
+
+## Cervical Flexion
+
+### Muscles Tested
+
+* Sternocleidomastoid (bilateral), Longus colli/capitis, Anterior scalene (group action).
+
+### Position
+
+* **Supine**, head on table, knees flexed.
+
+### Therapist
+
+* Stand at head; apply resistance on **forehead** in posterior direction while **other hand** supports thorax if needed.
+
+### Action
+
+* **Lifts head from table** with **chin tucked**, eyes toward ceiling.
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds test position against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Raises head through available range **without resistance**.
+
+---
+
+## Flexion to Isolate a Single Sternocleidomastoid (Anterolateral Flexion)
+
+### Muscle Tested
+
+* **Sternocleidomastoid** (one side).
+
+### Position
+
+* **Supine**. Head turned **to the opposite side** being tested.
+
+### Therapist
+
+* Stand at head; apply resistance **on the temple/forehead** in the direction opposite the motion.
+
+### Action
+
+* **Raises head** with **face turned** contralaterally (isolates one SCM).
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds position against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Full range **against gravity** without resistance.
+
+---
+
+## Cervical Rotation
+
+### Muscles Tested
+
+* SCM (contralateral rotator), Splenius/Longissimus cervicis/capitis (ipsilateral), and other rotators (group).
+
+### Position
+
+* **Supine**, head supported; **turn fully** to one side for test.
+
+### Therapist
+
+* Place a hand at the **temple**; apply resistance **toward neutral** (opposite rotation) while stabilizing chest as needed.
+
+### Action
+
+* **Rotates head/neck** through full range to the test side.
+
+### Grades 3, 4, 5
+
+* **Grade 5:** Holds position against **maximal** resistance.
+* **Grade 4:** Holds against **moderate** resistance.
+* **Grade 3:** Rotates through full range **without resistance**.
+
 ## Scapular Abduction & Upward Rotation (Serratus Anterior)
 
 **Plane: scapular plane | End-Feel: firm**
