@@ -481,10 +481,10 @@ document.getElementById("zeroAll").onclick = () => {
     if (q0) b.quaternion.copy(q0);
   });
 };
-
 /* ===== Grading Exceptions Availability Control ===== */
 
 const exceptionSelect = document.getElementById("GradingExceptions");
+const gradeMainSelect = document.getElementById("grade-main");
 
 // Tests that ALLOW grading exceptions
 const EXCEPTION_TESTS = new Set([
@@ -500,23 +500,31 @@ function updateGradingExceptionAvailability() {
   const key = actionSel.value;
 
   if (EXCEPTION_TESTS.has(key)) {
-    // Enable exceptions
+    /** Enable Exceptions */
     exceptionSelect.disabled = false;
     exceptionSelect.style.opacity = "1";
+
+    /** Disable Regular Grade */
+    gradeMainSelect.disabled = true;
+    gradeMainSelect.style.opacity = "0.4";
+
   } else {
-    // Disable exceptions & reset
+    /** Disable Exceptions */
     exceptionSelect.disabled = true;
     exceptionSelect.style.opacity = "0.4";
     exceptionSelect.value = "3"; // Reset to Grade 3 default
+
+    /** Enable Regular Grade */
+    gradeMainSelect.disabled = false;
+    gradeMainSelect.style.opacity = "1";
   }
 }
 
-// Run whenever test changes
+// Run when test changes
 actionSel.addEventListener("change", updateGradingExceptionAvailability);
 
-// Run once on page load
+// Run once on load
 updateGradingExceptionAvailability();
-
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
