@@ -622,6 +622,24 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 // Run once on load
 updateGradingExceptionAvailability();
 
+// Minimal setPair used only for pose setting (not animation)
+function setPair(key, degrees) {
+  const rad = THREE.MathUtils.degToRad(degrees);
+
+  // LEFT / RIGHT detection
+  let targets = [];
+  skeleton.bones.forEach(b => {
+    if (b.name.toLowerCase().includes(key.replace(/_[lr]$/, '').split('_')[0])) {
+      targets.push(b);
+    }
+  });
+
+  targets.forEach(bone => {
+    bone.rotation.x = rad;
+  });
+}
+  
+
 function applyPoseForTest(testKey) {
   if (!model) return;
 
@@ -649,28 +667,7 @@ function applyPoseForTest(testKey) {
     return;
   }
 
-  /* ============ SHORT SITTING ============ 
-     hips ≈ 90° flex via thigh_L / thigh_R
-     knees ≈ 90° flex via calf_L / calf_R
-  ========================================== */
-  if (pose === "short_sit") {
 
-    // HIPS at ~90° flex (thigh bones)
-    if (boneMap.thigh_L)
-      boneMap.thigh_L.rotation.x = THREE.MathUtils.degToRad(90);
-    if (boneMap.thigh_R)
-      boneMap.thigh_R.rotation.x = THREE.MathUtils.degToRad(90);
-
-    // KNEES using calf_L / calf_R
-    // (you noted the system expects -90 for extension on these bones,
-    // so we’re using that same axis/sign convention here.)
-    if (boneMap.calf_L)
-      boneMap.calf_L.rotation.x = THREE.MathUtils.degToRad(-90);
-    if (boneMap.calf_R)
-      boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
-
-    return;
-  }
 
   /* ============ STANDING (default neutral) ============ */
   if (pose === "standing") {
@@ -685,6 +682,23 @@ function applyPoseForTest(testKey) {
   }
 }
  
+if (pose === "short_sit") {
+
+  // Flex hips to 90°
+  if (typeof setPair === "function") {
+    setPair('hip_fe_l', 90);
+    setPair('hip_fe_r', 90);
+
+    // Flex knees to -90° (ROMetrics sign convention)
+    setPair('knee_fe_l', -90);
+    setPair('knee_fe_r', -90);
+  }
+
+  // Move model downward so sitting actually makes contact visually
+  model.position.y = -0.4;
+
+  return;
+}
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
