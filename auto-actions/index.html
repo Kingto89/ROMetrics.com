@@ -40,6 +40,8 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 #resistanceFill{position:absolute;top:0;left:0;width:0;height:100%;background-color:var(--accent);transition:width .1s linear;z-index:1}
 #resistanceText{position:relative;z-index:2}
 #instructionText{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 12px 0;display:none}
+#regionSel{width:100%;margin:8px 0;}
+
 
 /* Right-side note panel (smaller) */
 #notePanel{position:fixed;top:16px;right:16px;width:min(420px,46vw);max-height:70vh;display:none;z-index:140;
@@ -73,11 +75,14 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
         </label>
       </div>
 
-      <label>Body Region</label>
-      <div class="seg">
-        <button id="segUpper" class="on">Upper Body</button>
-        <button id="segLower">Lower Body</button>
-      </div>
+      <label>MMT Test & Muscle</label>
+      <select id="regionSel">
+      <option value="">(Select category…)</option>
+      <option value="upper">Upper Body</option>
+      <option value="lower">Lower Body</option>
+      <option value="all">All Motions</option>
+      </select>
+
 
       <label>Action</label>
       <select id="actionSel"></select>
@@ -136,9 +141,6 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
   const panel = document.getElementById("panel");
   const dragbar = document.getElementById("dragbar");
 
-  const segUpper = document.getElementById("segUpper");
-  const segLower = document.getElementById("segLower");
-
   const actionSel = document.getElementById("actionSel");
   const actionDeg = document.getElementById("actionDeg");
   const pairLabel = document.getElementById("pairLabel");
@@ -149,6 +151,31 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
   const ry = document.getElementById("ry");
   const rz = document.getElementById("rz");
   const zeroBone = document.getElementById("zeroBone");
+
+  const regionSel = document.getElementById("regionSel");
+
+regionSel.addEventListener("change", () => {
+  const val = regionSel.value;
+
+  if (val === "upper") {
+    CURRENT = UPPER;
+  } 
+  else if (val === "lower") {
+    CURRENT = LOWER;
+  } 
+  else if (val === "all") {
+    // merge upper + lower into one giant list
+    CURRENT = [...UPPER, ...LOWER];
+  } 
+  else {
+    CURRENT = [];
+  }
+
+  fillActionMenu();
+  actionDeg.value = "0";
+  actionDeg.disabled = true;
+});
+
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
@@ -700,7 +727,6 @@ function freezeBindBaseFor(key, cfg) {
     {key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, invert:true, hints:[/wrist|hand/i]}, // 🔁 flipped
 
 ];   
-  const LOWER = [
     {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
     {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30,  max:120, hints:[/thigh|femur/i]},
     {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30,  max:45,  hints:[/thigh|femur/i]},
@@ -715,7 +741,6 @@ function freezeBindBaseFor(key, cfg) {
     {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal',   neutral:0, min:-20,  max:35,  hints:[/foot|calcaneus|metatars|heel/i]},
   ];
 
-  let CURRENT = UPPER;
 
   function dirEntriesFromPair(cfg){
     const absMin = Math.abs(cfg.min);
@@ -879,7 +904,7 @@ if (cfg.key === 'foot_invev_l') {
     ph.value = ""; ph.textContent = "(Select a motion…)";
     actionSel.appendChild(ph);
 
-    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    const list = CURRENT;
     const catalog = buildSeparatedCatalog(list);
     Object.keys(catalog).forEach(group=>{
       const og = document.createElement("optgroup"); og.label = group;
@@ -911,8 +936,6 @@ if (cfg.key === 'foot_invev_l') {
     actionDeg.disabled = false;
   }
 
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
-  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
