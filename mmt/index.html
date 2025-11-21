@@ -674,30 +674,26 @@ function applyPoseForTest(testKey) {
     // already reset to neutral above
     return;
   }
+ /* ============ SHORT SITTING (hips 90°, knees 90°) ============ */
+if (pose === "short_sit") {
+
+  if (typeof setPair === "function") {
+    setPair("hip_fe_l", 90);
+    setPair("hip_fe_r", 90);
+    setPair("knee_fe_l", -90);
+    setPair("knee_fe_r", -90);
+  }
+
+  model.position.y = -0.4;
+  return;
+}
+ 
 
   /* ============ SIDE-LYING (if you use it) ============ */
   if (pose === "side_lying") {
     model.rotation.z = Math.PI / 2;
     return;
   }
-}
- 
-if (pose === "short_sit") {
-
-  // Flex hips to 90°
-  if (typeof setPair === "function") {
-    setPair('hip_fe_l', 90);
-    setPair('hip_fe_r', 90);
-
-    // Flex knees to -90° (ROMetrics sign convention)
-    setPair('knee_fe_l', -90);
-    setPair('knee_fe_r', -90);
-  }
-
-  // Move model downward so sitting actually makes contact visually
-  model.position.y = -0.4;
-
-  return;
 }
 
 /* ==== Side panel + Markdown loading ==== */
