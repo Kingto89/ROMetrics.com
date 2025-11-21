@@ -134,7 +134,9 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 
       <optgroup label="Ankle & Foot">
         <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
-        <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
+        <option value="Foot_Eversion_PF">Foot Eversion + Plantarflexion (Fibularis Longus, Fibularis Brevis)</option>
+        <option value="Ankle_Dorsiflexion">Ankle Dorsiflexion (Tibialis Anterior; EDL/EHL assist)</option>
+         <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
       </optgroup>
     </select>
 
@@ -442,7 +444,9 @@ const TEST_TO_HEADING = {
   Hamstrings: "Knee Flexion",
   Quadriceps: "Knee Extension",
   Tibialis_Anterior: "Foot Dorsiflexion + Inversion",
-  Gastrocnemius: "Ankle Plantar Flexion"
+  Foot_Eversion_PF: "Foot Eversion + Plantarflexion",
+  Ankle_Dorsiflexion: "Ankle Dorsiflexion",
+   Gastrocnemius: "Ankle Plantar Flexion"
 };
 
 function mdToHtml(md){
