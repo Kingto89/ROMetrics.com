@@ -686,19 +686,11 @@ if (pose === "short_sit") {
     if (boneMap.calf_R) boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
   }
 
-  // === RELIABLE GROUND SNAP AFTER POSE APPLIED ===
-  // 1. Calculate the model's current bounding box after posing
-  const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  
-  // 2. Shift the model up by the minimum Y value to place the lowest point at Y=0
-  if (isFinite(minY)) {
-    model.position.y -= minY;
-  } else {
-    // Fallback to your old method if bounding box calculation fails (rare)
-    model.position.y = -0.4;
-  }
-  // ================================================
+  // === FIXED OFFSET FOR SITTING ===
+  // This ensures the pelvis/buttocks are on the ground (Y=0) or a slight offset.
+  // Using your existing fallback value:
+  model.position.y = -0.4; // This value worked for your model in a previous context
+  // ================================
 
   return;
 }
