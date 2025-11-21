@@ -15,15 +15,29 @@
 </script>
 
 <style>
-:root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
-.dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
-.dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
-.content{padding:12px;overflow:auto}
-label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
-select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
+:root{
+  /* Change these to match the light theme */
+  --bg:#f1f5f9;           /* Was: #0b1220 */
+  --panel:#ffffff;         /* Was: #0f172a */
+  --line:#cbd5e1;          /* Was: #1f2937 */
+  --ctrl:#e2e8f0;          /* Was: #1e293b */
+  --text:#0f172a;          /* Was: #e2e8f0 */
+  --muted:#64748b;         /* Was: #cbd5e1 */
+}
+html,body{
+  margin:0;
+  height:100%;
+  /* Use the new light background and text colors */
+  background:var(--bg);
+  color:var(--text); 
+  overflow:hidden;
+  font-family:system-ui,Segoe UI,Roboto
+}
+/* You should also update other colors to be readable on the light background */
+.dragbar{cursor:move;background:var(--ctrl);border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
+select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid var(--line);color:var(--text)}
+/* ... and so on for all dark-scheme styles (e.g., #log, .panel, .modal) */
 .row{display:flex;gap:8px}.row>button{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
 .seg{display:flex;gap:8px}
