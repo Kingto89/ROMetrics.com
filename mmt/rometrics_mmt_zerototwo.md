@@ -1,5 +1,159 @@
 # Manual Muscle Testing (MMT) — Grades 2, 1, 0 
 
+## Capital Extension — Grades 0–2
+
+### Muscles Tested
+
+* Rectus capitis posterior major/minor, Longissimus capitis, Obliquus capitis (sup./inf.), Splenius/Semispinalis/Spinalis capitis
+
+### Position
+
+* **Supine**, head supported on table (gravity minimized)
+
+### Therapist
+
+* Stand at head; one hand under occiput for support, other ready at forehead to guard
+
+### Action
+
+* **Chin-up nod** (extend head on atlas) **without lifting head**
+
+### Grades 0–2
+
+* **Grade 2:** full range in gravity-eliminated (chin tilts up, head stays on table)
+* **Grade 1:** trace contraction palpated **just inferior to occiput** over suboccipital region
+* **Grade 0:** no palpable contraction
+
+---
+
+## Cervical Extension — Grades 0–2
+
+### Muscles Tested
+
+* Longissimus/Semispinalis/Iliocostalis/Splenius cervicis (group)
+
+### Position
+
+* **Supine**, head supported on table (gravity minimized)
+
+### Therapist
+
+* One hand beneath **parietal–occipital** area to monitor; other hand guards at chin/forehead
+
+### Action
+
+* **Cervical spine extends** (presses gently into table) **without head lift**
+
+### Grades 0–2
+
+* **Grade 2:** full range in gravity-eliminated (smooth posterior glide into table)
+* **Grade 1:** trace activity palpated **along cervical spinous gutters** (paraspinals C2–C7)
+* **Grade 0:** no palpable contraction
+
+---
+
+## Capital Flexion (Chin Tuck) — Grades 0–2
+
+### Muscles Tested
+
+* Longus capitis, Rectus capitis anterior, Anterior scalene (capital flexor group)
+
+### Position
+
+* **Supine**, head supported on table (gravity minimized)
+
+### Therapist
+
+* One hand across **mandible** to monitor motion line; other hand stabilizes upper chest/SC area
+
+### Action
+
+* **Chin tuck** (“yes” nod) **without lifting head**
+
+### Grades 0–2
+
+* **Grade 2:** full chin-tuck range in gravity-eliminated
+* **Grade 1:** trace contraction palpated **deep to SCM in anterior triangle** (difficult; feel subtle deep tension)
+* **Grade 0:** no palpable contraction
+
+---
+
+## Cervical Flexion — Grades 0–2
+
+### Muscles Tested
+
+* SCM (bilateral), Longus colli/capitis, Anterior scalene (group)
+
+### Position
+
+* **Side-lying** with head supported on pillows/towel (gravity minimized) **OR** supine with therapist fully supporting head weight
+
+### Therapist
+
+* Cradle **occiput** and **upper trunk** to remove head weight; monitor SCM at **sternal/clavicular origins** and along **anterior neck**
+
+### Action
+
+* **Roll chin toward chest** (cervical flexion) **without lifting head**
+
+### Grades 0–2
+
+* **Grade 2:** full range in gravity-eliminated (smooth chin approach to chest)
+* **Grade 1:** trace activity palpated **SCM belly** (from mastoid to sternum/clavicle) or **tendon above clavicle**
+* **Grade 0:** no palpable contraction
+
+---
+
+## Flexion to Isolate a Single Sternocleidomastoid — Grades 0–2
+
+### Muscle Tested
+
+* Sternocleidomastoid (one side)
+
+### Position
+
+* **Supine**, head supported; **face turned away from test side** (gravity minimized)
+
+### Therapist
+
+* Support under **occiput**; palpate SCM on the **tested side** from **mastoid → sternal/clavicular heads**
+
+### Action
+
+* **Anterolateral flexion**: roll head forward with face kept **turned contralaterally**, no head lift
+
+### Grades 0–2
+
+* **Grade 2:** full anterolateral flexion in gravity-eliminated
+* **Grade 1:** trace contraction palpated **along tested SCM** (visible tendon/cord with attempt)
+* **Grade 0:** no palpable contraction
+
+---
+
+## Cervical Rotation — Grades 0–2
+
+### Muscles Tested
+
+* SCM (contralateral), Splenius/Longissimus cervicis & capitis (ipsilateral), other rotators (group)
+
+### Position
+
+* **Supine**, head supported on table (gravity minimized)
+
+### Therapist
+
+* Stabilize upper chest as needed; palpate **contralateral SCM** and **ipsilateral posterior neck** for activity
+
+### Action
+
+* **Rotate head/neck** fully toward test side **without lifting**
+
+### Grades 0–2
+
+* **Grade 2:** full rotation in gravity-eliminated
+* **Grade 1:** trace activity palpated (**contralateral SCM** anteriorly or **ipsilateral posterior rotators**)
+* **Grade 0:** no palpable contraction
+
 ## General Low‑Grade Testing Principles
 - **Grade 2 (gravity‑minimized):** Full available ROM in a position where the segment moves **parallel to the floor** and the limb is **supported** to reduce friction.
 - **Grade 1 (trace):** Palpable or visible muscle/tendon activity **without joint movement**; include precise palpation and “find‑it” cues.
