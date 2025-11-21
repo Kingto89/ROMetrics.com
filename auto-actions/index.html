@@ -170,23 +170,29 @@ optgroup{color:var(--muted);font-style:normal}
         </label>
       </div>
 
-      <label>Body Region</label>
-      <div class="seg">
-        <button id="segUpper" class="on">Upper Body</button>
-        <button id="segLower">Lower Body</button>
-      </div>
+   <label>Body Region</label>
+<div class="seg">
+  <button id="segUpper" class="on">Upper Body</button>
+  <button id="segLower">Lower Body</button>
+</div>
 
-      <label>Action</label>
-    <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-end;">
-    <select id="actionSel" style="flex-grow: 1; width: 100%; box-sizing: border-box; margin: 0;">
-    <button id="showMMT" class="mini" style="flex-shrink: 0; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
-      
-        </select>
-      <label><span id="pairLabel">Angle (°)</span></label>
-      <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
-      <button id="autoMoveBtn" class="mini">Run Action</button>
+<label>Action</label>
+<div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-end;">
 
-     <details id="boneAdv">
+  <select id="actionSel" style="flex-grow: 1; width: 100%; box-sizing: border-box; margin: 0;">
+    </select>
+
+  <button id="showMMT" class="mini" style="flex-shrink: 0; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
+</div>
+
+<label><span id="pairLabel">Angle (°)</span></label>
+<input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+
+<div style="margin-bottom: 8px;">
+    <button id="autoMoveBtn" class="mini" style="width: 100%;">Run Action</button>
+</div>
+
+<details id="boneAdv">
     <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
         <select id="boneSel"></select>
