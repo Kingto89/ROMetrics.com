@@ -15,49 +15,106 @@
 </script>
 
 <style>
+/* 🎨 MMT Trainer Light Color Scheme */
 :root{
-  /* Change these to match the light theme */
-  --bg:#f1f5f9;           /* Was: #0b1220 */
-  --panel:#ffffff;         /* Was: #0f172a */
-  --line:#cbd5e1;          /* Was: #1f2937 */
-  --ctrl:#e2e8f0;          /* Was: #1e293b */
-  --text:#0f172a;          /* Was: #e2e8f0 */
-  --muted:#64748b;         /* Was: #cbd5e1 */
+  --bg:#f1f5f9;           /* Light Slate Background */
+  --panel:#ffffff;         /* White Panel */
+  --line:#cbd5e1;          /* Light Gray Border */
+  --ctrl:#e2e8f0;          /* Off-White Control BG */
+  --text:#0f172a;          /* Dark Text */
+  --muted:#64748b;         /* Muted Gray Text */
+  --primary:#0d9488;       /* Teal Accent (for 'on' state) */
+  --accent:#facc15;        /* Yellow Accent */
 }
+
 html,body{
   margin:0;
   height:100%;
-  /* Use the new light background and text colors */
   background:var(--bg);
-  color:var(--text); 
+  color:var(--text);
   overflow:hidden;
   font-family:system-ui,Segoe UI,Roboto
 }
-/* You should also update other colors to be readable on the light background */
-.dragbar{cursor:move;background:var(--ctrl);border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{
+  position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 8px 28px rgba(0,0,0,.15); /* Lighter shadow for light theme */
+  display:flex;flex-direction:column;overflow:hidden
+}
+.dragbar{
+  cursor:move;
+  background:var(--ctrl); /* Light gray for drag bar */
+  border-bottom:1px solid var(--line);
+  padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px
+}
 .dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
-select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid var(--line);color:var(--text)}
-/* ... and so on for all dark-scheme styles (e.g., #log, .panel, .modal) */
+.content{padding:12px;overflow:auto}
+label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
+select,button,input[type=range]{
+  width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;
+  background:var(--ctrl);border:1px solid var(--line); /* Light borders */
+  color:var(--text)
+}
 .row{display:flex;gap:8px}.row>button{flex:1}
-.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
+.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid var(--line)}
 .seg{display:flex;gap:8px}
-.seg button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
-.seg button.on{background:#1f2c43;color:#fff;border-color:#47618e}
-details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
-summary{cursor:pointer;font-weight:600;color:#dbe7ff}
-#log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
-#msg{position:fixed;bottom:10px;left:12px;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:8px;padding:6px 10px;font-size:12px;z-index:25}
-optgroup{color:#9fb0c9;font-style:normal}
-.modal{position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;background:rgba(8,13,26,.96);border:1px solid #334155;border-radius:12px;backdrop-filter:blur(6px);display:none;flex-direction:column;overflow:hidden}
+.seg button{
+  flex:1;padding:8px 10px;border-radius:10px;
+  background:var(--ctrl); /* Light control BG */
+  border:1px solid var(--line);
+  color:var(--text)
+}
+.seg button.on{
+  background:var(--primary); /* Teal for selected button */
+  color:#fff;
+  border-color:var(--primary)
+}
+details{
+  border:1px solid var(--line);
+  border-radius:10px;padding:8px;
+  background:var(--ctrl); /* Light BG for collapsible */
+  margin-top:8px
+}
+summary{cursor:pointer;font-weight:600;color:var(--text)}
+#log{
+  background:var(--bg); /* Light page background for log */
+  border:1px solid var(--line);
+  min-height:90px;max-height:130px;overflow:auto;
+  border-radius:8px;padding:8px;font-size:12px;
+  white-space:pre-wrap;
+  color:var(--text); /* Dark text for log */
+}
+#msg{
+  position:fixed;bottom:10px;left:12px;
+  background:var(--panel); /* White background for message */
+  border:1px solid var(--line);
+  border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;
+  color:var(--text);
+}
+optgroup{color:var(--muted);font-style:normal}
+/* Modal/Tuner (using light scheme but slightly darker background for contrast) */
+.modal{
+  position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;
+  background:var(--ctrl); /* Light control background */
+  border:1px solid var(--line);border-radius:12px;
+  /* backdrop-filter:blur(6px); -- Removed blur for cleaner look on light theme */
+  box-shadow:0 8px 28px rgba(0,0,0,.25);
+  display:none;flex-direction:column;overflow:hidden
+}
 .modal.on{display:flex}
-.modal .top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1f2a40;background:#0c1628}
-.modal .top h4{margin:0;font-size:14px}
-.modal .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:18px;cursor:pointer}
-.modal .body{padding:12px;overflow:auto}
-.rom-item{border:1px solid #2a3a55;border-radius:10px;background:#101a2e;margin:8px 0;}
-.rom-item summary{padding:10px 12px;list-style:none;cursor:pointer}
+.modal .top{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background:var(--bg); /* Lightest color for header */
+}
+.modal .top h4{margin:0;font-size:14px;color:var(--text)}
+.modal .x{margin-left:auto;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+.modal .body{padding:12px;overflow:auto;background:var(--panel)}
+.rom-item{border:1px solid var(--line);border-radius:10px;background:var(--ctrl);margin:8px 0;}
+.rom-item summary{padding:10px 12px;list-style:none;cursor:pointer;color:var(--text)}
 .rom-item summary::-webkit-details-marker{display:none}
-.rom-item .inner{padding:8px 12px;border-top:1px solid #1c2941}
+.rom-item .inner{padding:8px 12px;border-top:1px solid var(--line)}
 .rom-row{display:flex;gap:10px;font-size:13px;padding:4px 0}
 .rom-row input[type=number]{
   height:22px;           /* match Cervical Rot box height */
@@ -65,8 +122,13 @@ optgroup{color:#9fb0c9;font-style:normal}
   padding:2px 4px;
   box-sizing:border-box;
 }
-.rom-head{width:160px;color:#9fb0c9}
-.badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
+.rom-head{width:160px;color:var(--muted)}
+.badge{
+  display:inline-block;padding:2px 6px;border-radius:6px;
+  border:1px solid var(--line);
+  background:var(--bg);
+  color:var(--text);font-size:11px;margin-left:6px
+}
 #boneAdv { display:none !important; }
 </style>
 </head>
