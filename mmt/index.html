@@ -480,6 +480,42 @@ document.getElementById("zeroAll").onclick = () => {
     const q0 = initialBoneRot.get(b);
     if (q0) b.quaternion.copy(q0);
   });
+
+/* ===== Grading Exceptions Availability Control ===== */
+
+const exceptionSelect = document.getElementById("GradingExceptions");
+
+// Tests that ALLOW grading exceptions
+const EXCEPTION_TESTS = new Set([
+  "Trunk_Ext_Lumbar",
+  "Trunk_Ext_Thoracic",
+  "Trunk_Flexion",
+  "Trunk_Rotation",
+  "Pelvic_Elevation",
+  "Gastrocnemius"
+]);
+
+function updateGradingExceptionAvailability() {
+  const key = actionSel.value;
+
+  if (EXCEPTION_TESTS.has(key)) {
+    // Enable exceptions
+    exceptionSelect.disabled = false;
+    exceptionSelect.style.opacity = "1";
+  } else {
+    // Disable exceptions & reset
+    exceptionSelect.disabled = true;
+    exceptionSelect.style.opacity = "0.4";
+    exceptionSelect.value = "3"; // Reset to Grade 3 default
+  }
+}
+
+// Run whenever test changes
+actionSel.addEventListener("change", updateGradingExceptionAvailability);
+
+// Run once on page load
+updateGradingExceptionAvailability();
+  
 };
 
 /* ==== Side panel + Markdown loading ==== */
