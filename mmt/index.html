@@ -389,7 +389,6 @@ testButton.addEventListener('pointercancel', handleResistanceButtonUp);
 testButton.addEventListener('contextmenu', e=>e.preventDefault());
 
 /* ==== Basic enablement ==== */
-/* ==== Basic enablement ==== */
 actionSel.addEventListener('change', ()=>{
   const selectedMuscle = actionSel.value;
   testButton.disabled = selectedMuscle === "";
@@ -407,8 +406,9 @@ actionSel.addEventListener('change', ()=>{
   
   const requiredPosition = TEST_BODY_POSITIONS[selectedMuscle] || 'default';
   setModelBasePosition(requiredPosition);
-  // ----------------------------------------------------
-});
+updateModelPose(positionSel.value);
+CURRENT_ACTION = null;
+  });
 
 document.getElementById("lock3D").onclick = () => {
   controls.enabled = !controls.enabled;
@@ -423,77 +423,58 @@ document.getElementById("zeroAll").onclick = () => {
     const q0 = initialBoneRot.get(b);
     if (q0) b.quaternion.copy(q0);
   });
- startTestBtn.onclick = () => {
+  
+startTestBtn.onclick = () => {
   if (!skeleton) return;
-  const muscleKey = actionSel.value;
-  if (!muscleKey) return;
+  const muscleKey = actionSel.value; // Get the currently selected action key
 
   // 130 degrees converted to Radians
   const THETA_130_RAD = Math.PI * 130 / 180;
   
-  // Map the selected test key to the required joint rotations.
+  // Map the MMT test key to the required joint rotations.
+  // NOTE: We use a placeholder key here as your dropdown uses Goniometry keys.
   const MMT_START_POSITIONS = {
-    // Scapular Abduction & Upward Rotation (Serratus Anterior)
-    Serratus_Anterior: {
-      // Apply 130 degrees of shoulder flexion to both arms (assuming Z-axis is flexion)
+    // Assuming the selected value corresponds to this:
+    'Serratus_Anterior': { 
+      // Apply 130 degrees of shoulder flexion to both arms (upperarm_R/L)
       'upperarm_R': { x: 0, y: 0, z: THETA_130_RAD }, 
       'upperarm_L': { x: 0, y: 0, z: THETA_130_RAD },
     },
-    // Add other tests here as you program them:
-    // e.g., Anterior_Deltoid: { 'upperarm_R': { x: 0, y: 0, z: Math.PI * 90 / 180 }, ... }
   };
+  
+  const basePosition = positionSel.value;
 
-  const startPos = MMT_START_POSITIONS[muscleKey];
+  // --- 1. Restore Base Position (Sitting) ---
+  // This ensures the hips/knees stay in the sitting pose set previously.
+  if (basePosition === 'sitting') {
+    // Force the hips and knees back to 90 degrees flexion
+    setPair('hip_fe_l', 90);
+    setPair('hip_fe_r', 90);
+    setPair('knee_fe_l', -90);
+    setPair('knee_fe_r', -90);
+  } else {
+    // For standing/prone/supine, ensure the current pose is maintained
+    updateModelPose(basePosition);
+  }
 
-  // Apply the test-specific joint rotations
+  // --- 2. Apply MMT Start Pose Angles ---
+  // You will need to map your current `actionSel.value` to the MMT_START_POSITIONS key.
+  // For the Serratus Anterior test, we use the hardcoded definition.
+  const startPos = MMT_START_POSITIONS['Serratus_Anterior']; 
+
   if (startPos) {
+    // Apply the specific joint rotations only for the arms
     skeleton.bones.forEach(b => {
       if (startPos[b.name]) {
         const rot = startPos[b.name];
-        // Set the bone's rotation to the new start position
-        b.rotation.set(rot.x, rot.y, rot.z); 
+        b.rotation.set(rot.x, rot.y, rot.z); 
       }
     });
-    log(`Applied MMT start position for: ${muscleKey}`);
+    log(`Applied MMT start position (Serratus Anterior: 130° arms)`);
   } else {
-    // If no specific position is found for the test, zero the arms back to initial pose.
-    // NOTE: This will reset *all* bones, including hips/knees if they aren't held by the 'sit' function.
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-    log(`MMT start position not found for ${muscleKey}. Model reset to Zero.`);
+    log(`MMT start position not defined.`);
   }
 }; 
-/* ==== Basic enablement ==== */
-actionSel.addEventListener('change', ()=>{
-  testButton.disabled = actionSel.value === "";
-  // ----------------------------------------------------
-  // 1. INSERT LOGIC HERE to set the initial body position
-  // ----------------------------------------------------
-  const selectedMuscle = actionSel.value;
-  
-  // Map muscle test key to required body position (sitting, supine, etc.)
-  const TEST_BODY_POSITIONS = {
-    Serratus_Anterior: 'short_sit', // Example: sitting with hip/knees at 90
-    // ... add other muscle-to-position mappings here ...
-    Upper_Trapezius: 'sit',
-    Anterior_Deltoid: 'sit',
-    Glute_Max: 'prone',
-    Quadriceps: 'sit_edge', // Example for knee extension
-    // ...
-  };
-  
-  const requiredPosition = TEST_BODY_POSITIONS[selectedMuscle] || 'default'; // 'default' could be anatomical standing
-  
-  // Assuming a function exists to change the model's base body position 
-  // (e.g., set model to short_sit without changing arm/leg test angles yet)
-  // You would need to implement a function like:
-  // setModelBasePosition(requiredPosition);
-  // ----------------------------------------------------
-});  
-};
-  
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
