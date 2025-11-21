@@ -21,7 +21,7 @@
   --panel:#ffffff;         /* White Panel */
   --line:#cbd5e1;          /* Light Gray Border */
   --ctrl:#e2e8f0;          /* Off-White Control BG */
-  --text:#f1f5f9;          /* Dark Text */
+  --text:#0f172a;          /* Dark Text */
   --muted:#64748b;         /* Muted Gray Text */
   --primary:#0d9488;       /* Teal Accent (for 'on' state) */
   --accent:#facc15;        /* Yellow Accent */
@@ -410,8 +410,7 @@ if (antiBox){
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0b1220);
-
+  scene.background = new THREE.Color(0xffffff);
   const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
   camera.position.set(1.6, 1.6, 3.2);
 
