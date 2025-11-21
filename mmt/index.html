@@ -351,6 +351,51 @@ testButton.addEventListener('pointerup', handleResistanceButtonUp);
 testButton.addEventListener('pointercancel', handleResistanceButtonUp);
 testButton.addEventListener('contextmenu', e=>e.preventDefault());
 
+/* === Serratus helper functions (place before your listeners) === */
+const _bindQ = new Map();
+
+function getBone(regexArray){
+  if (!skeleton) return null;
+  const names = skeleton.bones.map(b => (b.name||'').toLowerCase());
+  for (const rx of regexArray){
+    const i = names.findIndex(n => rx.test(names[i] ?? "")); // guard
+    if (i !== -1) return skeleton.bones[i];
+  }
+  // Fallback scan without names[i] reuse bug:
+  for (let i=0;i<names.length;i++){
+    if (regexArray.some(rx => rx.test(names[i]))) return skeleton.bones[i];
+  }
+  return null;
+}
+
+function setBoneDeg(bone, axis, deg){
+  if (!bone) return;
+  if (!_bindQ.has(bone)) _bindQ.set(bone, (initialBoneRot.get(bone) || bone.quaternion.clone()).clone());
+  const base = _bindQ.get(bone);
+  const e = new THREE.Euler(0,0,0,"XYZ");
+  const r = THREE.MathUtils.degToRad(deg);
+  if (axis === 'x') e.x = r; else if (axis === 'y') e.y = r; else e.z = r;
+  const qDelta = new THREE.Quaternion().setFromEuler(e);
+  bone.quaternion.copy(base).multiply(qDelta);
+}
+
+/* Short-sit: hips 90°, knees 90°, keep seated */
+function applyShortSitPose(){
+  if (!skeleton) return;
+
+  const thighL = getBone([/thigh.*l\b/, /upperleg.*l\b/, /mixamorig.*thigh\.l/i]);
+  const thighR = getBone([/thigh.*r\b/, /upperleg.*r\b/, /mixamorig.*thigh\.r/i]);
+  const calfL  = getBone([/calf.*l\b/, /lowerleg.*l\b/, /mixamorig.*calf\.l/i]);
+  const calfR  = getBone([/calf.*r\b/, /lowerleg.*r\b/, /mixamorig.*calf\.r/i]);
+
+  setBoneDeg(thighL, 'x',  90);
+  setBoneDeg(thighR, 'x',  90);
+  setBoneDeg(calfL,  'x', -90);
+  setBoneDeg(calfR,  'x', -90);
+
+  if (model) model.position.y = (model.position.y || 0) - 0.4;
+  groundS
+
 /* === Basic enablement + body pose per test (drop-in) === */
 const TEST_BODY_POSITIONS = {
   Serratus_Anterior: 'short_sit',
