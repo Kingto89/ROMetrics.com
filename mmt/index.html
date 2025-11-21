@@ -335,6 +335,25 @@ function loadModel(){
 }
 loadModel();
 
+let boneMap = {
+  thigh_L: null,
+  thigh_R: null,
+  calf_L: null,
+  calf_R: null
+};
+
+function cacheKeyBones() {
+  if (!skeleton) return;
+
+  skeleton.bones.forEach(b => {
+    if (b.name === "thigh_L") boneMap.thigh_L = b;
+    if (b.name === "thigh_R") boneMap.thigh_R = b;
+    if (b.name === "calf_L")  boneMap.calf_L  = b;
+    if (b.name === "calf_R")  boneMap.calf_R  = b;
+  });
+}
+  
+
 /* ===== MMT REQUIRED BODY POSITIONS ===== */
 /*
   Allowed positions:
@@ -599,50 +618,69 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 // Run once on load
 updateGradingExceptionAvailability();
 
- /* ===== AUTO-POSE WHEN TEST IS SELECTED ===== */
-
 function applyPoseForTest(testKey) {
   if (!model) return;
 
   const pose = MMT_POSE[testKey];
-  if (!pose) return; // No pose defined (fallback)
+  if (!pose) return;
 
-  // Reset to anatomic first
-  document.getElementById("zeroAll").click();
+  // Reset model orientation & bones back to baseline
+  model.rotation.set(0, 0, 0);
+  if (skeleton) {
+    skeleton.bones.forEach(b => {
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
 
-  switch(pose) {
-    case "prone":
-      model.rotation.x = Math.PI / 2;   // lay face down
-      break;
+  /* ============ PRONE (face down) ============ */
+  if (pose === "prone") {
+    model.rotation.x = Math.PI / 2;
+    return;
+  }
 
-    case "supine":
-      model.rotation.x = -Math.PI / 2;  // lay on back
-      break;
+  /* ============ SUPINE (face up) ============ */
+  if (pose === "supine") {
+    model.rotation.x = -Math.PI / 2;
+    return;
+  }
 
-    case "short_sit":
-      model.rotation.x = 0;             // upright
-      break;
+  /* ============ SHORT SITTING ============ 
+     hips ≈ 90° flex via thigh_L / thigh_R
+     knees ≈ 90° flex via calf_L / calf_R
+  ========================================== */
+  if (pose === "short_sit") {
 
-    case "long_sit":
-      model.rotation.x = 0;
-      // legs extended forward — coming later with bone actions
-      break;
+    // HIPS at ~90° flex (thigh bones)
+    if (boneMap.thigh_L)
+      boneMap.thigh_L.rotation.x = THREE.MathUtils.degToRad(90);
+    if (boneMap.thigh_R)
+      boneMap.thigh_R.rotation.x = THREE.MathUtils.degToRad(90);
 
-    case "standing":
-      model.rotation.x = 0;
-      break;
+    // KNEES using calf_L / calf_R
+    // (you noted the system expects -90 for extension on these bones,
+    // so we’re using that same axis/sign convention here.)
+    if (boneMap.calf_L)
+      boneMap.calf_L.rotation.x = THREE.MathUtils.degToRad(-90);
+    if (boneMap.calf_R)
+      boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
 
-    case "side_lying":
-      model.rotation.z = Math.PI / 2;
-      break;
+    return;
+  }
+
+  /* ============ STANDING (default neutral) ============ */
+  if (pose === "standing") {
+    // already reset to neutral above
+    return;
+  }
+
+  /* ============ SIDE-LYING (if you use it) ============ */
+  if (pose === "side_lying") {
+    model.rotation.z = Math.PI / 2;
+    return;
   }
 }
-
-// Trigger pose when a test is selected
-actionSel.addEventListener("change", ()=> {
-  applyPoseForTest(actionSel.value);
-}); 
-  
+ 
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
