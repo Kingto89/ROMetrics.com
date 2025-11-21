@@ -177,8 +177,11 @@ optgroup{color:var(--muted);font-style:normal}
       </div>
 
       <label>Action</label>
-      <select id="actionSel"></select>
-
+    <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-end;">
+    <select id="actionSel" style="flex-grow: 1; width: 100%; box-sizing: border-box; margin: 0;">
+    <button id="showMMT" class="mini" style="flex-shrink: 0; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
+      
+        </select>
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
       <button id="autoMoveBtn" class="mini">Run Action</button>
@@ -218,6 +221,9 @@ optgroup{color:var(--muted);font-style:normal}
   <canvas id="c"></canvas>
 
   <script type="module">
+
+   const MD_GONIO = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_gonio_placement.md";
+ 
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
