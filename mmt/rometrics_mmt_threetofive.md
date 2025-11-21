@@ -1066,7 +1066,87 @@
 * **Grade 4:** holds against moderate resistance
 * **Grade 3:** full ROM against gravity, no resistance
 
+## Foot Inversion (Tibialis Posterior)
+
+**Plane: frontal + sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Tibialis Posterior
+
+### Position
+
+* Short sitting or supine, foot off edge
+
+### Therapist
+
+* Stabilize distal leg above ankle
+
+### Action
+
+* Invert + slight plantarflex; resist **down/out** at medial forefoot (navicular/1st ray)
+
+### Grades 3, 4, 5
+
+* **Grade 5:** holds position against max resistance
+* **Grade 4:** holds against moderate resistance
+* **Grade 3:** full ROM against gravity, no resistance
+
 ---
+
+## Foot Eversion + Plantarflexion (Fibularis/Peroneus Longus & Brevis)
+
+**Plane: frontal + sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Fibularis (Peroneus) Longus
+* Fibularis (Peroneus) Brevis
+
+### Position
+
+* Short sitting or supine, foot off edge
+
+### Therapist
+
+* Stabilize distal leg above ankle
+
+### Action
+
+* Evert + slight plantarflex; resist **up/in** at lateral forefoot (5th ray)
+
+### Grades 3, 4, 5
+
+* **Grade 5:** holds position against max resistance
+* **Grade 4:** holds against moderate resistance
+* **Grade 3:** full ROM against gravity, no resistance
+
+## Ankle Dorsiflexion (Tibialis Anterior)
+
+**Plane: sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Tibialis Anterior (primary); EDL/EHL assist
+
+### Position
+
+* Short sitting, foot off edge, ankle neutral (avoid inversion/eversion)
+
+### Therapist
+
+* Stabilize distal leg above ankle
+
+### Action
+
+* Dorsiflex to full range; resist **downward** at dorsal mid-forefoot (over metatarsals), keep foot neutral
+
+### Grades 3, 4, 5
+
+* **Grade 5:** holds position against max resistance
+* **Grade 4:** holds against moderate resistance
+* **Grade 3:** full ROM against gravity, no resistance
+
 
 ## Ankle Plantar Flexion (Gastrocnemius, Soleus)
 
