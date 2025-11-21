@@ -354,18 +354,6 @@ function cacheKeyBones() {
   log("Key bones cached for posing.");
 }
 
-// Call this function inside loadModel() after initialBoneRot is set (around line 1050)
-function loadModel(){
-    // ... (existing code)
-    // 3️⃣ Now capture the new baseline for reference motions
-    resetAllBonesToInitial();
-    
-    // <<< ADDED: CACHE BONES >>>
-    cacheKeyBones(); 
-
-    // 4️⃣ Apply anatomic offsets on top of corrected baseline
-    applyAnatomicBaseline();
-
 
 /* ===== MMT REQUIRED BODY POSITIONS ===== */
 /*
