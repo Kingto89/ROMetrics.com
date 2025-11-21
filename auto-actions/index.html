@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,142 +124,177 @@ optgroup{color:#9fb0c9;font-style:normal}
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ===== UI ===== */
-const msg = document.getElementById("msg");
-const logEl = document.getElementById("log");
-const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+  /* ===== UI ===== */
+  const msg = document.getElementById("msg");
+  const logEl = document.getElementById("log");
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-const panel = document.getElementById("panel");
-const dragbar = document.getElementById("dragbar");
+  const panel = document.getElementById("panel");
+  const dragbar = document.getElementById("dragbar");
 
-// NEW MMT UI elements
-const actionSel = document.getElementById("actionSel");
-const startTestBtn = document.getElementById("startTestBtn");
-const showMMT = document.getElementById("showMMT");
-const gradeMain = document.getElementById("grade-main");
-const exceptionSelect = document.getElementById("GradingExceptions");
-const testButton = document.getElementById("testButton");
-const resistanceFill = document.getElementById("resistanceFill");
-const resistanceText = document.getElementById("resistanceText");
-const instructionText = document.getElementById("instructionText");
-const lock3D = document.getElementById("lock3D");
-const zeroAll = document.getElementById("zeroAll");
+  const segUpper = document.getElementById("segUpper");
+  const segLower = document.getElementById("segLower");
 
-const boneSel = document.getElementById("boneSel");
-const rx = document.getElementById("rx");
-const ry = document.getElementById("ry");
-const rz = document.getElementById("rz");
-const zeroBone = document.getElementById("zeroBone");
+  const actionSel = document.getElementById("actionSel");
+  const actionDeg = document.getElementById("actionDeg");
+  const pairLabel = document.getElementById("pairLabel");
+  const zeroAll = document.getElementById("zeroAll");
 
-/* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
+  const boneSel = document.getElementById("boneSel");
+  const rx = document.getElementById("rx");
+  const ry = document.getElementById("ry");
+  const rz = document.getElementById("rz");
+  const zeroBone = document.getElementById("zeroBone");
+
+  /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
-  enabled: false,
-  // Default limits (only need to define the keys used by capFor)
-  trunkLatLMax: 30, trunkLatRMax: 30, cervRotLMax: 80, cervRotRMax: 80,
-  shExtLMax: 60, shExtRMax: 60, shAddLMax: 30, shAddRMax: 30,
-  shFlexLMax: 170, shFlexRMax: 170, shAbdLMax: 170, shAbdRMax: 170,
-  shIRLMax: 70, shIRRMax: 70, shERLMax: 90, shERRMax: 90,
-  elExtLMax: 10, elExtRMax: 10, elFlexLMax: 150, elFlexRMax: 150,
-  wrSupLMax: 95, wrSupRMax: 95,
-  hipFlexLMax: 110, hipFlexRMax: 110, hipExtLMax: 30, hipExtRMax: 30,
-  hipAbdLMax: 45, hipAbdRMax: 45, hipAddLMax: 25, hipAddRMax: 25,
-  hipIRLMax: 45, hipIRRMax: 45, kneeFlexLMax: 150, kneeFlexRMax: 150,
-  kneeExtLMax: 5, kneeExtRMax: 5, anklePF_LMax: 50, anklePF_RMax: 50,
-  ankleDF_LMax: 20, ankleDF_RMax: 20, footInvLMax: 35, footInvRMax: 35,
-  footEvLMax: 20, footEvRMax: 20,
+  enabled: false,
+  // ===== Existing upper body =====
+  trunkLatLMax: 30,
+  trunkLatRMax: 30,
+  cervRotLMax: 80,
+  cervRotRMax: 80,
+  shExtLMax: 60, shExtRMax: 60,
+  shAddLMax: 30, shAddRMax: 30,
+  shFlexLMax: 170, shFlexRMax: 170,
+  shAbdLMax: 170, shAbdRMax: 170,
+  shIRLMax: 70, shIRRMax: 70,
+  shERLMax: 90, shERRMax: 90,
+  elExtLMax: 10, elExtRMax: 10,
+  elFlexLMax: 150, elFlexRMax: 150,
+  wrSupLMax: 95, wrSupRMax: 95,
 
-  load() {
-    try {
-      const raw = localStorage.getItem('rometrics_collim');
-      if (!raw) return;
-      const o = JSON.parse(raw);
-      Object.keys(this).forEach(k=>{
-        if(k!=='enabled'&&k!=='load'&&k!=='save')
-          if(typeof o[k]==='number') this[k]=o[k];
-      });
-    } catch(e){}
-  },
-  save() {
-    try {
-      const o={};
-      Object.keys(this).forEach(k=>{
-        if(typeof this[k]==='number') o[k]=this[k];
-      });
-      localStorage.setItem('rometrics_collim', JSON.stringify(o));
-    } catch(e){}
-  }
+  // ===== NEW lower body defaults =====
+  hipFlexLMax: 110, hipFlexRMax: 110,
+  hipExtLMax: 30,  hipExtRMax: 30,
+  hipAbdLMax: 45,  hipAbdRMax: 45,
+  hipAddLMax: 25,  hipAddRMax: 25,
+  hipIRLMax: 45,  hipIRRMax: 45,
+  kneeFlexLMax: 150, kneeFlexRMax: 150,
+  kneeExtLMax: 5,   kneeExtRMax: 5,
+  anklePF_LMax: 50, anklePF_RMax: 50,
+  ankleDF_LMax: 20, ankleDF_RMax: 20,
+  footInvLMax: 35,  footInvRMax: 35,
+  footEvLMax: 20,   footEvRMax: 20,
+
+  load() {
+    try {
+      const raw = localStorage.getItem('rometrics_collim');
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      Object.keys(this).forEach(k=>{
+        if(k!=='enabled'&&k!=='load'&&k!=='save')
+          if(typeof o[k]==='number') this[k]=o[k];
+      });
+    } catch(e){}
+  },
+  save() {
+    try {
+      const o={};
+      Object.keys(this).forEach(k=>{
+        if(typeof this[k]==='number') o[k]=this[k];
+      });
+      localStorage.setItem('rometrics_collim', JSON.stringify(o));
+    } catch(e){}
+  }
 };
 COLLIM.load();
 
 function capFor(action){
-  COLLIM.load();  // ✅ refresh saved limits before applying
-  if(!COLLIM.enabled || !action) return null; // no cap
-  const { key, sign } = action; // sign: +1 or -1
-    // Cervical rotation L/R
-    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax;
-    // Shoulder flex/ext
-    if (/^sh_fe_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (sign > 0) return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax; // Flexion
-      else return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;    // Extension
-    }
-    // Shoulder Abd/Add
-    if (/^sh_aa_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (isLeft) return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax; // Left: + = Abd, − = Add
-      else return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax; // Right: + = Add, − = Abd (corrected)
-    }
-    // Shoulder IR/ER caps
-    if (/^sh_irer_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (sign > 0) return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax; // Internal Rotation
-      else return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax; // External Rotation
-    }
-    // Elbow Flexion / Extension
-    if (/^el_fe_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (sign > 0) return isLeft ? COLLIM.elFlexLMax : COLLIM.elFlexRMax; // Flexion
-      else if (sign < 0) return isLeft ? COLLIM.elExtLMax : COLLIM.elExtRMax; // Extension
-    }
-    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
-    if(/^wr_ps_/.test(key) && sign<0){
-      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
-    }
-    // Trunk lateral (existing)
-    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
-    // Hip Flexion
-    if(/^hip_fe_/.test(key)){
-      if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
-    }
-    // Hip Abduction / Adduction
-    if (/^hip_aa_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      if (isLeft) return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax; // Left: + = Abduction, − = Adduction
-      else return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax; // Right: + = Adduction, − = Abduction
-    }
-    // Hip Internal / External Rotation
-    if (/^hip_irer_/.test(key)) {
-      const isLeft = key.endsWith('_l');
-      return isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax;
-    }
-    // Knee Flexion / Extension (only flexion capped)
-    if(/^knee_fe_/.test(key)){
-      if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
-      if(sign < 0) return null; // no cap on extension
-    }
-    // Ankle PF / DF
-    if(/^ankle_dfpf_/.test(key)){
-      if(sign > 0) return key.endsWith('_l') ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax;
-      if(sign < 0) return key.endsWith('_l') ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax;
-    }
-    // Foot Inversion / Eversion
-    if(/^foot_invev_/.test(key)){
-      if(sign > 0) return key.endsWith('_l') ? COLLIM.footEvLMax : COLLIM.footEvRMax;
-      if(sign < 0) return key.endsWith('_l') ? COLLIM.footInvLMax : COLLIM.footInvRMax;
-    }
-    return null;
+  COLLIM.load();  // ✅ refresh saved limits before applying
+  if(!COLLIM.enabled || !action) return null; // no cap
+  const { key, sign } = action; // sign: +1 or -1
+    // Cervical rotation L/R
+    if(key==='cerv_rot') return (sign>0) ? COLLIM.cervRotLMax : COLLIM.cervRotRMax; // + = Left, - = Right
+       // Shoulder flex/ext → cap BOTH flexion (+1) and extension (−1)
+    if (/^sh_fe_/.test(key)) {
+      const isLeft = key.endsWith('_l');
+      if (sign > 0) { // Flexion
+        return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
+      }
+    }
+
+// Shoulder Abd/Add — handle L normally; R corrected
+if (/^sh_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction (normal)
+    return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
+  } else {
+    // ✅ Right side corrected: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+  }
 }
-  }   /// may be stray
+
+    // Shoulder IR/ER caps
+if (/^sh_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { // Internal Rotation
+    return isLeft ? COLLIM.shIRLMax : COLLIM.shIRRMax;
+  } else { // External Rotation
+    return isLeft ? COLLIM.shERLMax : COLLIM.shERRMax;
+  }
+}
+  // === Elbow Flexion / Extension ===
+if (/^el_fe_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (sign > 0) { 
+    // Flexion
+    return isLeft ? COLLIM.elFlexLMax : COLLIM.elFlexRMax;
+  } else if (sign < 0) {
+    // Extension
+    return isLeft ? COLLIM.elExtLMax : COLLIM.elExtRMax;
+  }
+}
+    // Wrist PS → cap supination only. NOTE: in our menu below, Supination is the NEGATIVE direction (sign -1)
+    if(/^wr_ps_/.test(key) && sign<0){
+      return key.endsWith('_l') ? COLLIM.wrSupLMax : COLLIM.wrSupRMax;
+    }
+    // Trunk lateral (existing)
+    if(key==='trunk_lat') return (sign>0) ? COLLIM.trunkLatLMax : COLLIM.trunkLatRMax;
+    // Hip Flexion (both)
+if(/^hip_fe_/.test(key)){
+  if (sign > 0) return key.endsWith('_l') ? COLLIM.hipFlexLMax : COLLIM.hipFlexRMax;
+}
+// Hip Abduction / Adduction
+if (/^hip_aa_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  if (isLeft) {
+    // Left: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.hipAbdLMax : COLLIM.hipAddLMax;
+  } else {
+    // Right: + = Adduction, − = Abduction
+    return (sign > 0) ? COLLIM.hipAddRMax : COLLIM.hipAbdRMax;
+  }
+}
+// Hip Internal / External Rotation
+if (/^hip_irer_/.test(key)) {
+  const isLeft = key.endsWith('_l');
+  // symmetric cap for both directions (you can split later if needed)
+  return isLeft ? COLLIM.hipIRLMax : COLLIM.hipIRRMax;
+}
+
+// Knee Flexion / Extension (only flexion capped)
+if(/^knee_fe_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.kneeFlexLMax : COLLIM.kneeFlexRMax;
+  if(sign < 0) return null; // no cap on extension
+}
+
+// Ankle PF / DF
+if(/^ankle_dfpf_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.anklePF_LMax : COLLIM.anklePF_RMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.ankleDF_LMax : COLLIM.ankleDF_RMax;
+}
+
+// Foot Inversion / Eversion
+if(/^foot_invev_/.test(key)){
+  if(sign > 0) return key.endsWith('_l') ? COLLIM.footEvLMax : COLLIM.footEvRMax;
+  if(sign < 0) return key.endsWith('_l') ? COLLIM.footInvLMax : COLLIM.footInvRMax;
+}
+    return null;
+  }
 
   const antiBox = document.getElementById('antiBox');
 if (antiBox){
@@ -833,6 +867,48 @@ if (cfg.key === 'foot_invev_l') {
   }
 
   let CURRENT_ACTION = null;
+  function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
+
+  function fillActionMenu(){
+    actionSel.innerHTML = "";
+    const ph = document.createElement("option");
+    ph.value = ""; ph.textContent = "(Select a motion…)";
+    actionSel.appendChild(ph);
+
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
+    const catalog = buildSeparatedCatalog(list);
+    Object.keys(catalog).forEach(group=>{
+      const og = document.createElement("optgroup"); og.label = group;
+      catalog[group].forEach(entry=>{
+        const opt = document.createElement("option");
+        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
+        opt.textContent = entry.label;
+        og.appendChild(opt);
+      });
+      actionSel.appendChild(og);
+    });
+
+    actionSel.value = "";
+    pairLabel.textContent = "Angle (°)";
+    actionDeg.disabled = true;
+    CURRENT_ACTION = null;
+  }
+
+  function syncActionUI(forceZero=false){
+    if (!CURRENT_ACTION){
+      actionDeg.disabled = true;
+      pairLabel.textContent = "Angle (°)";
+      return;
+    }
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
+    actionDeg.min = "0";
+    actionDeg.max = String(CURRENT_ACTION.max);
+    if (forceZero) actionDeg.value = "0";
+    actionDeg.disabled = false;
+  }
+
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
+  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
@@ -850,6 +926,156 @@ function applyAnatomicBaseline(){
   log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
 }
 
+  // Always return to anatomic when changing actions; then freeze bind
+  actionSel.addEventListener("change", ()=>{
+    resetAllBonesToInitial();
+    applyAnatomicBaseline();
+    CURRENT_ACTION = null;
+    const v = actionSel.value || "";
+    if (v.startsWith("sep:")){
+      const [, key, signStr, maxStr] = v.split(":");
+      const cfg = cfgFromKey(key);
+      CURRENT_ACTION = { mode:'sep', key, cfg, sign: parseInt(signStr,10), max: parseFloat(maxStr), label: actionSel.options[actionSel.selectedIndex].textContent };
+      freezeBindBaseFor(key,cfg);
+
+// Shoulder IR/ER → set elbow to 90° baseline immediately
+if (key==='sh_irer_l' || key==='sh_irer_r'){
+  const side = key.endsWith('_l') ? 'l' : 'r';
+  setPair(`el_fe_${side}`, 90); // elbow flexion to 90°
+  setPair(`wr_ps_${side}`, 9);
+  setPair(`clavicle_${side.toUpperCase()}`, side==='r' ? -45 : 45); 
+  log(`Elbow ${side.toUpperCase()} set to 90° for shoulder rotation setup.`);
+}
+// Hip IR/ER → set posture: hip flexion 95°, knee flexion 90°
+if (key==='hip_irer_l' || key==='hip_irer_r'){
+  const side = key.endsWith('_l') ? 'l' : 'r';
+  setPair(`hip_fe_${side}`, 95);   // hip flexed up for stable rotation
+  setPair(`knee_fe_${side}`, -90);  // knee flexed to 90°
+  // ✅ Re-bind baseline to the seated posture for THIS motion only
+  const b = resolveBind(key, cfg);
+  if (b) {
+    b.axis = 'y';                   // force correct axis for hip rotation
+    b.qBind = b.bone.quaternion.clone();  // <-- capture baseline AFTER posture
+  }
+  log(`Hip ${side.toUpperCase()} set to FE=95°, Knee ${side.toUpperCase()} to FE=90° for hip rotation setup.`);
+}
+      syncActionUI(true);
+      return;
+    }
+    syncActionUI(true);
+  });
+
+actionDeg.addEventListener("input", ()=> {
+  if (!CURRENT_ACTION) return;
+
+  let val = Math.max(0, Math.min(CURRENT_ACTION.max, parseFloat(actionDeg.value)||0));
+
+  // Anticollision cap (keep this early)
+  const cap = capFor(CURRENT_ACTION);
+  if (typeof cap === 'number' && val > cap){
+    val = cap; actionDeg.value = String(val);
+    log(`Anticollision limit hit (${CURRENT_ACTION.label}): max ${cap}°`);
+  }
+
+  // Signed degrees for the chosen direction
+  let signed = CURRENT_ACTION.sign * val;
+
+  // === Smooth IR/ER path (compose with Abd/Add from same baseline) ===
+  if (CURRENT_ACTION.key==='sh_irer_l' || CURRENT_ACTION.key==='sh_irer_r'){
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+
+    // keep elbow flexed for stability
+    setPair(`el_fe_${side}`, 90);
+
+    // RIGHT shoulder needs sign flip on your rig
+    let rotDeg = -signed;
+
+    // compute coupled Abd/Add amount (IR → Add, ER → Abd)
+    const amt = Math.min(30, Math.abs(rotDeg)*0.3) * (rotDeg>0 ? -1 : +1); // − = Add, + = Abd
+
+    // compose both rotations from the SAME base on the SAME bone
+    const keyRot = `sh_irer_${side}`;
+    const keyAA  = `sh_aa_${side}`;
+    const cfgRot = cfgFromKey(keyRot), cfgAA = cfgFromKey(keyAA);
+    const bR = resolveBind(keyRot, cfgRot);
+    const bA = resolveBind(keyAA,  cfgAA);
+    if (bR) bR.axis = 'y'; 
+    if (bR && bA && bR.bone === bA.bone){
+      const base = bR.qBind.clone();
+
+      const toQ = (axis, deg) => {
+        const r = THREE.MathUtils.degToRad(deg);
+        const e = new THREE.Euler(
+          axis==='x'?r:0,
+          axis==='y'?r:0,
+          axis==='z'?r:0,
+          "XYZ"
+        );
+        return new THREE.Quaternion().setFromEuler(e);
+      };
+
+      const qRot = toQ(bR.axis, rotDeg);
+      const qAA  = toQ(bA.axis, amt);
+      const q = base.clone().multiply(qRot).multiply(qAA);
+
+      bR.bone.quaternion.copy(q);
+    } else {
+      // fallback if binds differ: still apply rotation (with R-side fix)
+      applyPairAngle(keyRot, cfgRot, rotDeg);
+    }
+    return; // IMPORTANT: stop here so we don't also run the generic path
+  }
+// === Hip IR/ER path (keep setup posture; rotate thigh around Y) ===
+if (CURRENT_ACTION.key==='hip_irer_l' || CURRENT_ACTION.key==='hip_irer_r'){
+  const side   = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+  const keyRot = `hip_irer_${side}`;
+  const cfgRot = cfgFromKey(keyRot);
+
+  // maintain the setup posture every tick
+  setPair(`hip_fe_${side}`, 95);
+  setPair(`knee_fe_${side}`, -90);
+
+  // rotation amount (positive = whatever your menu defines)
+  const rotDeg = CURRENT_ACTION.sign * val;
+
+  // apply rotation about mapped axis (axisFor maps hip_irer_* → 'y')
+  applyPairAngle(keyRot, cfgRot, rotDeg);
+  return; // stop here (don’t run generic path)
+}
+  // === Generic path (everything else) ===
+  applyPairAngle(CURRENT_ACTION.key, CURRENT_ACTION.cfg, signed);
+});
+document.getElementById("autoMoveBtn").onclick = () => {
+  if (!CURRENT_ACTION) return;
+  // 🔒 Hold seated/90–90 posture at the moment the run starts (Hip IR/ER only)
+  if (/^hip_irer_/.test(CURRENT_ACTION.key)){
+    const side = CURRENT_ACTION.key.endsWith('_l') ? 'l' : 'r';
+    setPair(`hip_fe_${side}`, 95);    // hip flexion stays at 95°
+    setPair(`knee_fe_${side}`, -90);  // knee FLEX stays at −90°
+  }
+
+  let target = CURRENT_ACTION.max;
+  const cap = capFor(CURRENT_ACTION);
+  if (typeof cap === "number") target = cap;
+
+    let current = 0;  
+  actionDeg.value = 0;
+  actionDeg.dispatchEvent(new Event("input"));
+  const step = 1;    // speed: 1 degree per tick
+  const interval = 10; // speed: lower = faster
+
+  const timer = setInterval(() => {
+    current += step;
+
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+
+    actionDeg.value = current;
+    actionDeg.dispatchEvent(new Event("input"));
+
+  }, interval);
 };
 
     zeroAll.onclick = ()=>{
