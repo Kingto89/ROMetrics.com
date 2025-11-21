@@ -336,23 +336,36 @@ function loadModel(){
 loadModel();
 
 let boneMap = {
-  thigh_L: null,
-  thigh_R: null,
-  calf_L: null,
-  calf_R: null
+  thigh_L: null,
+  thigh_R: null,
+  calf_L: null,
+  calf_R: null,
 };
 
+// New function to find and store the key bones
 function cacheKeyBones() {
-  if (!skeleton) return;
-
-  skeleton.bones.forEach(b => {
-    if (b.name === "thigh_L") boneMap.thigh_L = b;
-    if (b.name === "thigh_R") boneMap.thigh_R = b;
-    if (b.name === "calf_L")  boneMap.calf_L  = b;
-    if (b.name === "calf_R")  boneMap.calf_R  = b;
-  });
+  if (!skeleton) return;
+  skeleton.bones.forEach(b => {
+    if (b.name === "thigh_L") boneMap.thigh_L = b;
+    if (b.name === "thigh_R") boneMap.thigh_R = b;
+    if (b.name === "calf_L")  boneMap.calf_L  = b;
+    if (b.name === "calf_R")  boneMap.calf_R  = b;
+  });
+  log("Key bones cached for posing.");
 }
-  
+
+// Call this function inside loadModel() after initialBoneRot is set (around line 1050)
+function loadModel(){
+    // ... (existing code)
+    // 3️⃣ Now capture the new baseline for reference motions
+    resetAllBonesToInitial();
+    
+    // <<< ADDED: CACHE BONES >>>
+    cacheKeyBones(); 
+
+    // 4️⃣ Apply anatomic offsets on top of corrected baseline
+    applyAnatomicBaseline();
+
 
 /* ===== MMT REQUIRED BODY POSITIONS ===== */
 /*
