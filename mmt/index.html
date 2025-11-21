@@ -69,6 +69,16 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
     <select id="actionSel">
       <option value="">(Select a test to begin…)</option>
 
+      <optgroup label="Cervical & Capital">
+  <option value="Capital_Extension">Capital Extension (Rectus Capitis Posterior Major, Obliquus Capitis Superior, Splenius Capitis)</option>
+  <option value="Cervical_Extension">Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)</option>
+  <option value="Capital_Flexion">Capital Flexion — Chin Tuck (Longus Capitis, Rectus Capitis Anterior, Anterior Scalene)</option>
+  <option value="Cervical_Flexion">Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene)</option>
+  <option value="Single_SCM">Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli)</option>
+  <option value="Cervical_Rotation">Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral)</option>
+</optgroup>
+
+
       <optgroup label="Scapula">
         <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
         <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
@@ -394,6 +404,12 @@ const MD_LOW  = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/m
 
 // Map select values to readable headings to find in MD
 const TEST_TO_HEADING = {
+  Capital_Extension: "Capital Extension",
+  Cervical_Extension: "Cervical Extension",
+  Capital_Flexion: "Capital Flexion — Chin Tuck",
+  Cervical_Flexion: "Cervical Flexion",
+  Single_SCM: "Single Sternocleidomastoid — Anterolateral Flexion",
+  Cervical_Rotation: "Cervical Rotation",
   Serratus_Anterior: "Scapular Abduction & Upward Rotation",
   Upper_Trapezius: "Scapular Elevation",
   Middle_Trapezius: "Scapular Adduction / Retraction",
