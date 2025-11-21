@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,22 +17,8 @@
 <style>
 :root{--bg:#0b1220;--panel:#0f172a;--line:#1f2937;--ctrl:#1e293b;--text:#e2e8f0;--muted:#cbd5e1}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
-  .lockOn{background:#0b3a1f;border-color:#16a34a}
-   .hide{display:none}.lockOn{background:#0b3a1f;border-color:#16a34a}
-    select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:#1e293b;border:1px solid #334155;color:#e2e8f0}
-  .row{display:flex;gap:8px}.row>button{flex:1}
-  .pill{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid #334155;border-radius:12px;padding:8px 6px;line-height:1}
-  .pill .top{display:flex;align-items:center;gap:6px;font-weight:700}
-  .pill .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
-  .pill.orange{border-color:#f59e0b}.pill .dot.orange{background:#f59e0b}
-  .pill.red{border-color:#ef4444}.pill .dot.red{background:#ef4444}
-  .pill.green{border-color:#22c55e}.pill .dot.green{background:#22c55e}
-  .pill .label{font-size:12px;color:#cbd5e1}
-   .hud,.toast,#msg{z-index:40}
-  .hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:10px;padding:6px 10px;font-weight:700;backdrop-filter:blur(6px)}
-  .toast{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(2,6,23,.7);border:1px solid #334155;border-radius:10px;padding:6px 10px;font-size:13px;display:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{position:fixed;left:25px;top:12px;width:360px;max-height:90vh;z-index:100;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.panel{position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:#0c1628;border-bottom:1px solid #162235;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:#9fb0c9}
 .content{padding:12px;overflow:auto}
@@ -41,6 +26,9 @@ label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
 select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;background:var(--ctrl);border:1px solid #334155;color:#e2e8f0}
 .row{display:flex;gap:8px}.row>button{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid #334155}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:8px 10px;border-radius:10px;background:#142033;border:1px solid #334155;color:#cbd5e1}
+.seg button.on{background:#1f2c43;color:#fff;border-color:#47618e}
 details{border:1px solid #162235;border-radius:10px;padding:8px;background:#0b1426;margin-top:8px}
 summary{cursor:pointer;font-weight:600;color:#dbe7ff}
 #log{background:#0b1220;border:1px solid #1f2937;min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
@@ -66,46 +54,9 @@ optgroup{color:#9fb0c9;font-style:normal}
 .rom-head{width:160px;color:#9fb0c9}
 .badge{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #2a3a55;background:#132038;color:#cbd5e1;font-size:11px;margin-left:6px}
 #boneAdv { display:none !important; }
-  /* SVG */
-  #gonioHost{position:fixed; inset:0; z-index:10; pointer-events:none}
-  #gonioHost svg{width:100vw;height:100vh;background:transparent;pointer-events:none}
-  .tick{stroke:#64748b;stroke-width:.9}.tickBig{stroke-width:1.6}
-  .labelOuter{fill:#e5e7eb;font-size:11px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
-  .labelInner{fill:#fca5a5;font-size:8.2px;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
-  .rulerTick{stroke:#94a3b8}
-  .ruLbl{fill:#cbd5e1;font-size:9.5px;dominant-baseline:middle;paint-order:stroke;stroke:#0b1220;stroke-width:3px}
-  .scrLine{stroke-width:2.2; stroke-linecap:round}
-
-  /* Cursors */
-  #instrument{cursor:move}
-  #armB_handleKnob,#armB_handleShaft,#armB_knob{cursor:grab}
-  /* --- NO JUMP SLIDERS --- */
-
-/* 1. Disable clicks on the slider track */
-input[type=range] {
-  pointer-events: none; 
-}
-
-/* 2. Re-enable clicks/drags ONLY on the thumb (handle) */
-input[type=range]::-webkit-slider-thumb {
-  pointer-events: auto;
-  cursor: grab;
-}
-input[type=range]::-moz-range-thumb {
-  pointer-events: auto;
-  cursor: grab;
-}
-/* --- THICKER SLIDERS + BLUE FILL + NO PAGE SWIPE (Linear) --- */
-input[type=range] { touch-action: none; -webkit-appearance: none; appearance: none; height: 24px; background: #334155; border-radius: 12px; overflow: hidden; margin: 10px 0; padding: 0; border: 0; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: #e2e8f0; border-radius: 50%; border: 2px solid #0f172a; box-shadow: -100vw 0 0 100vw #3b82f6; cursor: grab; pointer-events: auto; }
-input[type=range]::-moz-range-thumb { width: 24px; height: 24px; background: #e2e8f0; border-radius: 50%; border: 2px solid #0f172a; box-shadow: -100vw 0 0 100vw #3b82f6; cursor: grab; pointer-events: auto; }
 </style>
 </head>
 <body>
-
-  <div class="hud" id="hud">Angle: 0°</div>
-  <div class="toast" id="toast">Preset updated</div>
-  
   <!-- Panel -->
   <div class="panel" id="panel">
     <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
@@ -118,154 +69,19 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; background: #e2
         </label>
       </div>
 
-     <label>Body Region</label>
-<select id="regionSel">
-    <option value="">(Select region…)</option>
-    <option value="cervical_spine">Cervical Spine</option>
-    <option value="thoracic_lumbar_spine">Thoracic & Lumbar Spine</option>
-    <option value="glenohumeral_joint">Glenohumeral Joint</option>
-    <option value="elbow_radioulnar">Elbow & Radioulnar Joints</option>
-    <option value="wrist">Wrist</option>
-    <option value="hip">Hip</option>
-    <option value="knee">Knee</option>
-    <option value="talocrural_ankle">Talocrural (Ankle)</option>
-    <option value="transverse_tarsal_subtalar">Transverse Tarsal & Subtalar</option>
-</select>
-
+      <label>Body Region</label>
+      <div class="seg">
+        <button id="segUpper" class="on">Upper Body</button>
+        <button id="segLower">Lower Body</button>
+      </div>
 
       <label>Action</label>
       <select id="actionSel"></select>
 
       <label><span id="pairLabel">Angle (°)</span></label>
       <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
-      <div class="row">
       <button id="autoMoveBtn" class="mini">Run Action</button>
-      <button id="showNote" class="mini">📌 Goniometer Placement</button>
-      </div>
-  
-  <div class="row">
-    <button class="pill orange" id="pickFulcrum">
-      <div class="top"><span class="dot orange"></span><span>1</span></div>
-      <div class="label">Fulcrum</div>
-    </button>
-    <button class="pill red" id="pickStationary">
-      <div class="top"><span class="dot red"></span><span>2</span></div>
-      <div class="label">Stationary</div>
-    </button>
-    <button class="pill green" id="pickMoving">
-      <div class="top"><span class="dot green"></span><span>3</span></div>
-      <div class="label">Moving</div>
-    </button>
-  </div>
 
-  <label>Range of Motion</label>
-  <div class="row">
-    <button id="startROM">▶️ Start ROM</button>
-    <button id="resetROM">↺ Reset ROM</button>
-    <button id="resetMeasurement" title="Clear dots + lines + goniometer">🧹 Reset Measurement</button>
-  </div>
-
-  <label>Interaction Locks</label>
-  <div class="row">
-    <button id="lock3D">🔓 3D: Unlocked</button>
-    <button id="lockGonio">🔓 Gonio Arm: Unlocked</button>
-  </div>
-
-    <!-- SVG overlay: screen-space dots + lines -->
-<div id="gonioHost" class="hide" aria-hidden="true">
-  <svg id="gonioSvg" aria-label="Universal goniometer">
-    <g id="screenDots">
-      <line id="scrLineA" class="scrLine" stroke="#ef4444" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
-      <line id="scrLineB" class="scrLine" stroke="#22c55e" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
-      <circle id="scrFulcrum" r="6" fill="#f59e0b" cx="-100" cy="-100" style="display:none"/>
-      <circle id="scrStationary" r="6" fill="#ef4444" cx="-100" cy="-100" style="display:none"/>
-      <circle id="scrMoving" r="6" fill="#22c55e" cx="-100" cy="-100" style="display:none"/>
-    </g>
-    <g id="viewport" transform="translate(0,0) scale(1)">
-      <g id="rotWrap" transform="rotate(0)">
-        <g id="mirrorWrap" transform="scale(1,1)">
-          <g id="instrument">
-            <g id="head">
-            <circle r="120" fill="rgba(0,0,0,0)" stroke="#94a3b8" stroke-width="1.6" style="pointer-events:all"/>
-            <circle r="86"  fill="none" stroke="#94a3b8" stroke-width="0.9" opacity="0.65"/>     
-              <g id="ticks"></g>
-              <g id="numsOut"></g>
-              <g id="labelsFixed">
-              <g id="numsInWrap"><g id="numsIn"></g></g>
-            </g>
-
-              <circle r="3.2" fill="#94a3b8"/>
-            </g>
-
-            <!-- Stationary (red) -->
-            <g id="armA_grp">
-              <rect x="-10" y="120" width="20" height="260" rx="10" stroke="#ef4444" fill="none" stroke-width="3" />
-              <line id="axisA" x1="0" y1="380" x2="0" y2="-116" stroke="#ef4444" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
-              <g id="armA_ruler"></g>
-              <circle id="armA_knob" cx="0" cy="380" r="10" fill="#ef4444"/>
-            </g>
-
-            <!-- Moving (green) -->
-            <g id="armB_grp">
-              <rect x="-10" y="-380" width="20" height="500" rx="10" stroke="#22c55e" fill="none" stroke-width="3"/>
-              <line id="axisB" x1="0" y1="-380" x2="0" y2="124" stroke="#22c55e" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
-              <g id="armB_ruler"></g>
-              <circle id="armB_knob" cx="0" cy="-380" r="10" fill="#22c55e"/>
-              <circle id="armB_handleKnob" cx="0" cy="-380" r="38" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
-              <rect   id="armB_handleShaft" x="-20" y="-380" width="40" height="500" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
-            </g>
-          </g>
-        </g>
-      </g>
-    </g>
-  </svg>
-</div>
-
-  <details id="controllers">
-    <summary>🎛️ Controllers</summary>
-    <div class="group">
-      <details id="ctrlGonio">
-        <summary>🧭 Goniometer</summary>
-
-
-        <label>
-  Rotate Moving Arm — CW (°)
-  <input type="checkbox" id="cwMode" style="margin-left:8px; width:auto; vertical-align:middle">
-</label>
-<input type="range" min="0" max="360" step="1" value="0" id="rotateCW">
-
-<label>
-  Rotate Moving Arm — CCW (°)
-  <input type="checkbox" id="ccwMode" style="margin-left:8px; width:auto; vertical-align:middle">
-</label>
-<input type="range" min="0" max="360" step="1" value="0" id="rotateCCW">
-        
-         <label>Rotate Goniometer (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="gonioRotate">
-        <label>Gonio Size (10–200%)</label>
-        <input type="range" min="10" max="200" step="5" value="100" id="gonioSize">
-
-        <label>Gonio X (px)</label>
-        <input type="range" min="0" max="2000" step="1" value="0" id="gonioX">
-        <label>Gonio Y (px)</label>
-        <input type="range" min="0" max="2000" step="1" value="0" id="gonioY">
-      </details>
-
-      <details id="ctrlModel">
-        <summary>🧍 Model</summary>
-        <label>Model X (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0" id="modelX">
-        <label>Model Z (m)</label>
-        <input type="range" min="-2" max="2" step="0.01" value="0.6" id="modelZ">
-        <label>Model Y (m) — up/down</label>
-        <input type="range" min="-0.2" max="0.6" step="0.005" value="0" id="modelY">
-        <label>Model Scale (%)</label>
-        <input type="range" min="60" max="160" step="1" value="100" id="modelScale">
-        <label>Model Yaw (°)</label>
-        <input type="range" min="0" max="360" step="1" value="0" id="modelYaw">
-      </details>
-    </div>
-  </details>
      <details id="boneAdv">
     <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
@@ -307,413 +123,28 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; background: #e2
   import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
   import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
   import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
-/* ===================== GONIOMETER LOGIC (From Index 2) ===================== */
-const Gonio = (() => {
-  const host        = document.getElementById('gonioHost');
-  const svg         = document.getElementById('gonioSvg');
-  const viewport    = document.getElementById('viewport');
-  const rotWrap     = document.getElementById('rotWrap');
-  const numsInWrap  = document.getElementById('numsInWrap');
-  const labelsFixed = document.getElementById('labelsFixed');
-  const numsOut     = document.getElementById('numsOut');
-  const numsIn      = document.getElementById('numsIn');
-  const ticks       = document.getElementById('ticks');
-  const armA_ruler  = document.getElementById('armA_ruler');
-  const armB_ruler  = document.getElementById('armB_ruler');
 
-  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-  const clamp360=a=>(a%360+360)%360;
-  const toDegUp=(x,y)=>clamp360(Math.atan2(-y,x)*180/Math.PI+90);
+  /* ===== UI ===== */
+  const msg = document.getElementById("msg");
+  const logEl = document.getElementById("log");
+  const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-  (function build(){
-    const NS = "http://www.w3.org/2000/svg";
-    if(!ticks || !numsOut || !numsIn) return;
-    const R = 120, Rin = 86;
-    const line = (p,x1,y1,x2,y2,cls)=>{
-      const n = document.createElementNS(NS,'line');
-      n.setAttribute('x1',x1); n.setAttribute('y1',y1); n.setAttribute('x2',x2); n.setAttribute('y2',y2);
-      if (cls) n.setAttribute('class',cls); p.appendChild(n);
-    };
-    const text = (p,x,y,t,cls)=>{
-      const n = document.createElementNS(NS,'text');
-      n.setAttribute('x',x); n.setAttribute('y',y); n.setAttribute('class',cls);
-      n.textContent = t; p.appendChild(n); return n;
-    };
-    const innerFromD = (d)=>{ const raw=(d+180)%360; return (raw<=180)?raw:360-raw; };
-    const rBand = (R+Rin)*0.5;
-    for (let d=0; d<360; d+=5){
-      const a=(d-90)*Math.PI/180, big=(d%10===0), len=big?12:6;
-      const r1=rBand-len*0.5, r2=rBand+len*0.5;
-      line(ticks, Math.cos(a)*r1, Math.sin(a)*r1, Math.cos(a)*r2, Math.sin(a)*r2, big?"tick tickBig":"tick");
-    }
-    numsOut.innerHTML=""; numsIn.innerHTML="";
-    const rWhite=R-8, rInner=Rin+9;
-    for (let d=0; d<360; d+=10){
-      const inner=innerFromD(d), outer=Math.abs(90-inner);
-      if (outer%20===0 && outer<=80) {
-        const a=(d-90)*Math.PI/180; text(numsOut, Math.cos(a)*rWhite, Math.sin(a)*rWhite, String(outer), "labelOuter");
-      }
-      if (inner%10===0 && (inner!==0 || d===180)){
-        const a=(d-90)*Math.PI/180; text(numsIn, Math.cos(a)*rInner, Math.sin(a)*rInner, String(inner), "labelInner");
-      }
-    }
-    function buildTipRuler(group, tipY, dir, which){
-      if(!group) return; group.innerHTML='';
-      const CM=14, IN=2.5;
-      const line2=(x1,y1,x2,y2,c)=>{const n=document.createElementNS(NS,'line');n.setAttribute('x1',x1);n.setAttribute('y1',y1);n.setAttribute('x2',x2);n.setAttribute('y2',y2);n.setAttribute('class',c||'rulerTick');group.appendChild(n);};
-      const label=(x,y,t,rot)=>{const n=document.createElementNS(NS,'text');n.setAttribute('x',x);n.setAttribute('y',y);n.setAttribute('class','ruLbl'); if(rot) n.setAttribute('transform',`rotate(${rot} ${x} ${y})`); n.textContent=t; n.dataset.arm=which; n.dataset.x=x; n.dataset.y=y; group.appendChild(n);};
-      for(let c=0; c<=15.01; c+=0.5){
-        const y=tipY-dir*(c*CM), long=Math.abs(c%1)<0.01, mid=!long && Math.abs(c%0.5)<0.01, w=long?8:mid?5:3;
-        line2(-10,y,-10-w,y); if(long) label(-18,y,String(Math.round(c)),-90);
-      }
-      for(let i=0; i<=6.01; i+=0.5){
-        const y=tipY-dir*(i*IN*CM), long=Math.abs(i%1)<0.01, mid=!long && Math.abs(i%0.5)<0.01, w=long?8:mid?5:3;
-        line2(10,y,10+w,y); if(long) label(18,y,String(Math.round(i)),90);
-      }
-      label(-26,tipY,'cm',-90); label(26,tipY,'in',90);
-    }
-    buildTipRuler(armA_ruler, +380, +1, 'A');
-    buildTipRuler(armB_ruler, -380, -1, 'B');
-  })();
+  const panel = document.getElementById("panel");
+  const dragbar = document.getElementById("dragbar");
 
-  let mov=30, zoom=1, panX=innerWidth/2, panY=innerHeight/2, baseRot=0, userRot=0, scale=1, zeroRef=0;
-  let draggingArm=false, draggingPan=false, lastPanScreen=null;
-  let dragOffset = 0;    // Essential for smooth dragging (no snapping to finger)
-  let isRomMode = false; // Essential for sliders (prevents jumping back to 0)
-  
-  const getCwMode = () => { const el = document.getElementById("cwMode"); return el ? el.checked : false; };
+  const segUpper = document.getElementById("segUpper");
+  const segLower = document.getElementById("segLower");
 
-  function applyView(){ viewport.setAttribute('transform',`translate(${panX},${panY}) scale(${zoom*scale})`); }
-  function applyRot(){ rotWrap.setAttribute('transform',`rotate(${baseRot+userRot})`); }
-  function applyLabelFix(){
-    const t = -(baseRot + userRot);
-    if(labelsFixed) labelsFixed.setAttribute('transform', `rotate(${t})`);
-    if(numsInWrap) numsInWrap.setAttribute('transform', `rotate(${-t})`);
-    if(numsOut) numsOut.setAttribute('transform','rotate(0)');
-  }
-  function updateRulerUpright(){
-    document.querySelectorAll('.ruLbl').forEach(t=>{
-      const which=t.dataset.arm, base=(which==='A'?0:mov)+baseRot+userRot, x=+t.dataset.x, y=+t.dataset.y;
-      t.setAttribute('transform', `rotate(${-base} ${x} ${y})`);
-    });
-  }
-  function clampPanToViewport(){
-    const bound=80*zoom*scale, m=6, minX=m+bound, maxX=innerWidth-m-bound, minY=m+bound, maxY=innerHeight-m-bound;
-    panX = (minX<=maxX)? Math.min(maxX, Math.max(minX, panX)) : innerWidth/2;
-    panY = (minY<=maxY)? Math.min(maxY, Math.max(minY, panY)) : innerHeight/2;
-  }
-  function render(){
-    const a=document.getElementById('armA_grp'), b=document.getElementById('armB_grp');
-    if(a) a.setAttribute('transform','rotate(0)');
-    if(b) b.setAttribute('transform',`rotate(${mov})`);
-    updateRulerUpright();
-  }
-  
-  clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render();
+  const actionSel = document.getElementById("actionSel");
+  const actionDeg = document.getElementById("actionDeg");
+  const pairLabel = document.getElementById("pairLabel");
+  const zeroAll = document.getElementById("zeroAll");
 
-  /* Interactions */
-  const inst = document.getElementById('instrument');
-
-/* --- NEW: Wire up the Green Arm Handles --- */
-  ['armB_handleKnob', 'armB_handleShaft', 'armB_knob'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) {
-          el.style.pointerEvents = "all"; 
-          el.style.cursor = "grab";
-          // THIS LINE FIXES THE JUMP: Prevents scrolling while dragging the arm
-          el.style.touchAction = "none"; 
-          el.addEventListener('pointerdown', startArmDrag);
-      }
-  });
-
-  // Listen globally for the "Spin" gesture
-  window.addEventListener('pointermove', moveArm);
-  window.addEventListener('pointerup', endArm);
-  // THESE LINES FIX THE JUMP: Stop dragging if touch is interrupted
-  window.addEventListener('pointercancel', endArm);
-  window.addEventListener('blur', endArm);
-  /* ------------------------------------------ */
-  if(inst){
-    inst.addEventListener('pointerdown', e=>{
-      if (typeof lockGonio!=='undefined' && lockGonio) return;
-      if (e.target.closest('#armB_handleKnob')||e.target.closest('#armB_handleShaft')||e.target.closest('#armB_knob')) return;
-      e.preventDefault(); draggingPan=true; lastPanScreen={x:e.clientX, y:e.clientY};
-      inst.setPointerCapture?.(e.pointerId);
-    });
-    inst.addEventListener('pointermove', e=>{
-      if (typeof lockGonio!=='undefined' && lockGonio) return;
-      if (!draggingPan || !lastPanScreen) return;
-      e.preventDefault();
-      const dx=(e.clientX-lastPanScreen.x)/(zoom*scale), dy=(e.clientY-lastPanScreen.y)/(zoom*scale);
-      panX+=dx; panY+=dy; lastPanScreen={x:e.clientX, y:e.clientY};
-      clampPanToViewport(); applyView();
-    });
-    inst.addEventListener('pointerup', ()=>{ draggingPan=false; lastPanScreen=null; });
-    inst.addEventListener('pointercancel', ()=>{ draggingPan=false; lastPanScreen=null; });
-  }
-  if(svg) svg.addEventListener('wheel', e=>{
-    if (typeof lockGonio!=='undefined' && lockGonio) return;
-    e.preventDefault();
-    const step = Math.sign(e.deltaY)<0 ? 1.22 : 1/1.22;
-    zoom=clamp(zoom*step, 0.07, 10);
-    clampPanToViewport(); applyView();
-  }, {passive:false});
-
-function startArmDrag(e){
-    if (typeof lockGonio!=='undefined' && lockGonio) return;
-    e.stopPropagation(); e.preventDefault();
-    document.getElementById('armB_grp').setPointerCapture?.(e.pointerId);
-    draggingArm=true;
-    // Calculate offset so arm doesn't snap to finger
-    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
-    const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    const fingerAngle = clamp360(toDegUp(p.x, p.y));
-    dragOffset = fingerAngle - mov; 
-  }
-
-function moveArm(e){
-    if (typeof lockGonio!=='undefined' && lockGonio) return;
-    if(!draggingArm) return;
-    e.stopPropagation(); e.preventDefault();
-
-    // 1. Capture old position to determine direction
-    const oldMov = mov;
-
-    // 2. Calculate new position
-    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
-    const p=pt.matrixTransform(rotWrap.getScreenCTM().inverse());
-    const fingerAngle = clamp360(toDegUp(p.x, p.y));
-    mov = clamp360(fingerAngle - dragOffset); 
-    
-    // 3. Auto-Detect Direction (Fixes ROM counting 360-1)
-    // If dragging CW (decreasing), we switch to "CCW Mode" (Inverted math) so it counts up.
-    // If dragging CCW (increasing), we switch to "CW Mode" (Standard math).
-    if (typeof isRomMode !== 'undefined' && isRomMode) {
-         let delta = mov - oldMov;
-         // Handle wrap-around math (e.g. 359 -> 1 is +2, not -358)
-         if(delta > 180) delta -= 360;
-         if(delta < -180) delta += 360;
-
-         // Only switch if moving significantly (prevents jitter)
-         if(Math.abs(delta) > 0.5) {
-             const cw = document.getElementById("cwMode");
-             const ccw = document.getElementById("ccwMode");
-             if(cw && ccw) {
-                 if(delta > 0) { // Increasing Angle -> Standard Mode
-                     cw.checked = true; ccw.checked = false;
-                 } else { // Decreasing Angle -> Inverted Mode
-                     ccw.checked = true; cw.checked = false;
-                 }
-             }
-         }
-    }
-
-    render();
-  }
-function endArm(){ 
-    draggingArm=false; 
-    
-    // Only update the internal baseline if we are NOT in ROM mode.
-    // This prevents the ROM from resetting to 0 immediately when you let go.
-    if (typeof isRomMode !== 'undefined' && !isRomMode) {
-        zeroRef = mov; 
-    }
-    
-    // Reset slider visuals to 0
-    const cw = document.getElementById("rotateCW");
-    const ccw = document.getElementById("rotateCCW");
-    if(cw) cw.value = 0;
-    if(ccw) ccw.value = 0;
-}
-
- return {
-    show:()=>{ host.classList.remove('hide'); host.setAttribute('aria-hidden','false'); if(inst) inst.style.display='block'; clampPanToViewport(); applyView(); },
-    hide:()=>{ host.classList.add('hide'); host.setAttribute('aria-hidden','true'); },
-    setPose:(cx,cy,base,m)=>{ panX=cx; panY=cy; baseRot=base; mov=clamp360(m-base); clampPanToViewport(); applyView(); applyRot(); applyLabelFix(); render(); },
-    setScale:(k)=>{ scale=clamp(k||1,0.1,2); clampPanToViewport(); applyView(); },
-    setZoom:(k)=>{ zoom=clamp(k||1,0.07,10); clampPanToViewport(); applyView(); },
-    degFromScreenVec:(dx,dy)=>toDegUp(dx,dy),
-    zeroHere:()=>{ zeroRef=clamp360(mov); },
-    setMovDegRel:(deg)=>{ mov=clamp360(zeroRef+deg); render(); },
-    setUserRot:(deg)=>{ userRot=deg; applyRot(); applyLabelFix(); },
-    getMovDegAbs:()=>clamp360(mov),
-    setPan:(x,y)=>{ panX=x; panY=y; clampPanToViewport(); applyView(); },
-    getPan:()=>{ return {x:panX,y:panY}; },
-
-get angle(){ 
-    // 1. Calculate standard Clockwise distance from zero (0 to 360)
-    let delta = clamp360(mov - zeroRef);
-
-    // 2. If in CCW Mode, invert the math so it counts UP (1, 10, 90...)
-    // instead of DOWN (359, 350, 270...)
-    if (!getCwMode()) {
-        delta = (360 - delta) % 360;
-    }
-
-    return delta; 
-},
-    setRomMode: (v) => { isRomMode = v; }, 
-    // -------------------------
-
-    refresh:()=>{ applyView(); applyRot(); applyLabelFix(); render(); }
-  };
-})(); // End of Gonio Module
-window.Gonio = Gonio;
-
-    
-/* ===== UI ===== */
-const regionSel = document.getElementById("regionSel");   // ← MOVE THIS UP
-const showNote = document.getElementById("showNote");
-const notePopup = document.getElementById("notePopup");
-const closeNote = document.getElementById("closeNote");
-const noteContent = document.getElementById("noteContent");
-
-const msg = document.getElementById("msg");
-const logEl = document.getElementById("log");
-const log = (t)=>{ logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
-
-const panel = document.getElementById("panel");
-const dragbar = document.getElementById("dragbar");
-
-const actionSel = document.getElementById("actionSel");
-const actionDeg = document.getElementById("actionDeg");
-const pairLabel = document.getElementById("pairLabel");
-const zeroAll = document.getElementById("zeroAll");
-
-const boneSel = document.getElementById("boneSel");
-const rx = document.getElementById("rx");
-const ry = document.getElementById("ry");
-const rz = document.getElementById("rz");
-const zeroBone = document.getElementById("zeroBone");
-
-/* ===================== SCREEN-SPACE DOTS (no 3D raycast) ===================== */
-const scr = { fulcrum:null, stationary:null, moving:null };
-let romActive = false; // Added
-const svg = document.getElementById('gonioSvg');
-const scrFulcrum = document.getElementById('scrFulcrum');
-const scrStationary = document.getElementById('scrStationary');
-const scrMoving = document.getElementById('scrMoving');
-const scrLineA = document.getElementById('scrLineA');
-const scrLineB = document.getElementById('scrLineB');
-
-document.getElementById('instrument').style.display = 'none';  ////added to stop Gonio loading early during integration
-
-let target = null;
-function setDotEl(el, p){
-  if(!p){ el.style.display='none'; return; }
-  el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); el.style.display='block';
-}
-function setLineEl(el, a, b, onColor){
-  if(a && b){
-    el.setAttribute('x1', a.x); el.setAttribute('y1', a.y);
-    el.setAttribute('x2', b.x); el.setAttribute('y2', b.y);
-    el.style.display='block';
-    if(onColor) el.setAttribute('stroke', onColor);
-  } else el.style.display='none';
-}
-
-function refreshScreenDots(){
-  setDotEl(scrFulcrum,    scr.fulcrum);
-  setDotEl(scrStationary, scr.stationary);
-  setDotEl(scrMoving,     scr.moving);
-  setLineEl(scrLineA, scr.fulcrum, scr.stationary, '#ef4444');
-  setLineEl(scrLineB, scr.fulcrum, scr.moving,     '#22c55e');
-
-  const host = document.getElementById('gonioHost');
-  const anyPlaced = !!(scr.fulcrum || scr.stationary || scr.moving);
-
-  if (anyPlaced) { 
-    host.classList.remove('hide'); 
-    host.setAttribute('aria-hidden','false'); 
-  } else { 
-    host.classList.add('hide');    
-    host.setAttribute('aria-hidden','true');  
-  }
-
-  // LAUNCH RULER if all 3 dots are placed
-  if(scr.fulcrum && scr.stationary && scr.moving){
-     
-     const Fs = scr.fulcrum, Ss = scr.stationary, Ms = scr.moving;
-     const baseDeg = Gonio.degFromScreenVec(Ss.x - Fs.x, Ss.y - Fs.y);
-     const movDeg  = Gonio.degFromScreenVec(Ms.x - Fs.x, Ms.y - Fs.y);
-
-     const inst = document.getElementById('instrument');
-     if (inst.style.display === 'none' || inst.style.display === '') {
-        inst.style.display = 'block'; // 
-        Gonio.setZoom(1);
-        const targetFrac = 0.18;
-        const targetBound = Math.min(innerWidth, innerHeight) * targetFrac;
-        const autoScale = Math.max(0.25, Math.min(0.9, targetBound / 140));
-        Gonio.setScale(autoScale);
-        if(document.getElementById("gonioSize")) document.getElementById("gonioSize").value = Math.round(autoScale * 100);
-     }
-
-     Gonio.show();
-     Gonio.setPose(Fs.x, Fs.y, baseDeg, movDeg);
-     Gonio.zeroHere();
-     
-     // Update UI
-     const p = Gonio.getPan();
-     if(document.getElementById("gonioX")) document.getElementById("gonioX").value = Math.round(p.x);
-     if(document.getElementById("gonioY")) document.getElementById("gonioY").value = Math.round(p.y);
-     if(typeof setAngleHUD === 'function') setAngleHUD(Gonio.getMovDegAbs(), "");
-     set3DLock (true);
-     if(typeof setGonioLock === 'function') setGonioLock(false);
-
-  } else {
-     // Hide ruler if incomplete
-     const inst = document.getElementById('instrument');
-     if(inst) inst.style.display = 'none';
-  }
-}
-/* ===== Region → MD file map ===== */
-const NOTE_MAP = {
-  cervical_spine: "cervical_spine.md",
-  thoracic_lumbar_spine: "thoracic_lumbar_spine.md",
-  glenohumeral_joint: "glenohumeral_joint.md",
-  elbow_radioulnar: "elbow_radioulnar.md",
-  wrist: "wrist.md",
-  hip: "hip.md",
-  knee: "knee.md",
-  talocrural_ankle: "talocrural_ankle.md",
-  transverse_tarsal_subtalar: "transverse_tarsal_subtalar.md"
-};
-
-/* ===== Load placement note ===== */
-async function loadNoteFile() {
-  const region = regionSel.value;
-
-  if (!region || !NOTE_MAP[region]) {
-    noteContent.innerHTML = "<i>No placement guide available for this action.</i>";
-    return;
-  }
-
-  const filePath = `https://kingto89.github.io/ROMetrics.com/auto-actions/goniometry-placement-guide/${NOTE_MAP[region]}`;
-
-  try {
-    const res = await fetch(filePath);
-    if (!res.ok) throw new Error("Missing file");
-    const md = await res.text();
-
-    const converter = new showdown.Converter({ tables: true });
-    noteContent.innerHTML = converter.makeHtml(md);
-
-  } catch (e) {
-    noteContent.innerHTML = "<i>Could not load placement notes.</i>";
-  }
-}
-
-
-/* ===== Events ===== */
-showNote.onclick = () => {
-  loadNoteFile();
-  notePopup.style.display = "block";
-};
-
-closeNote.onclick = () => {
-  notePopup.style.display = "none";
-};
-
+  const boneSel = document.getElementById("boneSel");
+  const rx = document.getElementById("rx");
+  const ry = document.getElementById("ry");
+  const rz = document.getElementById("rz");
+  const zeroBone = document.getElementById("zeroBone");
 
   /* ===== Collision limits (Safe ROM line; dev-tuned) ===== */
 const COLLIM = {
@@ -724,13 +155,13 @@ const COLLIM = {
   cervRotLMax: 80,
   cervRotRMax: 80,
   shExtLMax: 60, shExtRMax: 60,
-  shAddLMax: 20, shAddRMax: 20,
-  shFlexLMax: 110, shFlexRMax: 110,
-  shAbdLMax: 160, shAbdRMax: 160,
+  shAddLMax: 30, shAddRMax: 30,
+  shFlexLMax: 170, shFlexRMax: 170,
+  shAbdLMax: 170, shAbdRMax: 170,
   shIRLMax: 70, shIRRMax: 70,
   shERLMax: 90, shERRMax: 90,
   elExtLMax: 10, elExtRMax: 10,
-  elFlexLMax: 130, elFlexRMax: 130,
+  elFlexLMax: 150, elFlexRMax: 150,
   wrSupLMax: 95, wrSupRMax: 95,
 
   // ===== NEW lower body defaults =====
@@ -767,7 +198,6 @@ const COLLIM = {
     } catch(e){}
   }
 };
-localStorage.removeItem('rometrics_collim'); // <--- ADD THIS LINE HERE
 COLLIM.load();
 
 function capFor(action){
@@ -781,9 +211,8 @@ function capFor(action){
       const isLeft = key.endsWith('_l');
       if (sign > 0) { // Flexion
         return isLeft ? COLLIM.shFlexLMax : COLLIM.shFlexRMax;
-      } else {
-        // FIX: Return Abduction Max (170) for Up (+), Adduction Max (30) for Down (-)
-        return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
+      } else {        // Extension
+        return isLeft ? COLLIM.shExtLMax  : COLLIM.shExtRMax;
       }
     }
 
@@ -794,9 +223,9 @@ if (/^sh_aa_/.test(key)) {
     // Left: + = Abduction, − = Adduction (normal)
     return (sign > 0) ? COLLIM.shAbdLMax : COLLIM.shAddLMax;
   } else {
-        // FIX: Use Abduction Limit (170) for Abduction (+), and Adduction Limit (30) for Adduction (-)
-        return (sign > 0) ? COLLIM.shAbdRMax : COLLIM.shAddRMax;
-      }
+    // ✅ Right side corrected: + = Abduction, − = Adduction
+    return (sign > 0) ? COLLIM.shAddRMax : COLLIM.shAbdRMax;
+  }
 }
 
     // Shoulder IR/ER caps
@@ -1083,7 +512,7 @@ if (antiBox){
 
     const HINTS = cfg.hints || [];
     const preferred = (/^trunk_/.test(cfg.key)) ? [/^spine01$/] :
-                      (/cerv_/.test(cfg.key)) ? [/^head$/, /^neck$/] : [];
+                      (/^cerv_/.test(cfg.key))  ? [/^neck$/, /^head$/] : [];
     const tryList = preferred.length ? [...preferred, ...HINTS] : HINTS;
 
     for (const cand of tryList){
@@ -1440,29 +869,13 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-function fillActionMenu() {
-
-  // --- No region selected → no actions ---
-  if (!regionSel.value) {
+  function fillActionMenu(){
     actionSel.innerHTML = "";
-    actionSel.disabled = true;
-    actionDeg.disabled = true;
-    CURRENT_ACTION = null;
-    return;
-  }
+    const ph = document.createElement("option");
+    ph.value = ""; ph.textContent = "(Select a motion…)";
+    actionSel.appendChild(ph);
 
-  // --- Region selected → rebuild action menu ---
-  actionSel.innerHTML = "";
-  actionSel.disabled = false;
-
-  const ph = document.createElement("option");
-  ph.value = "";
-  ph.textContent = "(Select a motion…)";
-  actionSel.appendChild(ph);
-
-
-    // CURRENT now holds ONLY the motions for the selected region
-    const list = CURRENT || [];
+    const list = (CURRENT===UPPER) ? UPPER : LOWER;
     const catalog = buildSeparatedCatalog(list);
     Object.keys(catalog).forEach(group=>{
       const og = document.createElement("optgroup"); og.label = group;
@@ -1481,79 +894,21 @@ function fillActionMenu() {
     CURRENT_ACTION = null;
   }
 
-function syncActionUI(forceZero=false){
+  function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){
       actionDeg.disabled = true;
       pairLabel.textContent = "Angle (°)";
       return;
     }
-    pairLabel.textContent = "Angle (°)";
+    pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
     actionDeg.min = "0";
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false;
-}
-
-
-regionSel.onchange = () => {
-  const r = regionSel.value;
-
-  if (r === "cervical_spine") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("cerv_")
-    );
-  }
-  else if (r === "thoracic_lumbar_spine") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("trunk_")
-    );
-  }
-  else if (r === "glenohumeral_joint") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("sh_")
-    );
-  }
-  else if (r === "elbow_radioulnar") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("el_") ||
-      x.key.startsWith("wr_ps_")
-    );
-  }
-  else if (r === "wrist") {
-    CURRENT = UPPER.filter(x =>
-      x.key.startsWith("wr_")
-    );
-  }
-  else if (r === "hip") {
-    CURRENT = LOWER.filter(x =>
-      x.key.startsWith("hip_")
-    );
-  }
-  else if (r === "knee") {
-    CURRENT = LOWER.filter(x =>
-      x.key.startsWith("knee_")
-    );
-  }
-  else if (r === "talocrural_ankle") {
-    CURRENT = LOWER.filter(x =>
-      x.key.startsWith("ankle_")
-    );
-  }
-  else if (r === "transverse_tarsal_subtalar") {
-    CURRENT = LOWER.filter(x =>
-      x.key.startsWith("foot_")
-    );
-  }
-  else {
-    CURRENT = [];
   }
 
-  fillActionMenu();
-  actionDeg.value = "0";
-  actionDeg.disabled = true;
-  CURRENT_ACTION = null;
-};
-
+  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
+  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
@@ -1802,42 +1157,7 @@ log("Anatomic baseline applied on load.");
   /* ===== Advanced controls wiring ===== */
   boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
   [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
-/* ===== Advanced controls wiring ===== */
-  boneSel.onchange = ()=>{ rx.value="0"; ry.value="0"; rz.value="0"; setBoneRotationFromUI(); };
-  [rx,ry,rz].forEach(el=> el.addEventListener("input", setBoneRotationFromUI));
 
-  // --- PASTE THIS BLOCK BELOW ---
-  
-  // 1. Model Controller Logic
-  const mdl = { 
-    x: document.getElementById("modelX"),
-    y: document.getElementById("modelY"),
-    z: document.getElementById("modelZ"),
-    s: document.getElementById("modelScale"),
-    yaw: document.getElementById("modelYaw")
-  };
-
-  function updateModelTransform(){
-    if(!model) return;
-    // Apply Position (X, Y, Z)
-    model.position.set(
-      parseFloat(mdl.x.value) || 0,
-      parseFloat(mdl.y.value) || 0,
-      parseFloat(mdl.z.value) || 0
-    );
-    // Apply Scale
-    const s = (parseFloat(mdl.s.value) || 100) / 100;
-    model.scale.set(s, s, s);
-    // Apply Yaw
-    model.rotation.y = THREE.MathUtils.degToRad(parseFloat(mdl.yaw.value) || 0);
-  }
-
-  // 2. Attach Listeners
-  Object.values(mdl).forEach(el => {
-    if(el) el.addEventListener("input", updateModelTransform);
-  });
-
-  // -----------------------------
   /* ===== Paired-joint helpers ===== */
   function setPair(key,deg){
     if (key === 'wr_ps_l') return rotateSideWristPS('l', deg);
@@ -1869,180 +1189,6 @@ log("Anatomic baseline applied on load.");
     log(`Wrist ${side.toUpperCase()} (hand_${side}) PS = ${deg}°`);
   }
 
-/* --- HUD & Helpers --- */
-let lock3D = false;    
-let lockGonio = false; 
-
-function setAngleHUD(angle, romStr=""){
-  const hud = document.getElementById("hud");
-  // Fix: Ensure we display the ROM string if it exists
-  if(hud) hud.textContent = romStr ? `Angle: ${angle.toFixed(0)}° | ROM: ${romStr}` : `Angle: ${angle.toFixed(0)}°`;
-}
-
-function romString(){ 
-  // Fix: Calculate ROM based on the romActive flag
-  return typeof romActive !== 'undefined' && romActive ? `${Gonio.angle.toFixed(0)}° (start 0°)` : ""; 
-}
-
-function setGonioLock(v){
-  lockGonio = v;
-  const inst = document.getElementById('instrument');
-  if(inst) inst.style.pointerEvents = lockGonio ? 'none' : 'auto';
-  const btn = document.getElementById("lockGonio");
-  if(btn) { btn.textContent=(lockGonio?"🔒 Gonio: Locked":"🔓 Gonio: Unlocked"); btn.classList.toggle('lockOn', lockGonio); }
-}
-
-function set3DLock(v){ 
-  lock3D=v; 
-  if(controls) controls.enabled=!lock3D; 
-  const btn = document.getElementById("lock3D");
-  if(btn) { btn.textContent=(lock3D?"🔒 3D: Locked":"🔓 3D: Unlocked"); btn.classList.toggle('lockOn', lock3D); }
-}
-
-// Re-bind UI logic for ROM buttons
-const startB = document.getElementById("startROM"), resetB = document.getElementById("resetROM");
-
-if(startB) startB.onclick=()=>{ 
-    Gonio.zeroHere(); 
-    Gonio.setMovDegRel(0); 
-    
-    romActive=true;         // Turn ON Text
-    Gonio.setRomMode(true); // LOCK BASELINE (Prevents jumping)
-    
-    setAngleHUD(0,""); 
-    log("ROM start @ 0°"); 
-};
-
-if(resetB) resetB.onclick=()=>{ 
-    romActive=false;         // Turn OFF Text
-    Gonio.setRomMode(false); // UNLOCK BASELINE (Allows alignment)
-    
-    Gonio.zeroHere(); 
-    Gonio.setMovDegRel(0); 
-    
-    setAngleHUD(0,""); 
-    log("ROM reset → 0°"); 
-};
-
-// Re-bind UI logic for Locks
-document.getElementById("lock3D").onclick=()=>set3DLock(!lock3D);
-document.getElementById("lockGonio").onclick=()=>setGonioLock(!lockGonio);
-
-/* ===================== GONIOMETER UI CONTROLLERS ===================== */
-
-// 1. Grab Elements
-const sizeEl        = document.getElementById("gonioSize");
-const gonioRotateEl = document.getElementById("gonioRotate");
-const rotateCWEl    = document.getElementById("rotateCW");
-const rotateCCWEl   = document.getElementById("rotateCCW");
-const cwMode        = document.getElementById("cwMode");
-const ccwMode       = document.getElementById("ccwMode");
-const gonioXEl      = document.getElementById("gonioX");
-const gonioYEl      = document.getElementById("gonioY");
-
-// 2. Exclusive Checkboxes (CW vs CCW)
-if(cwMode && ccwMode){
-  cwMode.onchange  = ()=>{ if(cwMode.checked)  ccwMode.checked=false; };
-  ccwMode.onchange = ()=>{ if(ccwMode.checked) cwMode.checked=false; };
-}
-
-// 3. Sliders Logic
-
-// --- HELPER: Update Baseline on Touch ---
-// This ensures that when you grab a slider, the arm's CURRENT position
-// becomes the new "0" for that slider, preventing jumps.
-const handleSliderTouch = () => {
-  // Only update baseline if NOT in ROM mode (Alignment mode)
-  if (typeof romActive !== 'undefined' && !romActive && typeof Gonio !== 'undefined') {
-    Gonio.zeroHere();       // 1. Commit current arm position as new "ZeroRef"
-    
-    // 2. Reset sliders visually to 0 so the new drag calculates relative to HERE
-    if(rotateCWEl)  rotateCWEl.value = 0; 
-    if(rotateCCWEl) rotateCCWEl.value = 0;
-  }
-};
-
-// --- Size ---
-if(sizeEl){
-  sizeEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    Gonio.setScale(parseInt(sizeEl.value, 10) / 100); 
-    Gonio.refresh(); 
-  };
-}
-
-// --- Base Rotation ---
-if(gonioRotateEl){
-  gonioRotateEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    Gonio.setUserRot(parseFloat(gonioRotateEl.value) || 0); 
-    Gonio.refresh(); 
-  };
-}
-
-// --- Rotate Moving Arm (CW) ---
-if(rotateCWEl){
-  // ADDED: Update baseline immediately when user touches slider
-  rotateCWEl.addEventListener('pointerdown', handleSliderTouch);
-
-  rotateCWEl.oninput = () => {
-    if(typeof Gonio === 'undefined') return;
-    // Auto-check the box if user slides this
-    if(cwMode) { cwMode.checked = true; ccwMode.checked = false; }
-    
-    const v = parseFloat(rotateCWEl.value) || 0;
-    // Reset the other slider
-    if(rotateCCWEl) rotateCCWEl.value = 0;
-
-    Gonio.setMovDegRel(v);
-    
-    // Update HUD
-    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
-       setAngleHUD(Gonio.getMovDegAbs(), romString());
-    }
-  };
-}
-
-// --- Rotate Moving Arm (CCW) ---
-if(rotateCCWEl){
-  // ADDED: Update baseline immediately when user touches slider
-  rotateCCWEl.addEventListener('pointerdown', handleSliderTouch);
-
-  rotateCCWEl.oninput = () => {
-    if(typeof Gonio === 'undefined') return;
-    // Auto-check the box
-    if(ccwMode) { ccwMode.checked = true; cwMode.checked = false; }
-
-    const v = parseFloat(rotateCCWEl.value) || 0;
-    // Reset the other slider
-    if(rotateCWEl) rotateCWEl.value = 0;
-
-    // Negative value for CCW relative movement
-    Gonio.setMovDegRel(-v);
-
-    // Update HUD
-    if(typeof setAngleHUD === 'function' && typeof romString === 'function') {
-       setAngleHUD(Gonio.getMovDegAbs(), romString());
-    }
-  };
-}
-
-// --- Position X / Y ---
-if(gonioXEl){
-  gonioXEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    const y = Gonio.getPan().y; 
-    Gonio.setPan(parseFloat(gonioXEl.value), y); 
-  };
-}
-
-if(gonioYEl){
-  gonioYEl.oninput = () => { 
-    if(typeof Gonio === 'undefined') return;
-    const x = Gonio.getPan().x; 
-    Gonio.setPan(x, parseFloat(gonioYEl.value)); 
-  };
-}
 /* ===== Hidden Anatomic Tuner (dev-only, non-mirrored) ===== */
 let tunerEl = null, tunerVisible = false;
 function ensureAnatomicTuner() {
@@ -2329,107 +1475,19 @@ function toggleCollisionTuner(show) {
   colTunerEl.style.display = colTunerVisible ? "block" : "none";
 }
 
-function pickOnScreen(e){
-  if(!target) return;
-  const leftPanel = document.querySelector('.panel');
-  if(leftPanel && leftPanel.contains(e.target)) return;
-
-  const r = renderer.domElement.getBoundingClientRect();
-  const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
-  const y = Math.min(Math.max(e.clientY - r.top, 0), r.height);
-
-  scr[target] = { x, y };
-  console.log(`${target} pinned @ ${x|0},${y|0}`); ///added after
-
-  //const host = document.getElementById('gonioHost');
-  //host.classList.remove('hide'); host.setAttribute('aria-hidden','false');
- // log(`${target} pinned @ ${x|0},${y|0}`); //see is replaces above
-  target = null;
-  refreshScreenDots();
-}
-
-renderer.domElement.addEventListener('pointerdown', pickOnScreen, {passive:false});
-svg.addEventListener('pointerdown', pickOnScreen, {passive:false});
-
-/* Pills */
-document.getElementById("pickFulcrum").onclick   = () => { target = "fulcrum";   log("Place Fulcrum");   };
-document.getElementById("pickStationary").onclick= () => { target = "stationary";log("Place Stationary"); };
-document.getElementById("pickMoving").onclick    = () => { target = "moving";    log("Place Moving");    };
-
-/* Reset Measurement */
-const resetMeasurementBtn = document.getElementById("resetMeasurement");
-resetMeasurementBtn.onclick = ()=>{
-  // 1. Clear dots
-  scr.fulcrum = scr.stationary = scr.moving = null;
-  refreshScreenDots();
-   
-  // 2. Hide Gonio, Unlock Mode, Reset Variables
-  if(typeof Gonio !== 'undefined') {
-      Gonio.hide();
-      Gonio.setRomMode(false); // <--- UNLOCK MODE HERE
-  }
-  romActive = false;
-
-  // 3. Reset Sliders
-  if(rotateCWEl) rotateCWEl.value = 0;
-  if(rotateCCWEl) rotateCCWEl.value = 0;
-   
-  // 4. Reset HUD
-  setAngleHUD(0,"");
-  log("Measurement reset");
-};
-    
-/* Render loop */
-addEventListener("resize", () => {
-  camera.aspect = innerWidth/innerHeight; 
-  camera.updateProjectionMatrix(); 
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-const clock = new THREE.Clock();
-    
-(function animate(){
-  clock.getDelta();
-  controls.update();
-  
-  // Update HUD if Gonio is visible
-  const host = document.getElementById('gonioHost');
-  if (host && !host.classList.contains('hide')) {
-     if(typeof Gonio !== 'undefined' && typeof setAngleHUD === 'function'){
-        
-        // 1. Get the raw 0-360 position of the arm
-        const raw = Gonio.getMovDegAbs();
-        
-        // 2. VISUAL ONLY: Fold at 180. 
-        // If raw is 270°, this makes it read 90° (360 - 270).
-        const visualAngle = (raw > 180) ? 360 - raw : raw;
-
-        // 3. Update HUD
-        // visualAngle = Position on tool (0-180)
-        // romString() = Total travel (0-360)
-        setAngleHUD(visualAngle, typeof romString === 'function' ? romString() : "");
-     }
-  }
-
-  renderer.render(scene, camera);
-  requestAnimationFrame(animate);
-})();
-    
+  /* ===== Resize & render ===== */
+  addEventListener("resize", () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+  (function animate(){
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  })();
   </script>
-  <div id="notePopup" 
-     style="display:none; position:fixed; right:16px; bottom:16px;
-            width:min(420px,50vw); max-height:70vh;
-            background:#0c1628; color:#e2e8f0;
-            border:1px solid #334155; border-radius:10px;
-            padding:12px; overflow:auto; z-index:200;">
-  <div style="display:flex; align-items:center;">
-    <strong style="font-size:14px;">Goniometer Placement</strong>
-    <button id="closeNote" 
-            style="margin-left:auto; background:transparent; border:0;
-                   color:#9fb0c9; font-size:18px; cursor:pointer;">✕</button>
-  </div>
-  <div id="noteContent" style="margin-top:10px; font-size:13px; line-height:1.45;"></div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 </body>
 </html>
+
+
