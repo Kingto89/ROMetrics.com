@@ -843,6 +843,31 @@ addEventListener("resize", ()=>{
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+
+/* === AUTO-MOVEMENT FOR MMT: Start Test === */
+startTestBtn.addEventListener("click", () => {
+  const test = actionSel.value;
+  if (!test) return;
+
+  // Determine which motion to animate based on UPPER/LOWER lists
+  const cfg = [...UPPER, ...LOWER].find(x => test.includes(x.key.split('_')[0]));
+  if (!cfg) return;
+
+  let current = 0;
+  const target = cfg.max;
+  const step = 1;          // degrees per tick
+  const interval = 12;     // speed
+
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    setPair(cfg.key, current);
+  }, interval);
+});
+  
 (function loop(){
   controls.update();
   renderer.render(scene, camera);
