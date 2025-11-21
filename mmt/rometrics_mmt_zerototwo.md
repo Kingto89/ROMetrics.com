@@ -49,7 +49,145 @@
 ### Therapist Cue
 - **G2/1/0:** “Try to lift your elbow toward the ceiling.”
 
+## Trunk Extension — Lumbar (Grades 0–2)
+
+**Plane: sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Lumbar extensors (erector spinae, multifidi)
+
+### Position
+
+* Prone; arms at sides; head neutral; legs on table (gravity minimized set-up)
+
+### Therapist
+
+* Stabilize legs above ankles or across pelvis; cue “look at floor” to avoid cervical substitution; monitor lumbar spinous processes for lift
+
+### Action
+
+* Attempt to raise head/shoulders/chest off table in small arc
+
+### Grades 0–2
+
+* **Grade 2:** partial ROM in gravity-minimized (lumbar lifts but trunk does not fully clear)
+* **Grade 1:** trace contraction palpable along lumbar paraspinals lateral to spinous processes
+* **Grade 0:** no palpable activity
+
 ---
+
+## Trunk Extension — Thoracic (Grades 0–2)
+
+**Plane: sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Thoracic extensors
+
+### Position
+
+* Prone with upper trunk near edge of table to nipple line; arms at sides; head neutral
+
+### Therapist
+
+* Stabilize ankles; guard trunk at shoulders; prevent lumbar substitution
+
+### Action
+
+* Attempt to lift upper trunk toward horizontal
+
+### Grades 0–2
+
+* **Grade 2:** partial ROM (upper trunk initiates lift but does not reach horizontal)
+* **Grade 1:** trace contraction palpable over thoracic paraspinals between scapulae
+* **Grade 0:** no palpable activity
+
+---
+
+## Trunk Flexion — Rectus Abdominis (Grades 0–2)
+
+**Plane: sagittal | End-Feel: soft/firm**
+
+### Muscles Tested
+
+* Rectus abdominis
+
+### Position
+
+* Supine; knees flexed (hooklying) to reduce hip flexor pull; arms at sides
+
+### Therapist
+
+* Stabilize trunk as needed; monitor inferior angles of scapulae; palpate RA along linea alba just lateral to umbilicus
+
+### Action
+
+* Attempt curl-up; chin pointed to ceiling (avoid cervical flexor substitution)
+
+### Grades 0–2
+
+* **Grade 2:** partial trunk curl (scapulae do not clear)
+* **Grade 1:** trace contraction palpable in RA with visible tension but no trunk movement
+* **Grade 0:** no palpable activity
+
+---
+
+## Trunk Rotation — External & Internal Obliques (Grades 0–2)
+
+**Plane: transverse | End-Feel: firm**
+
+### Muscles Tested
+
+* External oblique (contralateral)
+* Internal oblique (ipsilateral)
+
+### Position
+
+* Supine; arms at sides; knees flexed (hooklying)
+
+### Therapist
+
+* Palpate external oblique on anterolateral abdomen **opposite** the rotation; palpate internal oblique **same** side as rotation near ASIS; monitor scapular motion
+
+### Action
+
+* Attempt to lift head/shoulders and rotate (elbow toward opposite knee)
+
+### Grades 0–2
+
+* **Grade 2:** partial lift/rotation (scapula does not clear)
+* **Grade 1:** trace contraction palpable in targeted oblique(s) without trunk motion
+* **Grade 0:** no palpable activity
+
+---
+
+## Pelvic Elevation (Hip Hike) — Quadratus Lumborum (Grades 0–2)
+
+**Plane: frontal | End-Feel: firm**
+
+### Muscle Tested
+
+* Quadratus lumborum
+
+### Position
+
+* Supine or prone; test leg slight extension/abduction to place QL on stretch; pelvis neutral (no trunk rotation)
+
+### Therapist
+
+* Support leg to reduce friction; hand at ankle only for guidance (no resistance for 0–2); palpate QL just above iliac crest between 12th rib and iliac crest
+
+### Action
+
+* Attempt to hike pelvis toward ribs on test side
+
+### Grades 0–2
+
+* **Grade 2:** partial pelvic hike through available range without resistance
+* **Grade 1:** trace contraction palpable in QL with visible tautness at iliac crest
+* **Grade 0:** no palpable activity
+
 
 ## Latissimus Dorsi — Shoulder Extension/Adduction (Low‑Grade Version)
 ### Grade 2 — Gravity‑Minimized Position
