@@ -480,6 +480,7 @@ document.getElementById("zeroAll").onclick = () => {
     const q0 = initialBoneRot.get(b);
     if (q0) b.quaternion.copy(q0);
   });
+};
 
 /* ===== Grading Exceptions Availability Control ===== */
 
@@ -515,8 +516,7 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 
 // Run once on page load
 updateGradingExceptionAvailability();
-  
-};
+
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
