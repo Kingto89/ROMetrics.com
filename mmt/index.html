@@ -676,24 +676,32 @@ function applyPoseForTest(testKey) {
   }
 /* ============ SHORT SITTING (hips 90°, knees 90°) ============ */
 if (pose === "short_sit") {
+  if (skeleton) {
+    // HIP FLEXION — thighs (90 degrees)
+    if (boneMap.thigh_L) boneMap.thigh_L.rotation.x = THREE.MathUtils.degToRad(90);
+    if (boneMap.thigh_R) boneMap.thigh_R.rotation.x = THREE.MathUtils.degToRad(90);
 
-  if (skeleton) {
+    // KNEE FLEXION — calves (-90 degrees)
+    if (boneMap.calf_L) boneMap.calf_L.rotation.x = THREE.MathUtils.degToRad(-90);
+    if (boneMap.calf_R) boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
+  }
 
-    // HIP FLEXION — thighs
-    if (boneMap.thigh_L) boneMap.thigh_L.rotation.x = THREE.MathUtils.degToRad(90);
-    if (boneMap.thigh_R) boneMap.thigh_R.rotation.x = THREE.MathUtils.degToRad(90);
+  // === RELIABLE GROUND SNAP AFTER POSE APPLIED ===
+  // 1. Calculate the model's current bounding box after posing
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  
+  // 2. Shift the model up by the minimum Y value to place the lowest point at Y=0
+  if (isFinite(minY)) {
+    model.position.y -= minY;
+  } else {
+    // Fallback to your old method if bounding box calculation fails (rare)
+    model.position.y = -0.4;
+  }
+  // ================================================
 
-    // KNEE FLEXION — calves
-    if (boneMap.calf_L) boneMap.calf_L.rotation.x = THREE.MathUtils.degToRad(-90);
-    if (boneMap.calf_R) boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
-  }
-
-  // Lower the entire model so the butt touches the ground plane
-  model.position.y = -0.4;
-
-  return;
+  return;
 }
- 
   /* ============ SIDE-LYING (if you use it) ============ */
   if (pose === "side_lying") {
     model.rotation.z = Math.PI / 2;
