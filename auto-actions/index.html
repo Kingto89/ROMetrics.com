@@ -1,175 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>3D Motion Lab — Automated </title>
-
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-
-<style>
-/* 🎨 MMT Trainer Light Color Scheme */
-:root{
-  --bg:#f1f5f9;           /* Light Slate Background */
-  --panel:#ffffff;         /* White Panel */
-  --line:#cbd5e1;          /* Light Gray Border */
-  --ctrl:#e2e8f0;          /* Off-White Control BG */
-  --text:#0f172a;          /* Dark Text */
-  --muted:#64748b;         /* Muted Gray Text */
-  --primary:#0d9488;       /* Teal Accent (for 'on' state) */
-  --accent:#facc15;        /* Yellow Accent */
-}
-
-html,body{
-  margin:0;
-  height:100%;
-  background:var(--bg);
-  color:var(--text);
-  overflow:hidden;
-  font-family:system-ui,Segoe UI,Roboto
-}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.panel{
-  position:fixed;left:12px;top:12px;width:360px;max-height:90vh;z-index:20;
-  background:var(--panel);border:1px solid var(--line);border-radius:12px;
-  box-shadow:0 8px 28px rgba(0,0,0,.15);
-  display:flex;flex-direction:column;overflow:hidden
-}
-.dragbar{
-  cursor:move;
-  background:var(--ctrl);
-  border-bottom:1px solid var(--line);
-  padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px
-}
-.dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
-.content{padding:12px;overflow:auto}
-label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
-select,button,input[type=range]{
-  width:100%;margin:6px 0 8px 0;padding:8px 10px;border-radius:10px;
-  background:var(--ctrl);border:1px solid var(--line);
-  color:var(--text)
-}
-.mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid var(--line); width: 100%;} /* Forced full width */
-.button-group-half {
-  width: calc(50% - 4px); /* Half width for inline buttons */
-  margin-top: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--ctrl);
-  border: 1px solid var(--line);
-  color: var(--text);
-  display: inline-block;
-  text-align: center;
-  box-sizing: border-box;
-}
-.button-group-half.on{
-  background:var(--primary);
-  color:#fff;
-  border-color:var(--primary)
-}
-details{
-  border:1px solid var(--line);
-  border-radius:10px;padding:8px;
-  background:var(--ctrl);
-  margin-top:8px
-}
-summary{cursor:pointer;font-weight:600;color:var(--text)}
-#log{
-  background:var(--bg);
-  border:1px solid var(--line);
-  min-height:90px;max-height:130px;overflow:auto;
-  border-radius:8px;padding:8px;font-size:12px;
-  white-space:pre-wrap;
-  color:var(--text);
-}
-#msg{
-  position:fixed;bottom:10px;left:12px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;
-  color:var(--text);
-}
-optgroup{color:var(--muted);font-style:normal}
-/* Modal/Tuner */
-.modal{
-  position:fixed;right:16px;bottom:16px;width:min(420px,50vw);max-height:78vh;z-index:30;
-  background:var(--ctrl);
-  border:1px solid var(--line);border-radius:12px;
-  box-shadow:0 8px 28px rgba(0,0,0,.25);
-  display:none;flex-direction:column;overflow:hidden
-}
-.modal.on{display:flex}
-.modal .top{
-  display:flex;align-items:center;gap:10px;padding:10px 12px;
-  border-bottom:1px solid var(--line);
-  background:var(--bg);
-}
-.modal .top h4{margin:0;font-size:14px;color:var(--text)}
-.modal .x{margin-left:auto;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer}
-.modal .body{padding:12px;overflow:auto;background:var(--panel)}
-.rom-item{border:1px solid var(--line);border-radius:10px;background:var(--ctrl);margin:8px 0;}
-.rom-item summary{padding:10px 12px;list-style:none;cursor:pointer;color:var(--text)}
-.rom-item summary::-webkit-details-marker{display:none}
-.rom-item .inner{padding:8px 12px;border-top:1px solid var(--line)}
-.rom-head-inline{width:160px;color:var(--muted); display: inline-block;}
-.rom-input-inline{width: calc(100% - 170px); float: right;}
-.rom-row-clear{clear:both; display: block; margin-bottom: 8px;} /* Used to wrap rom-head + input */
-
-.rom-row input[type=number]{
-  height:22px;
-  font-size:12px;
-  padding:2px 4px;
-  box-sizing:border-box;
-  width: 100%;
-}
-.badge{
-  display:inline-block;padding:2px 6px;border-radius:6px;
-  border:1px solid var(--line);
-  background:var(--bg);
-  color:var(--text);font-size:11px;margin-left:6px
-}
-/* Styles specific to the MMT Note Panel */
-#notePanel{position:fixed;top:16px;right:16px;width:min(420px,46vw);max-height:70vh;z-index:140;
-  background:var(--ctrl);
-  border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);
-  display:flex;flex-direction:column;overflow:hidden}
-.note-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
-.note-head h3{margin:0;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.note-tabs{display:inline-block; margin-left: 8px;}
-.note-tabs button{
-  padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);
-  margin-right: 8px;
-}
-.note-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.note-body{padding:12px;overflow:auto;background:var(--panel)}
-.note-close{border-radius:8px;border:1px solid var(--line);padding:6px 10px;background:var(--panel)}
-@media (max-width: 720px){
-  #notePanel{right:8px;left:8px;width:auto;max-height:60vh}
-}
-.hide{display:none !important;}
-#boneAdv { display:none !important; }
-</style>
-</head>
-<body>
-  <!-- Panel -->
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">🧭 Manual Muscle Testing <span class="hint">drag me</span></div>
-    <div class="content">
-
-      <div class="row" style="align-items:center">
-        <label style="display:flex;gap:6px;align-items:center;margin:0;">
-          <input id="antiBox" type="checkbox"/>
-          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-        </label>
-      </div>
-  <div class="content">
+<div class="content">
 
   <div class="row" style="align-items:center">
     <label style="display:flex;gap:6px;align-items:center;margin:0;">
@@ -177,34 +6,30 @@ optgroup{color:var(--muted);font-style:normal}
       <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
     </label>
   </div>
-  
-  <label>MMT Test & Muscle / ROM Action Selection</label> 
+
+  <label>MMT Test & Muscle / ROM Action Selection</label>
   
   <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-end;">
-    <select id="actionSel" style="flex: 1 1 50%; width: 100%; box-sizing: border-box; margin: 0;">...</select>
+    <select id="actionSel" style="flex: 1 1 50%; width: 100%; box-sizing: border-box; margin: 0;">
+      <option value="">(Select an action or MMT test…)</option>
+    </select>
+
     <button id="showMMT" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
   </div>
   
   <label><span id="pairLabel">Angle (°)</span></label>
+  <input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+
+  <div style="margin-bottom: 8px;">
+    <button id="autoMoveBtn" class="mini" style="width: 100%;">Run Action</button>
   </div>
 
-<label>Action</label>
-<div style="margin-bottom: 8px; display: flex; gap: 8px;">
-
-  <select id="actionSel" style="flex: 1 1 50%; width: 100%; box-sizing: border-box; margin: 0;">
-    </select>
-
-  <button id="showMMT" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
+  <details id="boneAdv">
+    </details>
+  
+  <label>Event Log</label>
+  <pre id="log"></pre>
 </div>
-
-<label><span id="pairLabel">Angle (°)</span></label>
-<input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
-
-<div style="margin-bottom: 8px;">
-    <button id="autoMoveBtn" class="mini" style="width: 100%;">Run Action</button>
-</div>
-
-<details id="boneAdv">
   
     <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
@@ -994,46 +819,47 @@ if (cfg.key === 'foot_invev_l') {
   let CURRENT_ACTION = null;
   function cfgFromKey(k){ return [...UPPER,...LOWER].find(x=>x.key===k) || null; }
 
-  function fillActionMenu(){
+function fillActionMenu(){
     actionSel.innerHTML = "";
+    
     const ph = document.createElement("option");
-    ph.value = ""; ph.textContent = "(Select a motion…)";
+    ph.value = ""; ph.textContent = "(Select a motion or MMT test...)";
     actionSel.appendChild(ph);
 
-    const list = (CURRENT===UPPER) ? UPPER : LOWER;
-    const catalog = buildSeparatedCatalog(list);
+    const allMotions = [...UPPER, ...LOWER]; 
+    const catalog = buildSeparatedCatalog(allMotions);
+    
     Object.keys(catalog).forEach(group=>{
-      const og = document.createElement("optgroup"); og.label = group;
-      catalog[group].forEach(entry=>{
-        const opt = document.createElement("option");
-        opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
-        opt.textContent = entry.label;
-        og.appendChild(opt);
-      });
-      actionSel.appendChild(og);
+        const og = document.createElement("optgroup"); 
+        og.label = group;
+        
+        catalog[group].forEach(entry=>{
+            const opt = document.createElement("option");
+            opt.value = `sep:${entry.key}:${entry.sign}:${entry.max}`;
+            opt.textContent = entry.label;
+            og.appendChild(opt);
+        });
+        actionSel.appendChild(og);
     });
 
     actionSel.value = "";
     pairLabel.textContent = "Angle (°)";
     actionDeg.disabled = true;
     CURRENT_ACTION = null;
-  }
+}
 
-  function syncActionUI(forceZero=false){
+function syncActionUI(forceZero=false){
     if (!CURRENT_ACTION){
-      actionDeg.disabled = true;
-      pairLabel.textContent = "Angle (°)";
-      return;
+        actionDeg.disabled = true;
+        pairLabel.textContent = "Angle (°)";
+        return;
     }
     pairLabel.textContent = `${CURRENT_ACTION.label} — Angle (°)`;
     actionDeg.min = "0";
     actionDeg.max = String(CURRENT_ACTION.max);
     if (forceZero) actionDeg.value = "0";
     actionDeg.disabled = false;
-  }
-
-  segUpper.onclick = ()=>{ CURRENT = UPPER; segUpper.classList.add('on'); segLower.classList.remove('on'); fillActionMenu(); actionDeg.value='0'; actionDeg.disabled=true; };
-  segLower.onclick = ()=>{ CURRENT = LOWER; segLower.classList.add('on'); segUpper.classList.remove('on'); fillActionMenu(); };
+}
 
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
