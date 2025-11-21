@@ -306,44 +306,7 @@ function loadModel(){
   });
 }
 loadModel();
-/* ==== Body Position / Stance Logic ==== */
-// This map holds the base positions (hips/knees/torso) for MMT stances
-const BODY_POSITIONS = {
-  // Define the required rotations for a "short sit" (hip and knee at 90 degrees)
-  short_sit: {
-    // Assuming 'upperleg' and 'lowerleg' bones, and that Y-axis is the flexion/extension axis
-    // Rotate hip (upperleg) to 90 degrees flexion (PI/2 rad)
-    'upperleg_R': { x: 0, y: Math.PI / 2, z: 0 }, 
-    'upperleg_L': { x: 0, y: Math.PI / 2, z: 0 },
-    // Rotate knee (lowerleg) to 90 degrees flexion (PI/2 rad)
-    'lowerleg_R': { x: 0, y: -Math.PI / 2, z: 0 }, // Often negative for knee flexion
-    'lowerleg_L': { x: 0, y: -Math.PI / 2, z: 0 },
-    // You may need to adjust the torso/pelvis position as well.
-  },
-  default: {} // Default position (anatomical standing) has zero rotation adjustments
-  // Add 'prone', 'supine', 'standing', etc., here as needed.
-};
 
-function setModelBasePosition(positionKey) {
-  if (!skeleton || !BODY_POSITIONS[positionKey]) return;
-
-  // Reset the model to zero (Anatomical position) first
-  skeleton.bones.forEach(b=>{
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
-
-  const pose = BODY_POSITIONS[positionKey];
-
-  // Apply the new base position rotations
-  skeleton.bones.forEach(b => {
-    if (pose[b.name]) {
-      const rot = pose[b.name];
-      b.rotation.set(rot.x, rot.y, rot.z);
-    }
-  });
-  log(`Base position set to: ${positionKey}`);
-}
 /* ==== Resistance fill (restored) ==== */
 let resistanceTimer = null;
 let resistanceStartTime = 0;
@@ -388,93 +351,41 @@ testButton.addEventListener('pointerup', handleResistanceButtonUp);
 testButton.addEventListener('pointercancel', handleResistanceButtonUp);
 testButton.addEventListener('contextmenu', e=>e.preventDefault());
 
-/* ==== Basic enablement ==== */
-actionSel.addEventListener('change', ()=>{
-  const selectedMuscle = actionSel.value;
-  testButton.disabled = selectedMuscle === "";
-
-  // ----------------------------------------------------
-  // 1. Set the initial body position based on the selected test
-  // ----------------------------------------------------
-  const TEST_BODY_POSITIONS = {
-    Serratus_Anterior: 'short_sit', 
-    // Add other tests as you define them:
-    // Upper_Trapezius: 'sit',
-    // Glute_Max: 'prone',
-    // Anterior_Deltoid: 'short_sit', 
-  };
-  
-  const requiredPosition = TEST_BODY_POSITIONS[selectedMuscle] || 'default';
-  setModelBasePosition(requiredPosition);
-updateModelPose(positionSel.value);
-CURRENT_ACTION = null;
-  });
-
-document.getElementById("lock3D").onclick = () => {
-  controls.enabled = !controls.enabled;
-  const btn = document.getElementById("lock3D");
-  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
-  btn.classList.toggle('lockOn', !controls.enabled);
+/* === Basic enablement + body pose per test (drop-in) === */
+const TEST_BODY_POSITIONS = {
+  Serratus_Anterior: 'short_sit',
+  // Upper_Trapezius: 'sit',
+  // Glute_Max: 'prone',
+  // Anterior_Deltoid: 'short_sit',
 };
 
-document.getElementById("zeroAll").onclick = () => {
-  if (!skeleton) return;
-  skeleton.bones.forEach(b=>{
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
-  
-startTestBtn.onclick = () => {
-  if (!skeleton) return;
-  const muscleKey = actionSel.value; // Get the currently selected action key
+function applyBodyPosition(key){
+  switch (key){
+    case 'short_sit': return applyShortSitPose();   // hips 90°, knees 90°
+    case 'sit':      return applyShortSitPose();    // (use a dedicated applySitPose() if you add one)
+    case 'prone':    return applyPronePose && applyPronePose();
+    case 'supine':   return applySupinePose && applySupinePose();
+    default:         return; // no change
+  }
+}
 
-  // 130 degrees converted to Radians
-  const THETA_130_RAD = Math.PI * 130 / 180;
-  
-  // Map the MMT test key to the required joint rotations.
-  // NOTE: We use a placeholder key here as your dropdown uses Goniometry keys.
-  const MMT_START_POSITIONS = {
-    // Assuming the selected value corresponds to this:
-    'Serratus_Anterior': { 
-      // Apply 130 degrees of shoulder flexion to both arms (upperarm_R/L)
-      'upperarm_R': { x: 0, y: 0, z: THETA_130_RAD }, 
-      'upperarm_L': { x: 0, y: 0, z: THETA_130_RAD },
-    },
-  };
-  
-  const basePosition = positionSel.value;
+let _currentAction = "";
 
-  // --- 1. Restore Base Position (Sitting) ---
-  // This ensures the hips/knees stay in the sitting pose set previously.
-  if (basePosition === 'sitting') {
-    // Force the hips and knees back to 90 degrees flexion
-    setPair('hip_fe_l', 90);
-    setPair('hip_fe_r', 90);
-    setPair('knee_fe_l', -90);
-    setPair('knee_fe_r', -90);
-  } else {
-    // For standing/prone/supine, ensure the current pose is maintained
-    updateModelPose(basePosition);
-  }
+actionSel.addEventListener('change', () => {
+  _currentAction = actionSel.value || "";
+  testButton.disabled = _currentAction === "";
+  if (!_currentAction) return;
 
-  // --- 2. Apply MMT Start Pose Angles ---
-  // You will need to map your current `actionSel.value` to the MMT_START_POSITIONS key.
-  // For the Serratus Anterior test, we use the hardcoded definition.
-  const startPos = MMT_START_POSITIONS['Serratus_Anterior']; 
+  const required = TEST_BODY_POSITIONS[_currentAction];
+  if (required) applyBodyPosition(required);  // selection → body pose
+});
 
-  if (startPos) {
-    // Apply the specific joint rotations only for the arms
-    skeleton.bones.forEach(b => {
-      if (startPos[b.name]) {
-        const rot = startPos[b.name];
-        b.rotation.set(rot.x, rot.y, rot.z); 
-      }
-    });
-    log(`Applied MMT start position (Serratus Anterior: 130° arms)`);
-  } else {
-    log(`MMT start position not defined.`);
-  }
-}; 
+// Start → actual start position, keep body pose
+startTestBtn.addEventListener('click', () => {
+  if (_currentAction === "Serratus_Anterior") {
+    applySerratusStart(); // raises both arms to ~130° while seated
+  }
+});
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
