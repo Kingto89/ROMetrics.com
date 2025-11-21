@@ -112,7 +112,145 @@
 * **Grade 4:** holds against moderate resistance
 * **Grade 3:** full ROM against gravity, no resistance
 
+## Trunk Extension — Lumbar
+
+**Plane: sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Lumbar extensors (erector spinae, multifidi)
+
+### Position
+
+* Prone; fingertips at sides of head; legs on table
+
+### Therapist
+
+* Stabilize legs above ankles (or lean across pelvis if needed)
+
+### Action
+
+* Raise head/shoulders/chest off table (lumbar extension)
+
+### Grades 3, 4, 5
+
+* **Grade 5:** hands behind head; sternum/xiphoid clears; steady hold
+* **Grade 4:** hands behind back; clears; slight yield/effort
+* **Grade 3:** arms at sides; clears to available range
+
 ---
+
+## Trunk Extension — Thoracic
+
+**Plane: sagittal | End-Feel: firm**
+
+### Muscles Tested
+
+* Thoracic extensors
+
+### Position
+
+* Prone with upper trunk off table to nipple line; hands at sides of head
+
+### Therapist
+
+* Stabilize ankles
+
+### Action
+
+* Extend thoracic spine to horizontal (avoid excessive lumbar)
+
+### Grades 3, 4, 5
+
+* **Grade 5:** reaches horizontal quickly, no wavering
+* **Grade 4:** reaches horizontal with effort
+* **Grade 3:** arms at sides; lifts to available range
+
+---
+
+## Trunk Flexion — Rectus Abdominis
+
+**Plane: sagittal | End-Feel: soft/firm**
+
+### Muscles Tested
+
+* Rectus abdominis
+
+### Position
+
+* Supine
+
+### Therapist
+
+* Monitor scapular clearance
+
+### Action
+
+* Curl trunk; inferior angles of scapulae must clear table
+
+### Grades 3, 4, 5
+
+* **Grade 5:** hands behind head; scapulae clear
+* **Grade 4:** arms across chest; scapulae clear
+* **Grade 3:** arms forward; scapulae clear
+
+---
+
+## Trunk Rotation — External & Internal Obliques
+
+**Plane: transverse | End-Feel: firm**
+
+### Muscles Tested
+
+* External oblique (contralateral)
+* Internal oblique (ipsilateral)
+
+### Position
+
+* Supine; chin to ceiling
+
+### Therapist
+
+* Monitor scapular clearance and rotation side
+
+### Action
+
+* Lift head/shoulders; rotate (elbow toward opposite knee)
+
+### Grades 3, 4, 5
+
+* **Grade 5:** hands behind head; scapula on rotation side clears
+* **Grade 4:** arms across chest; scapula clears
+* **Grade 3:** arms forward; scapula clears
+
+---
+
+## Pelvic Elevation (Hip Hike) — Quadratus Lumborum
+
+**Plane: frontal | End-Feel: firm**
+
+### Muscle Tested
+
+* Quadratus lumborum
+
+### Position
+
+* Supine or prone; test leg slight extension/abduction; no trunk rotation
+
+### Therapist
+
+* Apply caudal traction at ankle for resistance; stabilize as needed
+
+### Action
+
+* Hike pelvis toward ribs
+
+### Grades 3, 4, 5
+
+* **Grade 5:** maintains hike against strong traction
+* **Grade 4:** maintains hike against moderate traction
+* **Grade 3:** full pelvic hike through range without added resistance
+
 
 ## Latissimus Dorsi
 
