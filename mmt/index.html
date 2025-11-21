@@ -674,21 +674,26 @@ function applyPoseForTest(testKey) {
     // already reset to neutral above
     return;
   }
- /* ============ SHORT SITTING (hips 90°, knees 90°) ============ */
+/* ============ SHORT SITTING (hips 90°, knees 90°) ============ */
 if (pose === "short_sit") {
 
-  if (typeof setPair === "function") {
-    setPair("hip_fe_l", 90);
-    setPair("hip_fe_r", 90);
-    setPair("knee_fe_l", -90);
-    setPair("knee_fe_r", -90);
+  if (skeleton) {
+
+    // HIP FLEXION — thighs
+    if (boneMap.thigh_L) boneMap.thigh_L.rotation.x = THREE.MathUtils.degToRad(90);
+    if (boneMap.thigh_R) boneMap.thigh_R.rotation.x = THREE.MathUtils.degToRad(90);
+
+    // KNEE FLEXION — calves
+    if (boneMap.calf_L) boneMap.calf_L.rotation.x = THREE.MathUtils.degToRad(-90);
+    if (boneMap.calf_R) boneMap.calf_R.rotation.x = THREE.MathUtils.degToRad(-90);
   }
 
+  // Lower the entire model so the butt touches the ground plane
   model.position.y = -0.4;
+
   return;
 }
  
-
   /* ============ SIDE-LYING (if you use it) ============ */
   if (pose === "side_lying") {
     model.rotation.z = Math.PI / 2;
