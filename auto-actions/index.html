@@ -158,41 +158,56 @@ optgroup{color:var(--muted);font-style:normal}
 </style>
 </head>
 <body>
-  <!-- Panel -->
-  <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
-    <div class="content">
+ <div class="content">
 
-      <div class="row" style="align-items:center">
-        <label style="display:flex;gap:6px;align-items:center;margin:0;">
-          <input id="antiBox" type="checkbox"/>
-          <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
-        </label>
-      </div>
+  <div class="row" style="align-items:center">
+    <label style="display:flex;gap:6px;align-items:center;margin:0;">
+      <input id="antiBox" type="checkbox"/>
+      <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+    </label>
+  </div>
 
-<label>Body Region</label>
-<div class="seg">
-  <button id="segUpper" class="on">Upper Body</button>
-  <button id="segLower">Lower Body</button>
-</div>
-
-<label>Action</label>
-<div style="margin-bottom: 8px; display: flex; gap: 8px;">
-
-  <select id="actionSel" style="flex: 1 1 50%; width: 100%; box-sizing: border-box; margin: 0;">
+  <label>MMT Test & Muscle</label>
+  <select id="actionSel">
+    <option value="">(Select a test to begin…)</option>
     </select>
 
-  <button id="showMMT" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
-</div>
+  <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+    <button id="startTestBtn" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">▶️ Start Test (Grade 3 Position)</button>
+    <button id="showMMT" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
+  </div>
+  
+  <label>Test Grade Selection</label>
+  <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+    <select id="grade-main" name="grade-main" style="flex: 1 1 50%; box-sizing: border-box; margin: 0;">
+      <option value="3">Grade 3 - 5 (Full ROM / Resistance: none, Mod, Max)</option>
+      <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+      <option value="1">Grade 1 (Trace Contraction)</option>
+      <option value="0">Grade 0 (No Contraction)</option>
+    </select>
+    <select id="GradingExceptions" name="GradingExceptions" style="flex: 1 1 50%; box-sizing: border-box; margin: 0;">
+      <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
+      <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
+      <option value="3">Grade 3 (Full ROM / No Resistance)</option>
+      </select>
+  </div>
 
-<label><span id="pairLabel">Angle (°)</span></label>
-<input type="range" id="actionDeg" min="-90" max="150" step="1" value="0" style="display:none">
+  <div style="margin-bottom: 8px;">
+    <button id="testButton" class="mini" disabled style="width: 100%; position: relative; overflow: hidden; padding: 12px 10px; font-weight: 700;">
+      <div id="resistanceFill" style="position:absolute;top:0;left:0;width:0;height:100%;background-color:var(--accent);transition:width .1s linear;z-index:1"></div>
+      <span id="resistanceText" style="position:relative;z-index:2">Hold to Apply Resistance (4/5)</span>
+    </button>
+  </div>
+  
+  <p id="instructionText" style="font-size:12px;color:var(--muted);text-align:center;margin:4px 0 12px 0;display:none">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
 
-<div style="margin-bottom: 8px;">
-    <button id="autoMoveBtn" class="mini" style="width: 100%;">Run Action</button>
-</div>
+  <label>Model Control</label>
+  <div class="row">
+    <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
+    <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+  </div>
 
-<details id="boneAdv">
+  <details id="boneAdv">
   
     <summary>Bone (Advanced)</summary>
         <label>Bone (Blender order)</label>
