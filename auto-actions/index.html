@@ -160,7 +160,7 @@ optgroup{color:var(--muted);font-style:normal}
 <body>
   <!-- Panel -->
   <div class="panel" id="panel">
-    <div class="dragbar" id="dragbar">🧭 Joint Lab <span class="hint">drag me</span></div>
+    <div class="dragbar" id="dragbar">🧭 Manual Muscle Testing <span class="hint">drag me</span></div>
     <div class="content">
 
       <div class="row" style="align-items:center">
@@ -169,12 +169,24 @@ optgroup{color:var(--muted);font-style:normal}
           <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
         </label>
       </div>
+  <div class="content">
 
-<label>Body Region</label>
-<div class="seg">
-  <button id="segUpper" class="on">Upper Body</button>
-  <button id="segLower">Lower Body</button>
-</div>
+  <div class="row" style="align-items:center">
+    <label style="display:flex;gap:6px;align-items:center;margin:0;">
+      <input id="antiBox" type="checkbox"/>
+      <span title="Shift+Click to open Collision Tuner (dev)">Anticollision</span>
+    </label>
+  </div>
+  
+  <label>MMT Test & Muscle / ROM Action Selection</label> 
+  
+  <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-end;">
+    <select id="actionSel" style="flex: 1 1 50%; width: 100%; box-sizing: border-box; margin: 0;">...</select>
+    <button id="showMMT" class="mini" style="flex: 1 1 50%; padding: 8px 10px; margin: 0;">📌 MMT Placement</button>
+  </div>
+  
+  <label><span id="pairLabel">Angle (°)</span></label>
+  </div>
 
 <label>Action</label>
 <div style="margin-bottom: 8px; display: flex; gap: 8px;">
