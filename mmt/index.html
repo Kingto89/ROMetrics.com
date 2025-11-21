@@ -558,6 +558,10 @@ testButton.addEventListener('contextmenu', e=>e.preventDefault());
 actionSel.addEventListener('change', ()=>{
   testButton.disabled = actionSel.value === "";
 });
+// When a test is selected, snap the body to the required position
+actionSel.addEventListener("change", () => {
+  applyPoseForTest(actionSel.value);
+});
 
 document.getElementById("lock3D").onclick = () => {
   controls.enabled = !controls.enabled;
