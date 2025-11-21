@@ -335,6 +335,79 @@ function loadModel(){
 }
 loadModel();
 
+/* ===== MMT REQUIRED BODY POSITIONS ===== */
+/*
+  Allowed positions:
+  - "prone"
+  - "supine"
+  - "short_sit"
+  - "long_sit"
+  - "standing"
+*/
+
+const MMT_POSE = {
+  /* CERVICAL / CAPITAL */
+  Capital_Extension: "prone",
+  Cervical_Extension: "prone",
+
+  Capital_Flexion: "supine",
+  Cervical_Flexion: "supine",
+  Single_SCM: "supine",
+  Cervical_Rotation: "supine",
+
+  /* SCAPULA */
+  Serratus_Anterior: "short_sit",
+  Upper_Trapezius: "short_sit",
+  Middle_Trapezius: "prone",
+  Rhomboids: "prone",
+  Latissimus_Dorsi: "prone",
+
+  /* SHOULDER */
+  Anterior_Deltoid: "short_sit",
+  Posterior_Deltoid: "prone",
+  Middle_Deltoid: "short_sit",
+  Infraspinatus: "short_sit",
+  Subscapularis: "short_sit",
+
+  /* TRUNK */
+  Trunk_Ext_Lumbar: "prone",
+  Trunk_Ext_Thoracic: "prone",
+  Trunk_Flexion: "supine",
+  Trunk_Rotation: "supine",
+  Pelvic_Elevation: "standing",
+
+  /* ELBOW */
+  Biceps_Brachii: "short_sit",
+  Brachialis: "short_sit",
+  Brachioradialis: "short_sit",
+  Triceps_Brachii: "short_sit",
+
+  /* WRIST */
+  ECRL: "short_sit",
+  ECRB: "short_sit",
+  ECU: "short_sit",
+  FCR: "short_sit",
+  FCU: "short_sit",
+
+  /* HIP */
+  Iliopsoas: "short_sit",
+  Glute_Max: "prone",
+  Glute_Med: "side_lying",   // OPTIONAL, we can map side-lying to a basic supported version
+  Hip_ER: "short_sit",
+  Hip_IR: "short_sit",
+
+  /* KNEE */
+  Hamstrings: "prone",
+  Quadriceps: "short_sit",
+
+  /* FOOT & ANKLE */
+  Tibialis_Anterior: "short_sit",
+  Foot_Eversion_PF: "side_lying",   // better accuracy
+  Ankle_Dorsiflexion: "short_sit",
+  Gastrocnemius: "standing"
+};
+  
+
 /* ===== MMT MOTION CONFIG — INSERTED BELOW MODEL LOAD ===== */
 
 const UPPER = [
@@ -525,6 +598,51 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 
 // Run once on load
 updateGradingExceptionAvailability();
+
+ /* ===== AUTO-POSE WHEN TEST IS SELECTED ===== */
+
+function applyPoseForTest(testKey) {
+  if (!model) return;
+
+  const pose = MMT_POSE[testKey];
+  if (!pose) return; // No pose defined (fallback)
+
+  // Reset to anatomic first
+  document.getElementById("zeroAll").click();
+
+  switch(pose) {
+    case "prone":
+      model.rotation.x = Math.PI / 2;   // lay face down
+      break;
+
+    case "supine":
+      model.rotation.x = -Math.PI / 2;  // lay on back
+      break;
+
+    case "short_sit":
+      model.rotation.x = 0;             // upright
+      break;
+
+    case "long_sit":
+      model.rotation.x = 0;
+      // legs extended forward — coming later with bone actions
+      break;
+
+    case "standing":
+      model.rotation.x = 0;
+      break;
+
+    case "side_lying":
+      model.rotation.z = Math.PI / 2;
+      break;
+  }
+}
+
+// Trigger pose when a test is selected
+actionSel.addEventListener("change", ()=> {
+  applyPoseForTest(actionSel.value);
+}); 
+  
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
