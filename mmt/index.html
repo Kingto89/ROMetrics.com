@@ -503,7 +503,6 @@ function nudgeTowardAway(sign){
   model.position.addScaledVector(dir, 0.04 * sign);
   savePose();
 }
-
 /* ==== Load model ==== */
 function addModel(gltf){
   model = gltf.scene;
@@ -520,13 +519,13 @@ function addModel(gltf){
 
   // If we have a saved pose, apply it; else stand on floor
   if(!loadPose()){
-    placeOnFloor();
+    placeOnFloor(); // <--- THIS LINE IS REQUIRED
   }
 
   $("msg").textContent = "✅ Model loaded";
-} // <--- THIS IS THE MISSING CLOSING BRACE!
+} 
 
-const MODEL_CANDIDATES = [
+const MODEL_CANDIDATES = [  
 // ... rest of the code continues below here
   window.ROMETRICS_MODEL_URL,
   "assets/Roma_ROMetrics.glb",
