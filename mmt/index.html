@@ -222,6 +222,8 @@ window.addEventListener('error', (e) => {
   if (m) m.textContent = `⚠️ ${e.message}`;
 });
 
+  
+
 /* ==== UI refs ==== */
 const canvas = document.getElementById("c");
 const logEl = document.getElementById("log");
@@ -283,11 +285,17 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
+function stickToY(targetY=0){
+  if(!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  if (isFinite(minY)) model.position.y += (targetY - minY);
+}
 
  // Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 15) {
+function shrinkBackgroundBy(factor = 50) {
   const oldFovDeg = camera.fov;
-  const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
+  const newFovDeg = Math.min(90, oldFovDeg * factor); // cap to avoid fish-eye
 
   // Keep the model the same on-screen size:
   // move the camera closer as we widen the FOV
@@ -395,6 +403,44 @@ function loadModel(){
       skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
     }
     console.log("BONES:", skeleton.bones.map(b => b.name));
+// --- Seat-on-bed illusion (legs only; exact bone names) ---
+(() => {
+  const get = (n)=> skeleton.bones.find(b => b.name === n);
+
+  const thighL = get("thigh_L");
+  const thighR = get("thigh_R");
+  const calfL  = get("calf_L");
+  const calfR  = get("calf_R");
+
+  // restore base rotations if saved
+  [thighL, thighR, calfL, calfR].forEach(b => {
+    const q0 = initialBoneRot.get(b);
+    if (b && q0) b.quaternion.copy(q0);
+  });
+
+  const rad = THREE.MathUtils.degToRad;
+  if (thighL) thighL.rotateX(rad(90));
+  if (thighR) thighR.rotateX(rad(90));
+  if (calfL)  calfL.rotateX(rad(-90));
+  if (calfR)  calfR.rotateX(rad(-90));
+// Snap model’s lowest point to y=0
+const bbox = new THREE.Box3().setFromObject(model);
+model.position.y -= bbox.min.y;
+
+// Turn the ground into a shadow-catching “bed top” under the hips
+ground.geometry.dispose();
+ground.geometry = new THREE.PlaneGeometry(0.10, 1.40); // table-ish size
+ground.position.set(model.position.x, 0.012, model.position.z + 0.75); // small forward nudge
+ground.visible = true;
+ground.material.opacity = 0.65;  // stronger contact shadow
+
+
+  // position + framing to sell "seated in bed"
+  model.position.y -= 0.3;           // tweak 0.35–0.55
+  controls.target.set(0, 1.05, 0.15);
+  camera.position.set(1.15, 1.25, 1.75);
+  camera.updateProjectionMatrix();
+})();
 
   });
 }
