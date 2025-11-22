@@ -285,15 +285,16 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
- // --- visible seat to anchor the model in space ---
+// --- visible box seat (keep visible for alignment) ---
 const seat = new THREE.Mesh(
-  new THREE.BoxGeometry(0.55, 0.06, 0.40),          // width, height, depth
+  new THREE.BoxGeometry(0.55, 0.06, 0.40),                 // w, h, d
   new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.95, metalness: 0 })
 );
 seat.receiveShadow = true;
 seat.castShadow = false;
-seat.position.set(0, 0.46, 0.05);                   // ← raise/lower with seat.position.y
+seat.position.set(0, 0.46, 0.05);                           // adjust Y to raise/lower
 scene.add(seat);
+
 function placeSeatUnderHips(y=0.46, zOffset=0.05){
   if(!model) return;
   const box = new THREE.Box3().setFromObject(model);
