@@ -434,8 +434,12 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
-placeSeatUnderHips(0.46, 0.05);  // move seat under hips
-stickToY(seat.position.y + 0.005); // sit on seat with tiny sink
+  placeSeatUnderHips(0.46, 0.05);                  // center seat under hips
+seat.updateMatrixWorld();
+const seatTop = seat.position.y + 0.03;          // 0.06 seat height → top is +0.03
+const mb = new THREE.Box3().setFromObject(model);
+model.position.set(seat.position.x, model.position.y + (seatTop - mb.min.y) + 0.002, seat.position.z);
+
 
 
 // Turn the ground into a shadow-catching “bed top” under the hips
