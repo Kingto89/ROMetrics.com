@@ -293,21 +293,23 @@ ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-/* ==== HDR — lighting only (NO background override) ==== */
+/* ==== HDR ENVIRONMENT LOADER — works + no giant background ==== */
 const exrLoader = new EXRLoader();
-const correctedHdrPath = "../assets/hospital_room_2k.exr";
+const correctedHdrPath = "../assets/hospital_room_2k.exr";  // your original working path
 
 exrLoader.load(
   correctedHdrPath,
   (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
 
-    // HDR used only for reflection / lighting — NOT as visible background
+    // ✔️ Use HDR for lighting only
     scene.environment = texture;
 
-    // keep your flat color background
-    // (prevents superimposed room effect)
+    // ✔️ Keep your solid background (no giant HDR)
+    // scene.background stays as your 0xf1f5f9 color
+
     console.log("HDR loaded");
+    document.getElementById("msg").textContent = "HDR loaded";
   },
   undefined,
   (err) => {
@@ -316,8 +318,6 @@ exrLoader.load(
   }
 );
 
-
-/* =============================== */
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
