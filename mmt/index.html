@@ -280,30 +280,7 @@ key.shadow.camera.near=0.1; key.shadow.camera.far=15;
 key.shadow.camera.left=-4; key.shadow.camera.right=4;
 key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
 scene.add(key);
-// Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 3) {
-  const oldFovDeg = camera.fov;
-  const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
 
-  // Keep the model the same on-screen size:
-  // move the camera closer as we widen the FOV
-  const oldFov = THREE.MathUtils.degToRad(oldFovDeg);
-  const newFov = THREE.MathUtils.degToRad(newFovDeg);
-
-  const target = controls ? controls.target.clone() : new THREE.Vector3(0, 0, 0);
-  const camDir = camera.position.clone().sub(target).normalize();
-  const oldDist = camera.position.distanceTo(target);
-  const newDist = oldDist * Math.tan(oldFov / 2) / Math.tan(newFov / 2);
-
-  camera.fov = newFovDeg;
-  camera.position.copy(target).add(camDir.multiplyScalar(newDist));
-  camera.updateProjectionMatrix();
-}
-
-// Call it once after your scene.background = texture (or anywhere after camera/controls exist)
-shrinkBackgroundBy(3);
-
-  
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity:.45 }));
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
@@ -316,7 +293,7 @@ function stickToY(targetY=0){
 }
 
  // Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 50) {
+function shrinkBackgroundBy(factor = 70) {
   const oldFovDeg = camera.fov;
   const newFovDeg = Math.min(90, oldFovDeg * factor); // cap to avoid fish-eye
 
