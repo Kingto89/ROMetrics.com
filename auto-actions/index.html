@@ -718,169 +718,134 @@ function freezeBindBaseFor(key, cfg) {
     const maxPos = cfg.max;
     const out = [];
     const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
-function dirEntriesFromPair(cfg){
-  const absMin = Math.abs(cfg.min);
-  const maxPos = cfg.max;
-  const out = [];
-  const push = (label, sign, maxVal) => out.push({ key: cfg.key, cfg, label, sign, max: maxVal });
 
-  // ===== CERVICAL & CAPITAL =====
-  if (cfg.key === 'cerv_fe'){
-    push('Cervical Flexion (SCM, Longus Colli, Anterior Scalene)', +1, maxPos);
-    push('Capital / Cervical Extension (Semispinalis & Splenius Cervicis)', -1, absMin);
-    return out;
-  }
-  if (cfg.key === 'cerv_lat'){
-    push('Single SCM — Anterolateral Flexion — L', -1, absMin);
-    push('Single SCM — Anterolateral Flexion — R', +1, maxPos);
-    return out;
-  }
-  if (cfg.key === 'cerv_rot'){
-    push('Cervical Rotation — R (SCM / Splenius Capitis)', -1, absMin);
-    push('Cervical Rotation — L (SCM / Splenius Capitis)', +1, maxPos);
-    return out;
-  }
+    // Cervical — keep exact labels
+    if (cfg.key === 'cerv_fe'){
+      push('Cervical Flexion',  +1, maxPos);
+      push('Cervical Extension', -1, absMin);
+      return out;
+    }
+    if (cfg.key === 'cerv_lat'){
+      push('Cervical Lateral Flexion — Left', -1, absMin);
+      push('Cervical Lateral Flexion — Right',  +1, maxPos);
+      return out;
+    }
+    if (cfg.key === 'cerv_rot'){
+      push('Cervical Rotation — Right',  -1, absMin);
+      push('Cervical Rotation — Left', +1, maxPos);
+      return out;
+    }
+    if (cfg.key === 'clavicle_L'){
+  push('Clavicle L — Elevation', +1, maxPos);
+  push('Clavicle L — Depression', -1, absMin);
+  return out;
+}
+if (cfg.key === 'clavicle_R'){
+  push('Clavicle R — Elevation', -1, maxPos);
+  push('Clavicle R — Depression', +1, absMin);
+  return out;
+}
 
-  // ===== SCAPULA / CLAVICLE =====
-  if (cfg.key === 'clavicle_L'){
-    push('Upper Trapezius — Scapular Elevation — L', +1, maxPos);
-    push('Clavicle Depression Pattern — L', -1, absMin);
-    return out;
-  }
-  if (cfg.key === 'clavicle_R'){
-    push('Upper Trapezius — Scapular Elevation — R', -1, maxPos);
-    push('Clavicle Depression Pattern — R', +1, absMin);
-    return out;
-  }
+    // Shoulder Abd/Add — Right side normal orientation
+   if (cfg.key==='sh_aa_r'){
+  push('Shoulder R — Abduction', +1, maxPos);
+  push('Shoulder R — Adduction', -1, absMin);
+  return out;
+}
+    // Shoulder R IR/ER — explicit labels
+if (cfg.key === 'sh_irer_r'){
+  push('Shoulder R — Internal Rotation', +1, maxPos);
+  push('Shoulder R — External Rotation', -1, absMin);
+  return out;
+}
 
-  // ===== SHOULDER ABD/ADD (R) =====
-  if (cfg.key === 'sh_aa_r'){
-    push('Middle Deltoid — Shoulder Abduction — R', +1, maxPos);
-    push('Shoulder Adduction Pattern — R', -1, absMin);
-    return out;
-  }
+// Shoulder L IR/ER — explicit labels
+if (cfg.key === 'sh_irer_l'){
+  push('Shoulder L — External Rotation', +1, maxPos);
+  push('Shoulder L — Internal Rotation', -1, absMin);
+  return out;
+}
 
-  // ===== SHOULDER IR/ER =====
-  if (cfg.key === 'sh_irer_r'){
-    push('Subscapularis — Internal Rotation — R', +1, maxPos);
-    push('Infraspinatus — External Rotation — R', -1, absMin);
-    return out;
-  }
+ // === Hip Abduction / Adduction explicit labels ===
+if (cfg.key === 'hip_aa_l'){
+  push('Hip L — Abduction', +1, maxPos);
+  push('Hip L — Adduction', -1, absMin);
+  return out;
+}
+if (cfg.key === 'hip_aa_r'){
+  push('Hip R — Abduction', -1, absMin);
+  push('Hip R — Adduction', +1, maxPos);
+  return out;
+}
 
-  if (cfg.key === 'sh_irer_l'){
-    push('Infraspinatus — External Rotation — L', +1, maxPos);
-    push('Subscapularis — Internal Rotation — L', -1, absMin);
-    return out;
-  }
+// --- Left Hip fix:  Internal ↔ External labels ---
+if (cfg.key === 'hip_irer_l') {
+  // External Rotation (positive)
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
 
-  // ===== HIP ABD/ADD =====
-  if (cfg.key === 'hip_aa_l'){
-    push('Glute Medius — Hip Abduction — L', +1, maxPos);
-    push('Hip Adduction Pattern — L', -1, absMin);
-    return out;
-  }
-  if (cfg.key === 'hip_aa_r'){
-    push('Glute Medius — Hip Abduction — R', -1, absMin);
-    push('Hip Adduction Pattern — R', +1, maxPos);
-    return out;
-  }
-
-  // ===== HIP IR/ER =====
-  if (cfg.key === 'hip_irer_l') {
-    push('Hip Internal Rotation — L', +1, maxPos);
-    push('Hip External Rotation — L', -1, absMin);
-    return out;
-  }
-
-  if (cfg.key === 'hip_irer_r') {
-    push('Hip Internal Rotation — R', -1, maxPos);
-    push('Hip External Rotation — R', +1, absMin);
-    return out;
-  }
-
-  // ===== FOOT INV/EV (L) =====
-  if (cfg.key === 'foot_invev_l') {
-    push('Foot Inversion — L (Tibialis Posterior Pattern)', -1, maxPos);
-    push('Foot Eversion — L (Fibularis Pattern)', +1, absMin);
-    return out;
-  }
-
-  // ===== KNEE FLEXION/EXTENSION =====
-  if (/^knee_fe_/.test(cfg.key)) {
-    push('Hamstrings — Knee Flexion', -1, maxPos);
-    push('Quadriceps — Knee Extension', +1, absMin);
-  }
-
-  // ===== FLEXION/EXTENSION GENERAL =====
-  else if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
-    push(cfg.key==='trunk_fe'
-         ? 'Trunk Flexion — Rectus Abdominis'
-         : cfg.pair.replace(/—.*$/, '— Flexion'),
-         +1, maxPos);
-
-    push(cfg.key==='trunk_fe'
-         ? 'Trunk Extension — Lumbar (Erector Spinae)'
-         : cfg.pair.replace(/—.*$/, '— Extension'),
-         -1, absMin);
-  }
-
-  // ===== ABDUCTION/ADDUCTION GENERAL =====
-  else if (/_aa_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
-  }
-
-  // ===== INTERNAL/EXTERNAL ROTATION GENERAL =====
-  else if (/_irer_/.test(cfg.key)){
-    push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
-    push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
-  }
-
-  // ===== TRUNK LATERAL FLEXION =====
-  else if (cfg.key==='trunk_lat'){
-    push('Trunk Extension — Lumbar (Erector Spinae) — R', +1, maxPos);
-    push('Trunk Extension — Lumbar (Erector Spinae) — L', -1, absMin);
-  }
-
-  // ===== TRUNK ROTATION =====
-  else if (cfg.key==='trunk_rot'){
-    push('Trunk Rotation — L (External + Internal Obliques)', +1, maxPos);
-    push('Trunk Rotation — R (External + Internal Obliques)', -1, absMin);
-  }
-
-  // ===== WRIST PRONATION/SUP =====
-  else if (/wr_ps_/.test(cfg.key)){
-    push('Forearm Pronation — (Pronator Teres/Quadratus)', +1, maxPos);
-    push('Forearm Supination — (Supinator/Biceps)', -1, absMin);
-  }
-
-  // ===== WRIST FLEX/EXT =====
-  else if (/wr_fe_/.test(cfg.key)){
-    push('Wrist Flexion (FCR/FCU)', +1, maxPos);
-    push('Wrist Extension (ECRL/ECRB/ECU)', -1, absMin);
-  }
-
-  // ===== WRIST RADIAL/ULNAR =====
-  else if (/wr_ru_/.test(cfg.key)){
-    push('Radial Deviation — (ECRL/ECRB)', +1, maxPos);
-    push('Ulnar Deviation — (ECU/FCU)', -1, absMin);
-  }
-
-  // ===== ANKLE DF/PF =====
-  else if (/ankle_dfpf_/.test(cfg.key)){
-    push('Plantarflexion — Gastrocnemius/Soleus', -1, maxPos);
-    push('Dorsiflexion — Tibialis Anterior', +1, absMin);
-  }
-
-  // ===== FOOT INV/EV GENERAL =====
-  else if (/foot_invev_/.test(cfg.key)){
-    push('Foot Eversion — (Fibularis Longus/Brevis)', -1, maxPos);
-    push('Foot Inversion — (Tibialis Posterior)', +1, absMin);
-  }
+  // Internal Rotation (negative)
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
 
   return out;
 }
 
+// --- Right Hip fix:  Internal ↔ External labels ---
+if (cfg.key === 'hip_irer_r') {
+  // External Rotation (positive)
+  push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), -1, maxPos);
+
+  // Internal Rotation (negative)
+  push(cfg.pair.replace(/—.*$/, '— External Rotation'), +1, absMin);
+
+  return out;
+}
+
+// --- Left Foot fix: 
+if (cfg.key === 'foot_invev_l') {
+  push(cfg.pair.replace(/—.*$/, '— Inversion'), -1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Eversion'), +1, absMin);
+  return out;
+}
+    if (/^knee_fe_/.test(cfg.key)) {
+  // 🔁 Knee bending = Flexion (+), straightening = Extension (−)
+  push(cfg.pair.replace(/—.*$/, '— Flexion'), -1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Extension'), +1, absMin);
+  }
+  else if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
+  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/_aa_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
+    } else if (/_irer_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
+    } else if (cfg.key==='trunk_lat'){
+      push(cfg.pair.replace(/—.*$/, '— Right Trunk Extension — Lumbar (Erector Spinae)'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Left Trunk Extension — Lumbar (Erector Spinae)'), -1, absMin);
+    } else if (cfg.key==='trunk_rot'){
+      push(cfg.pair.replace(/—.*$/, '— Left Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Right Rotation'), -1, absMin);
+    } else if (/wr_ps_/.test(cfg.key)){
+      // SWAP LABELS per your report: + == PRONATION, - == SUPINATION
+      push(cfg.pair.replace(/—.*$/, '— Pronation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Supination'), -1, absMin);
+    } else if (/wr_fe_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+    } else if (/wr_ru_/.test(cfg.key)){
+      // SWAP LABELS per your report: + == RADIAL, - == ULNAR
+      push(cfg.pair.replace(/—.*$/, '— Radial Deviation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Ulnar Deviation'), -1, absMin);
+    } else if (/ankle_dfpf_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Plantarflexion'), -1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Dorsiflexion'), +1, absMin);
+    } else if (/foot_invev_/.test(cfg.key)){
+      push(cfg.pair.replace(/—.*$/, '— Eversion'), -1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Inversion'), +1, absMin);
+    }
+    return out;
+  }
 
   function buildSeparatedCatalog(list){
     const cat = {};
