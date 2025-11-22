@@ -462,6 +462,7 @@ function placeOnTable(){
   // Snap bottom to tabletop
   const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
   snapBottomToY(topY);
+  setPoseFlag('seated', true);
   savePose();
 }
 
@@ -481,6 +482,7 @@ function placeOnFloor(){
   model.position.x = 0;
   model.position.z = -0.4;
   snapBottomToY(0);
+  setPoseFlag('seated', false);
   savePose();
 }
 
