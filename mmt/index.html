@@ -399,27 +399,6 @@ function setPoseFlag(k, v){
 }
 
 
-function savePose(){
-  if(!model) return;
-  const p = model.position, s = model.scale, ry = radToDeg(model.rotation.y);
-  localStorage.setItem("rometrics_pose_v3", JSON.stringify({x:p.x, y:p.y, z:p.z, sx:s.x, sy:s.y, sz:s.z, ry}));
-}
-function loadPose(){
-  try{
-    const raw = localStorage.getItem("rometrics_pose_v3");
-    if(!raw) return false;
-    const o = JSON.parse(raw);
-    if(!model) return false;
-    model.position.set(o.x, o.y, o.z);
-    model.scale.set(o.sx, o.sy, o.sz);
-    model.rotation.y = degToRad(o.ry || 0);
-    scaleSlider.value = String(o.sx.toFixed(2));
-    rotSlider.value = String(Math.round(o.ry || 0));
-    return true;
-  }catch{ return false; }
-}
-function clearPose(){ localStorage.removeItem("rometrics_pose_v3"); }
-
 function box3Of(obj){ return new THREE.Box3().setFromObject(obj); }
 function snapBottomToY(targetY){
   if(!model) return;
