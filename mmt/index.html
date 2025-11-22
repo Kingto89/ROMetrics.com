@@ -354,22 +354,18 @@ function cacheKeyBones() {
   log("Key bones cached for posing.");
 }
 
-/* ===== MMT REQUIRED BODY POSITIONS ===== */
-
-/* ===== MMT → AUTOACTION MAP ===== */
 const MMT_TO_AUTO = {
-  Capital_Extension: "cerv_fe",
-  Cervical_Extension: "cerv_fe",
+  Capital_Extension: "cerv_fe",
+  Cervical_Extension: "cerv_fe",
 
-  Capital_Flexion: "cerv_fe",
-  Cervical_Flexion: "cerv_fe",
+  Capital_Flexion: "cerv_fe",
+  Cervical_Flexion: "cerv_fe",
 
-  Cervical_Rotation: "cerv_rot"
+  Cervical_Rotation: "cerv_rot", // Note the comma here
+  
+  // ADDED MAPPING FOR SHOULDER FLEXION
+  Anterior_Deltoid: "sh_fe_l" 
 };
-
-/*
-  Allowed positions:
-
 
   - "prone"
   - "supine"
