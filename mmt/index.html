@@ -354,8 +354,19 @@ function cacheKeyBones() {
   log("Key bones cached for posing.");
 }
 
-
 /* ===== MMT REQUIRED BODY POSITIONS ===== */
+
+/* ===== MMT → AUTOACTION MAP ===== */
+const MMT_TO_AUTO = {
+  Capital_Extension: "cerv_fe",
+  Cervical_Extension: "cerv_fe",
+
+  Capital_Flexion: "cerv_fe",
+  Cervical_Flexion: "cerv_fe",
+
+  Cervical_Rotation: "cerv_rot"
+};
+
 /*
   Allowed positions:
   - "prone"
@@ -364,7 +375,6 @@ function cacheKeyBones() {
   - "long_sit"
   - "standing"
 */
-
 const MMT_POSE = {
   /* CERVICAL / CAPITAL */
   Capital_Extension: "prone",
@@ -412,7 +422,7 @@ const MMT_POSE = {
   /* HIP */
   Iliopsoas: "short_sit",
   Glute_Max: "prone",
-  Glute_Med: "side_lying",   // OPTIONAL, we can map side-lying to a basic supported version
+  Glute_Med: "side_lying",
   Hip_ER: "short_sit",
   Hip_IR: "short_sit",
 
@@ -422,7 +432,7 @@ const MMT_POSE = {
 
   /* FOOT & ANKLE */
   Tibialis_Anterior: "short_sit",
-  Foot_Eversion_PF: "side_lying",   // better accuracy
+  Foot_Eversion_PF: "side_lying",
   Ankle_Dorsiflexion: "short_sit",
   Gastrocnemius: "standing"
 };
@@ -837,9 +847,11 @@ startTestBtn.addEventListener("click", () => {
   const test = actionSel.value;
   if (!test) return;
 
-  // Determine which motion to animate based on UPPER/LOWER lists
-  const cfg = [...UPPER, ...LOWER].find(x => test.includes(x.key.split('_')[0]));
+  // Determine which AUTOACTION motion belongs to this MMT test
+  const autoKey = MMT_TO_AUTO[test];
+  const cfg = autoKey ? [...UPPER, ...LOWER].find(x => x.key === autoKey) : null;
   if (!cfg) return;
+
 
   let current = 0;
   const target = cfg.max;
