@@ -248,73 +248,74 @@ startTestBtn.addEventListener('click', () => {
     startTestBtn.classList.remove('lockOn');
   }, 300);
 });
-/* ========================================= */
-
 /* ==== THREE setup ==== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-// Set exposure to handle the HDR brightness (recommended for visual balance)
-renderer.toneMappingExposure = 0.8; 
+renderer.toneMappingExposure = 0.8;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
+
+// keep your smooth light background — this prevents HDR from covering the screen
 scene.background = new THREE.Color(0xf1f5f9);
 
-// FIX: Changed FOV from 45 to 35. This makes the distant HDR background appear smaller and correctly scaled 
-// relative to the foreground model without changing the model's physical size.
 const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.01, 100);
 camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = .08;
-controls.minDistance=.6; controls.maxDistance=6;
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 0.6; controls.maxDistance = 6;
 controls.target.set(0,1.1,0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
+
 const key = new THREE.DirectionalLight(0xffffff, 1.2);
 key.position.set(2.5,4,2.5);
 key.castShadow = true;
 key.shadow.mapSize.set(2048,2048);
-key.shadow.camera.near=0.1; key.shadow.camera.far=15;
-key.shadow.camera.left=-4; key.shadow.camera.right=4;
-key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
+key.shadow.camera.near = 0.1;
+key.shadow.camera.far = 15;
+key.shadow.camera.left = -4;
+key.shadow.camera.right = 4;
+key.shadow.camera.top = 4;
+key.shadow.camera.bottom = -4;
 scene.add(key);
 
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity:.45 }));
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(20,20),
+    new THREE.ShadowMaterial({ opacity:0.45 })
+);
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
+
+/* ==== HDR — lighting only (NO background override) ==== */
 const exrLoader = new EXRLoader();
-const pmrem = new THREE.PMREMGenerator(renderer);
+const correctedHdrPath = "../assets/hospital_room_2k.exr";
 
 exrLoader.load(
-    correctedHdrPath,
-    (texture) => {
-        // Convert HDR to environment map
-        const envMap = pmrem.fromEquirectangular(texture).texture;
+  correctedHdrPath,
+  (texture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
 
-        // ↓↓↓ The TRUE FIX ↓↓↓
-        // Make HDR appear 4× farther away (shrink visually)
-        const background = envMap.clone();
-        background.mapping = THREE.EquirectangularReflectionMapping;
-        background.userData = { distance: 4 };  // ← scale background distance
+    // HDR used only for reflection / lighting — NOT as visible background
+    scene.environment = texture;
 
-        scene.environment = envMap;
-        scene.background = background;
-
-        texture.dispose();
-        pmrem.dispose();
-    },
-    undefined,
-    (err) => {
-        console.error("HDR load error", err);
-        document.getElementById("msg").textContent = "⚠️ HDR load error";
-    }
+    // keep your flat color background
+    // (prevents superimposed room effect)
+    console.log("HDR loaded");
+  },
+  undefined,
+  (err) => {
+    console.error("HDR load error", err);
+    document.getElementById("msg").textContent = "⚠️ HDR load error";
+  }
 );
+
 
 /* =============================== */
   
