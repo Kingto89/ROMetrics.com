@@ -248,8 +248,46 @@ const nudgeTowardBtn = $("nudgeToward");
 const nudgeAwayBtn = $("nudgeAway");
 const scaleSlider = $("scaleSlider");
 const rotSlider = $("rotSlider");
+
+ function loadPose(){
+  try{
+    const raw = localStorage.getItem(POSE_KEY);
+    if(!raw) return false;
+    const o = JSON.parse(raw);
+    if(!model) return false;
+
+    model.position.set(o.x, o.y, o.z);
+    model.scale.set(o.sx, o.sy, o.sz);
+    model.rotation.y = degToRad(o.ry || 0);
+
+    scaleSlider.value = String(o.sx?.toFixed(2) ?? model.scale.x.toFixed(2));
+    rotSlider.value   = String(Math.round(o.ry || 0));
+
+    // if previously saved as seated, re-seat the legs and re-snap to tabletop
+    if (o.seated === true){
+      seatPoseOnlyLegs();
+      const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
+      snapBottomToY(topY);
+    }
+    return true;
+  }catch{ return false; }
+}
+ 
 const saveBtn = $("savePose");
 const clearBtn = $("clearPose");
+
+function savePose(){
+  if(!model) return;
+  const p = model.position, s = model.scale;
+  const raw = localStorage.getItem(POSE_KEY) || "{}";
+  const o = JSON.parse(raw);
+  o.x = p.x; o.y = p.y; o.z = p.z;
+  o.sx = s.x; o.sy = s.y; o.sz = s.z;
+  o.ry = radToDeg(model.rotation.y);
+  localStorage.setItem(POSE_KEY, JSON.stringify(o));
+  $("msg").textContent = "💾 Pose saved";
+}
+  
 
 /* ==== Start Test Button Glow Fix ==== */
 startTestBtn.addEventListener('click', () => {
@@ -377,6 +415,14 @@ const initialBoneRot = new Map();
 /* ==== Utilities ==== */
 function degToRad(d){ return d * Math.PI / 180; }
 function radToDeg(r){ return r * 180 / Math.PI; }
+const POSE_KEY = "rometrics_pose_v3";
+function setPoseFlag(k, v){
+  const raw = localStorage.getItem(POSE_KEY) || "{}";
+  const o = JSON.parse(raw);
+  o[k] = v;
+  localStorage.setItem(POSE_KEY, JSON.stringify(o));
+}
+
 
 function savePose(){
   if(!model) return;
@@ -480,6 +526,31 @@ function addModel(gltf){
     if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
   });
   scene.add(model);
+function placeOnTable(){
+  seatPoseOnlyLegs();
+  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
+  model.position.x = tableTop.position.x;
+  model.position.z = tableTop.position.z - (TABLE_D*0.25);
+  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
+  snapBottomToY(topY);
+  setPoseFlag("seated", true);   // ← add this
+  savePose();
+}
+
+function placeOnFloor(){
+  if (!model) return;
+  if (skeleton){
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
+  model.rotation.y = 0; rotSlider.value = "0";
+  model.position.x = 0; model.position.z = -0.4;
+  snapBottomToY(0);
+  setPoseFlag("seated", false);  // ← add this
+  savePose();
+}
 
   if (skeleton){
     skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
