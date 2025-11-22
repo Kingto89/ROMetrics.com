@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MMT Trainer — Side Notes (Room + Place & Save)</title>
+<title>MMT Trainer — Side Notes (Room + Seat + Save)</title>
 
 <script type="importmap">
 {
@@ -32,17 +32,9 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 .row{display:flex;gap:8px}.row>button,.row>select{flex:1}
 .mini{padding:6px 10px;border-radius:8px;background:var(--ctrl);border:1px solid var(--line)}
 .lockOn{background:#0b3a1f;border-color:#16a34a;color:#fff}
-#msg{position:fixed;bottom:10px;left:12px;background:var(--panel);border:1px solid var(--line);
-  border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;color:var(--text)}
+#msg{position:fixed;bottom:10px;left:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;z-index:25;color:var(--text)}
 #log{display:none;background:var(--ctrl);border:1px solid var(--line);min-height:90px;max-height:130px;overflow:auto;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap;color:var(--text)}
 
-/* Resistance button */
-#testButton{position:relative;padding:12px 10px;font-weight:700;overflow:hidden;touch-action:none;background:var(--ctrl)}
-#resistanceFill{position:absolute;top:0;left:0;width:0;height:100%;background-color:var(--accent);transition:width .1s linear;z-index:1}
-#resistanceText{position:relative;z-index:2}
-#instructionText{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 12px 0;display:none}
-
-/* Right-side note panel (smaller) */
 #notePanel{position:fixed;top:16px;right:16px;width:min(420px,46vw);max-height:70vh;display:none;z-index:140;
   background:#e2e8f0;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);
   display:flex;flex-direction:column;overflow:hidden}
@@ -57,10 +49,6 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
   #notePanel{right:8px;left:8px;width:auto;max-height:60vh}
 }
 .hide{display:none !important;}
-
-/* Placement controls */
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
-  background:#fff;font-size:12px}
 </style>
 </head>
 <body>
@@ -68,68 +56,67 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 <div class="panel" id="panel">
   <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
   <div class="content">
-
     <label>MMT Test & Muscle</label>
     <select id="actionSel">
       <option value="">(Select a test to begin…)</option>
       <optgroup label="Cervical & Capital">
-        <option value="Capital_Extension">Capital Extension</option>
-        <option value="Cervical_Extension">Cervical Extension</option>
-        <option value="Capital_Flexion">Capital Flexion — Chin Tuck</option>
-        <option value="Cervical_Flexion">Cervical Flexion</option>
-        <option value="Single_SCM">Single SCM — Anterolateral Flexion</option>
-        <option value="Cervical_Rotation">Cervical Rotation</option>
+        <option value="Capital_Extension">Capital Extension (Rectus Capitis Posterior Major, Obliquus Capitis Superior, Splenius Capitis)</option>
+        <option value="Cervical_Extension">Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)</option>
+        <option value="Capital_Flexion">Capital Flexion — Chin Tuck (Longus Capitis, Rectus Capitis Anterior, Anterior Scalene)</option>
+        <option value="Cervical_Flexion">Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene)</option>
+        <option value="Single_SCM">Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli)</option>
+        <option value="Cervical_Rotation">Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral)</option>
       </optgroup>
       <optgroup label="Scapula">
-        <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation</option>
-        <option value="Upper_Trapezius">Scapular Elevation</option>
-        <option value="Middle_Trapezius">Scapular Adduction / Retraction</option>
-        <option value="Rhomboids">Scapular Adduction + Downward Rotation</option>
-        <option value="Latissimus_Dorsi">Latissimus Dorsi</option>
+        <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
+        <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
+        <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
+        <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
+        <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
       </optgroup>
       <optgroup label="Shoulder">
-        <option value="Anterior_Deltoid">Shoulder Flexion</option>
-        <option value="Posterior_Deltoid">Shoulder Extension</option>
-        <option value="Middle_Deltoid">Shoulder Abduction</option>
-        <option value="Infraspinatus">Shoulder External Rotation</option>
-        <option value="Subscapularis">Shoulder Internal Rotation</option>
+        <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
+        <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
+        <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
+        <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
+        <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
       </optgroup>
-      <optgroup label="Trunk & Pelvis">
-        <option value="Trunk_Ext_Lumbar">Trunk Extension — Lumbar</option>
-        <option value="Trunk_Ext_Thoracic">Trunk Extension — Thoracic</option>
+      <optgroup label="Trunk & Pelvis - Grading Exception">
+        <option value="Trunk_Ext_Lumbar">Trunk Extension — Lumbar (Erector Spinae)</option>
+        <option value="Trunk_Ext_Thoracic">Trunk Extension — Thoracic (Erector Spinae)</option>
         <option value="Trunk_Flexion">Trunk Flexion — Rectus Abdominis</option>
-        <option value="Trunk_Rotation">Trunk Rotation</option>
-        <option value="Pelvic_Elevation">Pelvic Elevation — Hip Hike</option>
+        <option value="Trunk_Rotation">Trunk Rotation — External & Internal Obliques</option>
+        <option value="Pelvic_Elevation">Pelvic Elevation (Hip Hike) — Quadratus Lumborum</option>
       </optgroup>
       <optgroup label="Elbow">
-        <option value="Biceps_Brachii">Elbow Flexion — Biceps (sup)</option>
-        <option value="Brachialis">Elbow Flexion — Brachialis (pro)</option>
+        <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
+        <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
         <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
-        <option value="Triceps_Brachii">Elbow Extension — Triceps</option>
+        <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
       </optgroup>
       <optgroup label="Wrist">
-        <option value="ECRL">Wrist Extension — ECRL</option>
-        <option value="ECRB">Wrist Extension — ECRB</option>
-        <option value="ECU">Wrist Extension — ECU</option>
-        <option value="FCR">Wrist Flexion — FCR</option>
-        <option value="FCU">Wrist Flexion — FCU</option>
+        <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
+        <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
+        <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
+        <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
+        <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
       </optgroup>
       <optgroup label="Hip">
-        <option value="Iliopsoas">Hip Flexion — Iliopsoas</option>
-        <option value="Glute_Max">Hip Extension — Glute Max</option>
-        <option value="Glute_Med">Hip Abduction — Glute Med</option>
+        <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
+        <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
+        <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
         <option value="Hip_ER">Hip External Rotation</option>
         <option value="Hip_IR">Hip Internal Rotation</option>
       </optgroup>
       <optgroup label="Knee">
-        <option value="Hamstrings">Knee Flexion — Hamstrings</option>
-        <option value="Quadriceps">Knee Extension — Quadriceps</option>
+        <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
+        <option value="Quadriceps">Knee Extension (Quadriceps)</option>
       </optgroup>
-      <optgroup label="Ankle & Foot">
-        <option value="Tibialis_Anterior">Dorsiflexion + Inversion</option>
-        <option value="Foot_Eversion_PF">Eversion + Plantarflexion</option>
-        <option value="Ankle_Dorsiflexion">Ankle Dorsiflexion</option>
-        <option value="Gastrocnemius">Plantar Flexion — Gastroc/Soleus</option>
+      <optgroup label="Ankle & Foot -  Grading Exception for Gastroc">
+        <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
+        <option value="Foot_Eversion_PF">Foot Eversion + Plantarflexion (Fibularis Longus, Fibularis Brevis)</option>
+        <option value="Ankle_Dorsiflexion">Ankle Dorsiflexion (Tibialis Anterior; EDL/EHL assist)</option>
+        <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
       </optgroup>
     </select>
 
@@ -171,21 +158,28 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
     <label>Model Control</label>
     <div class="row">
       <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
-      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+      <button id="zeroAll" class="mini" title="Reset to anatomic baseline">Zero All</button>
     </div>
 
-    <label>Placement</label>
+    <label>Room Placement</label>
     <div class="row">
-      <button id="placeSave" class="mini">📍 Place (click surface) & Save</button>
-      <span id="placeHint" class="badge">Tip: click floor/table</span>
+      <button id="placeOnTable" class="mini">🪑 Place/Seat on Table</button>
+      <button id="placeOnFloor" class="mini">🦶 Stand on Floor</button>
     </div>
     <div class="row">
-      <button id="nudgeUp"   class="mini">⬆️ Nudge Up</button>
+      <button id="nudgeUp" class="mini">⬆️ Nudge Up</button>
       <button id="nudgeDown" class="mini">⬇️ Nudge Down</button>
     </div>
     <div class="row">
-      <button id="nudgeFwd"  class="mini">⬅️ Nudge Toward</button>
-      <button id="nudgeBack" class="mini">➡️ Nudge Away</button>
+      <button id="nudgeToward" class="mini">↗️ Nudge Toward</button>
+      <button id="nudgeAway" class="mini">↙️ Nudge Away</button>
+    </div>
+    <label>Scale</label>
+    <input id="scaleSlider" type="range" min="0.8" max="1.6" value="1.2" step="0.01"/>
+
+    <div class="row">
+      <button id="savePose" class="mini">💾 Save</button>
+      <button id="clearPose" class="mini">🧹 Clear</button>
     </div>
 
     <pre id="log"></pre>
@@ -209,6 +203,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 </div>
 
 <script>
+  // Use your live model path (uploaded in your repo)
   window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
 </script>
 
@@ -227,31 +222,34 @@ window.addEventListener('error', (e) => {
 });
 
 /* ==== UI refs ==== */
-const canvas = document.getElementById("c");
-const logEl = document.getElementById("log");
+const $ = (id)=>document.getElementById(id);
+const canvas = $("c");
+const logEl = $("log");
 const log = (t) => { logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
 
-const actionSel = document.getElementById("actionSel");
-const startTestBtn = document.getElementById("startTestBtn");
-const showMMT = document.getElementById("showMMT");
+const actionSel = $("actionSel");
+const startTestBtn = $("startTestBtn");
+const showMMT = $("showMMT");
+const testButton = $("testButton");
+const resistanceFill = $("resistanceFill");
+const resistanceText = $("resistanceText");
+const instructionText = $("instructionText");
+const gradeMain = $("grade-main");
 
-const testButton = document.getElementById("testButton");
-const resistanceFill = document.getElementById("resistanceFill");
-const resistanceText = document.getElementById("resistanceText");
-const instructionText = document.getElementById("instructionText");
-const gradeMain = document.getElementById("grade-main");
+const placeOnTableBtn = $("placeOnTable");
+const placeOnFloorBtn = $("placeOnFloor");
+const nudgeUpBtn = $("nudgeUp");
+const nudgeDownBtn = $("nudgeDown");
+const nudgeTowardBtn = $("nudgeToward");
+const nudgeAwayBtn = $("nudgeAway");
+const scaleSlider = $("scaleSlider");
+const saveBtn = $("savePose");
+const clearBtn = $("clearPose");
 
-const placeSaveBtn = document.getElementById("placeSave");
-const nudgeUp   = document.getElementById("nudgeUp");
-const nudgeDown = document.getElementById("nudgeDown");
-const nudgeFwd  = document.getElementById("nudgeFwd");
-const nudgeBack = document.getElementById("nudgeBack");
-const placeHint = document.getElementById("placeHint");
-
-/* ==== Start Test Button Glow Fix (NEW) ==== */
+/* ==== Start Test Button Glow Fix ==== */
 startTestBtn.addEventListener('click', () => {
   startTestBtn.classList.add('lockOn');
-  setTimeout(() => { startTestBtn.classList.remove('lockOn'); }, 300);
+  setTimeout(() => startTestBtn.classList.remove('lockOn'), 300);
 });
 
 /* ==== THREE setup ==== */
@@ -266,68 +264,101 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf1f5f9);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
-camera.position.set(2.2,1.7,3.8);
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 200);
+camera.position.set(1.8,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = .08;
-controls.minDistance=.6; controls.maxDistance=8;
-controls.target.set(0,1.1,0);
+controls.minDistance=.6; controls.maxDistance=20;
+controls.target.set(0,1.05,0);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.6));
-const key = new THREE.DirectionalLight(0xffffff, 1.2);
-key.position.set(3.5,5,3);
+/* Lights */
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8ca0b3, 0.8));
+const key = new THREE.DirectionalLight(0xffffff, 1.1);
+key.position.set(3.5,5,3.5);
 key.castShadow = true;
 key.shadow.mapSize.set(2048,2048);
-key.shadow.camera.near=0.1; key.shadow.camera.far=20;
-key.shadow.camera.left=-6; key.shadow.camera.right=6;
-key.shadow.camera.top=6; key.shadow.camera.bottom=-6;
+key.shadow.camera.near=0.1; key.shadow.camera.far=50;
+key.shadow.camera.left=-10; key.shadow.camera.right=10;
+key.shadow.camera.top=10; key.shadow.camera.bottom=-10;
 scene.add(key);
 
-/* ==== Room / exam props ==== */
-const placeables = []; // meshes we can place on
-const room = new THREE.Group(); scene.add(room);
+/* ==== ROOM GEOMETRY (simple eval room) ==== */
+const room = new THREE.Group();
+scene.add(room);
 
-// Floor
-const floorMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.95, metalness: 0 });
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(8,6), floorMat);
-floor.rotation.x = -Math.PI/2; floor.position.y = 0;
-floor.receiveShadow = true; room.add(floor); placeables.push(floor);
+// Floor (vinyl)
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(12, 12),
+  new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness:0.9, metalness:0 })
+);
+floor.rotation.x = -Math.PI/2;
+floor.receiveShadow = true;
+room.add(floor);
 
 // Walls
-const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 1 });
-const wallBack  = new THREE.Mesh(new THREE.PlaneGeometry(8,3), wallMat);  wallBack.position.set(0,1.5,-3); room.add(wallBack);
-const wallLeft  = new THREE.Mesh(new THREE.PlaneGeometry(6,3), wallMat);  wallLeft.rotation.y = Math.PI/2; wallLeft.position.set(-4,1.5,0); room.add(wallLeft);
-const wallRight = new THREE.Mesh(new THREE.PlaneGeometry(6,3), wallMat);  wallRight.rotation.y = -Math.PI/2; wallRight.position.set(4,1.5,0); room.add(wallRight);
+const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 1, metalness: 0 });
+const backWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), wallMat);
+backWall.position.set(0, 1.5, -6);
+room.add(backWall);
+const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), wallMat);
+leftWall.rotation.y = Math.PI/2;
+leftWall.position.set(-6, 1.5, 0);
+room.add(leftWall);
 
-// Exam table (red top)
-const table = new THREE.Group(); room.add(table);
-const base = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.55,0.7), new THREE.MeshStandardMaterial({ color:0xd1d5db, roughness:.9 }));
-base.position.set(0,0.275,0.4); base.castShadow = true; base.receiveShadow = true; table.add(base);
-const top = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.08,0.75), new THREE.MeshStandardMaterial({ color:0xb91c1c, roughness:.8 }));
-top.position.set(0,0.56,0.4); top.castShadow = true; top.receiveShadow = true; table.add(top); placeables.push(top);
-const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.06,0.3), new THREE.MeshStandardMaterial({ color:0xfef2f2, roughness:.95 }));
-pillow.position.set(0.55,0.63,0.4); pillow.castShadow = true; pillow.receiveShadow = true; table.add(pillow);
+// Long blue table (extended)
+const TABLE_HEIGHT = 0.46;
+const TABLE_THICK = 0.08;
+const TABLE_W = 0.7;
+const TABLE_D = 2.2; // Long enough
+const tableTop = new THREE.Mesh(
+  new THREE.BoxGeometry(TABLE_W, TABLE_THICK, TABLE_D),
+  new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness:0.85, metalness:0.05 }) // deep blue
+);
+tableTop.position.set(0, TABLE_HEIGHT, 0.35);
+tableTop.castShadow = true; tableTop.receiveShadow = true;
+room.add(tableTop);
 
-// Curtain
-const curtain = new THREE.Mesh(new THREE.BoxGeometry(0.02,2.4,2.0), new THREE.MeshStandardMaterial({ color:0x60a5fa, transparent:true, opacity:0.5, roughness:1 }));
-curtain.position.set(-0.95,1.2,0.9); room.add(curtain);
+// Table base (simple box legs)
+const base = new THREE.Mesh(
+  new THREE.BoxGeometry(TABLE_W*0.6, TABLE_HEIGHT, TABLE_D*0.8),
+  new THREE.MeshStandardMaterial({ color: 0x374151, roughness:0.9, metalness:0.05 })
+);
+base.position.set(0, TABLE_HEIGHT/2, 0.35);
+base.castShadow = true; base.receiveShadow = true;
+room.add(base);
+
+// Cabinet
+const cabinet = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 0.9, 0.45),
+  new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness:0.8 })
+);
+cabinet.position.set(-1.6, 0.45, -0.6);
+cabinet.castShadow = true; cabinet.receiveShadow = true;
+room.add(cabinet);
 
 // Stool
-const stoolSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.06,24), new THREE.MeshStandardMaterial({ color:0x374151, roughness:.8 }));
-stoolSeat.position.set(-0.8,0.4,-0.3); stoolSeat.castShadow = stoolSeat.receiveShadow = true; room.add(stoolSeat);
-const stoolLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.35,12), new THREE.MeshStandardMaterial({ color:0x9ca3af, metalness:.2, roughness:.5 }));
-stoolLeg.position.set(-0.8,0.22,-0.3); stoolLeg.castShadow = stoolLeg.receiveShadow = true; room.add(stoolLeg);
+const stoolSeat = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.18, 0.18, 0.06, 24),
+  new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness:0.8 })
+);
+stoolSeat.position.set(0.95, 0.52, -0.2);
+stoolSeat.castShadow = true; stoolSeat.receiveShadow = true;
+room.add(stoolSeat);
+const stoolLeg = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.03, 0.03, 0.5, 16),
+  new THREE.MeshStandardMaterial({ color: 0x4b5563, roughness:0.8 })
+);
+stoolLeg.position.set(0.95, 0.25, -0.2);
+stoolLeg.castShadow = true; stoolLeg.receiveShadow = true;
+room.add(stoolLeg);
 
-// Step
-const step = new THREE.Mesh(new THREE.BoxGeometry(0.45,0.15,0.35), new THREE.MeshStandardMaterial({ color:0x9ca3af, roughness:.9 }));
-step.position.set(0.6,0.075,0.9); step.castShadow = step.receiveShadow = true; room.add(step);
-
-// Door & Window
-const door = new THREE.Mesh(new THREE.BoxGeometry(0.9,2.1,0.05), new THREE.MeshStandardMaterial({ color:0x111827, roughness:.7 }));
-door.position.set(-3.1,1.05,-2.95); room.add(door);
-const windowPane = new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.8), new THREE.MeshStandardMaterial({ color:0x93c5fd, transparent:true, opacity:.5 }));
-windowPane.position.set(2.2,1.6,-2.95); room.add(windowPane);
+// Shadow catcher slightly above floor to enhance contact shadows
+const shadowCatch = new THREE.Mesh(new THREE.PlaneGeometry(6,6), new THREE.ShadowMaterial({ opacity:0.4 }));
+shadowCatch.rotation.x = -Math.PI/2;
+shadowCatch.position.y = 0.001;
+shadowCatch.receiveShadow = true;
+room.add(shadowCatch);
 
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
@@ -338,39 +369,41 @@ const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three
 let model=null, skeleton=null;
 const initialBoneRot = new Map();
 
-/* ==== Persistence ==== */
-const SEAT_KEY = "rometrics_room_pose_v1";
-function savePose() {
+/* ==== Utilities ==== */
+function savePose(){
   if(!model) return;
-  const p = model.position; const r = model.rotation;
-  localStorage.setItem(SEAT_KEY, JSON.stringify({ p:[p.x,p.y,p.z], r:[r.x,r.y,r.z] }));
+  const p = model.position, s = model.scale;
+  localStorage.setItem("rometrics_pose_v2", JSON.stringify({x:p.x, y:p.y, z:p.z, sx:s.x, sy:s.y, sz:s.z}));
 }
-function loadPose() {
+function loadPose(){
   try{
-    const raw = localStorage.getItem(SEAT_KEY);
+    const raw = localStorage.getItem("rometrics_pose_v2");
     if(!raw) return false;
-    const {p,r} = JSON.parse(raw);
-    if (p && model) model.position.set(p[0],p[1],p[2]);
-    if (r && model) model.rotation.set(r[0],r[1],r[2]);
+    const o = JSON.parse(raw);
+    if(!model) return false;
+    model.position.set(o.x, o.y, o.z);
+    model.scale.set(o.sx, o.sy, o.sz);
+    scaleSlider.value = String(o.sx.toFixed(2));
     return true;
-  } catch { return false; }
+  }catch{ return false; }
+}
+function clearPose(){ localStorage.removeItem("rometrics_pose_v2"); }
+
+function box3Of(obj){ return new THREE.Box3().setFromObject(obj); }
+function snapBottomToY(targetY){
+  if(!model) return;
+  const b = box3Of(model);
+  if (isFinite(b.min.y)) model.position.y += (targetY - b.min.y);
 }
 
-/* ==== Helpers ==== */
-function snapBottomTo(hitY){
-  const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  if (isFinite(minY)) model.position.y += (hitY - minY);
-}
-function seatedLegs(){
+function seatPoseOnlyLegs(){
   if(!skeleton) return;
   const get = (n)=> skeleton.bones.find(b => b.name === n);
-  const thighL = get("thigh_L");
-  const thighR = get("thigh_R");
-  const calfL  = get("calf_L");
-  const calfR  = get("calf_R");
+  const thighL = get("thigh_L"), thighR = get("thigh_R"), calfL = get("calf_L"), calfR = get("calf_R");
   [thighL,thighR,calfL,calfR].forEach(b=>{
-    const q0 = initialBoneRot.get(b); if(b&&q0) b.quaternion.copy(q0);
+    if(!b) return;
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
   });
   const rad = THREE.MathUtils.degToRad;
   if (thighL) thighL.rotateX(rad(90));
@@ -379,128 +412,142 @@ function seatedLegs(){
   if (calfR)  calfR.rotateX(rad(-90));
 }
 
+function placeOnTable(){
+  seatPoseOnlyLegs();
+  // Align model horizontally with table center
+  if(model){
+    model.position.x = tableTop.position.x;
+    model.position.z = tableTop.position.z - (TABLE_D*0.25);
+  }
+  // Snap bottom to tabletop
+  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
+  snapBottomToY(topY);
+  savePose();
+}
+
+function placeOnFloor(){
+  if(!model) return;
+  // Reset legs to default
+  if (skeleton){
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
+  // Center and snap to floor
+  model.position.x = 0;
+  model.position.z = -0.4;
+  snapBottomToY(0);
+  savePose();
+}
+
+function nudgeY(dy){
+  if(!model) return;
+  model.position.y += dy;
+  savePose();
+}
+function nudgeTowardAway(sign){
+  if(!model) return;
+  // Move along camera forward projected on XZ
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  dir.y = 0; dir.normalize();
+  model.position.addScaledVector(dir, 0.04 * sign);
+  savePose();
+}
+
 /* ==== Load model ==== */
+function addModel(gltf){
+  model = gltf.scene;
+  // Start slightly smaller than previous attempt to match room/table scale
+  model.scale.set(1.15,1.15,1.15);
+  model.traverse(o=>{
+    if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+    if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+  });
+  scene.add(model);
+
+  if (skeleton){
+    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+  }
+
+  // If we have a saved pose, apply it; else stand on floor
+  if(!loadPose()){
+    placeOnFloor();
+  }
+
+  $("msg").textContent = "✅ Model loaded";
+}
+
 const MODEL_CANDIDATES = [
   window.ROMETRICS_MODEL_URL,
   "assets/Roma_ROMetrics.glb",
   new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
 ].filter(Boolean);
 
-function tryNextModelUrl(index, onDone){
-  if(index >= MODEL_CANDIDATES.length){ onDone(new Error("All model URL fallbacks failed.")); return; }
+function tryNextModelUrl(index){
+  if(index >= MODEL_CANDIDATES.length){
+    $("msg").textContent = "⚠️ Could not load model from any path.";
+    return;
+  }
   const url = MODEL_CANDIDATES[index];
-  log("Loading model from: " + url);
-  loader.load(url,
-    (gltf)=> onDone(null, gltf),
+  $("msg").textContent = "Loading model… " + url;
+  loader.load(
+    url,
+    (gltf)=> addModel(gltf),
     (xhr)=>{
       const pct = xhr.lengthComputable ? Math.min(100, Math.round(100*xhr.loaded/xhr.total)) : null;
-      document.getElementById("msg").textContent = pct!==null ? `Loading ${pct}%` : "Loading…";
+      $("msg").textContent = pct!==null ? `Loading ${pct}%` : "Loading…";
     },
-    ()=> tryNextModelUrl(index+1, onDone)
+    ()=> tryNextModelUrl(index+1)
   );
 }
 
-function loadModel(){
-  tryNextModelUrl(0, (err, gltf)=>{
-    if (err){
-      document.getElementById("msg").textContent = `⚠️ Load error: ${err.message}`;
-      log("All fallbacks failed.");
-      return;
-    }
-    model = gltf.scene;
-    model.scale.set(1.5,1.5,1.5);
-    model.traverse(o=>{
-      if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
-      if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-    });
-    scene.add(model);
-    document.getElementById("msg").textContent = "✅ Model loaded";
+tryNextModelUrl(0);
 
-    if (skeleton){
-      skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-    }
-
-    // Default: place on floor center
-    const box = new THREE.Box3().setFromObject(model);
-    model.position.y -= box.min.y;
-    model.position.x = -0.2; model.position.z = 0.2;
-
-    // Restore pose if saved
-    if(!loadPose()){
-      // If no saved pose, seat on table by default
-      seatedLegs();
-      snapBottomTo(top.position.y + 0.04);
-      model.position.set(0.2, model.position.y, 0.5);
-    }
-  });
-}
-loadModel();
-
-/* ==== Placement (raycast) ==== */
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let placing = false;
-
-function onPointerDown(e){
-  if(!placing || !model) return;
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObjects(placeables, false);
-  if(hits.length){
-    const hit = hits[0];
-    model.position.copy(hit.point);
-    snapBottomTo(hit.point.y);
-    // If the surface is the red table top, auto-seat
-    if (hit.object === top) seatedLegs();
-    savePose();
-    placing = false;
-    placeSaveBtn.classList.remove('lockOn');
-    placeHint.textContent = "Saved ✓";
-    setTimeout(()=> placeHint.textContent = "Tip: click floor/table", 900);
-  }
-}
-
-placeSaveBtn.addEventListener('click', ()=>{
-  placing = true;
-  placeSaveBtn.classList.add('lockOn');
-  placeHint.textContent = "Click any floor/table surface…";
-});
-renderer.domElement.addEventListener('pointerdown', onPointerDown);
-
-/* ==== Nudgers ==== */
-function doNudge(dx,dy,dz){
-  if(!model) return;
-  model.position.x += dx;
-  model.position.y += dy;
-  model.position.z += dz;
-  savePose();
-}
-nudgeUp.addEventListener('click',   ()=> doNudge(0, +0.01, 0));
-nudgeDown.addEventListener('click', ()=> doNudge(0, -0.02, 0)); // a bit stronger down
-nudgeFwd.addEventListener('click',  ()=> doNudge(0, 0, -0.03));
-nudgeBack.addEventListener('click', ()=> doNudge(0, 0, +0.03));
-
-/* ==== Basic enablement ==== */
-actionSel.addEventListener('change', ()=>{
-  testButton.disabled = actionSel.value === "";
-});
-
-document.getElementById("lock3D").onclick = () => {
+/* ==== Wire UI ==== */
+$("lock3D").onclick = () => {
   controls.enabled = !controls.enabled;
-  const btn = document.getElementById("lock3D");
+  const btn = $("lock3D");
   btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
   btn.classList.toggle('lockOn', !controls.enabled);
 };
-
-document.getElementById("zeroAll").onclick = () => {
+$("zeroAll").onclick = () => {
   if (!skeleton) return;
   skeleton.bones.forEach(b=>{
     const q0 = initialBoneRot.get(b);
     if (q0) b.quaternion.copy(q0);
   });
 };
+
+placeOnTableBtn.onclick = placeOnTable;
+placeOnFloorBtn.onclick = placeOnFloor;
+nudgeUpBtn.onclick = ()=> nudgeY(+0.01);
+nudgeDownBtn.onclick = ()=> nudgeY(-0.01);
+nudgeTowardBtn.onclick = ()=> nudgeTowardAway(+1);
+nudgeAwayBtn.onclick = ()=> nudgeTowardAway(-1);
+
+scaleSlider.addEventListener('input', ()=>{
+  if(!model) return;
+  const s = parseFloat(scaleSlider.value);
+  model.scale.set(s,s,s);
+  savePose();
+});
+
+saveBtn.onclick = savePose;
+clearBtn.onclick = ()=>{ clearPose(); $("msg").textContent = "Saved pose cleared."; };
+
+/* ==== Notes panel (stubs) ==== */
+const notePanel = $('notePanel');
+const noteTitle = $('noteTitle');
+const noteBody  = $('noteBody');
+const tabHigh   = $('tabHigh');
+const tabLow    = $('tabLow');
+const closeNote = $('closeNote');
+showMMT.addEventListener('click', ()=> { notePanel.classList.remove('hide'); notePanel.style.display='flex'; });
+tabHigh.addEventListener('click', ()=>{});
+tabLow.addEventListener('click', ()=>{});
+closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
 
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
@@ -513,6 +560,7 @@ addEventListener("resize", ()=>{
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 })();
+
 </script>
 </body>
 </html>
