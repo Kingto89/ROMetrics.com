@@ -587,79 +587,115 @@ rotSlider.addEventListener('input', ()=>{
 saveBtn.onclick = savePose;
 clearBtn.onclick = ()=>{ localStorage.removeItem(POSE_KEY); $("msg").textContent = "Saved pose cleared."; };
 
-/* ==== Notes panel (MD loader) ==== */
-const notePanel = $('notePanel');
-const noteTitle = $('noteTitle');
-const noteBody  = $('noteBody');
-const tabHigh   = $('tabHigh');
-const tabLow    = $('tabLow');
-const closeNote = $('closeNote');
+/* ==== Side panel + Markdown loading ==== */
+const notePanel = document.getElementById('notePanel');
+const noteTitle = document.getElementById('noteTitle');
+const noteBody  = document.getElementById('noteBody');
+const tabHigh   = document.getElementById('tabHigh'); // 3–5
+const tabLow    = document.getElementById('tabLow');  // 0–2
+const closeNote = document.getElementById('closeNote');
 
-/* Helper: build path to your .md file
-   Assumes files like:
-   notes/Capital_Extension_high.md
-   notes/Capital_Extension_low.md
-   (rename paths if your folder/filenames are different)
-*/
-function buildNotePath(level){
-  const key = actionSel.value;
-  if (!key){
-    noteTitle.textContent = "MMT Instructions";
-    noteBody.textContent  = "Select a test from the dropdown first.";
-    return null;
-  }
-  // level: "high" → Grades 3–5, "low" → Grades 0–2
-  return `notes/${key}_${level}.md`;
+// GitHub RAW URLs for the two docs
+const MD_HIGH = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_threetofive.md";
+const MD_LOW  = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_zerototwo.md";
+
+// Map select values to readable headings to find in MD
+const TEST_TO_HEADING = {
+  Serratus_Anterior: "Scapular Abduction & Upward Rotation",
+  Upper_Trapezius: "Scapular Elevation",
+  Middle_Trapezius: "Scapular Adduction / Retraction",
+  Rhomboids: "Scapular Adduction + Downward Rotation",
+  Latissimus_Dorsi: "Latissimus Dorsi",
+  Anterior_Deltoid: "Shoulder Flexion",
+  Posterior_Deltoid: "Shoulder Extension",
+  Middle_Deltoid: "Shoulder Abduction",
+  Infraspinatus: "Shoulder External Rotation",
+  Subscapularis: "Shoulder Internal Rotation",
+  Biceps_Brachii: "Elbow Flexion — Biceps Brachii",
+  Brachialis: "Elbow Flexion — Brachialis",
+  Brachioradialis: "Elbow Flexion — Brachioradialis",
+  Triceps_Brachii: "Elbow Extension",
+  ECRL: "Wrist Extension — ECRL",
+  ECRB: "Wrist Extension — ECRB",
+  ECU: "Wrist Extension — ECU",
+  FCR: "Wrist Flexion — Flexor Carpi Radialis",
+  FCU: "Wrist Flexion — Flexor Carpi Ulnaris",
+  Iliopsoas: "Hip Flexion",
+  Glute_Max: "Hip Extension",
+  Glute_Med: "Hip Abduction",
+  Hip_ER: "Hip External Rotation",
+  Hip_IR: "Hip Internal Rotation",
+  Hamstrings: "Knee Flexion",
+  Quadriceps: "Knee Extension",
+  Tibialis_Anterior: "Foot Dorsiflexion + Inversion",
+  Gastrocnemius: "Ankle Plantar Flexion"
+};
+
+function mdToHtml(md){
+  // Tiny converter for headings/lists/bold/paragraphs
+  return md
+    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+    .replace(/^\* (.*)$/gm, "<li>$1</li>")
+    .replace(/^- (.*)$/gm, "<li>$1</li>")
+    .replace(/(\n<li>.*<\/li>)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/^([^<\n].*)$/gm, "<p>$1</p>");
 }
 
-async function loadNotes(level){
-  const path = buildNotePath(level);
-  if (!path) return;
-
-  const label = actionSel.options[actionSel.selectedIndex]?.text || "MMT Instructions";
-  noteTitle.textContent = level === "high"
-    ? `${label} — Grades 3–5`
-    : `${label} — Grades 0–2`;
-
-  noteBody.textContent = "Loading…";
-
-  try{
-    const res = await fetch(path);
-    if (!res.ok){
-      noteBody.textContent = `No notes file found for this test (${path}).`;
-      return;
+// Extract section starting with matching "## Heading" until next "##"
+function extractSection(md, queryHeading){
+  const lines = md.split(/\r?\n/);
+  let start = -1;
+  for (let i=0;i<lines.length;i++){
+    if (lines[i].startsWith("## ") && lines[i].toLowerCase().includes(queryHeading.toLowerCase())){
+      start = i; break;
     }
-    const txt = await res.text();
-    // Simple: show raw text; if you want markdown formatting later we can add it
-    noteBody.textContent = txt;
-  }catch(err){
-    noteBody.textContent = "Error loading notes.";
+  }
+  if (start === -1){
+    return md; // fallback: show whole doc if not found
+  }
+  let end = lines.length;
+  for (let j=start+1;j<lines.length;j++){
+    if (lines[j].startsWith("## ")){ end = j; break; }
+  }
+  return lines.slice(start, end).join("\n");
+}
+
+async function loadNoteFile(which){
+  const muscleKey = actionSel.value;
+  if (!muscleKey){
+    noteBody.innerHTML = "<p>Select a test first.</p>";
+    return;
+  }
+  const heading = TEST_TO_HEADING[muscleKey] || muscleKey.replaceAll("_"," ");
+  noteTitle.textContent = heading + " — MMT Instructions";
+  const url = (which === 'high') ? MD_HIGH : MD_LOW;
+  noteBody.innerHTML = "Loading…";
+  try{
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const section = extractSection(text, heading);
+    noteBody.innerHTML = mdToHtml(section);
+  }catch(e){
+    noteBody.textContent = "Failed to load instructions.";
   }
 }
 
-showMMT.addEventListener('click', ()=> {
+function openNote(which='high'){
+  tabHigh.classList.toggle('active', which==='high');
+  tabLow.classList.toggle('active', which!=='high');
   notePanel.classList.remove('hide');
-  notePanel.style.display = 'flex';
-  tabHigh.classList.add('active');
-  tabLow.classList.remove('active');
-  loadNotes("high");     // default to Grades 3–5
-});
+  notePanel.style.display = "flex";
+  loadNoteFile(which);
+}
 
-tabHigh.addEventListener('click', ()=> {
-  tabHigh.classList.add('active');
-  tabLow.classList.remove('active');
-  loadNotes("high");
-});
-
-tabLow.addEventListener('click', ()=> {
-  tabLow.classList.add('active');
-  tabHigh.classList.remove('active');
-  loadNotes("low");
-});
-
+showMMT.addEventListener('click', ()=> openNote('high'));
+tabHigh.addEventListener('click', ()=> openNote('high'));
+tabLow.addEventListener('click', ()=> openNote('low'));
 closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
-  
-
 
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
