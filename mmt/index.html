@@ -285,6 +285,12 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
+function stickToY(targetY=0){
+  if(!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  if (isFinite(minY)) model.position.y += (targetY - minY);
+}
 
  // Make the equirectangular background appear 3× smaller
 function shrinkBackgroundBy(factor = 50) {
@@ -417,6 +423,8 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
+  stickToY(0.46); // raise/lower until she “sits” on the surface (try 0.40–0.55)
+
 
   // position + framing to sell "seated in bed"
   model.position.y -= 0.3;           // tweak 0.35–0.55
