@@ -203,7 +203,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 </div>
 
 <script>
-  window.ROMETRICS_MODEL_URL = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/assets/Roma_ROMetrics.glb";
+  window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
 </script>
 
 <script type="module">
@@ -352,7 +352,7 @@ function cacheKeyBones() {
   log("Key bones cached for posing.");
 }
 
-/* ===== MMT → AUTOACTION MAP (COMPLETE) ===== */
+/* ===== MMT → AUTOACTION MAP (INCORPORATED FIX) ===== */
 const MMT_TO_AUTO = {
     /* Cervical & Capital */
     Capital_Extension: "cerv_fe",
@@ -680,10 +680,7 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 // Run once on load
 updateGradingExceptionAvailability();
 
-// Minimal setPair used only for pose setting (not animation)
-// The original simple setPair function has been removed.
-
-// NEW: Advanced setPair function capable of handling paired joint movement
+/* ===== MOVEMENT FIX: ADVANCED setPair FUNCTION ===== */
 function setPair(key, deg) {
     const cfg = [...UPPER, ...LOWER].find(x => x.key === key); 
     if (!cfg || !skeleton) return;
@@ -716,7 +713,6 @@ function setPair(key, deg) {
     bone.quaternion.copy(qBase).multiply(qDelta);
 }
   
-
 function applyPoseForTest(testKey) {
   const pose = MMT_POSE[testKey];
   if (!pose) return;
@@ -906,7 +902,7 @@ addEventListener("resize", ()=>{
   renderer.setSize(innerWidth, innerHeight);
 });
 
-/* === AUTO-MOVEMENT FOR MMT: Start Test === */
+/* === AUTO-MOVEMENT FOR MMT: Start Test (INCORPORATED FIX) === */
 startTestBtn.addEventListener("click", () => {
   const test = actionSel.value;
   if (!test) return;
@@ -919,11 +915,10 @@ startTestBtn.addEventListener("click", () => {
         return; 
     }
 
-
   let current = 0;
   const target = cfg.max;
-  const step = 2;          // Increased speed
-  const interval = 10;     // Increased speed
+  const step = 2;          // Increased speed for visibility
+  const interval = 10;     // Faster interval for smoother animation
 
  // Reset the joint to its initial pose before starting the motion
  setPair(cfg.key, 0);
