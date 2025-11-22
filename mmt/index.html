@@ -248,8 +248,6 @@ startTestBtn.addEventListener('click', () => {
     startTestBtn.classList.remove('lockOn');
   }, 300);
 });
-/* ========================================= */
-
 /* ==== THREE setup ==== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(devicePixelRatio);
@@ -264,9 +262,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf1f5f9);
 
-// FIX: Changed FOV from 45 to 35. This makes the distant HDR background appear smaller and correctly scaled 
-// relative to the foreground model without changing the model's physical size.
-const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.01, 100);
+// FIX V2: Lowered FOV to 25. This makes the distant HDR background appear much smaller and correctly scaled 
+// relative to the foreground model, fixing the "massive" appearance.
+const camera = new THREE.PerspectiveCamera(25, innerWidth/innerHeight, 0.01, 100);
 camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -288,7 +286,6 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
-
 /* ==== HDR Background Loader ==== */
 const exrLoader = new EXRLoader();
 // FIX: Using '../assets/' to resolve 404 error, assuming the HTML file is inside a subdirectory
