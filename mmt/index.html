@@ -416,21 +416,6 @@ let model=null, skeleton=null;
 const initialBoneRot = new Map();
 
 /* ==== Utilities ==== */
-function placeOnTable(){
-  seatPoseOnlyLegs();
-  // Face the table (positive Z)
-  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
-  // Align model horizontally with table center
-  if(model){
-    model.position.x = tableTop.position.x;
-    model.position.z = tableTop.position.z - (TABLE_D*0.25);
-  }
-  // Snap bottom to tabletop
-  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
-  snapBottomToY(topY);
-  setPoseFlag("seated", true); // <--- This saves the seated state
-  savePose();
-}  
 function degToRad(d){ return d * Math.PI / 180; }
 function radToDeg(r){ return r * 180 / Math.PI; }
 const POSE_KEY = "rometrics_pose_v3";
@@ -465,26 +450,30 @@ function seatPoseOnlyLegs(){
   if (calfR)  calfR.rotateX(rad(-90));
 }
 
-function placeOnFloor(){
-  if(!model) return;
-  // Reset legs to default
-  if (skeleton){
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-  }
-  // Face front wall
-  model.rotation.y = 0;
-  rotSlider.value = "0";
-  // Center and snap to floor
-  model.position.x = 0;
-  model.position.z = -0.4;
-  snapBottomToY(0);
-  setPoseFlag("seated", false); // <--- ADD THIS LINE
-  savePose();
+function placeOnTable(){
+  seatPoseOnlyLegs();
+  // Face the table (positive Z)
+  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
+  // Align model horizontally with table center
+  if(model){
+    model.position.x = tableTop.position.x;
+    model.position.z = tableTop.position.z - (TABLE_D*0.25);
+  }
+  // Snap bottom to tabletop
+  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
+  snapBottomToY(topY);
+  savePose();
 }
 
+function placeOnFloor(){
+  if(!model) return;
+  // Reset legs to default
+  if (skeleton){
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
   // Face front wall
   model.rotation.y = 0;
   rotSlider.value = "0";
@@ -509,6 +498,7 @@ function nudgeTowardAway(sign){
   model.position.addScaledVector(dir, 0.04 * sign);
   savePose();
 }
+
 /* ==== Load model ==== */
 function addModel(gltf){
   model = gltf.scene;
@@ -525,13 +515,13 @@ function addModel(gltf){
 
   // If we have a saved pose, apply it; else stand on floor
   if(!loadPose()){
-    placeOnFloor(); // <--- THIS LINE IS REQUIRED
+    placeOnFloor();
   }
 
   $("msg").textContent = "✅ Model loaded";
-} 
+} // <--- THIS IS THE MISSING CLOSING BRACE!
 
-const MODEL_CANDIDATES = [  
+const MODEL_CANDIDATES = [
 // ... rest of the code continues below here
   window.ROMETRICS_MODEL_URL,
   "assets/Roma_ROMetrics.glb",
