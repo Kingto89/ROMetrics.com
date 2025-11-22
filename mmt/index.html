@@ -331,6 +331,8 @@ function loadModel(){
     if (skeleton){
       skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
     }
+    console.log("BONES:", skeleton.bones.map(b => b.name));
+
   });
 }
 loadModel();
