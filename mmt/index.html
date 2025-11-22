@@ -391,6 +391,7 @@ function loadModel(){
       return;
     }
     model = gltf.scene;
+    model.scale.set(1.5, 1.5, 1.5);
     model.traverse(o=>{
       if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
       if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
