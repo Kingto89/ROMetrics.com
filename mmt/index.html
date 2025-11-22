@@ -194,9 +194,9 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 /* ==== Hard-wired numeric pose (edit these) ==== */
 const POSE = {
-  x: 0.50,   // back(-) / toward(+)
+  x: 0.60,   // back(-) / toward(+)
   y: 0.00,   // down(-) / up(+)
-  z: -0.20,  // left(-) / right(+)
+  z: 0.20,  // left(-) / right(+)
   ryDeg: 60,  // rotation 0–360
   s: 1.15,   // scale
   seated: false // true = sit legs
@@ -339,7 +339,7 @@ room.add(shadowCatch);
  // ---- View preset: room yaw + camera distance (ONE BLOCK) ----
 (() => {
   // Turn the whole room left/right (negative = left, positive = right)
-  const ROOM_YAW_DEG = -60;
+  const ROOM_YAW_DEG = -70;
   room.rotation.y = degToRad(ROOM_YAW_DEG);
 
   // Zoom preset: set camera distance from the controls target
