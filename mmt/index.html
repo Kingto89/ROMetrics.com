@@ -7,23 +7,23 @@
 
 <script type="importmap">
 {
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
 }
 </script>
 
 <style>
 :root{
-  --bg:#f1f5f9; --panel:#ffffff; --line:#cbd5e1; --ctrl:#e2e8f0;
-  --text:#0f172a; --muted:#64748b; --primary:#0d9488; --accent:#facc15;
+  --bg:#f1f5f9; --panel:#ffffff; --line:#cbd5e1; --ctrl:#e2e8f0;
+  --text:#0f172a; --muted:#64748b; --primary:#0d9488; --accent:#facc15;
 }
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:system-ui,Segoe UI,Roboto}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 .panel{position:fixed;left:25px;top:12px;width:380px;max-height:92vh;z-index:100;background:var(--panel);
-  border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden}
 .dragbar{cursor:move;background:var(--ctrl);border-bottom:1px solid var(--line);padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
 .dragbar .hint{margin-left:auto;font-size:12px;color:var(--muted)}
 .content{padding:12px;overflow:auto}
@@ -43,9 +43,9 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 
 /* Right-side note panel (smaller) */
 #notePanel{position:fixed;top:16px;right:16px;width:min(420px,46vw);max-height:70vh;display:none;z-index:140;
-  background:#e2e8f0; /* light slate */
-  border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);
-  display:flex;flex-direction:column;overflow:hidden}
+  background:#e2e8f0; /* light slate */
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  display:flex;flex-direction:column;overflow:hidden}
 .note-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#dbe4ee;border-bottom:1px solid var(--line)}
 .note-head h3{margin:0;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .note-tabs{display:flex;gap:8px}
@@ -54,7 +54,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 .note-body{padding:12px;overflow:auto;background:#fff}
 .note-close{border-radius:8px;border:1px solid var(--line);padding:6px 10px;background:#fff}
 @media (max-width: 720px){
-  #notePanel{right:8px;left:8px;width:auto;max-height:60vh}
+  #notePanel{right:8px;left:8px;width:auto;max-height:60vh}
 }
 .hide{display:none !important;}
 </style>
@@ -62,150 +62,148 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 <body>
 
 <div class="panel" id="panel">
-  <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
-  <div class="content">
+  <div class="dragbar" id="dragbar">💪 MMT Trainer <span class="hint">drag me</span></div>
+  <div class="content">
 
-    <label>MMT Test & Muscle</label>
-    <select id="actionSel">
-      <option value="">(Select a test to begin…)</option>
+    <label>MMT Test & Muscle</label>
+    <select id="actionSel">
+      <option value="">(Select a test to begin…)</option>
 
-      <optgroup label="Cervical & Capital">
-  <option value="Capital_Extension">Capital Extension (Rectus Capitis Posterior Major, Obliquus Capitis Superior, Splenius Capitis)</option>
-  <option value="Cervical_Extension">Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)</option>
-  <option value="Capital_Flexion">Capital Flexion — Chin Tuck (Longus Capitis, Rectus Capitis Anterior, Anterior Scalene)</option>
-  <option value="Cervical_Flexion">Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene)</option>
-  <option value="Single_SCM">Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli)</option>
-  <option value="Cervical_Rotation">Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral)</option>
+      <optgroup label="Cervical & Capital">
+  <option value="Capital_Extension">Capital Extension (Rectus Capitis Posterior Major, Obliquus Capitis Superior, Splenius Capitis)</option>
+  <option value="Cervical_Extension">Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)</option>
+  <option value="Capital_Flexion">Capital Flexion — Chin Tuck (Longus Capitis, Rectus Capitis Anterior, Anterior Scalene)</option>
+  <option value="Cervical_Flexion">Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene)</option>
+  <option value="Single_SCM">Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli)</option>
+  <option value="Cervical_Rotation">Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral)</option>
 </optgroup>
 
 
-      <optgroup label="Scapula">
-        <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
-        <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
-        <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
-        <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
-        <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
-      </optgroup>
+      <optgroup label="Scapula">
+        <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
+        <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
+        <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
+        <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
+        <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
+      </optgroup>
 
-      <optgroup label="Shoulder">
-        <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
-        <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
-        <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
-        <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
-        <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
-      </optgroup>
+      <optgroup label="Shoulder">
+        <option value="Anterior_Deltoid">Shoulder Flexion (Anterior Deltoid, Coracobrachialis)</option>
+        <option value="Posterior_Deltoid">Shoulder Extension (Posterior Deltoid, Lat, Teres Major)</option>
+        <option value="Middle_Deltoid">Shoulder Abduction (Middle Deltoid, Supraspinatus)</option>
+        <option value="Infraspinatus">Shoulder External Rotation (Infraspinatus, Teres Minor)</option>
+        <option value="Subscapularis">Shoulder Internal Rotation (Subscapularis, Teres Major, Pec Major, Lat)</option>
+      </optgroup>
 
-      <optgroup label="Trunk & Pelvis - Grading Exception">
-  <option value="Trunk_Ext_Lumbar">Trunk Extension — Lumbar (Erector Spinae)</option>
-  <option value="Trunk_Ext_Thoracic">Trunk Extension — Thoracic (Erector Spinae)</option>
-  <option value="Trunk_Flexion">Trunk Flexion — Rectus Abdominis</option>
-  <option value="Trunk_Rotation">Trunk Rotation — External & Internal Obliques</option>
-  <option value="Pelvic_Elevation">Pelvic Elevation (Hip Hike) — Quadratus Lumborum</option>
+      <optgroup label="Trunk & Pelvis - Grading Exception">
+  <option value="Trunk_Ext_Lumbar">Trunk Extension — Lumbar (Erector Spinae)</option>
+  <option value="Trunk_Ext_Thoracic">Trunk Extension — Thoracic (Erector Spinae)</option>
+  <option value="Trunk_Flexion">Trunk Flexion — Rectus Abdominis</option>
+  <option value="Trunk_Rotation">Trunk Rotation — External & Internal Obliques</option>
+  <option value="Pelvic_Elevation">Pelvic Elevation (Hip Hike) — Quadratus Lumborum</option>
 </optgroup>
 
-      
-      <optgroup label="Elbow">
-        <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
-        <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
-        <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
-        <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
-      </optgroup>
+      
+      <optgroup label="Elbow">
+        <option value="Biceps_Brachii">Elbow Flexion — Biceps Brachii (supinated)</option>
+        <option value="Brachialis">Elbow Flexion — Brachialis (pronated)</option>
+        <option value="Brachioradialis">Elbow Flexion — Brachioradialis (neutral)</option>
+        <option value="Triceps_Brachii">Elbow Extension — Triceps Brachii</option>
+      </optgroup>
 
-      <optgroup label="Wrist">
-        <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
-        <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
-        <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
-        <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
-        <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
-      </optgroup>
+      <optgroup label="Wrist">
+        <option value="ECRL">Wrist Extension — Extensor Carpi Radialis Longus (ECRL)</option>
+        <option value="ECRB">Wrist Extension — Extensor Carpi Radialis Brevis (ECRB)</option>
+        <option value="ECU">Wrist Extension — Extensor Carpi Ulnaris (ECU)</option>
+        <option value="FCR">Wrist Flexion — Flexor Carpi Radialis (FCR)</option>
+        <option value="FCU">Wrist Flexion — Flexor Carpi Ulnaris (FCU)</option>
+      </optgroup>
 
-      <optgroup label="Hip">
-        <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
-        <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
-        <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
-        <option value="Hip_ER">Hip External Rotation</option>
-        <option value="Hip_IR">Hip Internal Rotation</option>
-      </optgroup>
+      <optgroup label="Hip">
+        <option value="Iliopsoas">Hip Flexion (Iliopsoas)</option>
+        <option value="Glute_Max">Hip Extension (Glute Max, Hamstrings)</option>
+        <option value="Glute_Med">Hip Abduction (Glute Med, Glute Min)</option>
+        <option value="Hip_ER">Hip External Rotation</option>
+        <option value="Hip_IR">Hip Internal Rotation</option>
+      </optgroup>
 
-      <optgroup label="Knee">
-        <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
-        <option value="Quadriceps">Knee Extension (Quadriceps)</option>
-      </optgroup>
+      <optgroup label="Knee">
+        <option value="Hamstrings">Knee Flexion (Hamstrings)</option>
+        <option value="Quadriceps">Knee Extension (Quadriceps)</option>
+      </optgroup>
 
-      <optgroup label="Ankle & Foot -  Grading Exception for Gastroc">
-        <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
-        <option value="Foot_Eversion_PF">Foot Eversion + Plantarflexion (Fibularis Longus, Fibularis Brevis)</option>
-        <option value="Ankle_Dorsiflexion">Ankle Dorsiflexion (Tibialis Anterior; EDL/EHL assist)</option>
-         <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
-      </optgroup>
-    </select>
+      <optgroup label="Ankle & Foot -  Grading Exception for Gastroc">
+        <option value="Tibialis_Anterior">Dorsiflexion + Inversion (Tibialis Anterior)</option>
+        <option value="Foot_Eversion_PF">Foot Eversion + Plantarflexion (Fibularis Longus, Fibularis Brevis)</option>
+        <option value="Ankle_Dorsiflexion">Ankle Dorsiflexion (Tibialis Anterior; EDL/EHL assist)</option>
+         <option value="Gastrocnemius">Plantar Flexion (Gastrocnemius, Soleus)</option>
+      </optgroup>
+    </select>
 
-    <div class="row" style="margin-top:10px;">
-      <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
-      <button id="showMMT" class="mini">📌 MMT Placement</button>
-    </div>
+    <div class="row" style="margin-top:10px;">
+      <button id="startTestBtn" class="mini">▶️ Start Test (Grade 3 Position)</button>
+      <button id="showMMT" class="mini">📌 MMT Placement</button>
+    </div>
 
 <div class="row" style="align-items:center; margin-top:10px;">
-  <div style="flex:1;">
-    <label>Test Grade Selection</label>
-    <select id="grade-main" name="grade-main">
-      <option value="3">Grade 3 - 5 (Full ROM / Resistance: none, Mod, Max)</option>
-      <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
-      <option value="1">Grade 1 (Trace Contraction)</option>
-      <option value="0">Grade 0 (No Contraction)</option>
-    </select>
-  </div>
+  <div style="flex:1;">
+    <label>Test Grade Selection</label>
+    <select id="grade-main" name="grade-main">
+      <option value="3">Grade 3 - 5 (Full ROM / Resistance: none, Mod, Max)</option>
+      <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+      <option value="1">Grade 1 (Trace Contraction)</option>
+      <option value="0">Grade 0 (No Contraction)</option>
+    </select>
+  </div>
 
-  <div style="flex:1;">
-    <label>Grading Exceptions</label>
-    <select id="GradingExceptions" name="GradingExceptions">
-      <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
-      <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
-      <option value="3">Grade 3 (Full ROM / No Resistance)</option>
-      <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
-      <option value="1">Grade 1 (Trace Contraction)</option>
-    </select>
-  </div>
+  <div style="flex:1;">
+    <label>Grading Exceptions</label>
+    <select id="GradingExceptions" name="GradingExceptions">
+      <option value="5">Grade 5 (Full ROM / Maximum Resistance)</option>
+      <option value="4">Grade 4 (Full ROM / Moderate Resistance)</option>
+      <option value="3">Grade 3 (Full ROM / No Resistance)</option>
+      <option value="2">Grade 2 (Full ROM / Gravity Eliminated)</option>
+      <option value="1">Grade 1 (Trace Contraction)</option>
+    </select>
+  </div>
 </div>
 
 
-    <div class="row" style="margin-top:10px;">
-      <button id="testButton" disabled>
-        <div id="resistanceFill"></div>
-        <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
-      </button>
-    </div>
-    <p id="instructionText">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
+    <div class="row" style="margin-top:10px;">
+      <button id="testButton" disabled>
+        <div id="resistanceFill"></div>
+        <span id="resistanceText">Hold to Apply Resistance (4/5)</span>
+      </button>
+    </div>
+    <p id="instructionText">Hold for 1s (Grade 4), Hold for 2s (Grade 5).</p>
 
-    <label>Model Control</label>
-    <div class="row">
-      <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
-      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
-    </div>
+    <label>Model Control</label>
+    <div class="row">
+      <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
+      <button id="zeroAll" class="mini" title="Reset everything to anatomic baseline">Zero All</button>
+    </div>
 
-    <pre id="log"></pre>
-  </div>
+    <pre id="log"></pre>
+  </div>
 </div>
 
 <div id="msg">Loading…</div>
 <canvas id="c"></canvas>
 
-<!-- Right-side notes panel -->
 <div id="notePanel" class="hide">
-  <div class="note-head">
-    <h3 id="noteTitle">MMT Instructions</h3>
-    <div class="note-tabs">
-      <button id="tabHigh" class="active">Grades 3–5</button>
-      <button id="tabLow">Grades 0–2</button>
-    </div>
-    <button class="note-close" id="closeNote">Close ✕</button>
-  </div>
-  <div class="note-body" id="noteBody">Loading…</div>
+  <div class="note-head">
+    <h3 id="noteTitle">MMT Instructions</h3>
+    <div class="note-tabs">
+      <button id="tabHigh" class="active">Grades 3–5</button>
+      <button id="tabLow">Grades 0–2</button>
+    </div>
+    <button class="note-close" id="closeNote">Close ✕</button>
+  </div>
+  <div class="note-body" id="noteBody">Loading…</div>
 </div>
 
-<!-- Absolute override as requested -->
 <script>
-  window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
+  window.ROMETRICS_MODEL_URL = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/assets/Roma_ROMetrics.glb";
 </script>
 
 <script type="module">
@@ -218,8 +216,8 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 /* ==== Error surfacing ==== */
 window.addEventListener('error', (e) => {
-  const m = document.getElementById("msg");
-  if (m) m.textContent = `⚠️ ${e.message}`;
+  const m = document.getElementById("msg");
+  if (m) m.textContent = `⚠️ ${e.message}`;
 });
 
 /* ==== UI refs ==== */
@@ -276,62 +274,62 @@ scene.add(ground);
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
 const draco = new DRACOLoader(); draco.setDecoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/"); loader.setDRACOLoader(draco);
-const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
+const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/"); ktx2.detectSupport(renderer); loader.setKTX2Loader(ktx2);
 
 let model=null, skeleton=null;
 const initialBoneRot = new Map();
 
 function groundSnap() {
-  if (!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  if (isFinite(minY)) model.position.y -= minY;
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  if (isFinite(minY)) model.position.y -= minY;
 }
 
 const MODEL_CANDIDATES = [
-  window.ROMETRICS_MODEL_URL,
-  "assets/Roma_ROMetrics.glb",
-  new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
+  window.ROMETRICS_MODEL_URL,
+  "assets/Roma_ROMetrics.glb",
+  new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
 ].filter(Boolean);
 
 function tryNextModelUrl(index, onDone){
-  if(index >= MODEL_CANDIDATES.length){
-    onDone(new Error("All model URL fallbacks failed."));
-    return;
-  }
-  const url = MODEL_CANDIDATES[index];
-  log("Loading model from: " + url);
-  loader.load(
-    url,
-    (gltf)=> onDone(null, gltf),
-    (xhr)=>{
-      const pct = xhr.lengthComputable ? Math.min(100, Math.round(100*xhr.loaded/xhr.total)) : null;
-      document.getElementById("msg").textContent = pct!==null ? `Loading ${pct}%` : "Loading…";
-    },
-    ()=> tryNextModelUrl(index+1, onDone)
-  );
+  if(index >= MODEL_CANDIDATES.length){
+    onDone(new Error("All model URL fallbacks failed."));
+    return;
+  }
+  const url = MODEL_CANDIDATES[index];
+  log("Loading model from: " + url);
+  loader.load(
+    url,
+    (gltf)=> onDone(null, gltf),
+    (xhr)=>{
+      const pct = xhr.lengthComputable ? Math.min(100, Math.round(100*xhr.loaded/xhr.total)) : null;
+      document.getElementById("msg").textContent = pct!==null ? `Loading ${pct}%` : "Loading…";
+    },
+    ()=> tryNextModelUrl(index+1, onDone)
+  );
 }
 
 function loadModel(){
-  tryNextModelUrl(0, (err, gltf)=>{
-    if (err){
-      document.getElementById("msg").textContent = `⚠️ Load error: ${err.message}`;
-      log("All fallbacks failed.");
-      return;
-    }
-    model = gltf.scene;
-    model.traverse(o=>{
-      if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
-      if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-    });
-    scene.add(model);
-    groundSnap();
-    document.getElementById("msg").textContent = "✅ Model loaded";
+  tryNextModelUrl(0, (err, gltf)=>{
+    if (err){
+      document.getElementById("msg").textContent = `⚠️ Load error: ${err.message}`;
+      log("All fallbacks failed.");
+      return;
+    }
+    model = gltf.scene;
+    model.traverse(o=>{
+      if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+      if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+    });
+    scene.add(model);
+    groundSnap();
+    document.getElementById("msg").textContent = "✅ Model loaded";
 
-    if (skeleton){
-      skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-    }
-  });
+    if (skeleton){
+      skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+    }
+  });
 }
 loadModel();
 
@@ -351,21 +349,70 @@ function cacheKeyBones() {
     if (b.name === "calf_L")  boneMap.calf_L  = b;
     if (b.name === "calf_R")  boneMap.calf_R  = b;
   });
-  log("Key bones cached for posing.");
+  log("Key bones cached for posing.");
 }
 
-  /* ===== MMT → AUTOACTION MAP (COMPLETE) ===== */
+/* ===== MMT → AUTOACTION MAP (COMPLETE) ===== */
 const MMT_TO_AUTO = {
-  Capital_Extension: "cerv_fe",
-  Cervical_Extension: "cerv_fe",
+    /* Cervical & Capital */
+    Capital_Extension: "cerv_fe",
+    Cervical_Extension: "cerv_fe",
+    Capital_Flexion: "cerv_fe",
+    Cervical_Flexion: "cerv_fe",
+    Single_SCM: "cerv_fe", 
+    Cervical_Rotation: "cerv_rot",
+    
+    /* Scapula - Use Right arm movement as proxy for demonstration */
+    Upper_Trapezius: "clavicle_R", 
+    Middle_Trapezius: "scap_lr", 
+    Rhomboids: "scap_lr", 
+    Serratus_Anterior: "scap_lr", 
 
-  Capital_Flexion: "cerv_fe",
-  Cervical_Flexion: "cerv_fe",
+    /* Shoulder - Right side for test motion */
+    Anterior_Deltoid: "sh_fe_r", 
+    Posterior_Deltoid: "sh_fe_r", 
+    Middle_Deltoid: "sh_aa_r", 
+    Infraspinatus: "sh_irer_r", 
+    Subscapularis: "sh_irer_r", 
+    
+    /* Trunk & Pelvis */
+    Trunk_Ext_Lumbar: "trunk_fe",
+    Trunk_Ext_Thoracic: "trunk_fe",
+    Trunk_Flexion: "trunk_fe",
+    Trunk_Rotation: "trunk_rot",
+    Pelvic_Elevation: "pelvic_hike",
+    
+    /* Elbow - Right side for test motion */
+    Biceps_Brachii: "el_fe_r", 
+    Brachialis: "el_fe_r", 
+    Brachioradialis: "el_fe_r", 
+    Triceps_Brachii: "el_fe_r", 
+    
+    /* Wrist - Right side for test motion */
+    ECRL: "wr_fe_r", 
+    ECRB: "wr_fe_r", 
+    ECU: "wr_fe_r", 
+    FCR: "wr_fe_r", 
+    FCU: "wr_fe_r", 
 
-  Cervical_Rotation: "cerv_rot",
-  Anterior_Deltoid: "sh_fe_l", // Example mapping
-  // ADD MORE MAPPINGS HERE
+    /* Hip - Right side for test motion */
+    Iliopsoas: "hip_fe_r", 
+    Glute_Max: "hip_fe_r", 
+    Glute_Med: "hip_aa_r", 
+    Hip_ER: "hip_irer_r", 
+    Hip_IR: "hip_irer_r", 
+
+    /* Knee - Right side for test motion */
+    Hamstrings: "knee_fe_r", 
+    Quadriceps: "knee_fe_r", 
+
+    /* Ankle & Foot - Right side for test motion */
+    Tibialis_Anterior: "ankle_dfpf_r", 
+    Foot_Eversion_PF: "ankle_dfpf_r", 
+    Ankle_Dorsiflexion: "ankle_dfpf_r", 
+    Gastrocnemius: "ankle_dfpf_r" 
 };
+
 
 /*
   Allowed positions:
@@ -376,116 +423,116 @@ const MMT_TO_AUTO = {
   - "standing"
 */
 const MMT_POSE = {
-  /* CERVICAL / CAPITAL */
-  Capital_Extension: "prone",
-  Cervical_Extension: "prone",
+  /* CERVICAL / CAPITAL */
+  Capital_Extension: "prone",
+  Cervical_Extension: "prone",
 
-  Capital_Flexion: "supine",
-  Cervical_Flexion: "supine",
-  Single_SCM: "supine",
-  Cervical_Rotation: "supine",
+  Capital_Flexion: "supine",
+  Cervical_Flexion: "supine",
+  Single_SCM: "supine",
+  Cervical_Rotation: "supine",
 
-  /* SCAPULA */
-  Serratus_Anterior: "short_sit",
-  Upper_Trapezius: "short_sit",
-  Middle_Trapezius: "prone",
-  Rhomboids: "prone",
-  Latissimus_Dorsi: "prone",
+  /* SCAPULA */
+  Serratus_Anterior: "short_sit",
+  Upper_Trapezius: "short_sit",
+  Middle_Trapezius: "prone",
+  Rhomboids: "prone",
+  Latissimus_Dorsi: "prone",
 
-  /* SHOULDER */
-  Anterior_Deltoid: "short_sit",
-  Posterior_Deltoid: "prone",
-  Middle_Deltoid: "short_sit",
-  Infraspinatus: "short_sit",
-  Subscapularis: "short_sit",
+  /* SHOULDER */
+  Anterior_Deltoid: "short_sit",
+  Posterior_Deltoid: "prone",
+  Middle_Deltoid: "short_sit",
+  Infraspinatus: "short_sit",
+  Subscapularis: "short_sit",
 
-  /* TRUNK */
-  Trunk_Ext_Lumbar: "prone",
-  Trunk_Ext_Thoracic: "prone",
-  Trunk_Flexion: "supine",
-  Trunk_Rotation: "supine",
-  Pelvic_Elevation: "standing",
+  /* TRUNK */
+  Trunk_Ext_Lumbar: "prone",
+  Trunk_Ext_Thoracic: "prone",
+  Trunk_Flexion: "supine",
+  Trunk_Rotation: "supine",
+  Pelvic_Elevation: "standing",
 
-  /* ELBOW */
-  Biceps_Brachii: "short_sit",
-  Brachialis: "short_sit",
-  Brachioradialis: "short_sit",
-  Triceps_Brachii: "short_sit",
+  /* ELBOW */
+  Biceps_Brachii: "short_sit",
+  Brachialis: "short_sit",
+  Brachioradialis: "short_sit",
+  Triceps_Brachii: "short_sit",
 
-  /* WRIST */
-  ECRL: "short_sit",
-  ECRB: "short_sit",
-  ECU: "short_sit",
-  FCR: "short_sit",
-  FCU: "short_sit",
+  /* WRIST */
+  ECRL: "short_sit",
+  ECRB: "short_sit",
+  ECU: "short_sit",
+  FCR: "short_sit",
+  FCU: "short_sit",
 
-  /* HIP */
-  Iliopsoas: "short_sit",
-  Glute_Max: "prone",
-  Glute_Med: "side_lying",
-  Hip_ER: "short_sit",
-  Hip_IR: "short_sit",
+  /* HIP */
+  Iliopsoas: "short_sit",
+  Glute_Max: "prone",
+  Glute_Med: "side_lying",
+  Hip_ER: "short_sit",
+  Hip_IR: "short_sit",
 
-  /* KNEE */
-  Hamstrings: "prone",
-  Quadriceps: "short_sit",
+  /* KNEE */
+  Hamstrings: "prone",
+  Quadriceps: "short_sit",
 
-  /* FOOT & ANKLE */
-  Tibialis_Anterior: "short_sit",
-  Foot_Eversion_PF: "side_lying",
-  Ankle_Dorsiflexion: "short_sit",
-  Gastrocnemius: "standing"
+  /* FOOT & ANKLE */
+  Tibialis_Anterior: "short_sit",
+  Foot_Eversion_PF: "side_lying",
+  Ankle_Dorsiflexion: "short_sit",
+  Gastrocnemius: "standing"
 };
-  
+  
 
 /* ===== MMT MOTION CONFIG — INSERTED BELOW MODEL LOAD ===== */
 
 const UPPER = [
 
-  /* ===== TRUNK ===== */
-  {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
-  {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
-  {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
+  /* ===== TRUNK ===== */
+  {key:'trunk_fe',  pair:'Trunk — Flex / Ext',            side:'', plane:'sagittal',   neutral:0, min:-60, max:80,  hints:[/^spine01$/i]},
+  {key:'trunk_lat', pair:'Trunk — Lateral Bend (L / R)',  side:'', plane:'frontal',    neutral:0, min:-40, max:40,  hints:[/^spine01$/i]},
+  {key:'trunk_rot', pair:'Trunk — Rotation (L / R)',      side:'', plane:'transverse', neutral:0, min:-45, max:45,  hints:[/^spine01$/i]},
 
-  /* PELVIC HIKE (QL) */
-  {key:'pelvic_hike', pair:'Pelvic Elevation', side:'', plane:'frontal', neutral:0, min:0, max:15, hints:[/pelvis|hip/i]},
+  /* PELVIC HIKE (QL) */
+  {key:'pelvic_hike', pair:'Pelvic Elevation', side:'', plane:'frontal', neutral:0, min:0, max:15, hints:[/pelvis|hip/i]},
 
-  /* ===== CERVICAL / CAPITAL ===== */
-  {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60, max:70,  hints:[/^neck$|cspine|head/i]},
-  {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45, max:45,  hints:[/^neck$|cspine|head/i]},
-  {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80, max:80,  hints:[/^neck$|cspine|head/i]},
+  /* ===== CERVICAL / CAPITAL ===== */
+  {key:'cerv_fe',   pair:'Cervical Flex / Ext',                side:'', plane:'sagittal',   neutral:0, min:-60, max:70,  hints:[/^neck$|cspine|head/i]},
+  {key:'cerv_lat',  pair:'Cervical Lat Flex (L / R)',          side:'', plane:'frontal',    neutral:0, min:-45, max:45,  hints:[/^neck$|cspine|head/i]},
+  {key:'cerv_rot',  pair:'Cervical Rotation (L / R)',          side:'', plane:'transverse', neutral:0, min:-80, max:80,  hints:[/^neck$|cspine|head/i]},
 
-  /* ===== SCAPULA (SUBSTITUTED WITH CLAVICLE) ===== */
-  {key:'scap_lr',    pair:'Scapular — Pro / Ret via Clavicle', side:'', plane:'frontal',   neutral:0, min:-30, max:30, hints:[/clavicle/i]},
-  {key:'scap_eldep', pair:'Scapular — Elev / Dep via Clavicle', side:'', plane:'frontal',  neutral:0, min:-30, max:30, hints:[/clavicle/i]},
+  /* ===== SCAPULA (SUBSTITUTED WITH CLAVICLE) ===== */
+  {key:'scap_lr',    pair:'Scapular — Pro / Ret via Clavicle', side:'', plane:'frontal',   neutral:0, min:-30, max:30, hints:[/clavicle/i]},
+  {key:'scap_eldep', pair:'Scapular — Elev / Dep via Clavicle', side:'', plane:'frontal',  neutral:0, min:-30, max:30, hints:[/clavicle/i]},
 
-  /* Clavicle residuals */
-  {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
-  {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
+  /* Clavicle residuals */
+  {key:'clavicle_L', pair:'Clavicle L — Elevation / Depression', side:'l', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
+  {key:'clavicle_R', pair:'Clavicle R — Elevation / Depression', side:'r', plane:'frontal', neutral:0, min:-20, max:45, hints:[/clavicle|collar|shoulder|upperarm/i]},
 
-  /* ===== SHOULDER ===== */
-  {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-  {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+  /* ===== SHOULDER ===== */
+  {key:'sh_fe_l',   pair:'Shoulder L — Flex / Ext',            side:'l', plane:'sagittal',  neutral:0, min:-60, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+  {key:'sh_fe_r',   pair:'Shoulder R — Flex / Ext',            side:'r', plane:'sagittal',  neutral:0, min:-60, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
-  {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
-  {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+  {key:'sh_aa_l',   pair:'Shoulder L — Abd / Add',             side:'l', plane:'frontal',   neutral:0, min:-30, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
+  {key:'sh_aa_r',   pair:'Shoulder R — Abd / Add',             side:'r', plane:'frontal',   neutral:0, min:-30, max:180, hints:[/upperarm|humerus|shoulder|arm(?!.*lower)/i]},
 
-  {key:'sh_irer_l', pair:'Shoulder L — External / Internal',   side:'l', plane:'transverse',neutral:0, min:-90, max:70, hints:[/upperarm_L/i]},
-  {key:'sh_irer_r', pair:'Shoulder R — External / Internal',   side:'r', plane:'transverse',neutral:0, min:-90, max:70, hints:[/upperarm_R/i]},
+  {key:'sh_irer_l', pair:'Shoulder L — External / Internal',   side:'l', plane:'transverse',neutral:0, min:-90, max:70, hints:[/upperarm_L/i]},
+  {key:'sh_irer_r', pair:'Shoulder R — External / Internal',   side:'r', plane:'transverse',neutral:0, min:-90, max:70, hints:[/upperarm_R/i]},
 
-  /* ===== ELBOW ===== */
-  {key:'el_fe_l',   pair:'Elbow L — Flex / Ext', side:'l', plane:'sagittal',  neutral:0, min:-10, max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
-  {key:'el_fe_r',   pair:'Elbow R — Flex / Ext', side:'r', plane:'sagittal',  neutral:0, min:-10, max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+  /* ===== ELBOW ===== */
+  {key:'el_fe_l',   pair:'Elbow L — Flex / Ext', side:'l', plane:'sagittal',  neutral:0, min:-10, max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
+  {key:'el_fe_r',   pair:'Elbow R — Flex / Ext', side:'r', plane:'sagittal',  neutral:0, min:-10, max:150, hints:[/lowerarm|forearm|ulna|radius/i]},
 
-  /* ===== WRIST ===== */
-  {key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
-  {key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]},
+  /* ===== WRIST ===== */
+  {key:'wr_ps_l', pair:'Wrist L — Pronation / Supination', side:'l', plane:'transverse', neutral:0, min:-95, max:85, hints:[/wrist|hand|forearm|radius|ulna/i]},
+  {key:'wr_ps_r', pair:'Wrist R — Pronation / Supination', side:'r', plane:'transverse', neutral:0, min:-95, max:85, invert:true, hints:[/wrist|hand|forearm|radius|ulna/i]},
 
-  {key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
-  {key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+  {key:'wr_fe_l', pair:'Wrist L — Flex / Ext', side:'l', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
+  {key:'wr_fe_r', pair:'Wrist R — Flex / Ext', side:'r', plane:'sagittal', neutral:0, min:-70, max:80, hints:[/wrist|hand/i]},
 
-  {key:'wr_ru_l', pair:'Wrist L — Radial / Ulnar Dev', side:'l', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
-  {key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, invert:true, hints:[/wrist|hand/i]},
+  {key:'wr_ru_l', pair:'Wrist L — Radial / Ulnar Dev', side:'l', plane:'frontal', neutral:0, min:-40, max:20, hints:[/wrist|hand/i]},
+  {key:'wr_ru_r', pair:'Wrist R — Radial / Ulnar Dev', side:'r', plane:'frontal', neutral:0, min:-40, max:20, invert:true, hints:[/wrist|hand/i]},
 
 ];
 
@@ -494,70 +541,70 @@ const UPPER = [
 
 const LOWER = [
 
-  /* ===== HIP ===== */
-  {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30, max:120, hints:[/thigh|femur/i]},
-  {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30, max:120, hints:[/thigh|femur/i]},
+  /* ===== HIP ===== */
+  {key:'hip_fe_l',   pair:'Hip L — Flex / Ext',                side:'l', plane:'sagittal',  neutral:0, min:-30, max:120, hints:[/thigh|femur/i]},
+  {key:'hip_fe_r',   pair:'Hip R — Flex / Ext',                side:'r', plane:'sagittal',  neutral:0, min:-30, max:120, hints:[/thigh|femur/i]},
 
-  {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30, max:45,  hints:[/thigh|femur/i]},
-  {key:'hip_aa_r',   pair:'Hip R — Add / Abd',                 side:'r', plane:'frontal',   neutral:0, min:-30, max:45,  hints:[/thigh|femur/i]},
+  {key:'hip_aa_l',   pair:'Hip L — Abd / Add',                 side:'l', plane:'frontal',   neutral:0, min:-30, max:45,  hints:[/thigh|femur/i]},
+  {key:'hip_aa_r',   pair:'Hip R — Add / Abd',                 side:'r', plane:'frontal',   neutral:0, min:-30, max:45,  hints:[/thigh|femur/i]},
 
-  {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45, max:45,  hints:[/thigh|femur/i]},
-  {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45, max:45,  hints:[/thigh|femur/i]},
+  {key:'hip_irer_l', pair:'Hip L — Internal / External',       side:'l', plane:'transverse',neutral:0, min:-45, max:45,  hints:[/thigh|femur/i]},
+  {key:'hip_irer_r', pair:'Hip R — Internal / External',       side:'r', plane:'transverse',neutral:0, min:-45, max:45,  hints:[/thigh|femur/i]},
 
-  /* ===== KNEE ===== */
-  {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
-  {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
+  /* ===== KNEE ===== */
+  {key:'knee_fe_l', pair:'Knee L — Ext / Flex', side:'l', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
+  {key:'knee_fe_r', pair:'Knee R — Ext / Flex', side:'r', plane:'sagittal', neutral:0, min:-15, max:150, hints:[/calf|tibia|fibula|shin/i]},
 
-  /* ===== ANKLE ===== */
-  {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal', neutral:0, min:-20, max:50, hints:[/ankle|foot|talus|tarsal/i]},
-  {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal', neutral:0, min:-20, max:50, hints:[/ankle|foot|talus|tarsal/i]},
+  /* ===== ANKLE ===== */
+  {key:'ankle_dfpf_l', pair:'Ankle L — Dorsi / Plantarflex',   side:'l', plane:'sagittal', neutral:0, min:-20, max:50, hints:[/ankle|foot|talus|tarsal/i]},
+  {key:'ankle_dfpf_r', pair:'Ankle R — Dorsi / Plantarflex',   side:'r', plane:'sagittal', neutral:0, min:-20, max:50, hints:[/ankle|foot|talus|tarsal/i]},
 
-  /* ===== FOOT ===== */
-  {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal', neutral:0, min:-20, max:35, hints:[/foot|calcaneus|metatars|heel/i]},
-  {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal', neutral:0, min:-20, max:35, hints:[/foot|calcaneus|metatars|heel/i]},
+  /* ===== FOOT ===== */
+  {key:'foot_invev_l', pair:'Foot L — Inversion / Eversion',   side:'l', plane:'frontal', neutral:0, min:-20, max:35, hints:[/foot|calcaneus|metatars|heel/i]},
+  {key:'foot_invev_r', pair:'Foot R — Inversion / Eversion',   side:'r', plane:'frontal', neutral:0, min:-20, max:35, hints:[/foot|calcaneus|metatars|heel/i]},
 
 ];
 
 /* CURRENT DICT (UPPER by default) */
 let CURRENT = UPPER;
-  
+  
 /* ==== Resistance fill (restored) ==== */
 let resistanceTimer = null;
 let resistanceStartTime = 0;
 const RESISTANCE_FILL_TIME = 2000;
 
 function handleResistanceButtonDown(e){
-  if (testButton.disabled) return;
-  e.preventDefault();
-  resistanceStartTime = performance.now();
-  instructionText.style.display = 'block';
-  testButton.classList.add('active');
+  if (testButton.disabled) return;
+  e.preventDefault();
+  resistanceStartTime = performance.now();
+  instructionText.style.display = 'block';
+  testButton.classList.add('active');
 
-  resistanceTimer = setInterval(()=>{
-    const elapsed = performance.now() - resistanceStartTime;
-    const progress = Math.min(1, elapsed / RESISTANCE_FILL_TIME);
-    resistanceFill.style.width = `${progress*100}%`;
+  resistanceTimer = setInterval(()=>{
+    const elapsed = performance.now() - resistanceStartTime;
+    const progress = Math.min(1, elapsed / RESISTANCE_FILL_TIME);
+    resistanceFill.style.width = `${progress*100}%`;
 
-    if (progress >= 1){
-      resistanceText.textContent = 'Grade 5: Maximum Resistance';
-      gradeMain.value = '5';
-    } else if (progress >= 0.5){
-      resistanceText.textContent = 'Grade 4: Moderate Resistance';
-      gradeMain.value = '4';
-    } else {
-      resistanceText.textContent = 'Applying Resistance...';
-    }
-  }, 100);
+    if (progress >= 1){
+      resistanceText.textContent = 'Grade 5: Maximum Resistance';
+      gradeMain.value = '5';
+    } else if (progress >= 0.5){
+      resistanceText.textContent = 'Grade 4: Moderate Resistance';
+      gradeMain.value = '4';
+    } else {
+      resistanceText.textContent = 'Applying Resistance...';
+    }
+  }, 100);
 }
 
 function handleResistanceButtonUp(){
-  if (!resistanceTimer) return;
-  clearInterval(resistanceTimer);
-  resistanceTimer = null;
-  testButton.classList.remove('active');
-  resistanceFill.style.width = '0';
-  resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
-  instructionText.style.display = 'none';
+  if (!resistanceTimer) return;
+  clearInterval(resistanceTimer);
+  resistanceTimer = null;
+  testButton.classList.remove('active');
+  resistanceFill.style.width = '0';
+  resistanceText.textContent = 'Hold to Apply Resistance (4/5)';
+  instructionText.style.display = 'none';
 }
 
 testButton.addEventListener('pointerdown', handleResistanceButtonDown);
@@ -567,26 +614,26 @@ testButton.addEventListener('contextmenu', e=>e.preventDefault());
 
 /* ==== Basic enablement ==== */
 actionSel.addEventListener('change', ()=>{
-  testButton.disabled = actionSel.value === "";
+  testButton.disabled = actionSel.value === "";
 });
 // When a test is selected, snap the body to the required position
 actionSel.addEventListener("change", () => {
-  applyPoseForTest(actionSel.value);
+  applyPoseForTest(actionSel.value);
 });
 
 document.getElementById("lock3D").onclick = () => {
-  controls.enabled = !controls.enabled;
-  const btn = document.getElementById("lock3D");
-  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
-  btn.classList.toggle('lockOn', !controls.enabled);
+  controls.enabled = !controls.enabled;
+  const btn = document.getElementById("lock3D");
+  btn.textContent = (!controls.enabled ? "🔒 3D: Locked" : "🔓 3D: Unlocked");
+  btn.classList.toggle('lockOn', !controls.enabled);
 };
 
 document.getElementById("zeroAll").onclick = () => {
-  if (!skeleton) return;
-  skeleton.bones.forEach(b=>{
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
+  if (!skeleton) return;
+  skeleton.bones.forEach(b=>{
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
 };
 /* ===== Grading Exceptions Availability Control ===== */
 
@@ -595,36 +642,36 @@ const gradeMainSelect = document.getElementById("grade-main");
 
 // Tests that ALLOW grading exceptions
 const EXCEPTION_TESTS = new Set([
-  "Trunk_Ext_Lumbar",
-  "Trunk_Ext_Thoracic",
-  "Trunk_Flexion",
-  "Trunk_Rotation",
-  "Pelvic_Elevation",
-  "Gastrocnemius"
+  "Trunk_Ext_Lumbar",
+  "Trunk_Ext_Thoracic",
+  "Trunk_Flexion",
+  "Trunk_Rotation",
+  "Pelvic_Elevation",
+  "Gastrocnemius"
 ]);
 
 function updateGradingExceptionAvailability() {
-  const key = actionSel.value;
+  const key = actionSel.value;
 
-  if (EXCEPTION_TESTS.has(key)) {
-    /** Enable Exceptions */
-    exceptionSelect.disabled = false;
-    exceptionSelect.style.opacity = "1";
+  if (EXCEPTION_TESTS.has(key)) {
+    /** Enable Exceptions */
+    exceptionSelect.disabled = false;
+    exceptionSelect.style.opacity = "1";
 
-    /** Disable Regular Grade */
-    gradeMainSelect.disabled = true;
-    gradeMainSelect.style.opacity = "0.4";
+    /** Disable Regular Grade */
+    gradeMainSelect.disabled = true;
+    gradeMainSelect.style.opacity = "0.4";
 
-  } else {
-    /** Disable Exceptions */
-    exceptionSelect.disabled = true;
-    exceptionSelect.style.opacity = "0.4";
-    exceptionSelect.value = "3"; // Reset to Grade 3 default
+  } else {
+    /** Disable Exceptions */
+    exceptionSelect.disabled = true;
+    exceptionSelect.style.opacity = "0.4";
+    exceptionSelect.value = "3"; // Reset to Grade 3 default
 
-    /** Enable Regular Grade */
-    gradeMainSelect.disabled = false;
-    gradeMainSelect.style.opacity = "1";
-  }
+    /** Enable Regular Grade */
+    gradeMainSelect.disabled = false;
+    gradeMainSelect.style.opacity = "1";
+  }
 }
 
 // Run when test changes
@@ -634,57 +681,74 @@ actionSel.addEventListener("change", updateGradingExceptionAvailability);
 updateGradingExceptionAvailability();
 
 // Minimal setPair used only for pose setting (not animation)
-function setPair(key, degrees) {
-  const rad = THREE.MathUtils.degToRad(degrees);
+// The original simple setPair function has been removed.
 
-  // LEFT / RIGHT detection
-  let targets = [];
-  skeleton.bones.forEach(b => {
-    if (b.name.toLowerCase().includes(key.replace(/_[lr]$/, '').split('_')[0])) {
-      targets.push(b);
-    }
-  });
+// NEW: Advanced setPair function capable of handling paired joint movement
+function setPair(key, deg) {
+    const cfg = [...UPPER, ...LOWER].find(x => x.key === key); 
+    if (!cfg || !skeleton) return;
+    
+    const rad = THREE.MathUtils.degToRad(deg + (cfg.neutral || 0));
 
-  targets.forEach(bone => {
-    bone.rotation.x = rad;
-  });
+    // Find the bone using the key prefix (e.g., 'sh_fe_l' -> 'upperarm')
+    let boneNamePrefix = key.replace(/_[lr]$/, '').split('_')[0];
+    if (boneNamePrefix === 'cerv') boneNamePrefix = 'neck';
+    
+    // Find the target bone
+    const bone = skeleton.bones.find(b => b.name.toLowerCase().includes(boneNamePrefix));
+    if (!bone) return;
+
+    let x = 0, y = 0, z = 0;
+    
+    // Determine rotation axis based on plane (simplified mapping)
+    if (cfg.plane === 'sagittal') x = rad; // Flexion/Extension
+    else if (cfg.plane === 'frontal') z = rad; // Abduction/Adduction
+    else if (cfg.plane === 'transverse') y = rad; // Internal/External Rotation
+    
+    // Apply correction for right-side mirroring if applicable
+    if (key.endsWith('_r')) x = -x; 
+
+    const e = new THREE.Euler(x, y, z, "XYZ");
+    
+    // Use the initial bone rotation (baseline) as the start
+    const qBase = initialBoneRot.get(bone) || new THREE.Quaternion();
+    const qDelta = new THREE.Quaternion().setFromEuler(e);
+    bone.quaternion.copy(qBase).multiply(qDelta);
 }
-  
+  
 
 function applyPoseForTest(testKey) {
-  if (!model) return;
+  const pose = MMT_POSE[testKey];
+  if (!pose) return;
 
-  const pose = MMT_POSE[testKey];
-  if (!pose) return;
+  // Reset model orientation & bones back to baseline
+  model.rotation.set(0, 0, 0);
+  if (skeleton) {
+    skeleton.bones.forEach(b => {
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
 
-  // Reset model orientation & bones back to baseline
-  model.rotation.set(0, 0, 0);
-  if (skeleton) {
-    skeleton.bones.forEach(b => {
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-  }
+  /* ============ PRONE (face down) ============ */
+  if (pose === "prone") {
+    model.rotation.x = Math.PI / 2;
+    return;
+  }
 
-  /* ============ PRONE (face down) ============ */
-  if (pose === "prone") {
-    model.rotation.x = Math.PI / 2;
-    return;
-  }
-
-  /* ============ SUPINE (face up) ============ */
-  if (pose === "supine") {
-    model.rotation.x = -Math.PI / 2;
-    return;
-  }
+  /* ============ SUPINE (face up) ============ */
+  if (pose === "supine") {
+    model.rotation.x = -Math.PI / 2;
+    return;
+  }
 
 
 
-  /* ============ STANDING (default neutral) ============ */
-  if (pose === "standing") {
-    // already reset to neutral above
-    return;
-  }
+  /* ============ STANDING (default neutral) ============ */
+  if (pose === "standing") {
+    // already reset to neutral above
+    return;
+  }
 /* ============ SHORT SITTING (hips 90°, knees 90°) ============ */
 if (pose === "short_sit") {
   if (skeleton) {
@@ -705,129 +769,129 @@ if (pose === "short_sit") {
 
   return;
 }
-  /* ============ SIDE-LYING (if you use it) ============ */
-  if (pose === "side_lying") {
-    model.rotation.z = Math.PI / 2;
-    return;
-  }
+  /* ============ SIDE-LYING (if you use it) ============ */
+  if (pose === "side_lying") {
+    model.rotation.z = Math.PI / 2;
+    return;
+  }
 }
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
 const noteTitle = document.getElementById('noteTitle');
-const noteBody  = document.getElementById('noteBody');
-const tabHigh   = document.getElementById('tabHigh'); // 3–5
-const tabLow    = document.getElementById('tabLow');  // 0–2
+const noteBody  = document.getElementById('noteBody');
+const tabHigh   = document.getElementById('tabHigh'); // 3–5
+const tabLow    = document.getElementById('tabLow');  // 0–2
 const closeNote = document.getElementById('closeNote');
 
 // GitHub RAW URLs for the two docs
 const MD_HIGH = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_threetofive.md";
-const MD_LOW  = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_zerototwo.md";
+const MD_LOW  = "https://raw.githubusercontent.com/Kingto89/ROMetrics.com/main/mmt/rometrics_mmt_zerototwo.md";
 
 // Map select values to readable headings to find in MD
 const TEST_TO_HEADING = {
-  Capital_Extension: "Capital Extension",
-  Cervical_Extension: "Cervical Extension",
-  Capital_Flexion: "Capital Flexion — Chin Tuck",
-  Cervical_Flexion: "Cervical Flexion",
-  Single_SCM: "Single Sternocleidomastoid — Anterolateral Flexion",
-  Cervical_Rotation: "Cervical Rotation",
-  Serratus_Anterior: "Scapular Abduction & Upward Rotation",
-  Upper_Trapezius: "Scapular Elevation",
-  Middle_Trapezius: "Scapular Adduction / Retraction",
-  Rhomboids: "Scapular Adduction + Downward Rotation",
-  Latissimus_Dorsi: "Latissimus Dorsi",
-  Anterior_Deltoid: "Shoulder Flexion",
-  Posterior_Deltoid: "Shoulder Extension",
-  Middle_Deltoid: "Shoulder Abduction",
-  Infraspinatus: "Shoulder External Rotation",
-  Subscapularis: "Shoulder Internal Rotation",
-  Trunk_Ext_Lumbar: "Trunk Extension — Lumbar",
-  Trunk_Ext_Thoracic: "Trunk Extension — Thoracic",
-  Trunk_Flexion: "Trunk Flexion — Rectus Abdominis",
-  Trunk_Rotation: "Trunk Rotation — External & Internal Obliques",
-  Pelvic_Elevation: "Pelvic Elevation — Quadratus Lumborum",
-  Biceps_Brachii: "Elbow Flexion — Biceps Brachii",
-  Brachialis: "Elbow Flexion — Brachialis",
-  Brachioradialis: "Elbow Flexion — Brachioradialis",
-  Triceps_Brachii: "Elbow Extension",
-  ECRL: "Wrist Extension — ECRL",
-  ECRB: "Wrist Extension — ECRB",
-  ECU: "Wrist Extension — ECU",
-  FCR: "Wrist Flexion — Flexor Carpi Radialis",
-  FCU: "Wrist Flexion — Flexor Carpi Ulnaris",
-  Iliopsoas: "Hip Flexion",
-  Glute_Max: "Hip Extension",
-  Glute_Med: "Hip Abduction",
-  Hip_ER: "Hip External Rotation",
-  Hip_IR: "Hip Internal Rotation",
-  Hamstrings: "Knee Flexion",
-  Quadriceps: "Knee Extension",
-  Tibialis_Anterior: "Foot Dorsiflexion + Inversion",
-  Foot_Eversion_PF: "Foot Eversion + Plantarflexion",
-  Ankle_Dorsiflexion: "Ankle Dorsiflexion",
-   Gastrocnemius: "Ankle Plantar Flexion"
+  Capital_Extension: "Capital Extension",
+  Cervical_Extension: "Cervical Extension",
+  Capital_Flexion: "Capital Flexion — Chin Tuck",
+  Cervical_Flexion: "Cervical Flexion",
+  Single_SCM: "Single Sternocleidomastoid — Anterolateral Flexion",
+  Cervical_Rotation: "Cervical Rotation",
+  Serratus_Anterior: "Scapular Abduction & Upward Rotation",
+  Upper_Trapezius: "Scapular Elevation",
+  Middle_Trapezius: "Scapular Adduction / Retraction",
+  Rhomboids: "Scapular Adduction + Downward Rotation",
+  Latissimus_Dorsi: "Latissimus Dorsi",
+  Anterior_Deltoid: "Shoulder Flexion",
+  Posterior_Deltoid: "Shoulder Extension",
+  Middle_Deltoid: "Shoulder Abduction",
+  Infraspinatus: "Shoulder External Rotation",
+  Subscapularis: "Shoulder Internal Rotation",
+  Trunk_Ext_Lumbar: "Trunk Extension — Lumbar",
+  Trunk_Ext_Thoracic: "Trunk Extension — Thoracic",
+  Trunk_Flexion: "Trunk Flexion — Rectus Abdominis",
+  Trunk_Rotation: "Trunk Rotation — External & Internal Obliques",
+  Pelvic_Elevation: "Pelvic Elevation — Quadratus Lumborum",
+  Biceps_Brachii: "Elbow Flexion — Biceps Brachii",
+  Brachialis: "Elbow Flexion — Brachialis",
+  Brachioradialis: "Elbow Flexion — Brachioradialis",
+  Triceps_Brachii: "Elbow Extension",
+  ECRL: "Wrist Extension — ECRL",
+  ECRB: "Wrist Extension — ECRB",
+  ECU: "Wrist Extension — ECU",
+  FCR: "Wrist Flexion — Flexor Carpi Radialis",
+  FCU: "Wrist Flexion — Flexor Carpi Ulnaris",
+  Iliopsoas: "Hip Flexion",
+  Glute_Max: "Hip Extension",
+  Glute_Med: "Hip Abduction",
+  Hip_ER: "Hip External Rotation",
+  Hip_IR: "Hip Internal Rotation",
+  Hamstrings: "Knee Flexion",
+  Quadriceps: "Knee Extension",
+  Tibialis_Anterior: "Foot Dorsiflexion + Inversion",
+  Foot_Eversion_PF: "Foot Eversion + Plantarflexion",
+  Ankle_Dorsiflexion: "Ankle Dorsiflexion",
+   Gastrocnemius: "Ankle Plantar Flexion"
 };
 
 function mdToHtml(md){
-  // Tiny converter for headings/lists/bold/paragraphs
-  return md
-    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-    .replace(/^\* (.*)$/gm, "<li>$1</li>")
-    .replace(/^- (.*)$/gm, "<li>$1</li>")
-    .replace(/(\n<li>.*<\/li>)+/g, m => `<ul>${m}</ul>`)
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n{2,}/g, "</p><p>")
-    .replace(/^([^<\n].*)$/gm, "<p>$1</p>");
+  // Tiny converter for headings/lists/bold/paragraphs
+  return md
+    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+    .replace(/^\* (.*)$/gm, "<li>$1</li>")
+    .replace(/^- (.*)$/gm, "<li>$1</li>")
+    .replace(/(\n<li>.*<\/li>)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/^([^<\n].*)$/gm, "<p>$1</p>");
 }
 
 // Extract section starting with matching "## Heading" until next "##"
 function extractSection(md, queryHeading){
-  const lines = md.split(/\r?\n/);
-  let start = -1;
-  for (let i=0;i<lines.length;i++){
-    if (lines[i].startsWith("## ") && lines[i].toLowerCase().includes(queryHeading.toLowerCase())){
-      start = i; break;
-    }
-  }
-  if (start === -1){
-    return md; // fallback: show whole doc if not found
-  }
-  let end = lines.length;
-  for (let j=start+1;j<lines.length;j++){
-    if (lines[j].startsWith("## ")){ end = j; break; }
-  }
-  return lines.slice(start, end).join("\n");
+  const lines = md.split(/\r?\n/);
+  let start = -1;
+  for (let i=0;i<lines.length;i++){
+    if (lines[i].startsWith("## ") && lines[i].toLowerCase().includes(queryHeading.toLowerCase())){
+      start = i; break;
+    }
+  }
+  if (start === -1){
+    return md; // fallback: show whole doc if not found
+  }
+  let end = lines.length;
+  for (let j=start+1;j<lines.length;j++){
+    if (lines[j].startsWith("## ")){ end = j; break; }
+  }
+  return lines.slice(start, end).join("\n");
 }
 
 async function loadNoteFile(which){
-  const muscleKey = actionSel.value;
-  if (!muscleKey){
-    noteBody.innerHTML = "<p>Select a test first.</p>";
-    return;
-  }
-  const heading = TEST_TO_HEADING[muscleKey] || muscleKey.replaceAll("_"," ");
-  noteTitle.textContent = heading + " — MMT Instructions";
-  const url = (which === 'high') ? MD_HIGH : MD_LOW;
-  noteBody.innerHTML = "Loading…";
-  try{
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const text = await res.text();
-    const section = extractSection(text, heading);
-    noteBody.innerHTML = mdToHtml(section);
-  }catch(e){
-    noteBody.textContent = "Failed to load instructions.";
-  }
+  const muscleKey = actionSel.value;
+  if (!muscleKey){
+    noteBody.innerHTML = "<p>Select a test first.</p>";
+    return;
+  }
+  const heading = TEST_TO_HEADING[muscleKey] || muscleKey.replaceAll("_"," ");
+  noteTitle.textContent = heading + " — MMT Instructions";
+  const url = (which === 'high') ? MD_HIGH : MD_LOW;
+  noteBody.innerHTML = "Loading…";
+  try{
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const section = extractSection(text, heading);
+    noteBody.innerHTML = mdToHtml(section);
+  }catch(e){
+    noteBody.textContent = "Failed to load instructions.";
+  }
 }
 
 function openNote(which='high'){
-  tabHigh.classList.toggle('active', which==='high');
-  tabLow.classList.toggle('active', which!=='high');
-  notePanel.classList.remove('hide');
-  notePanel.style.display = "flex";
-  loadNoteFile(which);
+  tabHigh.classList.toggle('active', which==='high');
+  tabLow.classList.toggle('active', which!=='high');
+  notePanel.classList.remove('hide');
+  notePanel.style.display = "flex";
+  loadNoteFile(which);
 }
 
 showMMT.addEventListener('click', ()=> openNote('high'));
@@ -837,41 +901,47 @@ closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
 
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 /* === AUTO-MOVEMENT FOR MMT: Start Test === */
 startTestBtn.addEventListener("click", () => {
-  const test = actionSel.value;
-  if (!test) return;
+  const test = actionSel.value;
+  if (!test) return;
 
-  // Determine which AUTOACTION motion belongs to this MMT test
-  const autoKey = MMT_TO_AUTO[test];
-  const cfg = autoKey ? [...UPPER, ...LOWER].find(x => x.key === autoKey) : null;
-  if (!cfg) return;
-
-
-  let current = 0;
-  const target = cfg.max;
-  const step = 1;          // degrees per tick
-  const interval = 12;     // speed
-
-  const timer = setInterval(() => {
-    current += step;
-    if (current >= target) {
-      current = target;
-      clearInterval(timer);
+  // Determine which AUTOACTION motion belongs to this MMT test
+  const autoKey = MMT_TO_AUTO[test];
+  const cfg = autoKey ? [...UPPER, ...LOWER].find(x => x.key === autoKey) : null;
+  if (!cfg) {
+        console.warn(`No motion configuration found for test: ${test}`);
+        return; 
     }
-    setPair(cfg.key, current);
-  }, interval);
+
+
+  let current = 0;
+  const target = cfg.max;
+  const step = 2;          // Increased speed
+  const interval = 10;     // Increased speed
+
+ // Reset the joint to its initial pose before starting the motion
+ setPair(cfg.key, 0);
+
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    setPair(cfg.key, current);
+  }, interval);
 });
-  
+  
 (function loop(){
-  controls.update();
-  renderer.render(scene, camera);
-  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
