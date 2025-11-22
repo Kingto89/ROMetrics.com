@@ -247,24 +247,7 @@ camera.position.set(1.8,1.6,3.2);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = .08;
 controls.minDistance=.6; controls.maxDistance=20;
-controls.target.set(0,1.05,0);
-
- // ---- View preset: room yaw + camera distance (ONE BLOCK) ----
-(() => {
-  // Turn the whole room left/right (negative = left, positive = right)
-  const ROOM_YAW_DEG = -30;
-  room.rotation.y = degToRad(ROOM_YAW_DEG);
-
-  // Zoom preset: set camera distance from the controls target
-  function setCameraDistance(d){
-    const dir = new THREE.Vector3()
-      .subVectors(camera.position, controls.target)
-      .normalize();
-    camera.position.copy(controls.target).addScaledVector(dir, d);
-  }
-  setCameraDistance(4.8); // bigger = farther, smaller = closer
-})();
- 
+controls.target.set(0,1.05,0); 
 
 /* Lights */
 scene.add(new THREE.HemisphereLight(0xffffff, 0x8ca0b3, 0.8));
@@ -353,7 +336,21 @@ shadowCatch.rotation.x = -Math.PI/2;
 shadowCatch.position.y = 0.001;
 shadowCatch.receiveShadow = true;
 room.add(shadowCatch);
+ // ---- View preset: room yaw + camera distance (ONE BLOCK) ----
+(() => {
+  // Turn the whole room left/right (negative = left, positive = right)
+  const ROOM_YAW_DEG = -30;
+  room.rotation.y = degToRad(ROOM_YAW_DEG);
 
+  // Zoom preset: set camera distance from the controls target
+  function setCameraDistance(d){
+    const dir = new THREE.Vector3()
+      .subVectors(camera.position, controls.target)
+      .normalize();
+    camera.position.copy(controls.target).addScaledVector(dir, d);
+  }
+  setCameraDistance(4.8); // bigger = farther, smaller = closer
+})();
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
