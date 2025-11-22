@@ -434,7 +434,7 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
-  placeSeatUnderHips(0.46, 0.05);                  // center seat under hips
+  placeSeatUnderHips(0.26, 0.05);                  // center seat under hips
 seat.updateMatrixWorld();
 const seatTop = seat.position.y + 0.03;          // 0.06 seat height → top is +0.03
 const mb = new THREE.Box3().setFromObject(model);
