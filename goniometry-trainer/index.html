@@ -1689,17 +1689,17 @@ positionSel.onchange = () => {
   // === Anatomic preset (preloaded) ===
   const ANAT = { addL:-32, psL:-2, wpsL:-73 };
 function applyAnatomicBaseline(){
-  // 🦴 Apply identical baselines to both arms (no mirroring)
+  // Shoulder ADD: right needs counter-flip because sh_aa_r is inverted in applyPairAngle()
   setPair('sh_aa_l', ANAT.addL);
-  setPair('sh_aa_r', ANAT.addL);
+  setPair('sh_aa_r', -ANAT.addL);   // ← flip input so final result matches the left
 
-  // Forearm & wrist PS — apply same orientation to both
+  // Forearm & Wrist PS: keep identical on both sides (no mirroring)
   setPair('fa_ps_l', ANAT.psL);
   setPair('fa_ps_r', ANAT.psL);
   setPair('wr_ps_l', ANAT.wpsL);
-  setPair('wr_ps_r', -ANAT.wpsL);
+  setPair('wr_ps_r', ANAT.wpsL);    // ← remove the minus so both wrists match
 
-  log(`Anatomic baseline applied (same for L/R) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
+  log(`Anatomic baseline applied (L/R matched) → ADD ${ANAT.addL}, Forearm PS ${ANAT.psL}, Wrist PS ${ANAT.wpsL}`);
 }
 
 // Always return to anatomic when changing actions; then freeze bind
