@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MMT Trainer — Side Notes (Room + Seat + Save)</title>
+<title>MMT Trainer — Side Notes (Room + Seat + Save + Rotate)</title>
 
 <script type="importmap">
 {
@@ -174,8 +174,12 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
       <button id="nudgeToward" class="mini">↗️ Nudge Toward</button>
       <button id="nudgeAway" class="mini">↙️ Nudge Away</button>
     </div>
+
     <label>Scale</label>
     <input id="scaleSlider" type="range" min="0.8" max="1.6" value="1.2" step="0.01"/>
+
+    <label>Rotate (0–360°)</label>
+    <input id="rotSlider" type="range" min="0" max="360" value="0" step="1"/>
 
     <div class="row">
       <button id="savePose" class="mini">💾 Save</button>
@@ -243,6 +247,7 @@ const nudgeDownBtn = $("nudgeDown");
 const nudgeTowardBtn = $("nudgeToward");
 const nudgeAwayBtn = $("nudgeAway");
 const scaleSlider = $("scaleSlider");
+const rotSlider = $("rotSlider");
 const saveBtn = $("savePose");
 const clearBtn = $("clearPose");
 
@@ -370,24 +375,29 @@ let model=null, skeleton=null;
 const initialBoneRot = new Map();
 
 /* ==== Utilities ==== */
+function degToRad(d){ return d * Math.PI / 180; }
+function radToDeg(r){ return r * 180 / Math.PI; }
+
 function savePose(){
   if(!model) return;
-  const p = model.position, s = model.scale;
-  localStorage.setItem("rometrics_pose_v2", JSON.stringify({x:p.x, y:p.y, z:p.z, sx:s.x, sy:s.y, sz:s.z}));
+  const p = model.position, s = model.scale, ry = radToDeg(model.rotation.y);
+  localStorage.setItem("rometrics_pose_v3", JSON.stringify({x:p.x, y:p.y, z:p.z, sx:s.x, sy:s.y, sz:s.z, ry}));
 }
 function loadPose(){
   try{
-    const raw = localStorage.getItem("rometrics_pose_v2");
+    const raw = localStorage.getItem("rometrics_pose_v3");
     if(!raw) return false;
     const o = JSON.parse(raw);
     if(!model) return false;
     model.position.set(o.x, o.y, o.z);
     model.scale.set(o.sx, o.sy, o.sz);
+    model.rotation.y = degToRad(o.ry || 0);
     scaleSlider.value = String(o.sx.toFixed(2));
+    rotSlider.value = String(Math.round(o.ry || 0));
     return true;
   }catch{ return false; }
 }
-function clearPose(){ localStorage.removeItem("rometrics_pose_v2"); }
+function clearPose(){ localStorage.removeItem("rometrics_pose_v3"); }
 
 function box3Of(obj){ return new THREE.Box3().setFromObject(obj); }
 function snapBottomToY(targetY){
@@ -414,6 +424,8 @@ function seatPoseOnlyLegs(){
 
 function placeOnTable(){
   seatPoseOnlyLegs();
+  // Face the table (positive Z)
+  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
   // Align model horizontally with table center
   if(model){
     model.position.x = tableTop.position.x;
@@ -434,6 +446,9 @@ function placeOnFloor(){
       if (q0) b.quaternion.copy(q0);
     });
   }
+  // Face front wall
+  model.rotation.y = 0;
+  rotSlider.value = "0";
   // Center and snap to floor
   model.position.x = 0;
   model.position.z = -0.4;
@@ -459,7 +474,6 @@ function nudgeTowardAway(sign){
 /* ==== Load model ==== */
 function addModel(gltf){
   model = gltf.scene;
-  // Start slightly smaller than previous attempt to match room/table scale
   model.scale.set(1.15,1.15,1.15);
   model.traverse(o=>{
     if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
@@ -531,6 +545,13 @@ scaleSlider.addEventListener('input', ()=>{
   if(!model) return;
   const s = parseFloat(scaleSlider.value);
   model.scale.set(s,s,s);
+  savePose();
+});
+
+rotSlider.addEventListener('input', ()=>{
+  if(!model) return;
+  const deg = parseFloat(rotSlider.value);
+  model.rotation.y = degToRad(deg);
   savePose();
 });
 
