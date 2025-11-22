@@ -423,7 +423,16 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
-  stickToY(0.46); // raise/lower until she “sits” on the surface (try 0.40–0.55)
+// Snap model’s lowest point to y=0
+const bbox = new THREE.Box3().setFromObject(model);
+model.position.y -= bbox.min.y;
+
+// Turn the ground into a shadow-catching “bed top” under the hips
+ground.geometry.dispose();
+ground.geometry = new THREE.PlaneGeometry(0.70, 1.40); // table-ish size
+ground.position.set(model.position.x, 0.012, model.position.z + 0.05); // small forward nudge
+ground.visible = true;
+ground.material.opacity = 0.65;  // stronger contact shadow
 
 
   // position + framing to sell "seated in bed"
