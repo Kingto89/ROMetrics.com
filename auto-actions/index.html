@@ -721,18 +721,18 @@ function freezeBindBaseFor(key, cfg) {
 
     // Cervical — keep exact labels
     if (cfg.key === 'cerv_fe'){
-      push('Cervical Flexion',  +1, maxPos);
-      push('Cervical Extension', -1, absMin);
+      push('Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene',  +1, maxPos);
+      push('Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)', -1, absMin);
       return out;
     }
     if (cfg.key === 'cerv_lat'){
-      push('Cervical Lateral Flexion — Left', -1, absMin);
-      push('Cervical Lateral Flexion — Right',  +1, maxPos);
+      push('Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli) — Left', -1, absMin);
+      push('Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli) — Right',  +1, maxPos);
       return out;
     }
     if (cfg.key === 'cerv_rot'){
-      push('Cervical Rotation — Right',  -1, absMin);
-      push('Cervical Rotation — Left', +1, maxPos);
+      push('Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral — Right',  -1, absMin);
+      push('Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral — Left', +1, maxPos);
       return out;
     }
     if (cfg.key === 'clavicle_L'){
