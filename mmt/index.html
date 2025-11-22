@@ -358,13 +358,13 @@ const ANAT = { addL:-32, psL:-2, wpsL:-73 };
 /* Hints are case-insensitive substrings that may appear in your rig's bone names */
 const KEYMAP = {
   sh_aa_l: { hints:['upperarm_l','upperarm.l','l_upperarm','leftarm','mixamorig:lefthand','mixamorig:leftarm'], axis:'z' },
-  sh_aa_r: { hints:['upperarm_r','upperarm.r','r_upperarm','rightarm','mixamorig:righthand','mixamorig:rightarm'], axis:'z' },
+  sh_aa_r: { hints:['upperarm_r','upperarm.r','r_upperarm','rightarm','mixamorig:righthand','mixamorig:rightarm'], axis:'-z' },
 
   fa_ps_l: { hints:['forearm_l','forearm.l','l_forearm','mixamorig:leftforearm'], axis:'y' },
-  fa_ps_r: { hints:['forearm_r','forearm.r','r_forearm','mixamorig:rightforearm'], axis:'y' },
+  fa_ps_r: { hints:['forearm_r','forearm.r','r_forearm','mixamorig:rightforearm'], axis:'-y' },
 
   wr_ps_l: { hints:['hand_l','hand.l','l_hand','mixamorig:lefthand'], axis:'y' },
-  wr_ps_r: { hints:['hand_r','hand.r','r_hand','mixamorig:righthand'], axis:'y' },
+  wr_ps_r: { hints:['hand_r','hand.r','r_hand','mixamorig:righthand'], axis:'-y' },
 };
 
 function findBoneByHints(hints){
