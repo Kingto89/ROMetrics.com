@@ -450,19 +450,24 @@ function seatPoseOnlyLegs(){
   if (calfR)  calfR.rotateX(rad(-90));
 }
 
-function placeOnTable(){
-  seatPoseOnlyLegs();
-  // Face the table (positive Z)
-  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
-  // Align model horizontally with table center
-  if(model){
-    model.position.x = tableTop.position.x;
-    model.position.z = tableTop.position.z - (TABLE_D*0.25);
-  }
-  // Snap bottom to tabletop
-  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
-  snapBottomToY(topY);
-  savePose();
+function placeOnFloor(){
+  if(!model) return;
+  // Reset legs to default
+  if (skeleton){
+    skeleton.bones.forEach(b=>{
+      const q0 = initialBoneRot.get(b);
+      if (q0) b.quaternion.copy(q0);
+    });
+  }
+  // Face front wall
+  model.rotation.y = 0;
+  rotSlider.value = "0";
+  // Center and snap to floor
+  model.position.x = 0;
+  model.position.z = -0.4;
+  snapBottomToY(0);
+  setPoseFlag("seated", false); // <--- ADD THIS LINE
+  savePose();
 }
 
 function placeOnFloor(){
