@@ -435,7 +435,7 @@ function loadModel(){
   if (calfR)  calfR.rotateX(rad(-90));
   // snap model's lowest point to the seat top
 const box = new THREE.Box3().setFromObject(model);
-model.position.y += (seat.position.y - box.min.y) + 0.005; // small cushion sink
+model.position.y += (seat.position.y - box.min.y) + 0.0005; // small cushion sink
 
 // Turn the ground into a shadow-catching “bed top” under the hips
 ground.geometry.dispose();
