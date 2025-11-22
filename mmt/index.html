@@ -292,10 +292,10 @@ const seat = new THREE.Mesh(
 );
 seat.receiveShadow = true;
 seat.castShadow = false;
-seat.position.set(0, 0.46, 0.05);                           // adjust Y to raise/lower
+seat.position.set(0, 0.06, 0.05);                           // adjust Y to raise/lower
 scene.add(seat);
 
-function placeSeatUnderHips(y=0.46, zOffset=0.05){
+function placeSeatUnderHips(y=0.06, zOffset=0.05){
   if(!model) return;
   const box = new THREE.Box3().setFromObject(model);
   const cx = (box.min.x + box.max.x) * 0.5;
