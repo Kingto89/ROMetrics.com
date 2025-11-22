@@ -351,6 +351,35 @@ room.add(shadowCatch);
   }
   setCameraDistance(4.8); // bigger = farther, smaller = closer
 })();
+
+/* ==== Anatomic preset (minimal) ==== */
+const ANAT = { addL:-32, psL:-2, wpsL:-73 };
+
+// map your keys to bones/axes (keep short)
+const KEYMAP = {
+  sh_aa_l:{bone:'upperarm_L',axis:'z'}, sh_aa_r:{bone:'upperarm_R',axis:'z'},
+  fa_ps_l:{bone:'forearm_L',axis:'y'},  fa_ps_r:{bone:'forearm_R',axis:'y'},
+  wr_ps_l:{bone:'hand_L',axis:'y'},     wr_ps_r:{bone:'hand_R',axis:'y'},
+};
+
+function setPair(key, deg){
+  if(!skeleton) return;
+  const m = KEYMAP[key]; if(!m) return;
+  const b = skeleton.bones.find(x=>x.name===m.bone); if(!b) return;
+  const q0 = initialBoneRot.get(b); if(q0) b.quaternion.copy(q0);
+  const r = THREE.MathUtils.degToRad(deg);
+  if(m.axis==='x') b.rotateX(r); else if(m.axis==='y') b.rotateY(r); else b.rotateZ(r);
+}
+
+function applyAnatomicBaseline(){
+  setPair('sh_aa_l', ANAT.addL);
+  setPair('sh_aa_r', ANAT.addL);
+  setPair('fa_ps_l', ANAT.psL);
+  setPair('fa_ps_r', ANAT.psL);
+  setPair('wr_ps_l', ANAT.wpsL);
+  setPair('wr_ps_r', -ANAT.wpsL);
+}
+  
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
@@ -373,8 +402,8 @@ function seatPoseOnlyLegs(){
     if (q0) b.quaternion.copy(q0);
   });
   const rad = THREE.MathUtils.degToRad;
-  if (thighL) thighL.rotateX(rad(90));
-  if (thighR) thighR.rotateX(rad(90));
+  if (thighL) thighL.rotateX(rad(85));
+  if (thighR) thighR.rotateX(rad(85));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
 }
@@ -390,6 +419,7 @@ function addModel(gltf){
   // store baseline bone rotations
   if (skeleton){
     skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+    applyAnatomicBaseline();
   }
 
   // Apply hard-wired numeric transform (no saving, no snapping)
