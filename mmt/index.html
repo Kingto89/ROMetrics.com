@@ -248,76 +248,72 @@ startTestBtn.addEventListener('click', () => {
     startTestBtn.classList.remove('lockOn');
   }, 300);
 });
+/* ========================================= */
+
 /* ==== THREE setup ==== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.8;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-
-// keep your smooth light background — this prevents HDR from covering the screen
 scene.background = new THREE.Color(0xf1f5f9);
 
-const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.01, 100);
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
 camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.minDistance = 0.6; controls.maxDistance = 6;
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.minDistance=.6; controls.maxDistance=6;
 controls.target.set(0,1.1,0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
-
 const key = new THREE.DirectionalLight(0xffffff, 1.2);
 key.position.set(2.5,4,2.5);
 key.castShadow = true;
 key.shadow.mapSize.set(2048,2048);
-key.shadow.camera.near = 0.1;
-key.shadow.camera.far = 15;
-key.shadow.camera.left = -4;
-key.shadow.camera.right = 4;
-key.shadow.camera.top = 4;
-key.shadow.camera.bottom = -4;
+key.shadow.camera.near=0.1; key.shadow.camera.far=15;
+key.shadow.camera.left=-4; key.shadow.camera.right=4;
+key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
 scene.add(key);
 
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(20,20),
-    new THREE.ShadowMaterial({ opacity:0.45 })
-);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity:.45 }));
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-/* ==== HDR ENVIRONMENT LOADER — works + no giant background ==== */
+
+/* ==== HDR Background Loader ==== */
 const exrLoader = new EXRLoader();
-const correctedHdrPath = "../assets/hospital_room_2k.exr";  // your original working path
+// FIX: Using '../assets/' to resolve 404 error, assuming the HTML file is inside a subdirectory
+// and assets is one level up relative to that subdirectory.
+const correctedHdrPath = '../assets/hospital_room_2k.exr'; 
 
 exrLoader.load(
-  correctedHdrPath,
-  (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
+    correctedHdrPath,
+    (texture) => {
+        // Set the texture mapping for environment use
+        texture.mapping = THREE.EquirectangularReflectionMapping; 
 
-    // ✔️ Use HDR for lighting only
-    scene.environment = texture;
+        // Apply the texture to the scene's environment (for material reflections)
+        scene.environment = texture;
 
-    // ✔️ Keep your solid background (no giant HDR)
-    // scene.background stays as your 0xf1f5f9 color
-
-    console.log("HDR loaded");
-    document.getElementById("msg").textContent = "HDR loaded";
-  },
-  undefined,
-  (err) => {
-    console.error("HDR load error", err);
-    document.getElementById("msg").textContent = "⚠️ HDR load error";
-  }
+        // Apply the texture to the scene's background (what the camera sees)
+        scene.background = texture;
+    },
+    // Optional: Add an error handler for debugging
+    (xhr) => {
+        // progress tracking if needed
+    },
+    (error) => {
+        console.error('An error occurred loading the HDR. Path tried:', correctedHdrPath, error);
+        document.getElementById("msg").textContent = `⚠️ Error loading HDR. Check path: ${correctedHdrPath}`;
+    }
 );
-
+/* =============================== */
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
