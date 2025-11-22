@@ -256,13 +256,17 @@ renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// Set exposure to handle the HDR brightness (recommended for visual balance)
+renderer.toneMappingExposure = 0.8; 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf1f5f9);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+// FIX: Changed FOV from 45 to 35. This makes the distant HDR background appear smaller and correctly scaled 
+// relative to the foreground model without changing the model's physical size.
+const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.01, 100);
 camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -284,7 +288,6 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
-
 
 /* ==== HDR Background Loader ==== */
 const exrLoader = new EXRLoader();
