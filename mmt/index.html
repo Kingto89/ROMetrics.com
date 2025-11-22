@@ -300,6 +300,10 @@ exrLoader.load(
     (texture) => {
         // Set the texture mapping for environment use
         texture.mapping = THREE.EquirectangularReflectionMapping; 
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.repeat.set(0.25, 0.25);   // ← Shrink HDR to 1/4 size
+        texture.center.set(0.5, 0.5);
+
 
         // Apply the texture to the scene's environment (for material reflections)
         scene.environment = texture;
