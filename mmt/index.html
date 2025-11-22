@@ -302,13 +302,6 @@ function placeSeatUnderHips(y=0.46, zOffset=0.05){
   seat.position.set(cx, y, cz + zOffset); // center under pelvis
 }
  
-function stickToY(targetY=0){
-  if(!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const minY = box.min.y;
-  if (isFinite(minY)) model.position.y += (targetY - minY);
-}
-
  // Make the equirectangular background appear 3× smaller
 function shrinkBackgroundBy(factor = 50) {
   const oldFovDeg = camera.fov;
