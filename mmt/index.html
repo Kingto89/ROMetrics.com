@@ -352,66 +352,40 @@ room.add(shadowCatch);
   setCameraDistance(4.8); // bigger = farther, smaller = closer
 })();
 
-/* ==== Anatomic preset (robust, tolerant bone matching) ==== */
-const ANAT = { addL:-32, psL:-2, wpsL:-73 };
+/* === Anatomic preset — simple like goniometer index === */
+const ANAT = { add:-32, ps:-2, wps:-73 };
 
-/* Hints are case-insensitive substrings that may appear in your rig's bone names */
-const KEYMAP = {
-  sh_aa_l: { hints:['upperarm_l','upperarm.l','l_upperarm','leftarm','mixamorig:lefthand','mixamorig:leftarm'], axis:'z' },
-  sh_aa_r: { hints:['upperarm_r','upperarm.r','r_upperarm','rightarm','mixamorig:righthand','mixamorig:rightarm'], axis:'-z' },
-
-  fa_ps_l: { hints:['forearm_l','forearm.l','l_forearm','mixamorig:leftforearm'], axis:'y' },
-  fa_ps_r: { hints:['forearm_r','forearm.r','r_forearm','mixamorig:rightforearm'], axis:'-y' },
-
-  wr_ps_l: { hints:['hand_l','hand.l','l_hand','mixamorig:lefthand'], axis:'y' },
-  wr_ps_r: { hints:['hand_r','hand.r','r_hand','mixamorig:righthand'], axis:'-y' },
-};
-
-function findBoneByHints(hints){
-  if(!skeleton) return null;
-  const bones = skeleton.bones;
-  // First pass: exact (case-insensitive) match
-  for (const h of hints){
-    const hit = bones.find(b => b.name.toLowerCase() === h.toLowerCase());
-    if (hit) return hit;
-  }
-  // Second pass: substring match
-  for (const h of hints){
-    const hit = bones.find(b => b.name.toLowerCase().includes(h.toLowerCase()));
-    if (hit) return hit;
-  }
-  return null;
+function getBone(name){
+  return skeleton?.bones.find(b => b.name === name) || null;
 }
-
-function rotateByAxis(bone, axis, deg){
+function setDegAxis(bone, axis, deg){
+  if(!bone) return;
+  const q0 = initialBoneRot.get(bone);
+  if(q0) bone.quaternion.copy(q0);        // reset to baseline
   const r = THREE.MathUtils.degToRad(deg);
   if(axis==='x') bone.rotateX(r);
   else if(axis==='y') bone.rotateY(r);
   else bone.rotateZ(r);
 }
 
-function setPair(key, deg){
-  if(!skeleton) return;
-  const m = KEYMAP[key]; if(!m) return;
-  const b = findBoneByHints(m.hints); if(!b) { console.warn('Bone not found for', key, m.hints); return; }
-  const q0 = initialBoneRot.get(b); if(q0) b.quaternion.copy(q0);
-  rotateByAxis(b, m.axis, deg);
-}
-
+// ONE simple function that sets both sides (like your gonio index)
+// NOTE: this assumes arm bone names like "upperarm_L/R", "forearm_L/R", "hand_L/R".
+// If your rig uses "wrist_L/R" instead of "hand_L/R", change those two names below.
 function applyAnatomicBaseline(){
-  // Shoulders (same value both sides)
-  setPair('sh_aa_l', ANAT.addL);
-  setPair('sh_aa_r', ANAT.addL);
+  const shL = getBone('upperarm_L'), shR = getBone('upperarm_R'); // shoulder ab/ad on Z
+  const faL = getBone('forearm_L'),  faR = getBone('forearm_R');  // forearm PS on Y
+  const wrL = getBone('hand_L'),     wrR = getBone('hand_R');     // wrist PS on Y (use 'wrist_*' if needed)
 
-  // Forearm PS (same both sides)
-  setPair('fa_ps_l', ANAT.psL);
-  setPair('fa_ps_r', ANAT.psL);
+  setDegAxis(shL, 'z', ANAT.add);
+  setDegAxis(shR, 'z', ANAT.add);
 
-  // Wrist PS (mirror sign on R side as in your original)
-  setPair('wr_ps_l', ANAT.wpsL);
-  setPair('wr_ps_r', -ANAT.wpsL);
+  setDegAxis(faL, 'y', ANAT.ps);
+  setDegAxis(faR, 'y', ANAT.ps);
+
+  setDegAxis(wrL, 'y', ANAT.wps);
+  setDegAxis(wrR, 'y', -ANAT.wps);   // mirror sign on the right (your original rule)
 }
-
+  
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
