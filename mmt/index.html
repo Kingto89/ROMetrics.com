@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MMT Trainer — Side Notes (Room + Seat + Save + Rotate)</title>
+<title>MMT Trainer — Side Notes (Hard‑Wired Pose)</title>
 
 <script type="importmap">
 {
@@ -42,7 +42,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 .note-head h3{margin:0;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .note-tabs{display:flex;gap:8px}
 .note-tabs button{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff}
-.note-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-tabs button.active{background:#0d9488;color:#fff;border-color:#0d9488}
 .note-body{padding:12px;overflow:auto;background:#fff}
 .note-close{border-radius:8px;border:1px solid var(--line);padding:6px 10px;background:#fff}
 @media (max-width: 720px){
@@ -160,33 +160,6 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
       <button id="lock3D" class="mini">🔓 3D: Unlocked</button>
       <button id="zeroAll" class="mini" title="Reset to anatomic baseline">Zero All</button>
     </div>
-
-    <label>Room Placement</label>
-    <div class="row">
-      <button id="placeOnTable" class="mini">🪑 Place/Seat on Table</button>
-      <button id="placeOnFloor" class="mini">🦶 Stand on Floor</button>
-    </div>
-    <div class="row">
-      <button id="nudgeUp" class="mini">⬆️ Nudge Up</button>
-      <button id="nudgeDown" class="mini">⬇️ Nudge Down</button>
-    </div>
-    <div class="row">
-      <button id="nudgeToward" class="mini">↗️ Nudge Toward</button>
-      <button id="nudgeAway" class="mini">↙️ Nudge Away</button>
-    </div>
-
-    <label>Scale</label>
-    <input id="scaleSlider" type="range" min="0.8" max="1.6" value="1.2" step="0.01"/>
-
-    <label>Rotate (0–360°)</label>
-    <input id="rotSlider" type="range" min="0" max="360" value="0" step="1"/>
-
-    <div class="row">
-      <button id="savePose" class="mini">💾 Save</button>
-      <button id="clearPose" class="mini">🧹 Clear</button>
-    </div>
-
-    <pre id="log"></pre>
   </div>
 </div>
 
@@ -219,6 +192,16 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
+/* ==== Hard-wired numeric pose (edit these) ==== */
+const POSE = {
+  x: 0.00,   // left(-) / right(+)
+  y: 0.00,   // down(-) / up(+)
+  z: -0.40,  // toward camera(-) / away(+)
+  ryDeg: 0,  // rotation 0–360
+  s: 1.15,   // scale
+  seated: false // true = sit legs
+};
+
 /* ==== Error surfacing ==== */
 window.addEventListener('error', (e) => {
   const m = document.getElementById("msg");
@@ -229,7 +212,7 @@ window.addEventListener('error', (e) => {
 const $ = (id)=>document.getElementById(id);
 const canvas = $("c");
 const logEl = $("log");
-const log = (t) => { logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
+const log = (t) => { if(logEl){ logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; } };
 
 const actionSel = $("actionSel");
 const startTestBtn = $("startTestBtn");
@@ -239,58 +222,6 @@ const resistanceFill = $("resistanceFill");
 const resistanceText = $("resistanceText");
 const instructionText = $("instructionText");
 const gradeMain = $("grade-main");
-
-const placeOnTableBtn = $("placeOnTable");
-const placeOnFloorBtn = $("placeOnFloor");
-const nudgeUpBtn = $("nudgeUp");
-const nudgeDownBtn = $("nudgeDown");
-const nudgeTowardBtn = $("nudgeToward");
-const nudgeAwayBtn = $("nudgeAway");
-const scaleSlider = $("scaleSlider");
-const rotSlider = $("rotSlider");
-const saveBtn = $("savePose");
-const clearBtn = $("clearPose");
-// <<<< PASTE THIS BLOCK HERE >>>>
-
-function loadPose(){
-  try{
-    const raw = localStorage.getItem(POSE_KEY);
-    if(!raw) return false;
-    const o = JSON.parse(raw);
-    if(!model) return false;
-
-    model.position.set(o.x, o.y, o.z);
-    model.scale.set(o.sx, o.sy, o.sz);
-    model.rotation.y = degToRad(o.ry || 0);
-
-    // Update UI sliders
-    scaleSlider.value = String(o.sx?.toFixed(2) ?? model.scale.x.toFixed(2));
-    rotSlider.value   = String(Math.round(o.ry || 0));
-
-    // If previously saved as seated, re-seat the legs and re-snap to tabletop
-    if (o.seated === true){
-      seatPoseOnlyLegs();
-      const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
-      snapBottomToY(topY);
-    }
-    return true;
-  }catch{ return false; }
-}
-
-// <<<< END OF PASTE BLOCK >>>>
-
-function savePose(){
-  if(!model) return;
-  const p = model.position, s = model.scale;
-  const raw = localStorage.getItem(POSE_KEY) || "{}";
-  const o = JSON.parse(raw);
-  o.x = p.x; o.y = p.y; o.z = p.z;
-  o.sx = s.x; o.sy = s.y; o.sz = s.z;
-  o.ry = radToDeg(model.rotation.y);
-  localStorage.setItem(POSE_KEY, JSON.stringify(o));
-  $("msg").textContent = "💾 Pose saved";
-}
-  
 
 /* ==== Start Test Button Glow Fix ==== */
 startTestBtn.addEventListener('click', () => {
@@ -417,22 +348,6 @@ const initialBoneRot = new Map();
 
 /* ==== Utilities ==== */
 function degToRad(d){ return d * Math.PI / 180; }
-function radToDeg(r){ return r * 180 / Math.PI; }
-const POSE_KEY = "rometrics_pose_v3";
-function setPoseFlag(k, v){
-  const raw = localStorage.getItem(POSE_KEY) || "{}";
-  const o = JSON.parse(raw);
-  o[k] = v;
-  localStorage.setItem(POSE_KEY, JSON.stringify(o));
-}
-
-
-function box3Of(obj){ return new THREE.Box3().setFromObject(obj); }
-function snapBottomToY(targetY){
-  if(!model) return;
-  const b = box3Of(model);
-  if (isFinite(b.min.y)) model.position.y += (targetY - b.min.y);
-}
 
 function seatPoseOnlyLegs(){
   if(!skeleton) return;
@@ -450,81 +365,30 @@ function seatPoseOnlyLegs(){
   if (calfR)  calfR.rotateX(rad(-90));
 }
 
-function placeOnTable(){
-  seatPoseOnlyLegs();
-  // Face the table (positive Z)
-  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
-  // Align model horizontally with table center
-  if(model){
-    model.position.x = tableTop.position.x;
-    model.position.z = tableTop.position.z - (TABLE_D*0.25);
-  }
-  // Snap bottom to tabletop
-  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
-  snapBottomToY(topY);
-  setPoseFlag('seated', true);
-  savePose();
-}
-
-function placeOnFloor(){
-  if(!model) return;
-  // Reset legs to default
-  if (skeleton){
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-  }
-  // Face front wall
-  model.rotation.y = 0;
-  rotSlider.value = "0";
-  // Center and snap to floor
-  model.position.x = 0;
-  model.position.z = -0.4;
-  snapBottomToY(0);
-  setPoseFlag('seated', false);
-  savePose();
-}
-
-function nudgeY(dy){
-  if(!model) return;
-  model.position.y += dy;
-  savePose();
-}
-function nudgeTowardAway(sign){
-  if(!model) return;
-  // Move along camera forward projected on XZ
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  dir.y = 0; dir.normalize();
-  model.position.addScaledVector(dir, 0.04 * sign);
-  savePose();
-}
-
 /* ==== Load model ==== */
 function addModel(gltf){
-  model = gltf.scene;
-  model.scale.set(1.15,1.15,1.15);
-  model.traverse(o=>{
-    if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
-    if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-  });
-  scene.add(model);
+  model = gltf.scene;
+  model.traverse(o=>{
+    if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+    if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+  });
 
-  if (skeleton){
-    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-  }
+  // store baseline bone rotations
+  if (skeleton){
+    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+  }
 
-  // If we have a saved pose, apply it; else stand on floor
-  if(!loadPose()){
-    placeOnFloor();
-  }
+  // Apply hard-wired numeric transform (no saving, no snapping)
+  model.scale.set(POSE.s, POSE.s, POSE.s);
+  model.position.set(POSE.x, POSE.y, POSE.z);
+  model.rotation.set(0, degToRad(POSE.ryDeg), 0);
+  if (POSE.seated) seatPoseOnlyLegs();
 
-  $("msg").textContent = "✅ Model loaded";
-} // <--- THIS IS THE MISSING CLOSING BRACE!
+  scene.add(model);
+  $("msg").textContent = "✅ Model loaded";
+}
 
 const MODEL_CANDIDATES = [
-// ... rest of the code continues below here
   window.ROMETRICS_MODEL_URL,
   "assets/Roma_ROMetrics.glb",
   new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
@@ -564,30 +428,6 @@ $("zeroAll").onclick = () => {
     if (q0) b.quaternion.copy(q0);
   });
 };
-
-placeOnTableBtn.onclick = placeOnTable;
-placeOnFloorBtn.onclick = placeOnFloor;
-nudgeUpBtn.onclick = ()=> nudgeY(+0.01);
-nudgeDownBtn.onclick = ()=> nudgeY(-0.01);
-nudgeTowardBtn.onclick = ()=> nudgeTowardAway(+1);
-nudgeAwayBtn.onclick = ()=> nudgeTowardAway(-1);
-
-scaleSlider.addEventListener('input', ()=>{
-  if(!model) return;
-  const s = parseFloat(scaleSlider.value);
-  model.scale.set(s,s,s);
-  savePose();
-});
-
-rotSlider.addEventListener('input', ()=>{
-  if(!model) return;
-  const deg = parseFloat(rotSlider.value);
-  model.rotation.y = degToRad(deg);
-  savePose();
-});
-
-saveBtn.onclick = savePose;
-clearBtn.onclick = ()=>{ localStorage.removeItem(POSE_KEY); $("msg").textContent = "Saved pose cleared."; };
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
