@@ -294,6 +294,13 @@ seat.receiveShadow = true;
 seat.castShadow = false;
 seat.position.set(0, 0.46, 0.05);                   // ← raise/lower with seat.position.y
 scene.add(seat);
+function placeSeatUnderHips(y=0.46, zOffset=0.05){
+  if(!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const cx = (box.min.x + box.max.x) * 0.5;
+  const cz = (box.min.z + box.max.z) * 0.5;
+  seat.position.set(cx, y, cz + zOffset); // center under pelvis
+}
  
 function stickToY(targetY=0){
   if(!model) return;
@@ -433,9 +440,9 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
-  // snap model's lowest point to the seat top
-const box = new THREE.Box3().setFromObject(model);
-model.position.y += (seat.position.y - box.min.y) + 0.0005; // small cushion sink
+placeSeatUnderHips(0.46, 0.05);  // move seat under hips
+stickToY(seat.position.y + 0.005); // sit on seat with tiny sink
+
 
 // Turn the ground into a shadow-catching “bed top” under the hips
 ground.geometry.dispose();
