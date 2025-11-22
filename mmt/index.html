@@ -250,7 +250,37 @@ const scaleSlider = $("scaleSlider");
 const rotSlider = $("rotSlider");
 const saveBtn = $("savePose");
 const clearBtn = $("clearPose");
+// <<<< PASTE THIS BLOCK HERE >>>>
 
+function loadPose(){
+  try{
+    const raw = localStorage.getItem(POSE_KEY);
+    if(!raw) return false;
+    const o = JSON.parse(raw);
+    if(!model) return false;
+
+    model.position.set(o.x, o.y, o.z);
+    model.scale.set(o.sx, o.sy, o.sz);
+    model.rotation.y = degToRad(o.ry || 0);
+
+    // Update UI sliders
+    scaleSlider.value = String(o.sx?.toFixed(2) ?? model.scale.x.toFixed(2));
+    rotSlider.value   = String(Math.round(o.ry || 0));
+
+    // If previously saved as seated, re-seat the legs and re-snap to tabletop
+    if (o.seated === true){
+      seatPoseOnlyLegs();
+      const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
+      snapBottomToY(topY);
+    }
+    return true;
+  }catch{ return false; }
+}
+
+// <<<< END OF PASTE BLOCK >>>>
+
+function savePose(){
+    // ... (the existing savePose function continues here)
 function savePose(){
   if(!model) return;
   const p = model.position, s = model.scale;
@@ -508,11 +538,6 @@ function placeOnFloor(){
 
   if (skeleton){
     skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-  }
-
-  // If we have a saved pose, apply it; else stand on floor
-  if(!loadPose()){
-    placeOnFloor();
   }
 
   $("msg").textContent = "✅ Model loaded";
