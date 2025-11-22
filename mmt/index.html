@@ -225,7 +225,7 @@ window.addEventListener('error', (e) => {
 /* ==== UI refs ==== */
 const canvas = document.getElementById("c");
 const logEl = document.getElementById("log");
-const log = (t) => { logEl.textContent += t + "\\n"; logEl.scrollTop = logEl.scrollHeight; };
+const log = (t) => { logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
 
 const actionSel = document.getElementById("actionSel");
 const startTestBtn = document.getElementById("startTestBtn");
@@ -236,6 +236,18 @@ const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
 const instructionText = document.getElementById("instructionText");
 const gradeMain = document.getElementById("grade-main");
+
+/* ==== Start Test Button Glow Fix (NEW) ==== */
+// When the Start Test button is clicked, apply the green 'lockOn' class briefly.
+startTestBtn.addEventListener('click', () => {
+  startTestBtn.classList.add('lockOn');
+  
+  // Remove the class after a short delay (300ms) for a quick visual blink effect.
+  setTimeout(() => {
+    startTestBtn.classList.remove('lockOn');
+  }, 300);
+});
+/* ========================================= */
 
 /* ==== THREE setup ==== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
