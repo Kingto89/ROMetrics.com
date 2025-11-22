@@ -280,8 +280,6 @@ function loadPose(){
 // <<<< END OF PASTE BLOCK >>>>
 
 function savePose(){
-    // ... (the existing savePose function continues here)
-function savePose(){
   if(!model) return;
   const p = model.position, s = model.scale;
   const raw = localStorage.getItem(POSE_KEY) || "{}";
@@ -587,19 +585,81 @@ rotSlider.addEventListener('input', ()=>{
 });
 
 saveBtn.onclick = savePose;
-clearBtn.onclick = ()=>{ clearPose(); $("msg").textContent = "Saved pose cleared."; };
+clearBtn.onclick = ()=>{ localStorage.removeItem(POSE_KEY); $("msg").textContent = "Saved pose cleared."; };
 
-/* ==== Notes panel (stubs) ==== */
+/* ==== Notes panel (MD loader) ==== */
 const notePanel = $('notePanel');
 const noteTitle = $('noteTitle');
 const noteBody  = $('noteBody');
 const tabHigh   = $('tabHigh');
 const tabLow    = $('tabLow');
 const closeNote = $('closeNote');
-showMMT.addEventListener('click', ()=> { notePanel.classList.remove('hide'); notePanel.style.display='flex'; });
-tabHigh.addEventListener('click', ()=>{});
-tabLow.addEventListener('click', ()=>{});
+
+/* Helper: build path to your .md file
+   Assumes files like:
+   notes/Capital_Extension_high.md
+   notes/Capital_Extension_low.md
+   (rename paths if your folder/filenames are different)
+*/
+function buildNotePath(level){
+  const key = actionSel.value;
+  if (!key){
+    noteTitle.textContent = "MMT Instructions";
+    noteBody.textContent  = "Select a test from the dropdown first.";
+    return null;
+  }
+  // level: "high" → Grades 3–5, "low" → Grades 0–2
+  return `notes/${key}_${level}.md`;
+}
+
+async function loadNotes(level){
+  const path = buildNotePath(level);
+  if (!path) return;
+
+  const label = actionSel.options[actionSel.selectedIndex]?.text || "MMT Instructions";
+  noteTitle.textContent = level === "high"
+    ? `${label} — Grades 3–5`
+    : `${label} — Grades 0–2`;
+
+  noteBody.textContent = "Loading…";
+
+  try{
+    const res = await fetch(path);
+    if (!res.ok){
+      noteBody.textContent = `No notes file found for this test (${path}).`;
+      return;
+    }
+    const txt = await res.text();
+    // Simple: show raw text; if you want markdown formatting later we can add it
+    noteBody.textContent = txt;
+  }catch(err){
+    noteBody.textContent = "Error loading notes.";
+  }
+}
+
+showMMT.addEventListener('click', ()=> {
+  notePanel.classList.remove('hide');
+  notePanel.style.display = 'flex';
+  tabHigh.classList.add('active');
+  tabLow.classList.remove('active');
+  loadNotes("high");     // default to Grades 3–5
+});
+
+tabHigh.addEventListener('click', ()=> {
+  tabHigh.classList.add('active');
+  tabLow.classList.remove('active');
+  loadNotes("high");
+});
+
+tabLow.addEventListener('click', ()=> {
+  tabLow.classList.add('active');
+  tabHigh.classList.remove('active');
+  loadNotes("low");
+});
+
 closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
+  
+
 
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
