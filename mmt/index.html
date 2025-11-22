@@ -222,36 +222,6 @@ window.addEventListener('error', (e) => {
   if (m) m.textContent = `⚠️ ${e.message}`;
 });
 
-// --- Seat-on-bed illusion (minimal + safe) ---
-(function poseSeatedApprox(){
-  // 1) Put her roughly at bed height and frame her like she's on it
-  model.position.y += 0.45;                // tweak: 0.35–0.55 to sit higher/lower
-  controls.target.set(0, 1.05, 0.15);      // nudge gaze toward "bed" area in HDR
-  camera.position.set(1.15, 1.25, 1.75);   // lower + closer camera to sell the seat
-  camera.updateProjectionMatrix();
-
-  // 2) If a skeleton exists, softly bend to a seated pose (no-op if names don't match)
-  if (!skeleton) return;
-  const find = (k)=> skeleton.bones.find(b=> b.name.toLowerCase().includes(k));
-  const deg = THREE.MathUtils.degToRad;
-
-  const resetQ = (bone)=> {
-    const q0 = initialBoneRot.get(bone);
-    if (bone && q0) bone.quaternion.copy(q0);
-  };
-  const bendX = (bone, d)=> { if (bone) bone.rotateX(deg(d)); };
-
-  const thighL = find("thigh_l") || find("upperleg_l");
-  const thighR = find("thigh_r") || find("upperleg_r");
-  const shinL  = find("shin_l")  || find("lowerleg_l") || find("calf_l");
-  const shinR  = find("shin_r")  || find("lowerleg_r") || find("calf_r");
-  const spine  = find("spine");   // gentle trunk flex
-
-  [thighL, thighR, shinL, shinR, spine].forEach(resetQ);
-  bendX(thighL,  90); bendX(thighR,  90);   // hips ~90°
-  bendX(shinL,   90); bendX(shinR,   90);   // knees ~90°
-  bendX(spine,  -10);                        // slight trunk flex
-})();
   
 
 /* ==== UI refs ==== */
@@ -427,6 +397,33 @@ function loadModel(){
       skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
     }
     console.log("BONES:", skeleton.bones.map(b => b.name));
+// --- Seat-on-bed illusion (legs only; exact bone names) ---
+(() => {
+  const get = (n)=> skeleton.bones.find(b => b.name === n);
+
+  const thighL = get("thigh_L");
+  const thighR = get("thigh_R");
+  const calfL  = get("calf_L");
+  const calfR  = get("calf_R");
+
+  // restore base rotations if saved
+  [thighL, thighR, calfL, calfR].forEach(b => {
+    const q0 = initialBoneRot.get(b);
+    if (b && q0) b.quaternion.copy(q0);
+  });
+
+  const rad = THREE.MathUtils.degToRad;
+  if (thighL) thighL.rotateX(rad(90));
+  if (thighR) thighR.rotateX(rad(90));
+  if (calfL)  calfL.rotateX(rad(90));
+  if (calfR)  calfR.rotateX(rad(90));
+
+  // position + framing to sell "seated in bed"
+  model.position.y += 0.45;           // tweak 0.35–0.55
+  controls.target.set(0, 1.05, 0.15);
+  camera.position.set(1.15, 1.25, 1.75);
+  camera.updateProjectionMatrix();
+})();
 
   });
 }
