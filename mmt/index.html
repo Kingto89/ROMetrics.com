@@ -503,47 +503,28 @@ function nudgeTowardAway(sign){
 
 /* ==== Load model ==== */
 function addModel(gltf){
-  model = gltf.scene;
-  model.scale.set(1.15,1.15,1.15);
-  model.traverse(o=>{
-    if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
-    if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
-  });
-  scene.add(model);
-function placeOnTable(){
-  seatPoseOnlyLegs();
-  if(model){ model.rotation.y = 0; rotSlider.value = "0"; }
-  model.position.x = tableTop.position.x;
-  model.position.z = tableTop.position.z - (TABLE_D*0.25);
-  const topY = tableTop.position.y + TABLE_THICK/2 + 0.004;
-  snapBottomToY(topY);
-  setPoseFlag("seated", true);   // ← add this
-  savePose();
-}
+  model = gltf.scene;
+  model.scale.set(1.15,1.15,1.15);
+  model.traverse(o=>{
+    if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+    if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
+  });
+  scene.add(model);
 
-function placeOnFloor(){
-  if (!model) return;
-  if (skeleton){
-    skeleton.bones.forEach(b=>{
-      const q0 = initialBoneRot.get(b);
-      if (q0) b.quaternion.copy(q0);
-    });
-  }
-  model.rotation.y = 0; rotSlider.value = "0";
-  model.position.x = 0; model.position.z = -0.4;
-  snapBottomToY(0);
-  setPoseFlag("seated", false);  // ← add this
-  savePose();
-}
+  if (skeleton){
+    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
+  }
 
-  if (skeleton){
-    skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
-  }
+  // If we have a saved pose, apply it; else stand on floor
+  if(!loadPose()){
+    placeOnFloor();
+  }
 
-  $("msg").textContent = "✅ Model loaded";
-}
+  $("msg").textContent = "✅ Model loaded";
+} // <--- THIS IS THE MISSING CLOSING BRACE!
 
 const MODEL_CANDIDATES = [
+// ... rest of the code continues below here
   window.ROMETRICS_MODEL_URL,
   "assets/Roma_ROMetrics.glb",
   new URL("assets/Roma_ROMetrics.glb", document.baseURI).href
