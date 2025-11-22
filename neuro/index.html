@@ -191,78 +191,118 @@ loader.load(getModelURL(), (gltf) => {
 
 function generateMaps(mesh){
     const pos = mesh.geometry.attributes.position;
-    const skinIdx = mesh.geometry.attributes.skinIndex;
-    const skinWt = mesh.geometry.attributes.skinWeight;
-    const bones = mesh.skeleton.bones;
+    const world = mesh.matrixWorld;
+    const vec = new THREE.Vector3();
 
-    const buckets = {}; // "C5-Left" -> [indices]
+    const buckets = {};  // dermatome → vertex indices
+    const DLIST = ["C2","C3","C4","C5","C6","C7","C8",
+                   "T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12",
+                   "L1","L2","L3","L4","L5",
+                   "S1","S2","S3","S4","S5"];
 
-    const tempPos = new THREE.Vector3();
+    DLIST.forEach(d => buckets[d] = []);
 
-    for(let i=0; i<pos.count; i++){
-        // Get World Pos for Side Calculation
-        tempPos.fromBufferAttribute(pos, i);
-        tempPos.applyMatrix4(mesh.matrixWorld);
-        const isRight = tempPos.x < 0; // Assuming standard T-Pose
-        
-        // Find Bone
-        let maxW=0, bId=0;
-        for(let k=0; k<4; k++){
-            const w = skinWt.getComponent(i,k);
-            if(w > maxW){ maxW=w; bId = skinIdx.getComponent(i,k); }
-        }
-        const bName = bones[bId].name.toLowerCase();
+    // FIRST: get height for vertical segmentation
+    let minZ = Infinity, maxZ = -Infinity;
+    for(let i=0;i<pos.count;i++){
+        vec.fromBufferAttribute(pos, i).applyMatrix4(world);
+        minZ = Math.min(minZ, vec.y);
+        maxZ = Math.max(maxZ, vec.y);
+    }
+    const H = maxZ - minZ;
 
-        // Map Bone to Level
-        let level = null;
-        for(const m of BONE_MAP){
-            if(m.k.some(kw => bName.includes(kw))){ level = m.v; break; }
-        }
+    // ------------------------------
+    // REGION RULES (MEDICAL ACCURACY)
+    // ------------------------------
+    function getDermatome(v){
+        const y = v.y - minZ;     // height normalized
+        const x = v.x;
+        const z = v.z;
 
-        if(level){
-            const key = `${level}-${isRight?'R':'L'}`;
-            if(!buckets[key]) buckets[key] = [];
-            buckets[key].push(i);
-        }
+        const sideR = x < 0 ? "R" : "L";
+
+        // *** CERVICAL ***
+        if(y > 0.78 * H) return "C2";
+        if(y > 0.74 * H) return "C3";
+        if(y > 0.70 * H) return "C4";
+        if(y > 0.63 * H) return "C5";
+        if(y > 0.55 * H && Math.abs(x) > 0.12) return "C6";  // thumb side
+        if(y > 0.50 * H) return "C7";                       // middle hand
+        if(y > 0.45 * H && Math.abs(x) < 0.12) return "C8"; // pinky side
+
+        // *** THORACIC ***
+        if(y > 0.40 * H) return "T1";
+        if(y > 0.36 * H) return "T2";
+        if(y > 0.33 * H) return "T3";
+        if(y > 0.30 * H) return "T4"; // nipple line
+        if(y > 0.27 * H) return "T5";
+        if(y > 0.24 * H) return "T6";
+        if(y > 0.21 * H) return "T7";
+        if(y > 0.19 * H) return "T8";
+        if(y > 0.17 * H) return "T9";
+        if(y > 0.15 * H) return "T10"; // umbilicus
+        if(y > 0.13 * H) return "T11";
+        if(y > 0.11 * H) return "T12";
+
+        // *** LUMBAR ***
+        if(y > 0.09 * H) return "L1";
+        if(y > 0.07 * H) return "L2";
+        if(y > 0.04 * H && z > 0) return "L3"; // anterior thigh
+        if(y > 0.04 * H && z <=0) return "L4"; // medial leg
+        if(y > 0.02 * H) return "L5"; // big toe
+
+        // *** SACRAL ***
+        if(z < -0.10) return "S1"; // lateral foot + calf
+        if(z < -0.05) return "S2"; 
+        if(z < -0.02) return "S3";
+        if(z <  0.00) return "S4";
+        return "S5"; // perineum
     }
 
-    // Build Point Clouds
-    const worldPosArr = []; // Cache all world positions once
+    // ------------------------------
+    // CLASSIFY EACH VERTEX
+    // ------------------------------
     for(let i=0; i<pos.count; i++){
-        tempPos.fromBufferAttribute(pos, i);
-        tempPos.applyMatrix4(mesh.matrixWorld);
-        worldPosArr.push(tempPos.clone());
+        vec.fromBufferAttribute(pos, i).applyMatrix4(world);
+        const d = getDermatome(vec);
+        buckets[d].push(i);
     }
 
-    for(const [key, indices] of Object.entries(buckets)){
-        const level = key.split('-')[0];
-        const data = DB[level] || { color: 0xffffff };
+    // ------------------------------
+    // RENDER POINT CLOUDS
+    // ------------------------------
+    for(const d of Object.keys(buckets)){
+        const list = buckets[d];
+        if(list.length < 10) continue;
+
+        const verts = [];
+        for(const idx of list){
+            vec.fromBufferAttribute(pos, idx).applyMatrix4(world);
+            verts.push(vec.x, vec.y, vec.z);
+        }
 
         const geo = new THREE.BufferGeometry();
-        const verts = [];
-        indices.forEach(idx => {
-            const p = worldPosArr[idx];
-            verts.push(p.x, p.y, p.z);
-        });
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+
+        const color = DB[d] ? DB[d].color : 0xffffff;
 
         const mat = new THREE.PointsMaterial({
-            color: data.color,
-            size: 0.015,
+            color,
+            size: 0.017,
             sizeAttenuation: true,
             transparent: true,
             opacity: 0.85,
-            depthTest: false, // Always visible on top
-            depthWrite: false
+            depthWrite: false,
+            depthTest: false
         });
 
-        const points = new THREE.Points(geo, mat);
-        points.userData = { id: key, level: level, ...data };
-        points.renderOrder = 999;
-        
-        scene.add(points);
-        regionMeshes[key] = points;
-        originalColors[key] = data.color;
+        const pc = new THREE.Points(geo, mat);
+        pc.userData = { level: d, color: color };
+        pc.renderOrder = 999;
+
+        scene.add(pc);
+        regionMeshes[d] = pc;
+        originalColors[d] = color;
     }
 }
 
