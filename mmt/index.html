@@ -687,6 +687,7 @@ updateGradingExceptionAvailability();
 
 // Minimal setPair used only for pose setting (not animation)
 function setPair(key, degrees) {
+ console.log("setPair RUN:", key, degrees); 
   const rad = THREE.MathUtils.degToRad(degrees);
 
   // LEFT / RIGHT detection
