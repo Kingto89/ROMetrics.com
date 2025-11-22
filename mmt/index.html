@@ -287,7 +287,7 @@ scene.add(ground);
  // Make the equirectangular background appear 3× smaller
 function shrinkBackgroundBy(factor = 5) {
   const oldFovDeg = camera.fov;
-  const newFovDeg = Math.min(120, oldFovDeg * factor); // cap to avoid fish-eye
+  const newFovDeg = Math.min(150, oldFovDeg * factor); // cap to avoid fish-eye
 
   // Keep the model the same on-screen size:
   // move the camera closer as we widen the FOV
