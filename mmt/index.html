@@ -288,38 +288,34 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
-
-/* ==== HDR Background Loader ==== */
 const exrLoader = new EXRLoader();
-// FIX: Using '../assets/' to resolve 404 error, assuming the HTML file is inside a subdirectory
-// and assets is one level up relative to that subdirectory.
-const correctedHdrPath = '../assets/hospital_room_2k.exr'; 
+const pmrem = new THREE.PMREMGenerator(renderer);
 
 exrLoader.load(
     correctedHdrPath,
     (texture) => {
-        // Set the texture mapping for environment use
-        texture.mapping = THREE.EquirectangularReflectionMapping; 
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        texture.repeat.set(0.25, 0.25);   // ← Shrink HDR to 1/4 size
-        texture.center.set(0.5, 0.5);
+        // Convert HDR to environment map
+        const envMap = pmrem.fromEquirectangular(texture).texture;
 
+        // ↓↓↓ The TRUE FIX ↓↓↓
+        // Make HDR appear 4× farther away (shrink visually)
+        const background = envMap.clone();
+        background.mapping = THREE.EquirectangularReflectionMapping;
+        background.userData = { distance: 4 };  // ← scale background distance
 
-        // Apply the texture to the scene's environment (for material reflections)
-        scene.environment = texture;
+        scene.environment = envMap;
+        scene.background = background;
 
-        // Apply the texture to the scene's background (what the camera sees)
-        scene.background = texture;
+        texture.dispose();
+        pmrem.dispose();
     },
-    // Optional: Add an error handler for debugging
-    (xhr) => {
-        // progress tracking if needed
-    },
-    (error) => {
-        console.error('An error occurred loading the HDR. Path tried:', correctedHdrPath, error);
-        document.getElementById("msg").textContent = `⚠️ Error loading HDR. Check path: ${correctedHdrPath}`;
+    undefined,
+    (err) => {
+        console.error("HDR load error", err);
+        document.getElementById("msg").textContent = "⚠️ HDR load error";
     }
 );
+
 /* =============================== */
   
 /* ==== Loader ==== */
