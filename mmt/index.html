@@ -407,7 +407,6 @@ function loadModel(){
       if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
     });
     scene.add(model);
-    groundSnap();
     document.getElementById("msg").textContent = "✅ Model loaded";
 
     if (skeleton){
@@ -434,23 +433,23 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
+placeSeatUnderHips(0.46, 0.05);
 seat.updateMatrixWorld();
-const seatTop = seat.position.y + 0.03;          // 0.06 seat height → top is +0.03
-const mb = new THREE.Box3().setFromObject(model);
+const mb = new THREE.Box3().setFromObject(model), seatTop = seat.position.y + 0.03;
 model.position.set(seat.position.x, model.position.y + (seatTop - mb.min.y) + 0.002, seat.position.z);
+
 
 
 
 // Turn the ground into a shadow-catching “bed top” under the hips
 ground.geometry.dispose();
-ground.geometry = new THREE.PlaneGeometry(-0.007, 1.40); // table-ish size
+ground.geometry = new THREE.PlaneGeometry(0.70, 1.40); // table-ish size
 ground.position.set(model.position.x, 0.012, model.position.z + 0.2); // small forward nudge
 ground.visible = true;
 ground.material.opacity = 0.65;  // stronger contact shadow
 
 
   // position + framing to sell "seated in bed"
-  model.position.y -= 0.3;           // tweak 0.35–0.55
   controls.target.set(0, 1.05, 0.15);
   camera.position.set(1.15, 1.25, 1.75);
   camera.updateProjectionMatrix();
