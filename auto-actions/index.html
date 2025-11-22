@@ -721,18 +721,18 @@ function freezeBindBaseFor(key, cfg) {
 
     // Cervical — keep exact labels
     if (cfg.key === 'cerv_fe'){
-      push('Cervical Flexion (Sternocleidomastoid, Longus Colli, Anterior Scalene',  +1, maxPos);
-      push('Cervical Extension (Semispinalis Cervicis, Splenius Cervicis, Longissimus Cervicis)', -1, absMin);
+      push('Cervical Flexion',  +1, maxPos);
+      push('Cervical Extension', -1, absMin);
       return out;
     }
     if (cfg.key === 'cerv_lat'){
-      push('Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli) — Left', -1, absMin);
-      push('Single SCM — Anterolateral Flexion (SCM, Longus Capitis, Longus Colli) — Right',  +1, maxPos);
+      push('Cervical Lateral Flexion — Left', -1, absMin);
+      push('Cervical Lateral Flexion — Right',  +1, maxPos);
       return out;
     }
     if (cfg.key === 'cerv_rot'){
-      push('Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral — Right',  -1, absMin);
-      push('Cervical Rotation (SCM—contralateral; Splenius Capitis—ipsilateral; Longissimus Capitis—ipsilateral — Left', +1, maxPos);
+      push('Cervical Rotation — Right',  -1, absMin);
+      push('Cervical Rotation — Left', +1, maxPos);
       return out;
     }
     if (cfg.key === 'clavicle_L'){
@@ -812,8 +812,8 @@ if (cfg.key === 'foot_invev_l') {
   push(cfg.pair.replace(/—.*$/, '— Extension'), +1, absMin);
   }
   else if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
-  push(cfg.pair.replace(/—.*$/, '— Trunk Flexion — Rectus Abdominis'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Trunk Extension — Thoracic (Erector Spinae)'), -1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
     } else if (/_aa_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
@@ -821,11 +821,11 @@ if (cfg.key === 'foot_invev_l') {
       push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
     } else if (cfg.key==='trunk_lat'){
-      push(cfg.pair.replace(/—.*$/, '— Right Lat'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Left Lat'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Right Lateral Flexion'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Left Lateral Flexion'), -1, absMin);
     } else if (cfg.key==='trunk_rot'){
-      push(cfg.pair.replace(/—.*$/, '— Left Trunk Rotation — External & Internal Obliques'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Right Trunk Rotation — External & Internal Obliques'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Left Rotation'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Right Rotation'), -1, absMin);
     } else if (/wr_ps_/.test(cfg.key)){
       // SWAP LABELS per your report: + == PRONATION, - == SUPINATION
       push(cfg.pair.replace(/—.*$/, '— Pronation'), +1, maxPos);
