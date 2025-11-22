@@ -812,8 +812,8 @@ if (cfg.key === 'foot_invev_l') {
   push(cfg.pair.replace(/—.*$/, '— Extension'), +1, absMin);
   }
   else if (/_fe_/.test(cfg.key) || cfg.key==='trunk_fe'){
-  push(cfg.pair.replace(/—.*$/, '— Flexion'), +1, maxPos);
-  push(cfg.pair.replace(/—.*$/, '— Extension'), -1, absMin);
+  push(cfg.pair.replace(/—.*$/, '— Trunk Flexion — Rectus Abdominis'), +1, maxPos);
+  push(cfg.pair.replace(/—.*$/, '— Trunk Extension — Thoracic (Erector Spinae)'), -1, absMin);
     } else if (/_aa_/.test(cfg.key)){
       push(cfg.pair.replace(/—.*$/, '— Abduction'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— Adduction'), -1, absMin);
@@ -821,11 +821,11 @@ if (cfg.key === 'foot_invev_l') {
       push(cfg.pair.replace(/—.*$/, '— Internal Rotation'), +1, maxPos);
       push(cfg.pair.replace(/—.*$/, '— External Rotation'), -1, absMin);
     } else if (cfg.key==='trunk_lat'){
-      push(cfg.pair.replace(/—.*$/, '— Right Trunk Extension — Lumbar (Erector Spinae)'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Left Trunk Extension — Lumbar (Erector Spinae)'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Right Lat'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Left Lat'), -1, absMin);
     } else if (cfg.key==='trunk_rot'){
-      push(cfg.pair.replace(/—.*$/, '— Left Rotation'), +1, maxPos);
-      push(cfg.pair.replace(/—.*$/, '— Right Rotation'), -1, absMin);
+      push(cfg.pair.replace(/—.*$/, '— Left Trunk Rotation — External & Internal Obliques'), +1, maxPos);
+      push(cfg.pair.replace(/—.*$/, '— Right Trunk Rotation — External & Internal Obliques'), -1, absMin);
     } else if (/wr_ps_/.test(cfg.key)){
       // SWAP LABELS per your report: + == PRONATION, - == SUPINATION
       push(cfg.pair.replace(/—.*$/, '— Pronation'), +1, maxPos);
