@@ -211,6 +211,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
@@ -284,6 +285,19 @@ ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+/* ==== HDR Background Loader ==== */
+const exrLoader = new EXRLoader();
+// The asset path assumes 'assets' is relative to the index.html location.
+exrLoader.load('assets/hospital_room_2k.exr', (texture) => {
+    // Set the texture mapping for environment use
+    texture.mapping = THREE.EquirectangularReflectionMapping; 
+
+    // Apply the texture to the scene's environment (for material reflections)
+    scene.environment = texture;
+
+    // Apply the texture to the scene's background (what the camera sees)
+    scene.background = texture;
+});  
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
 loader.setMeshoptDecoder(MeshoptDecoder);
