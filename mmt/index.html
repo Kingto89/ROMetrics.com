@@ -898,10 +898,13 @@ addEventListener("resize", ()=>{
 startTestBtn.addEventListener("click", () => {
   const test = actionSel.value;
   if (!test) return;
+startTestBtn.classList.add("lockOn");
+setTimeout(()=> startTestBtn.classList.remove("lockOn"), 250);
 
   // Determine which AUTOACTION motion belongs to this MMT test
   const autoKey = MMT_TO_AUTO[test];
   const cfg = autoKey ? [...UPPER, ...LOWER].find(x => x.key === autoKey) : null;
+  console.log("StartTest:", { test, autoKey, cfg });
   if (!cfg) return;
 
 
