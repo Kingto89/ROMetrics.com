@@ -285,7 +285,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 
  // Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 3) {
+function shrinkBackgroundBy(factor = 5) {
   const oldFovDeg = camera.fov;
   const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
 
@@ -304,7 +304,6 @@ function shrinkBackgroundBy(factor = 3) {
   camera.updateProjectionMatrix();
 }
 
-// Call it once after your scene.background = texture (or anywhere after camera/controls exist)
 shrinkBackgroundBy(3);
  
 
@@ -335,7 +334,6 @@ exrLoader.load(
         document.getElementById("msg").textContent = `⚠️ Error loading HDR. Check path: ${correctedHdrPath}`;
     }
 );
-/* =============================== */
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
