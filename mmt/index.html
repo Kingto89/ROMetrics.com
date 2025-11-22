@@ -248,6 +248,7 @@ startTestBtn.addEventListener('click', () => {
     startTestBtn.classList.remove('lockOn');
   }, 300);
 });
+/* ========================================= */
 
 /* ==== THREE setup ==== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
@@ -255,7 +256,7 @@ renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-// Set exposure to handle the HDR brightness
+// Set exposure to handle the HDR brightness (recommended for visual balance)
 renderer.toneMappingExposure = 0.8; 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -263,10 +264,10 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf1f5f9);
 
-// FIX V3: Set FOV to a standard cinematic value (30) and move the camera slightly farther back 
-// to compensate for the zoom and frame the model better within the HDR environment.
-const camera = new THREE.PerspectiveCamera(30, innerWidth/innerHeight, 0.01, 100);
-camera.position.set(2.0, 1.6, 4.0); // Moved camera back slightly (was 1.6, 1.6, 3.2)
+// FIX: Changed FOV from 45 to 35. This makes the distant HDR background appear smaller and correctly scaled 
+// relative to the foreground model without changing the model's physical size.
+const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.01, 100);
+camera.position.set(1.6,1.6,3.2);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = .08;
@@ -286,7 +287,36 @@ scene.add(key);
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMaterial({ opacity:.45 }));
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
-scene.add(ground);  
+scene.add(ground);
+
+/* ==== HDR Background Loader ==== */
+const exrLoader = new EXRLoader();
+// FIX: Using '../assets/' to resolve 404 error, assuming the HTML file is inside a subdirectory
+// and assets is one level up relative to that subdirectory.
+const correctedHdrPath = '../assets/hospital_room_2k.exr'; 
+
+exrLoader.load(
+    correctedHdrPath,
+    (texture) => {
+        // Set the texture mapping for environment use
+        texture.mapping = THREE.EquirectangularReflectionMapping; 
+
+        // Apply the texture to the scene's environment (for material reflections)
+        scene.environment = texture;
+
+        // Apply the texture to the scene's background (what the camera sees)
+        scene.background = texture;
+    },
+    // Optional: Add an error handler for debugging
+    (xhr) => {
+        // progress tracking if needed
+    },
+    (error) => {
+        console.error('An error occurred loading the HDR. Path tried:', correctedHdrPath, error);
+        document.getElementById("msg").textContent = `⚠️ Error loading HDR. Check path: ${correctedHdrPath}`;
+    }
+);
+/* =============================== */
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
