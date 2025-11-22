@@ -285,7 +285,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 
  // Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 15) {
+function shrinkBackgroundBy(factor = 30) {
   const oldFovDeg = camera.fov;
   const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
 
