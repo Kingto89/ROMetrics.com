@@ -355,6 +355,76 @@ function cacheKeyBones() {
 }
 
 /* ===== CLEAN MMT → AUTOACTION MAP (FINAL) ===== */
+/* ===== MMT → BODY POSITION MAP (REQUIRED) ===== */
+/*
+  Allowed positions:
+  - "prone"
+  - "supine"
+  - "short_sit"
+  - "long_sit"
+  - "standing"
+*/
+const MMT_POSE = {
+  /* CERVICAL / CAPITAL */
+  Capital_Extension: "prone",
+  Cervical_Extension: "prone",
+  Capital_Flexion: "supine",
+  Cervical_Flexion: "supine",
+  Single_SCM: "supine",
+  Cervical_Rotation: "supine",
+
+  /* SCAPULA */
+  Serratus_Anterior: "short_sit",
+  Upper_Trapezius: "short_sit",
+  Middle_Trapezius: "prone",
+  Rhomboids: "prone",
+  Latissimus_Dorsi: "prone",
+
+  /* SHOULDER */
+  Anterior_Deltoid: "short_sit",
+  Posterior_Deltoid: "prone",
+  Middle_Deltoid: "short_sit",
+  Infraspinatus: "prone",
+  Subscapularis: "prone",
+
+  /* TRUNK */
+  Trunk_Ext_Lumbar: "prone",
+  Trunk_Ext_Thoracic: "prone",
+  Trunk_Flexion: "supine",
+  Trunk_Rotation: "supine",
+  Pelvic_Elevation: "standing",
+
+  /* ELBOW */
+  Biceps_Brachii: "short_sit",
+  Brachialis: "short_sit",
+  Brachioradialis: "short_sit",
+  Triceps_Brachii: "supine",
+
+  /* WRIST */
+  ECRL: "short_sit",
+  ECRB: "short_sit",
+  ECU: "short_sit",
+  FCR: "short_sit",
+  FCU: "short_sit",
+
+  /* HIP */
+  Iliopsoas: "short_sit",
+  Glute_Max: "prone",
+  Glute_Med: "side_lying",
+  Hip_ER: "short_sit",
+  Hip_IR: "short_sit",
+
+  /* KNEE */
+  Hamstrings: "prone",
+  Quadriceps: "short_sit",
+
+  /* ANKLE & FOOT */
+  Tibialis_Anterior: "short_sit",
+  Foot_Eversion_PF: "side_lying",
+  Ankle_Dorsiflexion: "short_sit",
+  Gastrocnemius: "standing"
+};
+  
 const MMT_TO_AUTO = {
 
   /* CERVICAL & CAPITAL */
