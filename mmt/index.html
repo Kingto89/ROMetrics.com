@@ -222,8 +222,6 @@ window.addEventListener('error', (e) => {
   if (m) m.textContent = `⚠️ ${e.message}`;
 });
 
-  
-
 /* ==== UI refs ==== */
 const canvas = document.getElementById("c");
 const logEl = document.getElementById("log");
@@ -238,22 +236,6 @@ const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
 const instructionText = document.getElementById("instructionText");
 const gradeMain = document.getElementById("grade-main");
-/* ==== Seat persistence (localStorage) ==== */
-const __SEAT_KEY = 'rometrics_seat_v1';
-function __saveSeat() {
-  if (!window.model) return;
-  const p = model.position;
-  localStorage.setItem(__SEAT_KEY, JSON.stringify([p.x, p.y, p.z]));
-}
-function __loadSeat() {
-  try {
-    const s = localStorage.getItem(__SEAT_KEY);
-    if (!s) return false;
-    const [x, y, z] = JSON.parse(s);
-    if (window.model) model.position.set(x, y, z);
-    return true;
-  } catch { return false; }
-}
 
 /* ==== Start Test Button Glow Fix (NEW) ==== */
 // When the Start Test button is clicked, apply the green 'lockOn' class briefly.
@@ -301,12 +283,11 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
-}
- 
+
  // Make the equirectangular background appear 3× smaller
-function shrinkBackgroundBy(factor = 50) {
+function shrinkBackgroundBy(factor = 15) {
   const oldFovDeg = camera.fov;
-  const newFovDeg = Math.min(90, oldFovDeg * factor); // cap to avoid fish-eye
+  const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
 
   // Keep the model the same on-screen size:
   // move the camera closer as we widen the FOV
@@ -362,6 +343,7 @@ const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three
 
 let model=null, skeleton=null;
 const initialBoneRot = new Map();
+
 function groundSnap() {
   if (!model) return;
   const box = new THREE.Box3().setFromObject(model);
@@ -401,43 +383,18 @@ function loadModel(){
       return;
     }
     model = gltf.scene;
-    model.scale.set(1.5, 1.5, 1.5);
     model.traverse(o=>{
       if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
       if (o.isSkinnedMesh && !skeleton) skeleton = o.skeleton;
     });
     scene.add(model);
+    groundSnap();
     document.getElementById("msg").textContent = "✅ Model loaded";
 
     if (skeleton){
       skeleton.bones.forEach(b => initialBoneRot.set(b, b.quaternion.clone()));
     }
     console.log("BONES:", skeleton.bones.map(b => b.name));
-// --- Seat-on-bed illusion (legs only; exact bone names) ---
-(() => {
-  const get = (n)=> skeleton.bones.find(b => b.name === n);
-
-  const thighL = get("thigh_L");
-  const thighR = get("thigh_R");
-  const calfL  = get("calf_L");
-  const calfR  = get("calf_R");
-
-  // restore base rotations if saved
-  [thighL, thighR, calfL, calfR].forEach(b => {
-    const q0 = initialBoneRot.get(b);
-    if (b && q0) b.quaternion.copy(q0);
-  });
-
-  const rad = THREE.MathUtils.degToRad;
-  if (thighL) thighL.rotateX(rad(90));
-  if (thighR) thighR.rotateX(rad(90));
-  if (calfL)  calfL.rotateX(rad(-90));
-  if (calfR)  calfR.rotateX(rad(-90));
-placeSeatUnderHips(0.46, 0.05);
-seat.updateMatrixWorld();
-const mb = new THREE.Box3().setFromObject(model), seatTop = seat.position.y + 0.03;
-model.position.set(seat.position.x, model.position.y + (seatTop - mb.min.y) + 0.002, seat.position.z);
-
 
   });
 }
