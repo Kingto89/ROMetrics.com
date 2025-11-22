@@ -203,7 +203,6 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
   <div class="note-body" id="noteBody">Loading…</div>
 </div>
 
-<!-- Absolute override as requested -->
 <script>
   window.ROMETRICS_MODEL_URL = "https://kingto89.github.io/ROMetrics.com/assets/Roma_ROMetrics.glb";
 </script>
@@ -285,6 +284,29 @@ ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+ // Make the equirectangular background appear 3× smaller
+function shrinkBackgroundBy(factor = 3) {
+  const oldFovDeg = camera.fov;
+  const newFovDeg = Math.min(100, oldFovDeg * factor); // cap to avoid fish-eye
+
+  // Keep the model the same on-screen size:
+  // move the camera closer as we widen the FOV
+  const oldFov = THREE.MathUtils.degToRad(oldFovDeg);
+  const newFov = THREE.MathUtils.degToRad(newFovDeg);
+
+  const target = controls ? controls.target.clone() : new THREE.Vector3(0, 0, 0);
+  const camDir = camera.position.clone().sub(target).normalize();
+  const oldDist = camera.position.distanceTo(target);
+  const newDist = oldDist * Math.tan(oldFov / 2) / Math.tan(newFov / 2);
+
+  camera.fov = newFovDeg;
+  camera.position.copy(target).add(camDir.multiplyScalar(newDist));
+  camera.updateProjectionMatrix();
+}
+
+// Call it once after your scene.background = texture (or anywhere after camera/controls exist)
+shrinkBackgroundBy(3);
+ 
 
 /* ==== HDR Background Loader ==== */
 const exrLoader = new EXRLoader();
