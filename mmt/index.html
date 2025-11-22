@@ -238,6 +238,22 @@ const resistanceFill = document.getElementById("resistanceFill");
 const resistanceText = document.getElementById("resistanceText");
 const instructionText = document.getElementById("instructionText");
 const gradeMain = document.getElementById("grade-main");
+/* ==== Seat persistence (localStorage) ==== */
+const __SEAT_KEY = 'rometrics_seat_v1';
+function __saveSeat() {
+  if (!window.model) return;
+  const p = model.position;
+  localStorage.setItem(__SEAT_KEY, JSON.stringify([p.x, p.y, p.z]));
+}
+function __loadSeat() {
+  try {
+    const s = localStorage.getItem(__SEAT_KEY);
+    if (!s) return false;
+    const [x, y, z] = JSON.parse(s);
+    if (window.model) model.position.set(x, y, z);
+    return true;
+  } catch { return false; }
+}
 
 /* ==== Start Test Button Glow Fix (NEW) ==== */
 // When the Start Test button is clicked, apply the green 'lockOn' class briefly.
@@ -285,22 +301,6 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
-// --- visible box seat (keep visible for alignment) ---
-const seat = new THREE.Mesh(
-  new THREE.BoxGeometry(0.55, 0.06, 0.40),                 // w, h, d
-  new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.95, metalness: 0 })
-);
-seat.receiveShadow = true;
-seat.castShadow = false;
-seat.position.set(0, -0.90, 0.05);                           // adjust Y to raise/lower
-scene.add(seat);
-
-function placeSeatUnderHips(y=-0.90, zOffset=0.05){
-  if(!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const cx = (box.min.x + box.max.x) * 0.5;
-  const cz = (box.min.z + box.max.z) * 0.5;
-  seat.position.set(cx, y, cz + zOffset); // center under pelvis
 }
  
  // Make the equirectangular background appear 3× smaller
@@ -438,22 +438,6 @@ seat.updateMatrixWorld();
 const mb = new THREE.Box3().setFromObject(model), seatTop = seat.position.y + 0.03;
 model.position.set(seat.position.x, model.position.y + (seatTop - mb.min.y) + 0.002, seat.position.z);
 
-
-
-
-// Turn the ground into a shadow-catching “bed top” under the hips
-ground.geometry.dispose();
-ground.geometry = new THREE.PlaneGeometry(0.70, 1.40); // table-ish size
-ground.position.set(model.position.x, 0.012, model.position.z + 0.2); // small forward nudge
-ground.visible = true;
-ground.material.opacity = 0.65;  // stronger contact shadow
-
-
-  // position + framing to sell "seated in bed"
-  controls.target.set(0, 1.05, 0.15);
-  camera.position.set(1.15, 1.25, 1.75);
-  camera.updateProjectionMatrix();
-})();
 
   });
 }
