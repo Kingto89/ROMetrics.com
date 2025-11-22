@@ -419,7 +419,7 @@ function loadModel(){
   if (calfR)  calfR.rotateX(rad(-90));
 
   // position + framing to sell "seated in bed"
-  model.position.y += 0.15;           // tweak 0.35–0.55
+  model.position.y -= 0.3;           // tweak 0.35–0.55
   controls.target.set(0, 1.05, 0.15);
   camera.position.set(1.15, 1.25, 1.75);
   camera.updateProjectionMatrix();
