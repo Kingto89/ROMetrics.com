@@ -352,33 +352,66 @@ room.add(shadowCatch);
   setCameraDistance(4.8); // bigger = farther, smaller = closer
 })();
 
-/* ==== Anatomic preset (minimal) ==== */
+/* ==== Anatomic preset (robust, tolerant bone matching) ==== */
 const ANAT = { addL:-32, psL:-2, wpsL:-73 };
 
-// map your keys to bones/axes (keep short)
+/* Hints are case-insensitive substrings that may appear in your rig's bone names */
 const KEYMAP = {
-  sh_aa_l:{bone:'upperarm_L',axis:'z'}, sh_aa_r:{bone:'upperarm_R',axis:'z'},
-  fa_ps_l:{bone:'forearm_L',axis:'y'},  fa_ps_r:{bone:'forearm_R',axis:'y'},
-  wr_ps_l:{bone:'hand_L',axis:'y'},     wr_ps_r:{bone:'hand_R',axis:'y'},
+  sh_aa_l: { hints:['upperarm_l','upperarm.l','l_upperarm','leftarm','mixamorig:lefthand','mixamorig:leftarm'], axis:'z' },
+  sh_aa_r: { hints:['upperarm_r','upperarm.r','r_upperarm','rightarm','mixamorig:righthand','mixamorig:rightarm'], axis:'z' },
+
+  fa_ps_l: { hints:['forearm_l','forearm.l','l_forearm','mixamorig:leftforearm'], axis:'y' },
+  fa_ps_r: { hints:['forearm_r','forearm.r','r_forearm','mixamorig:rightforearm'], axis:'y' },
+
+  wr_ps_l: { hints:['hand_l','hand.l','l_hand','mixamorig:lefthand'], axis:'y' },
+  wr_ps_r: { hints:['hand_r','hand.r','r_hand','mixamorig:righthand'], axis:'y' },
 };
+
+function findBoneByHints(hints){
+  if(!skeleton) return null;
+  const bones = skeleton.bones;
+  // First pass: exact (case-insensitive) match
+  for (const h of hints){
+    const hit = bones.find(b => b.name.toLowerCase() === h.toLowerCase());
+    if (hit) return hit;
+  }
+  // Second pass: substring match
+  for (const h of hints){
+    const hit = bones.find(b => b.name.toLowerCase().includes(h.toLowerCase()));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function rotateByAxis(bone, axis, deg){
+  const r = THREE.MathUtils.degToRad(deg);
+  if(axis==='x') bone.rotateX(r);
+  else if(axis==='y') bone.rotateY(r);
+  else bone.rotateZ(r);
+}
 
 function setPair(key, deg){
   if(!skeleton) return;
   const m = KEYMAP[key]; if(!m) return;
-  const b = skeleton.bones.find(x=>x.name===m.bone); if(!b) return;
+  const b = findBoneByHints(m.hints); if(!b) { console.warn('Bone not found for', key, m.hints); return; }
   const q0 = initialBoneRot.get(b); if(q0) b.quaternion.copy(q0);
-  const r = THREE.MathUtils.degToRad(deg);
-  if(m.axis==='x') b.rotateX(r); else if(m.axis==='y') b.rotateY(r); else b.rotateZ(r);
+  rotateByAxis(b, m.axis, deg);
 }
 
 function applyAnatomicBaseline(){
+  // Shoulders (same value both sides)
   setPair('sh_aa_l', ANAT.addL);
   setPair('sh_aa_r', ANAT.addL);
+
+  // Forearm PS (same both sides)
   setPair('fa_ps_l', ANAT.psL);
   setPair('fa_ps_r', ANAT.psL);
+
+  // Wrist PS (mirror sign on R side as in your original)
   setPair('wr_ps_l', ANAT.wpsL);
   setPair('wr_ps_r', -ANAT.wpsL);
 }
+
   
 /* ==== Loader ==== */
 const loader = new GLTFLoader();
