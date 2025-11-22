@@ -285,6 +285,16 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.ShadowMa
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
+ // --- visible seat to anchor the model in space ---
+const seat = new THREE.Mesh(
+  new THREE.BoxGeometry(0.55, 0.06, 0.40),          // width, height, depth
+  new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.95, metalness: 0 })
+);
+seat.receiveShadow = true;
+seat.castShadow = false;
+seat.position.set(0, 0.46, 0.05);                   // ← raise/lower with seat.position.y
+scene.add(seat);
+ 
 function stickToY(targetY=0){
   if(!model) return;
   const box = new THREE.Box3().setFromObject(model);
@@ -423,9 +433,9 @@ function loadModel(){
   if (thighR) thighR.rotateX(rad(90));
   if (calfL)  calfL.rotateX(rad(-90));
   if (calfR)  calfR.rotateX(rad(-90));
-// Snap model’s lowest point to y=0
-const bbox = new THREE.Box3().setFromObject(model);
-model.position.y -= bbox.min.y;
+  // snap model's lowest point to the seat top
+const box = new THREE.Box3().setFromObject(model);
+model.position.y += (seat.position.y - box.min.y) + 0.005; // small cushion sink
 
 // Turn the ground into a shadow-catching “bed top” under the hips
 ground.geometry.dispose();
