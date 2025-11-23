@@ -90,7 +90,7 @@
 
 ### Therapist
 
-* Stand at head; apply resistance on **forehead** in posterior direction while **other hand** supports thorax if needed.
+* Stand at head; apply resistance to chin using **two fingers.** 
 
 ### Action
 
