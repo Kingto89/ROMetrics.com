@@ -222,6 +222,7 @@ const resistanceFill = $("resistanceFill");
 const resistanceText = $("resistanceText");
 const instructionText = $("instructionText");
 const gradeMain = $("grade-main");
+const gradeExceptions = $("GradingExceptions");  
 
 /* ==== Start Test Button Glow Fix ==== */
 startTestBtn.addEventListener('click', () => {
@@ -418,9 +419,193 @@ const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three
 let model=null, skeleton=null;
 const initialBoneRot = new Map();
 
+// Reset all bones back to stored baseline
+function resetAllBones(){
+  if (!skeleton) return;
+  skeleton.bones.forEach(b=>{
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+}
+
+// Tests that use the GradingExceptions dropdown to decide high vs low family
+const EXCEPTION_TESTS = new Set([
+  "Trunk_Ext_Lumbar",
+  "Trunk_Ext_Thoracic",
+  "Trunk_Flexion",
+  "Trunk_Rotation",
+  "Pelvic_Elevation",
+  "Gastrocnemius"
+]);
+
+// For each test: which coarse body position to use for high (3–5) vs low (0–2) grades
+// Modes: 'anatomic', 'seated', 'supine', 'prone', 'side_lying', 'gastroc'
+const TEST_POSITION = {
+  // Cervical & Capital
+  Capital_Extension:   { high: "prone",      low: "supine"      },
+  Cervical_Extension:  { high: "prone",      low: "supine"      },
+  Capital_Flexion:     { high: "supine",     low: "supine"      },
+  Cervical_Flexion:    { high: "supine",     low: "side_lying"  },
+  Single_SCM:          { high: "supine",     low: "supine"      },
+  Cervical_Rotation:   { high: "supine",     low: "supine"      },
+
+  // Scapula
+  Serratus_Anterior:   { high: "seated",     low: "seated"      },
+  Upper_Trapezius:     { high: "seated",     low: "prone"       },
+  Middle_Trapezius:    { high: "prone",      low: "prone"       },
+  Rhomboids:           { high: "prone",      low: "prone"       },
+  Latissimus_Dorsi:    { high: "prone",      low: "side_lying"  },
+
+  // Shoulder
+  Anterior_Deltoid:    { high: "seated",     low: "side_lying"  },
+  Posterior_Deltoid:   { high: "prone",      low: "side_lying"  },
+  Middle_Deltoid:      { high: "seated",     low: "supine"      },
+  Infraspinatus:       { high: "seated",     low: "seated"      }, // table-supported ER
+  Subscapularis:       { high: "seated",     low: "seated"      },
+
+  // Trunk & Pelvis (grading exceptions)
+  Trunk_Ext_Lumbar:    { high: "prone",      low: "prone"       },
+  Trunk_Ext_Thoracic:  { high: "prone",      low: "prone"       },
+  Trunk_Flexion:       { high: "supine",     low: "supine"      },
+  Trunk_Rotation:      { high: "supine",     low: "supine"      },
+  Pelvic_Elevation:    { high: "supine",     low: "supine"      },
+
+  // Elbow
+  Biceps_Brachii:      { high: "seated",     low: "side_lying"  },
+  Brachialis:          { high: "seated",     low: "side_lying"  },
+  Brachioradialis:     { high: "seated",     low: "side_lying"  },
+  Triceps_Brachii:     { high: "seated",     low: "seated"      },
+
+  // Wrist
+  ECRL:                { high: "seated",     low: "seated"      },
+  ECRB:                { high: "seated",     low: "seated"      },
+  ECU:                 { high: "seated",     low: "seated"      },
+  FCR:                 { high: "seated",     low: "seated"      },
+  FCU:                 { high: "seated",     low: "seated"      },
+
+  // Hip
+  Iliopsoas:           { high: "seated",     low: "side_lying"  },
+  Glute_Max:           { high: "prone",      low: "side_lying"  },
+  Glute_Med:           { high: "side_lying", low: "supine"      },
+  Hip_ER:              { high: "seated",     low: "supine"      },
+  Hip_IR:              { high: "seated",     low: "supine"      },
+
+  // Knee
+  Hamstrings:          { high: "prone",      low: "side_lying"  },
+  Quadriceps:          { high: "seated",     low: "side_lying"  },
+
+  // Ankle & Foot
+  Tibialis_Anterior:   { high: "seated",     low: "supine"      }, // dorsiflex+inv
+  Foot_Eversion_PF:    { high: "seated",     low: "supine"      },
+  Ankle_Dorsiflexion:  { high: "seated",     low: "supine"      },
+  Gastrocnemius:       { high: "gastroc",    low: "side_lying"  }
+};
+
+// Decide if we're in the high (3–5) or low (0–2) family for a given test
+function getGradeBucketForTest(testKey){
+  // Trunk & gastroc use GradingExceptions dropdown
+  if (EXCEPTION_TESTS.has(testKey)){
+    if (!gradeExceptions) return "high";
+    const g = Number(gradeExceptions.value || "3");
+    return (g >= 3 ? "high" : "low");
+  }
+
+  // All other tests use grade-main (3–5 vs 0–2)
+  if (!gradeMain) return "high";
+  const gm = Number(gradeMain.value || "3");
+  return (gm >= 3 ? "high" : "low");
+}
+
+// Coarse body-mode: align to bed/cabinet but don't set specific joint test angles
+function setBodyMode(mode){
+  if (!model || !skeleton) return;
+
+  // Always start from your standing anatomic baseline
+  resetAllBones();
+  applyAnatomicBaseline();
+
+  // Defaults: your original standing pose in front of bed
+  let posX = POSE.x;
+  let posY = POSE.y;
+  let posZ = POSE.z;
+  let rotX = 0;
+  let rotY = degToRad(POSE.ryDeg);
+  let rotZ = 0;
+
+  if (mode === "seated"){
+    // Short sitting at edge of blue table
+    const edgeZ = tableTop.position.z + (TABLE_D / 2) - 0.25;
+    posX = 0;
+    posY = TABLE_HEIGHT + 0.02;
+    posZ = edgeZ;
+    rotX = 0;
+    rotY = degToRad(POSE.ryDeg);
+    seatPoseOnlyLegs();
+
+  } else if (mode === "supine"){
+    // Supine on bed, centered
+    posX = 0;
+    posY = TABLE_HEIGHT + TABLE_THICK / 2 + 0.04;
+    posZ = tableTop.position.z;
+    rotX = Math.PI / 2;
+    rotY = degToRad(POSE.ryDeg);
+
+  } else if (mode === "prone"){
+    // Prone on bed, centered
+    posX = 0;
+    posY = TABLE_HEIGHT + TABLE_THICK / 2 + 0.04;
+    posZ = tableTop.position.z;
+    rotX = Math.PI / 2;
+    rotY = degToRad(POSE.ryDeg + 180);
+
+  } else if (mode === "side_lying"){
+    // Side-lying on bed (rough: lying with trunk rotated)
+    posX = 0;
+    posY = TABLE_HEIGHT + TABLE_THICK / 2 + 0.04;
+    posZ = tableTop.position.z;
+    rotX = Math.PI / 2;
+    rotY = degToRad(POSE.ryDeg);
+    rotZ = Math.PI / 2; // roll onto side
+
+  } else if (mode === "gastroc"){
+    // Standing by cabinet for heel raises
+    const standZ = cabinet.position.z - 0.5;
+    posX = cabinet.position.x;
+    posY = 0;    // floor
+    posZ = standZ;
+    rotX = 0;
+    rotY = 0;    // face cabinet
+
+  } else {
+    // 'anatomic' or unknown → your original standing pose
+    posX = POSE.x;
+    posY = POSE.y;
+    posZ = POSE.z;
+    rotX = 0;
+    rotY = degToRad(POSE.ryDeg);
+    rotZ = 0;
+  }
+
+  model.position.set(posX, posY, posZ);
+  model.rotation.set(rotX, rotY, rotZ);
+}
+
+// Core logic: look at test + grade bucket and choose a body mode
+function applyBodyPositionFromSelection(){
+  if (!model || !skeleton) return;
+  const key = actionSel?.value;
+  if (!key) return;
+
+  const family = TEST_POSITION[key] || { high:"anatomic", low:"anatomic" };
+  const bucket = getGradeBucketForTest(key); // "high" or "low"
+  const mode = bucket === "low" ? (family.low || "anatomic")
+                                : (family.high || "anatomic");
+
+  setBodyMode(mode);
+}
+
 /* ==== Utilities ==== */
 function degToRad(d){ return d * Math.PI / 180; }
-
 function seatPoseOnlyLegs(){
   if(!skeleton) return;
   const get = (n)=> skeleton.bones.find(b => b.name === n);
