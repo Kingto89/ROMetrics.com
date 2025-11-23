@@ -502,6 +502,12 @@ const TEST_POSITION = {
 };
 
 // Decide if we're in the high (3–5) or low (0–2) family for a given test
+// Per-test pose overrides (absolute position + rotation) keyed by "TestKey:high" / "TestKey:low"
+const POSE_OVERRIDES = {}; // e.g. POSE_OVERRIDES["Capital_Extension:high"] = { x,y,z, rx,ry,rz };
+
+let CURRENT_BODY_TEST = null;
+let CURRENT_BODY_BUCKET = "high"; // "high" or "low"
+  
 function getGradeBucketForTest(testKey){
   // Trunk & gastroc use GradingExceptions dropdown
   if (EXCEPTION_TESTS.has(testKey)){
@@ -586,11 +592,26 @@ function setBodyMode(mode){
     rotZ = 0;
   }
 
+  // Apply any saved override for this test + family (high/low)
+  const key = CURRENT_BODY_TEST && CURRENT_BODY_BUCKET
+    ? `${CURRENT_BODY_TEST}:${CURRENT_BODY_BUCKET}`
+    : null;
+
+  if (key && POSE_OVERRIDES[key]){
+    const o = POSE_OVERRIDES[key];
+    posX = o.x;
+    posY = o.y;
+    posZ = o.z;
+    rotX = o.rx;
+    rotY = o.ry;
+    rotZ = o.rz;
+  }
+
   model.position.set(posX, posY, posZ);
   model.rotation.set(rotX, rotY, rotZ);
 }
 
-// Core logic: look at test + grade bucket and choose a body mode
+
 function applyBodyPositionFromSelection(){
   if (!model || !skeleton) return;
   const key = actionSel?.value;
@@ -600,6 +621,9 @@ function applyBodyPositionFromSelection(){
   const bucket = getGradeBucketForTest(key); // "high" or "low"
   const mode = bucket === "low" ? (family.low || "anatomic")
                                 : (family.high || "anatomic");
+
+  CURRENT_BODY_TEST = key;
+  CURRENT_BODY_BUCKET = bucket;
 
   setBodyMode(mode);
 }
@@ -671,6 +695,9 @@ function tryNextModelUrl(index){
 }
 
 tryNextModelUrl(0);
+ensurePoseTuner();
+showPoseTuner(true); // dev: show on first load
+  
 
 /* ==== Wire UI ==== */
 $("lock3D").onclick = () => {
@@ -688,22 +715,28 @@ $("zeroAll").onclick = () => {
     model.rotation.set(0, degToRad(POSE.ryDeg), 0);
   }
 };
-// When test changes, choose the correct high/low body position on bed/cabinet
+
 actionSel.addEventListener("change", () => {
   applyBodyPositionFromSelection();
+  if (poseTunerEl && poseTunerEl.updateLabels) poseTunerEl.updateLabels();
 });
 
-// When main grade (3–5 vs 0–2) changes, re-evaluate body position
 gradeMain.addEventListener("change", () => {
-  if (actionSel.value) applyBodyPositionFromSelection();
+  if (actionSel.value){
+    applyBodyPositionFromSelection();
+    if (poseTunerEl && poseTunerEl.updateLabels) poseTunerEl.updateLabels();
+  }
 });
 
-// When grading exception (trunk/gastroc) changes, re-evaluate body position
 if (gradeExceptions){
   gradeExceptions.addEventListener("change", () => {
-    if (actionSel.value) applyBodyPositionFromSelection();
+    if (actionSel.value){
+      applyBodyPositionFromSelection();
+      if (poseTunerEl && poseTunerEl.updateLabels) poseTunerEl.updateLabels();
+    }
   });
 }
+  
 
 
 /* ==== Side panel + Markdown loading ==== */
@@ -816,6 +849,210 @@ tabHigh.addEventListener('click', ()=> openNote('high'));
 tabLow.addEventListener('click', ()=> openNote('low'));
 closeNote.addEventListener('click', ()=> notePanel.classList.add('hide'));
 
+ /* ===== Pose Tuner (dev) — per-test high/low body transforms ===== */
+let poseTunerEl = null;
+let poseTunerVisible = true; // show on load so you can tune positions
+
+function ensurePoseTuner(){
+  if (poseTunerEl) return poseTunerEl;
+
+  poseTunerEl = document.createElement('div');
+  Object.assign(poseTunerEl.style, {
+    position: 'fixed',
+    right: '16px',
+    top: '16px',
+    zIndex: 50,
+    background: 'rgba(8,13,26,.96)',
+    border: '1px solid #334155',
+    borderRadius: '12px',
+    padding: '10px',
+    width: '300px',
+    color: '#e2e8f0',
+    font: '12px/1.3 system-ui,Segoe UI,Roboto',
+    boxShadow: '0 8px 28px rgba(0,0,0,.4)',
+    display: 'none'
+  });
+
+  poseTunerEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <strong style="font-size:13px;">Pose Tuner (High / Low)</strong>
+      <button id="poseTunerClose" title="Close" style="margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:11px;margin-bottom:6px;">
+      <div><strong>Test:</strong> <span id="poseTunerTestLabel">(none)</span></div>
+      <div><strong>Family:</strong> <span id="poseTunerBucketLabel">high</span></div>
+    </div>
+
+    <div style="border-top:1px solid #1f2933;margin:6px 0 8px 0;"></div>
+
+    <label style="display:block;opacity:.85;">Position (meters)</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px;">
+      <div>
+        <div style="opacity:.7;">X (left/right)</div>
+        <div style="display:flex;gap:4px;">
+          <button data-axis="x" data-delta="-0.02" class="mini">−</button>
+          <button data-axis="x" data-delta="0.02" class="mini">+</button>
+        </div>
+      </div>
+      <div>
+        <div style="opacity:.7;">Y (up/down)</div>
+        <div style="display:flex;gap:4px;">
+          <button data-axis="y" data-delta="-0.02" class="mini">−</button>
+          <button data-axis="y" data-delta="0.02" class="mini">+</button>
+        </div>
+      </div>
+      <div>
+        <div style="opacity:.7;">Z (front/back)</div>
+        <div style="display:flex;gap:4px;">
+          <button data-axis="z" data-delta="-0.02" class="mini">−</button>
+          <button data-axis="z" data-delta="0.02" class="mini">+</button>
+        </div>
+      </div>
+    </div>
+
+    <label style="display:block;opacity:.85;margin-top:4px;">Rotation (degrees)</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;">
+      <div>
+        <div style="opacity:.7;">Yaw (turn left/right)</div>
+        <div style="display:flex;gap:4px;">
+          <button data-rot="y" data-delta="-5" class="mini">⟲</button>
+          <button data-rot="y" data-delta="5" class="mini">⟳</button>
+        </div>
+      </div>
+      <div>
+        <div style="opacity:.7;">Pitch/Roll (face up/down/side)</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button data-rot="x" data-delta="-5" class="mini">Pitch −</button>
+          <button data-rot="x" data-delta="5" class="mini">Pitch +</button>
+          <button data-rot="z" data-delta="-5" class="mini">Roll −</button>
+          <button data-rot="z" data-delta="5" class="mini">Roll +</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="poseTunerSnapBase" class="mini" style="flex:1;">Reset to Base Mode</button>
+      <button id="poseTunerSave" class="mini" style="flex:1;background:#0f766e;border-color:#0f766e;color:#fff;">Save for Test</button>
+    </div>
+
+    <div style="margin-top:6px;font-size:10px;opacity:.7;">
+      Uses current dropdown + grade to decide <em>which</em> pose (high vs low) you’re tuning.
+    </div>
+  `;
+
+  document.body.appendChild(poseTunerEl);
+
+  const labelTest   = poseTunerEl.querySelector('#poseTunerTestLabel');
+  const labelBucket = poseTunerEl.querySelector('#poseTunerBucketLabel');
+  const btnClose    = poseTunerEl.querySelector('#poseTunerClose');
+  const btnSave     = poseTunerEl.querySelector('#poseTunerSave');
+  const btnSnapBase = poseTunerEl.querySelector('#poseTunerSnapBase');
+
+  function updateLabels(){
+    if (!actionSel) return;
+    const opt = actionSel.selectedOptions?.[0];
+    labelTest.textContent = opt ? opt.textContent.trim() : '(none)';
+    labelBucket.textContent = CURRENT_BODY_BUCKET || 'high';
+  }
+
+  // Helper: get or create override object for current test+bucket
+  function getCurrentOverrideKey(){
+    if (!CURRENT_BODY_TEST || !CURRENT_BODY_BUCKET) return null;
+    return `${CURRENT_BODY_TEST}:${CURRENT_BODY_BUCKET}`;
+  }
+
+  function ensureOverrideFromCurrentPose(){
+    const key = getCurrentOverrideKey();
+    if (!key || !model) return null;
+    if (!POSE_OVERRIDES[key]){
+      const euler = new THREE.Euler().copy(model.rotation);
+      POSE_OVERRIDES[key] = {
+        x: model.position.x,
+        y: model.position.y,
+        z: model.position.z,
+        rx: euler.x,
+        ry: euler.y,
+        rz: euler.z
+      };
+    }
+    return key;
+  }
+
+  function applyOverride(key){
+    const o = key && POSE_OVERRIDES[key];
+    if (!o || !model) return;
+    model.position.set(o.x, o.y, o.z);
+    model.rotation.set(o.rx, o.ry, o.rz);
+  }
+
+  // Position buttons
+  poseTunerEl.querySelectorAll('button[data-axis]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const key = ensureOverrideFromCurrentPose();
+      if (!key) return;
+      const axis = btn.getAttribute('data-axis');
+      const delta = parseFloat(btn.getAttribute('data-delta') || '0');
+      const o = POSE_OVERRIDES[key];
+      if (axis === 'x') o.x += delta;
+      if (axis === 'y') o.y += delta;
+      if (axis === 'z') o.z += delta;
+      applyOverride(key);
+    });
+  });
+
+  // Rotation buttons (deg)
+  poseTunerEl.querySelectorAll('button[data-rot]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const key = ensureOverrideFromCurrentPose();
+      if (!key) return;
+      const axis = btn.getAttribute('data-rot');
+      const deltaDeg = parseFloat(btn.getAttribute('data-delta') || '0');
+      const deltaRad = THREE.MathUtils.degToRad(deltaDeg);
+      const o = POSE_OVERRIDES[key];
+      if (axis === 'x') o.rx += deltaRad;
+      if (axis === 'y') o.ry += deltaRad;
+      if (axis === 'z') o.rz += deltaRad;
+      applyOverride(key);
+    });
+  });
+
+  // Reset to base (throw away override & re-apply base mode)
+  btnSnapBase.onclick = () => {
+    const key = getCurrentOverrideKey();
+    if (key && POSE_OVERRIDES[key]) delete POSE_OVERRIDES[key];
+    applyBodyPositionFromSelection();
+    updateLabels();
+  };
+
+  // Save button just logs config so you can later hard-code it if you want
+  btnSave.onclick = () => {
+    const key = ensureOverrideFromCurrentPose();
+    if (!key) return;
+    const o = POSE_OVERRIDES[key];
+    console.log(`POSE_OVERRIDES["${key}"] = { x:${o.x.toFixed(3)}, y:${o.y.toFixed(3)}, z:${o.z.toFixed(3)}, rx:${o.rx.toFixed(3)}, ry:${o.ry.toFixed(3)}, rz:${o.rz.toFixed(3)} };`);
+    labelTest.style.color = '#22c55e';
+    setTimeout(()=>labelTest.style.color='#e2e8f0', 600);
+  };
+
+  // Close
+  btnClose.onclick = () => {
+    poseTunerVisible = false;
+    poseTunerEl.style.display = 'none';
+  };
+
+  // Public helper so other code can refresh labels when test/grade changes
+  poseTunerEl.updateLabels = updateLabels;
+
+  return poseTunerEl;
+}
+
+function showPoseTuner(show){
+  ensurePoseTuner();
+  poseTunerVisible = (show === undefined) ? !poseTunerVisible : !!show;
+  poseTunerEl.style.display = poseTunerVisible ? 'block' : 'none';
+  if (poseTunerVisible && poseTunerEl.updateLabels) poseTunerEl.updateLabels();
+}
+ 
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
   camera.aspect = innerWidth/innerHeight;
