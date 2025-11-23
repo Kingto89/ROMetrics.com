@@ -631,7 +631,13 @@ function setBodyMode(mode){
     rotX = o.rx;
     rotY = o.ry;
     rotZ = o.rz;
+
+    // NEW: read plantarflexion from override if present
+    if (typeof o.pf === "number") {
+      GLOBAL_PF_DEG = o.pf;
+    }
   }
+
 
   model.position.set(posX, posY, posZ);
   model.rotation.set(rotX, rotY, rotZ);
