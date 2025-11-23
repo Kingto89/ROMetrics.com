@@ -247,8 +247,6 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 
 ## Trunk Extension — Lumbar (Grades 0–2)
 
-**Plane: sagittal | End-Feel: firm**
-
 ### Muscles Tested
 
 * Lumbar extensors (erector spinae, multifidi)
@@ -274,8 +272,6 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 ---
 
 ## Trunk Extension — Thoracic (Grades 0–2)
-
-**Plane: sagittal | End-Feel: firm**
 
 ### Muscles Tested
 
@@ -303,8 +299,6 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 
 ## Trunk Flexion — Rectus Abdominis (Grades 0–2)
 
-**Plane: sagittal | End-Feel: soft/firm**
-
 ### Muscles Tested
 
 * Rectus abdominis
@@ -330,8 +324,6 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 ---
 
 ## Trunk Rotation — External & Internal Obliques (Grades 0–2)
-
-**Plane: transverse | End-Feel: firm**
 
 ### Muscles Tested
 
@@ -359,8 +351,6 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 ---
 
 ## Pelvic Elevation (Hip Hike) — Quadratus Lumborum (Grades 0–2)
-
-**Plane: frontal | End-Feel: firm**
 
 ### Muscle Tested
 
