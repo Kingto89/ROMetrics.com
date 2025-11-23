@@ -218,9 +218,9 @@ Support the **weight of the arm/hand** in the test position; palpate along the *
 Ask the patient to **draw the shoulder blade “down and in” toward the spine** while keeping the hand on the low back and the arm relaxed in your support.
 
 ### Grades 0–2
-**Grade 2:** Scapula clearly moves into **adduction and downward rotation** (partial to full range) with the limb supported in gravity-eliminated.  
-**Grade 1:** No visible motion, but a **trace contraction** is felt in the rhomboids along the medial border of the scapula.  
-**Grade 0:** No visible movement and **no palpable activity** in the rhomboid region.
+### - Grade 2: Scapula clearly moves into **adduction and downward rotation** (partial to full range) with the limb supported in gravity-eliminated.  
+### - Grade 1: No visible motion, but a **trace contraction** is felt in the rhomboids along the medial border of the scapula.  
+### - Grade 0: No visible movement and **no palpable activity** in the rhomboid region.
 
 ---
 
@@ -239,9 +239,9 @@ Support the **weight of the arm** to keep the shoulder in the test line; with th
 Ask the patient to **draw the shoulder blade “down and in” toward the spine** while you keep the arm light and supported.
 
 ### Grades 0–2
-**Grade 2:** Clear scapular **depression and adduction** pattern (partial to full range) with the arm supported, no need to lift limb against gravity.  
-**Grade 1:** No visible motion, but a **faint contraction** is felt in the lower/middle trapezius area under the palpating fingers.  
-**Grade 0:** No visible movement and **no palpable activity** in the tested region.
+### - Grade 2: Clear scapular **depression and adduction** pattern (partial to full range) with the arm supported, no need to lift limb against gravity.  
+### - Grade 1: No visible motion, but a **faint contraction** is felt in the lower/middle trapezius area under the palpating fingers.  
+### - Grade 0: No visible movement and **no palpable activity** in the tested region.
 
 ---
 
@@ -265,9 +265,9 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 
 ### Grades 0–2
 
-* **Grade 2:** partial ROM in gravity-minimized (lumbar lifts but trunk does not fully clear)
-* **Grade 1:** trace contraction palpable along lumbar paraspinals lateral to spinous processes
-* **Grade 0:** no palpable activity
+### - Grade 2: partial ROM in gravity-minimized (lumbar lifts but trunk does not fully clear)
+### - Grade 1: trace contraction palpable along lumbar paraspinals lateral to spinous processes
+### - Grade 0: no palpable activity
 
 ---
 
