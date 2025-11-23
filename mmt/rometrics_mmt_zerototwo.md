@@ -192,7 +192,7 @@
 
 ---
 
-## Scapular Adduction / Retraction — Middle Trapezius
+## Scapular Adduction / Retraction — Middle Trapezius, Rhomboids
 ### Grade 2 — Gravity‑Minimized Position
 - **Prone.** Therapist **cradles the shoulder and upper arm**, supporting the limb so horizontal abduction/adduction of the scapula occurs with gravity minimized.
 ### Grade 1 — Palpation
