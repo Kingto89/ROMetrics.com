@@ -146,7 +146,7 @@
 
 ### Action
 
-* **Rotate head/neck** fully toward test side **without lifting**
+* **Rotate head** fully toward test side **without tilting chin** and keeping neck neutral.
 
 ### Grades 0–2
 
