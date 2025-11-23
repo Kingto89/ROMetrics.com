@@ -303,20 +303,21 @@ const tableTop = new THREE.Mesh(
 tableTop.position.set(0, TABLE_HEIGHT, 0.35);
 tableTop.castShadow = true; tableTop.receiveShadow = true;
 room.add(tableTop);
+
 // Face cutout (visual only, centered on midline near head end)
 const faceCutout = new THREE.Mesh(
   new THREE.CylinderGeometry(0.12, 0.12, 0.01, 32),
   new THREE.MeshStandardMaterial({ color: 0x111827, roughness:0.9, metalness:0 })
 );
-faceCutout.rotation.x = -Math.PI / 2;
+// no rotation – lies flat on table
 faceCutout.position.set(
   0,                                              // midline (left/right)
   TABLE_HEIGHT + TABLE_THICK / 2 + 0.005,        // just on top surface
-  tableTop.position.z + TABLE_D / 2 - 0.30       // near head end of table
+  tableTop.position.z - TABLE_D / 2 + 0.30       // opposite end of table
 );
 faceCutout.receiveShadow = true;
 room.add(faceCutout);
-  
+
 
 // Table base (simple box legs)
 const base = new THREE.Mesh(
