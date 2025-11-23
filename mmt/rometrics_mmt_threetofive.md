@@ -56,7 +56,7 @@
 
 ### Muscles Tested
 
-* Longus capitis, Rectus capitis anterior, Anterior scalene (capital flexor group).
+* Longus capitis, Rectus capitis anterior and lateralis, suprahyoid muscles.
 
 ### Position
 
