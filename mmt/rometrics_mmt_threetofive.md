@@ -64,7 +64,7 @@
 
 ### Therapist
 
-* Stand at head; **cup hands** give resistance under the **mandible**.
+* Stand at head; **cup hands** to provide resistance under the **mandible**.
 
 ### Action
 
