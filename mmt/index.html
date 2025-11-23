@@ -694,10 +694,7 @@ function tryNextModelUrl(index){
   );
 }
 
-tryNextModelUrl(0);
-ensurePoseTuner();
-showPoseTuner(true); // dev: show on first load
-  
+tryNextModelUrl(0);  
 
 /* ==== Wire UI ==== */
 $("lock3D").onclick = () => {
@@ -1052,6 +1049,17 @@ function showPoseTuner(show){
   poseTunerEl.style.display = poseTunerVisible ? 'block' : 'none';
   if (poseTunerVisible && poseTunerEl.updateLabels) poseTunerEl.updateLabels();
 }
+// Init the Pose Tuner once the module + DOM are ready
+window.addEventListener("load", () => {
+  try {
+    ensurePoseTuner();
+    showPoseTuner(true); // dev: show on first load
+  } catch (e) {
+    const m = document.getElementById("msg");
+    if (m) m.textContent = "⚠️ Pose tuner init failed: " + e.message;
+    console.error(e);
+  }
+});
  
 /* ==== Loop & resize ==== */
 addEventListener("resize", ()=>{
