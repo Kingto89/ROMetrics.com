@@ -20,7 +20,7 @@
 
 ### Grades 0–2
 
-* **Grade 2:** Partial range in gravity-eliminated (chin tilts up, head stays on table)
+* **Grade 2:** Full range in gravity-eliminated (chin tilts up, head stays on table)
 * **Grade 1:** trace contraction palpated **just inferior to occiput** over suboccipital region
 * **Grade 0:** no palpable contraction
 
@@ -46,7 +46,7 @@
 
 ### Grades 0–2
 
-* **Grade 2:** Partial range in gravity-eliminated (Push into therapist's hand)
+* **Grade 2:** Full range in gravity-eliminated (Push into therapist's hand)
 * **Grade 1:** trace activity palpated **along cervical spine** (paraspinals C2–C7)
 * **Grade 0:** no palpable contraction
 
