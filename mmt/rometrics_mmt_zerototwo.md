@@ -161,8 +161,6 @@
 
 ---
 
-# UPPER EXTREMITY
-
 ## Scapular Abduction & Upward Rotation — Serratus Anterior
 ### Grade 2 — Gravity‑Minimized Position
 - **Short sitting.** Therapist supports the arm **under the elbow**, holding it **above 90°** so the GH joint is assisted and gravity on the scapula is reduced.
@@ -203,6 +201,8 @@
 ### Therapist Cue
 - **G2/1/0:** “Try to lift your elbow toward the ceiling.”
 
+---
+
 ### Scapular Adduction + Downward Rotation — Grades 0–2
 
 ### Muscles Tested
@@ -222,6 +222,7 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 **Grade 1:** No visible motion, but a **trace contraction** is felt in the rhomboids along the medial border of the scapula.  
 **Grade 0:** No visible movement and **no palpable activity** in the rhomboid region.
 
+---
 
 ### Scapular Depression + Adduction — Grades 0–2
 
@@ -242,6 +243,7 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 **Grade 1:** No visible motion, but a **faint contraction** is felt in the lower/middle trapezius area under the palpating fingers.  
 **Grade 0:** No visible movement and **no palpable activity** in the tested region.
 
+---
 
 ## Trunk Extension — Lumbar (Grades 0–2)
 
