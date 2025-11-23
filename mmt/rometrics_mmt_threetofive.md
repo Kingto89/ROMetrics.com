@@ -237,7 +237,34 @@
 * **Grade 4:** holds against moderate resistance
 * **Grade 3:** full ROM against gravity, no resistance
 
----
+## Scapular Depression + Adduction (Trapezius — lower & middle)
+
+**Plane: frontal + transverse | End-Feel: firm**
+
+### Muscles Tested
+
+* Trapezius (middle and lower fibers)
+* Latissimus dorsi
+* Pectoralis major/minor (assist with depression when arm is fixed)
+
+### Position
+
+* Prone, arm raised in line with lower trap (≈145° abduction), **thumb up**
+
+### Therapist
+
+* Stabilization built in (trunk flat on table)
+
+### Action
+
+* Patient lifts arm off table; resistance at **distal humerus**, directed toward **scapular elevation/protraction**
+
+### Grades 3, 4, 5
+
+* **Grade 5:** full ROM, holds against **maximal resistance**
+* **Grade 4:** full ROM, holds against **moderate resistance**
+* **Grade 3:** full ROM against gravity, **no resistance**
+
 
 ## Scapular Adduction + Downward Rotation (Rhomboids)
 
