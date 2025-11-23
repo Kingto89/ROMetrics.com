@@ -86,8 +86,7 @@
 
 ### Position
 
-* **Side-lying** with head supported on pillows/towel (gravity minimized) **OR** supine with therapist fully supporting head weight
-
+* **Supine** with head supported by the table.
 ### Therapist
 
 * Stand at **head of table**, keeping the head fully supported on the surface.
