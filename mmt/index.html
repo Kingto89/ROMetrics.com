@@ -157,7 +157,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
   <strong>“+ / –” in MMT</strong><br>
   <strong>+</strong>: closer to the next higher grade<br>
   <strong>−</strong>: closer to the next lower grade<br>
-  <strong>3− / 3 / 3+</strong>: &lt; full ROM → full ROM (no resistance) → full ROM with slight resistance<br>
+  <strong>3− / 3 / 3+</strong>: less than full ROM → full ROM (no resistance) → full ROM with slight resistance<br>
   <strong>2 / 2−</strong>: full vs partial ROM in gravity-eliminated position
 </p>
 
@@ -516,7 +516,9 @@ POSE_OVERRIDES["Capital_Extension:high"] = { x:-0.800, y:0.640, z:0.330, rx:-1.5
 POSE_OVERRIDES["Capital_Extension:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
 POSE_OVERRIDES["Cervical_Extension:high"]  = { x:-0.800, y:0.640, z:0.330, rx:-1.571, ry:3.142, rz:1.222, pf: 40 };
 POSE_OVERRIDES["Cervical_Extension:low"]   = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
-
+POSE_OVERRIDES["Capital_Extension:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
+POSE_OVERRIDES["Capital_Extension:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
+  
 let CURRENT_BODY_TEST = null;
 let CURRENT_BODY_BUCKET = "high"; // "high" or "low"
   
