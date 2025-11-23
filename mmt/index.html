@@ -321,6 +321,53 @@ const cabinet = new THREE.Mesh(
 cabinet.position.set(-1.6, 0.45, -0.6);
 cabinet.castShadow = true; cabinet.receiveShadow = true;
 room.add(cabinet);
+// High-back chair ~0.25m (~10 in) in front of the cabinet
+const chairSeat = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.05, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.8 })
+);
+chairSeat.position.set(
+  cabinet.position.x,      // line up with cabinet in X
+  0.45,                    // seat height (roughly same as table height)
+  cabinet.position.z + 0.25 // ~10 inches in front of cabinet
+);
+chairSeat.castShadow = true;
+chairSeat.receiveShadow = true;
+room.add(chairSeat);
+
+// Simple legs
+const chairLegMat = new THREE.MeshStandardMaterial({ color: 0x4b5563, roughness: 0.9 });
+const legGeom = new THREE.CylinderGeometry(0.03, 0.03, 0.45, 12);
+[
+  [-0.20, -0.20],
+  [ 0.20, -0.20],
+  [-0.20,  0.20],
+  [ 0.20,  0.20],
+].forEach(([dx, dz]) => {
+  const leg = new THREE.Mesh(legGeom, chairLegMat);
+  leg.position.set(
+    chairSeat.position.x + dx,
+    0.45 / 2,                // half of seat height → on floor
+    chairSeat.position.z + dz
+  );
+  leg.castShadow = true;
+  leg.receiveShadow = true;
+  room.add(leg);
+});
+
+// High backrest
+const chairBack = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.9, 0.06), // width, height, thickness
+  new THREE.MeshStandardMaterial({ color: 0x4b5563, roughness: 0.9 })
+);
+chairBack.position.set(
+  chairSeat.position.x,
+  0.45 + 0.9 / 2,          // center back above seat
+  chairSeat.position.z - 0.22 // back edge of seat
+);
+chairBack.castShadow = true;
+chairBack.receiveShadow = true;
+room.add(chairBack);
 
 // Stool
 const stoolSeat = new THREE.Mesh(
@@ -522,6 +569,8 @@ POSE_OVERRIDES["Cervical_Flexion:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.57
 POSE_OVERRIDES["Cervical_Flexion:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
 POSE_OVERRIDES["Single_SCM:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
 POSE_OVERRIDES["Single_SCM:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
+POSE_OVERRIDES["Cervical_Rotation:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
+
   
 let CURRENT_BODY_TEST = null;
 let CURRENT_BODY_BUCKET = "high"; // "high" or "low"
