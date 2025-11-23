@@ -229,7 +229,7 @@
 
 ### Action
 
-* Horizontal abduction; resist at **posterior humerus**
+* Horizontal abduction; resist at **posterior humerus.**  Ask patient to bring their elbow up toward the ceiling
 
 ### Grades 3, 4, 5
 
