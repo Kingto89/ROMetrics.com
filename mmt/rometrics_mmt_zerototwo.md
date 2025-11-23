@@ -197,7 +197,7 @@
 - **Prone.** Therapist **cradles the shoulder and upper arm**, supporting the limb so horizontal abduction/adduction of the scapula occurs with gravity minimized.
 ### Grade 1 — Palpation
 - Along the **spine of the scapula** for middle trapezius fibers.
-- **Find‑it cue:** “Try lifting your elbow slightly; I’m feeling across your shoulder blade.”
+- **Find‑it cue:** “Try lifting your elbow.”
 ### Grade 0 — Observation
 - No activity felt along scapular spine.
 ### Therapist Cue
