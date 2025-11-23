@@ -146,7 +146,7 @@
 
 ### Action
 
-* **Rotates head/neck** through full range to the test side.
+* **Rotates head,** trying return to neutral/face forward.
 
 ### Grades 3, 4, 5
 
