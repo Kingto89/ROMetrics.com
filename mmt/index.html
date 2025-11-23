@@ -363,7 +363,7 @@ const chairBack = new THREE.Mesh(
 );
 chairBack.position.set(
   chairSeat.position.x,
-  0.45 + 0.9 / 2 + 0.01,          // center back above seat
+  0.45 + 0.9 / 2 + 0.03,          // center back above seat
   chairSeat.position.z - 0.22 // back edge of seat
 );
 chairBack.castShadow = true;
@@ -571,6 +571,7 @@ POSE_OVERRIDES["Cervical_Flexion:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.57
 POSE_OVERRIDES["Single_SCM:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
 POSE_OVERRIDES["Single_SCM:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
 POSE_OVERRIDES["Cervical_Rotation:high"] = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222, pf: 15 };
+POSE_OVERRIDES["Cervical_Rotation:low"] = { x:1.080, y:-0.460, z:-2.100, rx:0.000, ry:-1.222, rz:0.000, pf:-10 };
 
   
 let CURRENT_BODY_TEST = null;
