@@ -203,7 +203,7 @@
 
 ---
 
-### Scapular Adduction + Downward Rotation — Grades 0–2
+## Scapular Adduction + Downward Rotation — Grades 0–2
 
 ### Muscles Tested
 Rhomboid major; Rhomboid minor
@@ -224,7 +224,7 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 
 ---
 
-### Scapular Depression + Adduction — Grades 0–2
+## Scapular Depression + Adduction — Grades 0–2
 
 ### Muscles Tested
 Latissimus dorsi; Trapezius (middle & lower fibers); Pectoralis major/minor (assist with depression when arm fixed)
