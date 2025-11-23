@@ -285,7 +285,7 @@
 
 ### Action
 
-* Lift hand off back; resistance at **elbow** or **scapular border**
+* Lift hand off back; resistance above **elbow** in outward downward direction.
 
 ### Grades 3, 4, 5
 
