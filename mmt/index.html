@@ -71,6 +71,7 @@ select,button,input[type=range]{width:100%;margin:6px 0 8px 0;padding:8px 10px;b
         <option value="Serratus_Anterior">Scapular Abduction & Upward Rotation (Serratus Anterior)</option>
         <option value="Upper_Trapezius">Scapular Elevation (Upper Trapezius, Levator Scapulae)</option>
         <option value="Middle_Trapezius">Scapular Adduction / Retraction (Middle Trapezius)</option>
+        <option value="Scap_Depression_Adduction">Scapular Depression + Adduction (Lower Trapezius)</option>
         <option value="Rhomboids">Scapular Adduction + Downward Rotation (Rhomboids)</option>
         <option value="Latissimus_Dorsi">Latissimus Dorsi (shoulder depression/extension pattern)</option>
       </optgroup>
@@ -524,6 +525,7 @@ const TEST_POSITION = {
   Serratus_Anterior:   { high: "seated",     low: "seated"      },
   Upper_Trapezius:     { high: "seated",     low: "prone"       },
   Middle_Trapezius:    { high: "prone",      low: "prone"       },
+  Scap_Depression_Adduction: { high: "prone", low: "prone" },
   Rhomboids:           { high: "prone",      low: "prone"       },
   Latissimus_Dorsi:    { high: "prone",      low: "side_lying"  },
 
@@ -876,6 +878,7 @@ const TEST_TO_HEADING = {
   Serratus_Anterior: "Scapular Abduction & Upward Rotation",
   Upper_Trapezius: "Scapular Elevation",
   Middle_Trapezius: "Scapular Adduction / Retraction",
+  Scap_Depression_Adduction: "Scapular Depression + Adduction",
   Rhomboids: "Scapular Adduction + Downward Rotation",
   Latissimus_Dorsi: "Latissimus Dorsi",
   Anterior_Deltoid: "Shoulder Flexion",
