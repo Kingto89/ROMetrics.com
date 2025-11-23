@@ -526,7 +526,7 @@ const TEST_POSITION = {
   Upper_Trapezius:     { high: "seated",     low: "prone"       },
   Middle_Trapezius:    { high: "prone",      low: "prone"       },
   Scap_Depression_Adduction: { high: "prone", low: "prone" },
-  Rhomboids:           { high: "prone",      low: "prone"       },
+  Rhomboids:           { high: "prone",      low: "seated"       },
   Latissimus_Dorsi:    { high: "prone",      low: "side_lying"  },
 
   // Shoulder
@@ -597,6 +597,8 @@ POSE_OVERRIDES["Middle_Trapezius:high"] = { x:-1.200, y:0.640, z:0.470, rx:1.571
 POSE_OVERRIDES["Middle_Trapezius:low"] = { x:-1.200, y:0.640, z:0.470, rx:1.571, ry:0.000, rz:-1.920, pf:45.0 };
 POSE_OVERRIDES["Scap_Depression_Adduction:high"] = { x:-1.200, y:0.640, z:0.470, rx:1.571, ry:0.000, rz:-1.920, pf:45.0 };  
 POSE_OVERRIDES["Scap_Depression_Adduction:low"] = { x:-1.200, y:0.640, z:0.470, rx:1.571, ry:0.000, rz:-1.920, pf:45.0 };  
+POSE_OVERRIDES["Rhomboids:high"] = { x:-1.200, y:0.640, z:0.470, rx:1.571, ry:0.000, rz:-1.920, pf:45.0 };  
+POSE_OVERRIDES["Rhomboids:low"] = { x:-0.620, y:-0.440, z:0.540, rx:0.000, ry:0.349, rz:0.000, pf:-10.0 };  
  
 let CURRENT_BODY_TEST = null;
 let CURRENT_BODY_BUCKET = "high"; // "high" or "low"
