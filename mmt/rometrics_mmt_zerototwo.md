@@ -104,7 +104,7 @@
 
 ---
 
-## Flexion to Isolate a Single Sternocleidomastoid — Grades 0–2
+## Single SCM - (Anterolateral Flexion) — Grades 0–2
 
 ### Muscle Tested
 
