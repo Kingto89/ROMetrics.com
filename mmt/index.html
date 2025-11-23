@@ -418,6 +418,7 @@ const ktx2  = new KTX2Loader();  ktx2.setTranscoderPath("https://unpkg.com/three
 
 let model=null, skeleton=null;
 const initialBoneRot = new Map();
+let GLOBAL_PF_DEG = 0; // shared plantarflex angle for both feet
 
 // Reset all bones back to stored baseline
 function resetAllBones(){
@@ -547,6 +548,26 @@ function setBodyMode(mode){
     rotX = 0;
     rotY = degToRad(POSE.ryDeg);
     seatPoseOnlyLegs();
+function applyGlobalPF(){
+  if (!skeleton) return;
+
+  const footL = getBone("foot_L");
+  const footR = getBone("foot_R");
+
+  // Reset feet to their baseline before applying PF
+  [footL, footR].forEach(b => {
+    if (!b) return;
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+
+  if (!GLOBAL_PF_DEG) return; // nothing to do if 0°
+
+  const r = degToRad(GLOBAL_PF_DEG);
+  // If toes go the wrong way, flip the sign on r here
+  if (footL) footL.rotateX(-r);
+  if (footR) footR.rotateX(-r);
+}
 
   } else if (mode === "supine"){
     // Supine on bed, centered
@@ -609,6 +630,8 @@ function setBodyMode(mode){
 
   model.position.set(posX, posY, posZ);
   model.rotation.set(rotX, rotY, rotZ);
+  applyGlobalPF();
+
 }
 
 
@@ -927,6 +950,14 @@ function ensurePoseTuner(){
       </div>
     </div>
 
+        <label style="display:block;opacity:.85;margin-top:4px;">Ankle Plantarflexion (both feet)</label>
+    <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;">
+      <button data-pf="-5" class="mini">Less PF</button>
+      <button data-pf="5" class="mini">More PF</button>
+      <span id="pfLabel" style="margin-left:auto;opacity:.7;">0°</span>
+    </div>
+
+
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button id="poseTunerSnapBase" class="mini" style="flex:1;">Reset to Base Mode</button>
       <button id="poseTunerSave" class="mini" style="flex:1;background:#0f766e;border-color:#0f766e;color:#fff;">Save for Test</button>
@@ -944,13 +975,20 @@ function ensurePoseTuner(){
   const btnClose    = poseTunerEl.querySelector('#poseTunerClose');
   const btnSave     = poseTunerEl.querySelector('#poseTunerSave');
   const btnSnapBase = poseTunerEl.querySelector('#poseTunerSnapBase');
+  const pfLabel = poseTunerEl.querySelector('#pfLabel');
+
+  function updatePFLabel(){
+    if (pfLabel) pfLabel.textContent = `${GLOBAL_PF_DEG|0}°`;
+  }
 
   function updateLabels(){
     if (!actionSel) return;
     const opt = actionSel.selectedOptions?.[0];
     labelTest.textContent = opt ? opt.textContent.trim() : '(none)';
     labelBucket.textContent = CURRENT_BODY_BUCKET || 'high';
+    updatePFLabel();
   }
+
 
   // Helper: get or create override object for current test+bucket
   function getCurrentOverrideKey(){
@@ -1010,6 +1048,16 @@ function ensurePoseTuner(){
       if (axis === 'y') o.ry += deltaRad;
       if (axis === 'z') o.rz += deltaRad;
       applyOverride(key);
+    });
+  });
+  // Plantarflexion buttons
+  poseTunerEl.querySelectorAll('button[data-pf]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseFloat(btn.getAttribute('data-pf') || '0');
+      // Clamp so you don't break ankles
+      GLOBAL_PF_DEG = Math.max(-40, Math.min(40, GLOBAL_PF_DEG + delta));
+      applyGlobalPF();
+      updatePFLabel();
     });
   });
 
