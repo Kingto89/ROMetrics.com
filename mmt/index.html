@@ -680,12 +680,31 @@ $("lock3D").onclick = () => {
   btn.classList.toggle('lockOn', !controls.enabled);
 };
 $("zeroAll").onclick = () => {
-  if (!skeleton) return;
-  skeleton.bones.forEach(b=>{
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
+  // Reset bones and return to your original standing anatomic pose
+  resetAllBones();
+  applyAnatomicBaseline();
+  if (model){
+    model.position.set(POSE.x, POSE.y, POSE.z);
+    model.rotation.set(0, degToRad(POSE.ryDeg), 0);
+  }
 };
+// When test changes, choose the correct high/low body position on bed/cabinet
+actionSel.addEventListener("change", () => {
+  applyBodyPositionFromSelection();
+});
+
+// When main grade (3–5 vs 0–2) changes, re-evaluate body position
+gradeMain.addEventListener("change", () => {
+  if (actionSel.value) applyBodyPositionFromSelection();
+});
+
+// When grading exception (trunk/gastroc) changes, re-evaluate body position
+if (gradeExceptions){
+  gradeExceptions.addEventListener("change", () => {
+    if (actionSel.value) applyBodyPositionFromSelection();
+  });
+}
+
 
 /* ==== Side panel + Markdown loading ==== */
 const notePanel = document.getElementById('notePanel');
