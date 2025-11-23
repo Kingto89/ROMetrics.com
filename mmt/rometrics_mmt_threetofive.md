@@ -38,7 +38,7 @@
 
 ### Therapist
 
-* Stand at head; apply resistance on **parietal–occipital** area **downward/forward**; support under head as needed for safety.
+* Stand at head; apply resistance on **parietal–occipital** area **downward**; support under head as needed for safety.
 
 ### Action
 
@@ -64,7 +64,7 @@
 
 ### Therapist
 
-* Stand at head; **two fingers** give resistance under the **mandible** (flexion line) while the other hand **stabilizes the chest**/sternum.
+* Stand at head; **cup hands** give resistance under the **mandible**.
 
 ### Action
 
