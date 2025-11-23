@@ -138,7 +138,7 @@
 
 ### Position
 
-* **Supine**, head supported on table (gravity minimized)
+* **Sitting**, in a chair with a tall back that supports the torso and head, keeping the head neutral.
 
 ### Therapist
 
