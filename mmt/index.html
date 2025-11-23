@@ -504,10 +504,9 @@ const TEST_POSITION = {
 
 // Decide if we're in the high (3–5) or low (0–2) family for a given test
 // Per-test pose overrides (absolute position + rotation) keyed by "TestKey:high" / "TestKey:low"
-const POSE_OVERRIDES = {
-  // Paste the console lines from the tuner in here, like:
-  // "Capital_Extension:high": { x:0.000, y:0.480, z:0.350, rx:1.571, ry:0.523, rz:0.000 },
-  // "Capital_Extension:low":  { x:...,   y:...,   z:...,   rx:...,   ry:...,   rz:... },
+const POSE_OVERRIDES = {};
+POSE_OVERRIDES["Capital_Extension:high"] = { x:-0.800, y:0.640, z:0.330, rx:-1.571, ry:3.142, rz:1.222 };
+POSE_OVERRIDES["Capital_Extension:low"]  = { x:-1.220, y:0.520, z:0.470, rx:-1.571, ry:-0.000, rz:-1.222 };
 };
 
 let CURRENT_BODY_TEST = null;
