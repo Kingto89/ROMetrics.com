@@ -523,6 +523,28 @@ function getGradeBucketForTest(testKey){
   return (gm >= 3 ? "high" : "low");
 }
 
+/** Global plantarflexion for both feet */
+function applyGlobalPF(){
+  if (!skeleton) return;
+
+  const footL = getBone("foot_L");
+  const footR = getBone("foot_R");
+
+  // Reset feet to their baseline before applying PF
+  [footL, footR].forEach(b => {
+    if (!b) return;
+    const q0 = initialBoneRot.get(b);
+    if (q0) b.quaternion.copy(q0);
+  });
+
+  if (!GLOBAL_PF_DEG) return; // nothing to do if 0°
+
+  const r = degToRad(GLOBAL_PF_DEG);
+  // If toes go the wrong way, flip sign here
+  if (footL) footL.rotateX(-r);
+  if (footR) footR.rotateX(-r);
+}
+
 // Coarse body-mode: align to bed/cabinet but don't set specific joint test angles
 function setBodyMode(mode){
   if (!model || !skeleton) return;
@@ -548,26 +570,6 @@ function setBodyMode(mode){
     rotX = 0;
     rotY = degToRad(POSE.ryDeg);
     seatPoseOnlyLegs();
-function applyGlobalPF(){
-  if (!skeleton) return;
-
-  const footL = getBone("foot_L");
-  const footR = getBone("foot_R");
-
-  // Reset feet to their baseline before applying PF
-  [footL, footR].forEach(b => {
-    if (!b) return;
-    const q0 = initialBoneRot.get(b);
-    if (q0) b.quaternion.copy(q0);
-  });
-
-  if (!GLOBAL_PF_DEG) return; // nothing to do if 0°
-
-  const r = degToRad(GLOBAL_PF_DEG);
-  // If toes go the wrong way, flip the sign on r here
-  if (footL) footL.rotateX(-r);
-  if (footR) footR.rotateX(-r);
-}
 
   } else if (mode === "supine"){
     // Supine on bed, centered
@@ -630,9 +632,11 @@ function applyGlobalPF(){
 
   model.position.set(posX, posY, posZ);
   model.rotation.set(rotX, rotY, rotZ);
-  applyGlobalPF();
 
+  // Re-apply global plantarflexion to both feet
+  applyGlobalPF();
 }
+
 
 
 function applyBodyPositionFromSelection(){
