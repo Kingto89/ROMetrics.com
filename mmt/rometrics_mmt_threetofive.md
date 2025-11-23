@@ -104,7 +104,7 @@
 
 ---
 
-## Flexion to Isolate a Single Sternocleidomastoid (Anterolateral Flexion)
+## Single SCM - (Anterolateral Flexion)
 
 ### Muscle Tested
 
