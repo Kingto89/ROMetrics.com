@@ -281,7 +281,7 @@
 
 ### Therapist
 
-* Stabilization built in
+* Stabilize the upper trunk or opposite scapula to prevent trunk rolling
 
 ### Action
 
