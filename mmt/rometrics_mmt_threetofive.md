@@ -211,13 +211,13 @@
 
 ---
 
-## Scapular Adduction / Retraction (Middle Trapezius)
+## Scapular Adduction / Retraction 
 
 **Plane: transverse | End-Feel: firm**
 
 ### Muscle Tested
 
-* Middle Trapezius
+* Middle Trapezius, Rhomboids
 
 ### Position
 
