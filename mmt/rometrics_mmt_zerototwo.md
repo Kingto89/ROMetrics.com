@@ -203,6 +203,46 @@
 ### Therapist Cue
 - **G2/1/0:** “Try to lift your elbow toward the ceiling.”
 
+### Scapular Adduction + Downward Rotation — Grades 0–2
+
+### Muscles Tested
+Rhomboid major; Rhomboid minor
+
+### Position
+Prone, arm placed as in the higher-grade test (hand on low back in IR + adduction), but the **arm and hand are supported** so the limb does not have to lift against gravity.
+
+### Therapist
+Support the **weight of the arm/hand** in the test position; palpate along the **medial (vertebral) border of the scapula** to feel the rhomboids.
+
+### Action
+Ask the patient to **draw the shoulder blade “down and in” toward the spine** while keeping the hand on the low back and the arm relaxed in your support.
+
+### Grades 0–2
+**Grade 2:** Scapula clearly moves into **adduction and downward rotation** (partial to full range) with the limb supported in gravity-eliminated.  
+**Grade 1:** No visible motion, but a **trace contraction** is felt in the rhomboids along the medial border of the scapula.  
+**Grade 0:** No visible movement and **no palpable activity** in the rhomboid region.
+
+
+### Scapular Depression + Adduction — Grades 0–2
+
+### Muscles Tested
+Latissimus dorsi; Trapezius (middle & lower fibers); Pectoralis major/minor (assist with depression when arm fixed)
+
+### Position
+Prone, arm placed in the same diagonal line as higher grades (≈145° abduction) but **relaxed and supported** so it does not have to lift against gravity; trunk flat on table, head neutral or turned away.
+
+### Therapist
+Support the **weight of the arm** to keep the shoulder in the test line; with the other hand, palpate along the **lower/middle trapezius region** near the medial border of the scapula and toward the lower thoracic spine.
+
+### Action
+Ask the patient to **draw the shoulder blade “down and in” toward the spine** while you keep the arm light and supported.
+
+### Grades 0–2
+**Grade 2:** Clear scapular **depression and adduction** pattern (partial to full range) with the arm supported, no need to lift limb against gravity.  
+**Grade 1:** No visible motion, but a **faint contraction** is felt in the lower/middle trapezius area under the palpating fingers.  
+**Grade 0:** No visible movement and **no palpable activity** in the tested region.
+
+
 ## Trunk Extension — Lumbar (Grades 0–2)
 
 **Plane: sagittal | End-Feel: firm**
