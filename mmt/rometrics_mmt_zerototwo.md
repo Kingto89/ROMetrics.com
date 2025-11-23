@@ -20,7 +20,7 @@
 
 ### Grades 0–2
 
-* **Grade 2:** full range in gravity-eliminated (chin tilts up, head stays on table)
+* **Grade 2:** Partial range in gravity-eliminated (chin tilts up, head stays on table)
 * **Grade 1:** trace contraction palpated **just inferior to occiput** over suboccipital region
 * **Grade 0:** no palpable contraction
 
