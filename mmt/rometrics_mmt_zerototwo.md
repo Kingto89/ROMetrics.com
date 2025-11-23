@@ -46,8 +46,8 @@
 
 ### Grades 0–2
 
-* **Grade 2:** full range in gravity-eliminated (smooth posterior glide into table)
-* **Grade 1:** trace activity palpated **along cervical spinous gutters** (paraspinals C2–C7)
+* **Grade 2:** Partial range in gravity-eliminated (Push into therapist's hand)
+* **Grade 1:** trace activity palpated **along cervical spine** (paraspinals C2–C7)
 * **Grade 0:** no palpable contraction
 
 ---
