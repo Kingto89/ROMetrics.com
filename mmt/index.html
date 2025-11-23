@@ -402,13 +402,13 @@ function applyAnatomicBaseline(){
   const wrL = getBone('hand_L'),     wrR = getBone('hand_R');     // wrist PS on Y (use 'wrist_*' if needed)
 
   setDegAxis(shL, 'z', ANAT.add);
-  setDegAxis(shR, 'z', ANAT.add);
+  setDegAxis(shR, 'z', -ANAT.add);
 
   setDegAxis(faL, 'y', ANAT.ps);
   setDegAxis(faR, 'y', ANAT.ps);
 
   setDegAxis(wrL, 'y', ANAT.wps);
-  setDegAxis(wrR, 'y', -ANAT.wps);   // mirror sign on the right (your original rule)
+  setDegAxis(wrR, 'y', -ANAT.wps);   
 }
   
   
