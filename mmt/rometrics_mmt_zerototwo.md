@@ -90,11 +90,12 @@
 
 ### Therapist
 
-* Cradle **occiput** and **upper trunk** to remove head weight; monitor SCM at **sternal/clavicular origins** and along **anterior neck**
+* Stand at **head of table**, keeping the head fully supported on the surface.
+* Lightly palpate the **sternocleidomastoid** at its sternal/clavicular origins and along the **anterior neck**
 
 ### Action
 
-* **Roll chin toward chest** (cervical flexion) **without lifting head**
+* **Turns head left and right** (on table) **without lifting head**
 
 ### Grades 0–2
 
