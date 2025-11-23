@@ -230,7 +230,7 @@ Ask the patient to **draw the shoulder blade “down and in” toward the spine*
 Latissimus dorsi; Trapezius (middle & lower fibers); Pectoralis major/minor (assist with depression when arm fixed)
 
 ### Position
-Prone, arm placed in the same diagonal line as higher grades (≈145° abduction) but **relaxed and supported** so it does not have to lift against gravity; trunk flat on table, head neutral or turned away.
+Short Sitting, arm placed in the same diagonal line as higher grades (≈145° abduction) but **relaxed and supported** so it does not have to lift against gravity; trunk flat on table, head neutral or turned away.
 
 ### Therapist
 Support the **weight of the arm** to keep the shoulder in the test line; with the other hand, palpate along the **lower/middle trapezius region** near the medial border of the scapula and toward the lower thoracic spine.
