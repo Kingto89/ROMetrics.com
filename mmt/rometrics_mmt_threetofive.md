@@ -257,7 +257,7 @@
 
 ### Action
 
-* Patient lifts arm off table; resistance at **distal humerus**, directed toward **scapular elevation/protraction**
+* Patient lifts arm off table; resistance at **distal humerus.**
 
 ### Grades 3, 4, 5
 
