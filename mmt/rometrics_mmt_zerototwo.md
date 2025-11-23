@@ -169,7 +169,7 @@
 - Scapula expected to **abduct and upwardly rotate** as arm is maintained in elevation.
 ### Grade 1 — Palpation
 - Palpate along the **axillary border anterior to the inferior angle** of the scapula for serratus activity.
-- **Find‑it cue:** “I’m feeling in front of your shoulder blade; try to keep this lifted.”
+
 ### Grade 0 — Observation
 - No activity detected in the serratus region.
 ### Therapist Cues
