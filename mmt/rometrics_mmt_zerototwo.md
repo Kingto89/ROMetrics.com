@@ -203,7 +203,7 @@
 
 ---
 
-## Scapular Adduction + Downward Rotation — Grades 0–2
+## Scapular Adduction + Downward Rotation — Grades 0–2 
 
 ### Muscles Tested
 Rhomboid major; Rhomboid minor
