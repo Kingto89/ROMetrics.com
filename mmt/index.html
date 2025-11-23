@@ -575,6 +575,8 @@ POSE_OVERRIDES["Cervical_Rotation:low"] = { x:1.080, y:-0.460, z:-2.100, rx:0.00
 POSE_OVERRIDES["Serratus_Anterior:high"] = { x:-0.620, y:-0.440, z:0.540, rx:0.000, ry:0.349, rz:0.000, pf:-10.0 };
 POSE_OVERRIDES["Serratus_Anterior:low"] = { x:-0.620, y:-0.440, z:0.540, rx:0.000, ry:0.349, rz:0.000, pf:-10.0 };  
 POSE_OVERRIDES["Upper_Trapezius:high"] = { x:-0.620, y:-0.440, z:0.540, rx:0.000, ry:0.349, rz:0.000, pf:-10.0 };   
+POSE_OVERRIDES["Upper_Trapezius:low"] = { x:-1.200, y:0.640, z:0.470, rx:1.571, ry:0.000, rz:-1.920, pf:45.0 };
+  
 let CURRENT_BODY_TEST = null;
 let CURRENT_BODY_BUCKET = "high"; // "high" or "low"
   
@@ -1135,7 +1137,7 @@ function ensurePoseTuner(){
     btn.addEventListener('click', () => {
       const delta = parseFloat(btn.getAttribute('data-pf') || '0');
       // Clamp so you don't break ankles
-      GLOBAL_PF_DEG = Math.max(-40, Math.min(40, GLOBAL_PF_DEG + delta));
+      GLOBAL_PF_DEG = Math.max(-45, Math.min(45, GLOBAL_PF_DEG + delta));
       applyGlobalPF();
       updatePFLabel();
     });
